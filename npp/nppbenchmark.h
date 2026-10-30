@@ -11,6 +11,8 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License. */
+
+#include <common/system_info.h>
    
 
 std::unordered_map<std::string, std::stringstream> benchmarkResultsText;
@@ -21,6 +23,8 @@ const std::string path{ "" };
 constexpr int ITERS = 100;
 
 bool warmup{ false };
+// Free text for the "# notes:" line of the CSV header: set it at the start of launch() to state the protocol
+std::string benchmarkNotes;
 
 struct BenchmarkResultsNumbers {
   float NPPelapsedTimeMax;
@@ -45,11 +49,16 @@ inline void processExecution(const BenchmarkResultsNumbers &resF, const std::str
                              const std::array<float, ITERS> &NPPelapsedTime,
                              const std::array<float, ITERS> &FKelapsedTime,
                              const std::string &variableDimension) {
+  // The warm-up sweep runs one iteration per point: nothing of it goes to the CSV (it used to write a first, junk block)
+  if (warmup) {
+    return;
+  }
   // Create 2D Table for changing types and changing batch
   const std::string fileName = functionName + std::string(".csv");
   if constexpr (BATCH == batchValues[0]) {
     if (currentFile.find(fileName) == currentFile.end()) {
       currentFile[fileName].open(path + fileName);
+      fklb::writeSystemInfoHeader(currentFile[fileName], functionName, benchmarkNotes);
     }
     currentFile[fileName] << variableDimension;
     currentFile[fileName] << ", NPP MeanTime";
