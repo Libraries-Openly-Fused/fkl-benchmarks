@@ -42,7 +42,7 @@ there is no median in these files). Horizontal fusion has three CSVs: with the C
 - Data type `float`; one 1D buffer of `3840 * 2160 * 8 = 66 355 200` elements (265 420 800 bytes, 253.1 MiB) as input and another as output, so each launch reads
   253 MiB and writes 253 MiB; the input is set to 1.0.
 - The operation is a multiplication by 2 (`Mul<float>`), repeated N times (N = 1, 21, ..., 1181) in ONE fused kernel (`PerThreadRead` + N times `Mul` as nested
-  `StaticLoop`s of 20 + the remainder + `PerThreadWrite`, `TransformDPP`, thread fusion at its default); a single `executeOperations` per point, timed with
-  the harness' events on the stream. The values overflow to infinity for large N, which does not change the time.
+  `StaticLoop`s of 20 + the remainder + `PerThreadWrite`, `TransformDPP`, thread fusion at its default); a single `executeOperations` per point: one warm-up
+  execution, then 100 timed executions (`ITERS`), each timed with HIP events on the stream. The values overflow to infinity for large N, which does not change the time.
 - At one operation the time is 1.944 ms for 506 MiB moved, i.e. 273 GB/s (decimal) of read plus write traffic; the time grows from 101 operations on.
 
