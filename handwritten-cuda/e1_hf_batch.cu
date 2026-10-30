@@ -48,6 +48,7 @@
 #include <iostream>
 #include <random>
 #include <utility>
+#include <string>
 #include <vector>
 
 namespace {
@@ -154,9 +155,10 @@ bool runPoint(cudaStream_t cs, fk::Stream_<fk::ParArch::GPU_NVIDIA>& fkStream, f
     clearTensor(); launchFkl(); E1_CHECK(cudaStreamSynchronize(cs)); downloadTensor(outFkl);
     clearTensor(); launchFklTf(); E1_CHECK(cudaStreamSynchronize(cs)); downloadTensor(outFklTf);
     // the iterated version writes one Ptr2D per crop: copy the crops into the tensor layout of the hand kernel to compare
-    launchIterated(); E1_CHECK(cudaStreamSynchronize(cs));
+    // (not in profile mode: it launches one kernel per crop and the profiler would profile each of them)
+    if (!e1::profileMode()) { launchIterated(); E1_CHECK(cudaStreamSynchronize(cs)); }
     outIterated.assign(refHand.size(), 0.f);
-    for (int i = 0; i < BATCH; ++i) {
+    for (int i = 0; i < (e1::profileMode() ? 0 : BATCH); ++i) {
         std::vector<float> plane(static_cast<size_t>(CROP_W) * CROP_H);
         E1_CHECK(cudaMemcpy2D(plane.data(), CROP_W * sizeof(float), iteratedOut[i].ptr().data, iteratedOut[i].ptr().dims.pitch,
                               CROP_W * sizeof(float), CROP_H, cudaMemcpyDeviceToHost));
@@ -174,7 +176,7 @@ bool runPoint(cudaStream_t cs, fk::Stream_<fk::ParArch::GPU_NVIDIA>& fkStream, f
                     return false;
         return true;
     };
-    const bool exactFkl = sameWritten(refHand, outFkl), exactFklTf = sameWritten(refHand, outFklTf), exactIterated = sameWritten(refHand, outIterated);
+    const bool exactFkl = sameWritten(refHand, outFkl), exactFklTf = sameWritten(refHand, outFklTf), exactIterated = e1::profileMode() || sameWritten(refHand, outIterated);
     const bool exactHandGeneric = sameWritten(refHand, outHandGeneric);
 
     Timing tHand, tHandGeneric, tFkl, tFklTf, tIterated;
@@ -210,6 +212,7 @@ int launch() {
                          "iterated_min_ms", "fkl_over_hand", "iterated_over_fkl", "fkl_bitexact", "fkl_tf_bitexact", "iterated_bitexact",
                          "hand_generic_mean_ms", "hand_generic_min_ms", "fkl_over_hand_generic", "hand_generic_bitexact", "hand_param_bytes", "hand_generic_param_bytes"},
                         "source: seeded uint8 noise 3840x2160 (std::mt19937_64 seed 20261030), crop i at (i, i); cast, *1.0, -1.0, /3.2; the block is the one "
-                        "fk::getDefaultBlockSize picks; 100 timed iterations after one warm-up; *_bitexact = same bytes as hand_batch");
+                        std::string("fk::getDefaultBlockSize picks; 100 timed iterations after one warm-up; *_bitexact = same bytes as hand_batch") +
+                            (e1::profileMode() ? "; PROFILE MODE (E1_PROFILE=1): nothing was timed and the iterated version was not run, the times are zero" : ""));
     return runAll(std::make_index_sequence<sizeof(BATCHES) / sizeof(BATCHES[0])>{}, cs, fkStream, csv, noise) ? 0 : -1;
 }

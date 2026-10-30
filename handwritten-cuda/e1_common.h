@@ -18,6 +18,7 @@
 #include <cuda_runtime.h>
 
 #include <algorithm>
+#include <cstdlib>
 #include <cstring>
 #include <iostream>
 #include <vector>
@@ -39,8 +40,16 @@ struct Timing {
     double mean = 0, min = 1e30;
 };
 
+// E1_PROFILE=1: no timing loops, every kernel is launched once by the correctness check and nothing else, so that a profiler
+// (ncu, for the achieved occupancy of scripts/e1_table.py) sees one launch per kernel. The CSV is then not a timing result.
+inline bool profileMode() {
+    static const bool profile = std::getenv("E1_PROFILE") != nullptr && std::getenv("E1_PROFILE")[0] == '1';
+    return profile;
+}
+
 template <typename Launch>
 bool timeIt(cudaStream_t stream, const Launch& launch, Timing& t) {
+    if (profileMode()) return true;
     cudaEvent_t start, stop;
     E1_CHECK(cudaEventCreate(&start));
     E1_CHECK(cudaEventCreate(&stop));
