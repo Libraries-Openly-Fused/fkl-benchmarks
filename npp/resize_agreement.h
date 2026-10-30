@@ -146,7 +146,7 @@ inline bool checkBatch(const std::string& function, const int batch, const int i
                                     "); references in double precision for the whole pipeline; each implementation must match one "
                                     "convention within 1e-3, the difference between them is informational");
         it->second << "batch,FastNPP_follows,NPP_follows,FastNPP_vs_ref_FKL_max,FastNPP_vs_ref_pixel_centre_max,NPP_vs_ref_FKL_max,"
-                      "NPP_vs_ref_pixel_centre_max,FastNPP_vs_NPP_max,FastNPP_vs_NPP_mean\\n";
+                      "NPP_vs_ref_pixel_centre_max,FastNPP_vs_NPP_max,FastNPP_vs_NPP_mean\n";
     }
     it->second << batch << ',' << fastFollows << ',' << nppFollows << ',' << fastFKL.maxDiff << ',' << fastPC.maxDiff << ','
                << nppFKL.maxDiff << ',' << nppPC.maxDiff << ',' << cross.maxDiff << ',' << cross.mean() << '\n';
