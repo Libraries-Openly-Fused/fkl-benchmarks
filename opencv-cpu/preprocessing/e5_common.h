@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <chrono>
 #include <cstdio>
+#include <cstdlib>
 #include <fstream>
 #include <functional>
 #include <iostream>
@@ -64,6 +65,20 @@ inline std::string readFirstLine(const std::string& path) {
     return "unknown";
 }
 
+// "MemTotal" of /proc/meminfo, as GiB
+inline std::string memTotal() {
+    std::ifstream f("/proc/meminfo");
+    std::string key;
+    long long kb = 0;
+    while (f >> key >> kb) {
+        if (key == "MemTotal:") {
+            return std::to_string(kb / 1024 / 1024) + " GiB visible";
+        }
+        f.ignore(256, '\n');
+    }
+    return "unknown";
+}
+
 // The lines of cv::getBuildInformation() that say how this OpenCV runs on the CPU
 inline std::vector<std::string> openCvBuildLines() {
     const char* const keys[] = {"Version control:", "C++ standard:", "C++ Compiler:", "C++ flags (Release):",
@@ -103,7 +118,9 @@ inline void writeSystemInfoHeader(std::ostream& os, const Context& ctx) {
        << readFirstLine("/sys/devices/system/cpu/cpu0/cpufreq/scaling_driver") << ", EPP "
        << readFirstLine("/sys/devices/system/cpu/cpu0/cpufreq/energy_performance_preference") << ", boost "
        << readFirstLine("/sys/devices/system/cpu/cpufreq/boost") << "\n";
-    os << "# memory speed: PLACEHOLDER (sudo dmidecode -t memory | grep -m2 Speed)\n";
+    // The speed of the memory modules is only readable as root (dmidecode): E5_MEMORY_SPEED=<text> records it when it is known
+    const char* memorySpeed = std::getenv("E5_MEMORY_SPEED");
+    os << "# memory: " << memTotal() << ", speed " << (memorySpeed ? memorySpeed : "not recorded (dmidecode needs root)") << "\n";
     os << "# opencv default threads: " << ctx.cvThreadsDefault << " (cv::getNumThreads()), useOptimized "
        << cv::useOptimized() << ", useIPP " << cv::ipp::useIPP() << "\n";
     os << "# fkl cpu_multithread pool size: " << ctx.fklPoolSize << " (default hardware concurrency)\n";
