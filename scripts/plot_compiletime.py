@@ -14,7 +14,7 @@
 # limitations under the License.
 """F8, fig:compile_times: compile time and compiler memory against the number of fused operations (E3), two panels.
 
-  python scripts/plot_compiletime.py --csv results/rtx4090/e3-compile [--layout wide|stacked] [--out figures/compiletime_r2.pdf]
+  python scripts/plot_compiletime.py --csv results/rtx4090/e3-compile [--layout wide|single] [--out figures/compiletime_r2.pdf]
 
 (a) nvcc wall time, (b) peak memory of the compiler (the largest process of the nvcc run, GNU time), both logarithmic, one core,
 nvcc 13.4.92, -O3, -std=c++17, sm_89 + PTX. Series:
@@ -55,7 +55,7 @@ def series(table, variant, trees):
 
 def main():
     ap = pc.arg_parser(__doc__, "compiletime_r2.pdf")
-    ap.add_argument("--layout", choices=["wide", "stacked"], default="wide", help="wide: two panels side by side at 7.1 in; stacked: one column, 3.4 in")
+    ap.add_argument("--layout", choices=["wide", "single"], default="wide", help="wide: two panels side by side, 7.1 x 2.0 in; single: panel (a) only, one column, 3.4 x 2.1 in")
     args = ap.parse_args()
     chains = pc.resolve(args.csv, "e3_table_chains.csv")
     loops = pc.resolve(args.csv, "e3_table_staticloop.csv")
@@ -67,10 +67,11 @@ def main():
 
     pc.apply_style()
     if args.layout == "wide":
-        fig, axes = plt.subplots(1, 2, figsize=(7.1, 2.4), constrained_layout=True)
+        fig, axes = plt.subplots(1, 2, figsize=(7.1, 2.0), constrained_layout=True)
+        ax_t, ax_m = axes
     else:
-        fig, axes = plt.subplots(2, 1, figsize=(3.4, 4.4), constrained_layout=True)
-    ax_t, ax_m = axes
+        fig, ax_t = plt.subplots(figsize=(3.4, 2.1), constrained_layout=True)
+        ax_m = None
     c_sl, c_a = pc.SERIES_COLORS[0], pc.SERIES_COLORS[1]
 
     def draw(ax, key, scale):
@@ -95,10 +96,11 @@ def main():
     ax_t.text(6000 * 1.25, 4300, "timeout", ha="left", va="center")
     ax_t.legend(loc="upper left")
 
-    draw(ax_m, "peak_rss_mb", 1 / 1024.0)
-    ax_m.set_ylabel("Peak compiler memory (GB)")
-    ax_m.set_ylim(0.1, 30)
-    ax_m.yaxis.set_major_formatter(FuncFormatter(lambda v, _: f"{v:g}"))
+    if ax_m is not None:
+        draw(ax_m, "peak_rss_mb", 1 / 1024.0)
+        ax_m.set_ylabel("Peak compiler memory (GB)")
+        ax_m.set_ylim(0.1, 30)
+        ax_m.yaxis.set_major_formatter(FuncFormatter(lambda v, _: f"{v:g}"))
 
     notes = ["variant A without the change: tree 'current' (LTS-C++17 before PR #417); with: " + "tree 'getarg-pr' (PR branch) where measured, else 'patched' (same function in a scratch copy)",
              f"distinct operations without: N {min(without)}..{max(without)} ({len(without)} points) + timeout at {sorted(to_without)}; with: N {min(with_fix)}..{max(with_fix)} ({len(with_fix)} points) + timeout at {sorted(to_with)}",

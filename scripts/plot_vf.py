@@ -20,7 +20,7 @@
                   "Mul+Mul chain" (e0-vf-mul1; the instance 'mul1' is Mul then Mul)
   vf_b_r2.pdf     (b) the same chains against OpenCV-CUDA + CUDA Graphs (the *_CUDAGraphs.csv files)
   vfhf_c_r2.pdf   (c) VF + HF, batch 50 of 60 x 120 crops (e0-vf-mul-add): speedup against OpenCV-CUDA and against OpenCV-CUDA + CUDA Graphs
-  vfpanels_r2.pdf the three panels side by side at 7.1 in (a preview of the figure*; the LaTeX layout may place them differently)
+  vfpanels_r2.pdf the three panels in ONE row at 7.1 x 1.95 in (the figure*: Oscar's page budget wants one row); each single panel is 2.3 x 1.95 in
 
 --mul-add1 / --mul1 / --mul-add are the experiment directories (default: <csv>/e0-vf-mul-add1, e0-vf-mul1, e0-vf-mul-add); the re-run of
 e0-vf-mul-add1 (the first run has one disturbed row, at 5,402 operations) is given with --mul-add1. Every point of the files is drawn.
@@ -93,12 +93,12 @@ def main():
     if not hf_g:
         notes.append("(c) WARNING: the CUDA Graphs file of e0-vf-mul-add does not exist yet; the panel has only the OpenCV-CUDA series")
     for (name, curves, ylabel, legend) in specs:
-        fig, ax = plt.subplots(figsize=(args.width, args.width * 0.75), constrained_layout=True)
+        fig, ax = plt.subplots(figsize=(args.width, 1.95), constrained_layout=True)
         panel(ax, curves, ylabel, legend)
         srcs = {"vf_a_r2.pdf": [paths["mul-add1"][0], paths["mul1"][0]], "vf_b_r2.pdf": [paths["mul-add1"][1], paths["mul1"][1]],
                 "vfhf_c_r2.pdf": [paths["mul-add"][0]] + ([paths["mul-add"][1]] if hf_g else [])}[name]
         pc.save(fig, os.path.join(args.out_dir, name), srcs, "plot_vf.py", notes)
-    fig, axes = plt.subplots(1, 3, figsize=(7.1, 7.1 / 3 * 0.85), constrained_layout=True)
+    fig, axes = plt.subplots(1, 3, figsize=(7.1, 1.95), constrained_layout=True)
     for ax, (name, curves, ylabel, legend) in zip(axes, specs):
         panel(ax, curves, ylabel, legend)
     allsrc = [p for k in FILES for p in paths[k] if os.path.exists(p)]

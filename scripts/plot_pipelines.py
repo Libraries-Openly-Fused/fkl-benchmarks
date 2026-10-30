@@ -18,7 +18,7 @@
 
   cputime_r2.pdf    (a) CPU-time speedup against the batch size (2 to 152): "cvGS vs OpenCV-CUDA" (e0-cpu-time-opencv) and "FastNPP vs NPP" (e0-cpu-time-npp)
   npp_r2.pdf        (b) GPU speedup of FastNPP against NPP (batch 10 to 150): "without CPU overhead" and "with CPU overhead" (the two files of e0-npp)
-  pipelines_r2.pdf  both panels side by side at 7.1 in (preview of the figure*)
+  pipelines_r2.pdf  both panels in one row, 7.1 x 2.0 in (the figure*); each single panel is 3.4 x 2.0 in
 
 y axes start at 0 and are linear (the ranges are 14x to 420x and 30x to 145x, below the 100x-ratio at which the specification asks for a log axis).
 The FastNPP and NPP series must come from the runs made after the FastNPP resize-convention change (PR #45) is merged and the submodule is moved; the
@@ -76,13 +76,13 @@ def main():
             notes.append(f"({label}) {name}: {len(x)} points, batch {x[0]:.0f} to {x[-1]:.0f}; first {y[0]:.2f}x, maximum {max(y):.2f}x at batch {x[j]:.0f}; last {y[-1]:.2f}x")
 
     pc.apply_style()
-    fig, ax = plt.subplots(figsize=(args.width, args.width * 0.62), constrained_layout=True)
+    fig, ax = plt.subplots(figsize=(args.width, 2.0), constrained_layout=True)
     panel(ax, a, "CPU-time speedup", "upper left")
     pc.save(fig, os.path.join(args.out_dir, "cputime_r2.pdf"), [p_cv, p_cn], "plot_pipelines.py", notes)
-    fig, ax = plt.subplots(figsize=(args.width, args.width * 0.62), constrained_layout=True)
+    fig, ax = plt.subplots(figsize=(args.width, 2.0), constrained_layout=True)
     panel(ax, b, "GPU speedup of FastNPP vs NPP", "lower right")
     pc.save(fig, os.path.join(args.out_dir, "npp_r2.pdf"), [p_without, p_with], "plot_pipelines.py", notes)
-    fig, axes = plt.subplots(1, 2, figsize=(7.1, 7.1 / 2 * 0.62), constrained_layout=True)
+    fig, axes = plt.subplots(1, 2, figsize=(7.1, 2.0), constrained_layout=True)
     panel(axes[0], a, "CPU-time speedup", "upper left")
     panel(axes[1], b, "GPU speedup of FastNPP vs NPP", "lower right")
     pc.save(fig, os.path.join(args.out_dir, "pipelines_r2.pdf"), [p_cv, p_cn, p_without, p_with], "plot_pipelines.py", notes)

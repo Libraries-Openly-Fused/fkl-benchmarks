@@ -8,7 +8,7 @@ The E0 benchmarks are built with `-lineinfo` (the library default, `FKLB_LINEINF
 
 Targets: benchmark_latency_hiding, benchmark_numinstructions_x_operation, benchmark_horizontal_fusion, benchmark_data_type,
 benchmark_CPUandGPU_cvGS_vs_fk, benchmark_vertical_fusionCompareMulAdd1 (all `_cu`). With: 21 of 26 `flags.make` files contain `-lineinfo`
-(the five that do not are targets that are not CUDA translation units); without: 0 of 26, and the cubin has no `nv_debug_line_sass` section.
+(the five that do not are the `_cpp` CPU back-end targets, which have CXX flags only; all six `_cu` targets of the list carry it); without: 0 of 26, and the cubin has no `nv_debug_line_sass` section.
 
 Result (`sass_compare_lineinfo_on_vs_off.txt`): 596 kernels in both builds, 397 identical, 199 "different", all 199 in
 `benchmark_vertical_fusionCompareMulAdd1_cu`. Every one of those 199 has the same number of lines in both builds and differs in ONE line only:
