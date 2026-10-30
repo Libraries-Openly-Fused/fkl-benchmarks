@@ -109,6 +109,8 @@ def main():
     ap.add_argument("--style", default="new", help="API style of variant L: old (1f33224) or new")
     ap.add_argument("--tree", default="current", help="label of the FKL tree in the CSV (current, 07b2cb3 (fold), 07b2cb3^ (pre-fold), 1f33224)")
     ap.add_argument("--csv", default="e3_compile.csv", help="name of the CSV in --out")
+    ap.add_argument("--reps", type=int, default=3, help="repetitions of each compile")
+    ap.add_argument("--rep-threshold", type=float, default=30.0, help="a compile slower than this many seconds is not repeated (default 30)")
     args = ap.parse_args()
     os.makedirs(args.out, exist_ok=True)
     os.makedirs(args.work, exist_ok=True)
@@ -134,7 +136,7 @@ def main():
                 binary = os.path.join(args.work, label)
                 subprocess.run([sys.executable, gen, variant, str(n), src] + ([args.style] if variant == "L" else []), check=True)
                 rep = 0
-                while rep < 3:
+                while rep < args.reps:
                     timefile = os.path.join(args.work, label + ".time.csv")
                     cmd = [nvcc, "-std=c++17", "-O3", "-DNDEBUG", f"--generate-code=arch=compute_{args.arch[3:]},code=[compute_{args.arch[3:]},{args.arch}]", "--threads", "1",
                            "-ftemplate-depth=1000", "-lineinfo", "--resource-usage", "--time", timefile, "-I", include, src, "-o", binary]
@@ -179,7 +181,7 @@ def main():
                         stop = True
                         break
                     rep += 1
-                    if wall >= 30:
+                    if wall >= args.rep_threshold:
                         break
 
 
