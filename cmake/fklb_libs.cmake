@@ -4,6 +4,23 @@
 add_library(fklb_fkl INTERFACE)
 target_include_directories(fklb_fkl INTERFACE "${CMAKE_SOURCE_DIR}/external/fkl/include")
 
+# FKL with the multithreaded CPU back-end (ParArch::CPU_MULTITHREAD): the thread-pool submodule of external/fkl, the define
+# of the library and the threads library. Targets ask for it with LIBS fkl_mt; a benchmark that does not, and every cu and
+# hip binary built without it, are the same as before. Without the submodule (git submodule update --init --recursive)
+# fkl_mt is fkl, and the benchmarks compile without ParArch::CPU_MULTITHREAD (they test FK_CPU_MULTITHREAD_ENABLED).
+add_library(fklb_fkl_mt INTERFACE)
+target_link_libraries(fklb_fkl_mt INTERFACE fklb_fkl)
+if(EXISTS "${CMAKE_SOURCE_DIR}/external/fkl/thread-pool/include/ThreadPool.h")
+    find_package(Threads REQUIRED)
+    target_include_directories(fklb_fkl_mt INTERFACE "${CMAKE_SOURCE_DIR}/external/fkl/thread-pool/include")
+    target_compile_definitions(fklb_fkl_mt INTERFACE FK_CPU_MULTITHREAD_ENABLED)
+    target_link_libraries(fklb_fkl_mt INTERFACE Threads::Threads)
+    set(FKLB_HAVE_CPU_MULTITHREAD ON)
+else()
+    message(STATUS "fkl-benchmarks: external/fkl/thread-pool is not checked out, ParArch::CPU_MULTITHREAD is not built")
+    set(FKLB_HAVE_CPU_MULTITHREAD OFF)
+endif()
+
 # cvGPUSpeedup: its include/ and its root (the benchmarks use tests/testUtils.cuh)
 add_library(fklb_cvgs INTERFACE)
 target_include_directories(fklb_cvgs INTERFACE
