@@ -190,7 +190,7 @@ def cmd_table(args):
             if "launchTransformDPP" in name:
                 version = "fkl_tf" if "(fk::TF)1" in demangled else "fkl"
             else:
-                version = "hand_generic" if "Generic" in name else "hand"
+                version = "hand_generic" if "Generic" in name else ("hand_padded" if "Padded" in name else "hand")
         tr = timing.get(point, {})
         threads = 1
         for b in k["block"]:
@@ -213,7 +213,7 @@ def cmd_table(args):
             "achieved_occupancy_pct": f"{k['metrics'].get(M_ACHIEVED, float('nan')):.2f}",
             "ncu_duration_us": f"{k['metrics'].get(M_DURATION, float('nan')):.2f}",
         })
-    order = {"hand_params": 0, "hand": 0, "hand_imm": 1, "hand_generic": 1, "hand_vec": 2, "fkl": 3, "fkl_tf": 4}
+    order = {"hand_params": 0, "hand": 0, "hand_imm": 1, "hand_generic": 1, "hand_padded": 2, "hand_vec": 2, "fkl": 3, "fkl_tf": 4}
     rows.sort(key=lambda r: (r["point"], order.get(r["version"], 9)))
     if not rows:
         raise SystemExit("no kernel of the ncu run was found in the binary")

@@ -29,6 +29,8 @@
 //                 size and the resize factors compile-time / kernel arguments; the arithmetic in the order FKL uses
 //   hand_generic  the same with what FKL carries per crop: pointer, width, height and pitch (24 bytes), the kernel reading the source
 //                 size and pitch from that descriptor
+//   hand_padded   hand_generic with its parameter block padded to the size of FKL's read IOp (the crop descriptors, the resize parameters
+//                 and the rest FKL carries per crop): a DIAGNOSTIC that separates the size of the parameter block from the generated code
 //   fkl           FKL: BatchRead of the crops -> Resize -> VectorReorder -> Mul -> Sub -> Div -> TensorSplit, thread fusion off (the default)
 // Every version is compared bit by bit with hand_batch before anything is timed.
 //
@@ -123,6 +125,23 @@ __global__ void handPreproc(const __grid_constant__ CropPointers<BATCH> crops, c
     preprocess(crops.data[z], inPitch, CROP_W, CROP_H, fx, fy, x, y, z, tensor, pitch, imageStride, UP_W * UP_H);
 }
 
+template <int BATCH, size_t PAD>
+struct PaddedCropDescriptors {
+    CropDescriptors<BATCH> descriptors;
+    unsigned char padding[PAD];
+};
+
+template <int BATCH, size_t PAD>
+__global__ void handPreprocPadded(const __grid_constant__ PaddedCropDescriptors<BATCH, PAD> params, float* __restrict__ tensor, const size_t pitch,
+                                  const size_t imageStride, const float fx, const float fy) {
+    const int x = blockIdx.x * blockDim.x + threadIdx.x;
+    const int y = blockIdx.y * blockDim.y + threadIdx.y;
+    const int z = blockIdx.z;
+    if (x >= UP_W || y >= UP_H) return;
+    const auto& c = params.descriptors.crop[z];
+    preprocess(c.data, c.pitch, static_cast<int>(c.width), static_cast<int>(c.height), fx, fy, x, y, z, tensor, pitch, imageStride, UP_W * UP_H);
+}
+
 template <int BATCH>
 __global__ void handPreprocGeneric(const __grid_constant__ CropDescriptors<BATCH> crops, float* __restrict__ tensor, const size_t pitch,
                                    const size_t imageStride, const float fx, const float fy) {
@@ -168,12 +187,18 @@ bool runPoint(cudaStream_t cs, fk::Stream_<fk::ParArch::GPU_NVIDIA>& fkStream, f
     const auto div = fk::Div<float3>::build(make_float3(DIV_X, DIV_Y, DIV_Z));
     const fk::Write<fk::TensorSplit<float3>> write{dTensor.ptr()};
 
+    // the padding makes the hand-written parameter block as large as FKL's read IOp (which holds the per-crop pointers, sizes and resize parameters)
+    constexpr size_t PAD = sizeof(read) > sizeof(CropDescriptors<BATCH>) ? sizeof(read) - sizeof(CropDescriptors<BATCH>) : 1;
+    PaddedCropDescriptors<BATCH, PAD> paddedDescriptors;
+    paddedDescriptors.descriptors = cropDescriptors;
+
     const auto blockSize = fk::getDefaultBlockSize(UP_W, UP_H);   // the block FKL launches for this size
     const dim3 block(blockSize.x, blockSize.y);
     const dim3 grid((UP_W + block.x - 1) / block.x, (UP_H + block.y - 1) / block.y, BATCH);
 
     auto launchHand = [&] { handPreproc<BATCH><<<grid, block, 0, cs>>>(cropPointers, inPitch, dTensor.ptr().data, pitch, imageStride, fx, fy); };
     auto launchHandGeneric = [&] { handPreprocGeneric<BATCH><<<grid, block, 0, cs>>>(cropDescriptors, dTensor.ptr().data, pitch, imageStride, fx, fy); };
+    auto launchHandPadded = [&] { handPreprocPadded<BATCH, PAD><<<grid, block, 0, cs>>>(paddedDescriptors, dTensor.ptr().data, pitch, imageStride, fx, fy); };
     auto launchFkl = [&] { fk::executeOperations<fk::TransformDPP<fk::ParArch::GPU_NVIDIA, fk::TF::DISABLED>>(fkStream, read, reorder, mul, sub, div, write); };
 
     auto downloadTensor = [&](std::vector<float>& host) {
@@ -182,25 +207,27 @@ bool runPoint(cudaStream_t cs, fk::Stream_<fk::ParArch::GPU_NVIDIA>& fkStream, f
     };
     auto clearTensor = [&] { cudaMemset(dTensor.ptr().data, 0, tensorBytes); };
 
-    std::vector<float> refHand, outHandGeneric, outFkl;
+    std::vector<float> refHand, outHandGeneric, outHandPadded, outFkl;
     clearTensor(); launchHand(); E1_CHECK(cudaStreamSynchronize(cs)); downloadTensor(refHand);
     clearTensor(); launchHandGeneric(); E1_CHECK(cudaStreamSynchronize(cs)); downloadTensor(outHandGeneric);
+    clearTensor(); launchHandPadded(); E1_CHECK(cudaStreamSynchronize(cs)); downloadTensor(outHandPadded);
     clearTensor(); launchFkl(); E1_CHECK(cudaStreamSynchronize(cs)); downloadTensor(outFkl);
-    const bool exactHandGeneric = sameBits(refHand, outHandGeneric), exactFkl = sameBits(refHand, outFkl);
+    const bool exactHandPadded = sameBits(refHand, outHandPadded), exactHandGeneric = sameBits(refHand, outHandGeneric), exactFkl = sameBits(refHand, outFkl);
     if (!exactFkl) {
         size_t differing = 0; float maxDiff = 0;
         for (size_t i = 0; i < refHand.size(); ++i) if (refHand[i] != outFkl[i]) { ++differing; maxDiff = std::max(maxDiff, std::abs(refHand[i] - outFkl[i])); }
         std::cerr << BATCH << " crops: FKL differs from the hand-written kernel in " << differing << " of " << refHand.size() << " elements, max " << maxDiff << std::endl;
     }
 
-    Timing tHand, tHandGeneric, tFkl;
-    if (!timeIt(cs, launchHand, tHand) || !timeIt(cs, launchHandGeneric, tHandGeneric) || !timeIt(cs, launchFkl, tFkl)) return false;
+    Timing tHand, tHandGeneric, tHandPadded, tFkl;
+    if (!timeIt(cs, launchHand, tHand) || !timeIt(cs, launchHandGeneric, tHandGeneric) || !timeIt(cs, launchHandPadded, tHandPadded) || !timeIt(cs, launchFkl, tFkl)) return false;
     csv.row(BATCH, tHand.mean, tHand.min, tHandGeneric.mean, tHandGeneric.min, tFkl.mean, tFkl.min, tFkl.mean / tHand.mean,
-            tFkl.mean / tHandGeneric.mean, int(exactFkl), int(exactHandGeneric), sizeof(CropPointers<BATCH>), sizeof(CropDescriptors<BATCH>));
+            tFkl.mean / tHandGeneric.mean, int(exactFkl), int(exactHandGeneric), sizeof(CropPointers<BATCH>), sizeof(CropDescriptors<BATCH>), tHandPadded.mean, tHandPadded.min,
+            tFkl.mean / tHandPadded.mean, int(exactHandPadded), sizeof(read));
     csv.flush();
-    std::cout << BATCH << " crops: hand " << tHand.mean << " ms, hand_generic " << tHandGeneric.mean << ", fkl " << tFkl.mean
-              << " | bit-exact vs hand: hand_generic " << exactHandGeneric << ", fkl " << exactFkl << std::endl;
-    return exactFkl && exactHandGeneric;
+    std::cout << BATCH << " crops: hand " << tHand.mean << " ms, hand_generic " << tHandGeneric.mean << ", hand_padded " << tHandPadded.mean << ", fkl " << tFkl.mean
+              << " | bit-exact vs hand: hand_generic " << exactHandGeneric << ", hand_padded " << exactHandPadded << ", fkl " << exactFkl << std::endl;
+    return exactFkl && exactHandGeneric && exactHandPadded;
 }
 
 template <size_t... Is>
@@ -222,7 +249,8 @@ int launch() {
     fklb::CsvWriter csv("e1_preproc.csv", "E1c hand-written batched pre-processing vs FKL (60x120 uchar3 crops -> 64x128 float planar tensor)",
                         {"batch", "hand_mean_ms", "hand_min_ms", "hand_generic_mean_ms", "hand_generic_min_ms", "fkl_mean_ms", "fkl_min_ms",
                          "fkl_over_hand", "fkl_over_hand_generic", "fkl_bitexact", "hand_generic_bitexact",
-                         "hand_param_bytes", "hand_generic_param_bytes"},
+                         "hand_param_bytes", "hand_generic_param_bytes", "hand_padded_mean_ms", "hand_padded_min_ms", "fkl_over_hand_padded", "hand_padded_bitexact",
+                         "fkl_read_iop_bytes"},
                         std::string("thread fusion: off (fk::TF::DISABLED, the default); resize sampling: ASYMMETRIC (x * scale), the library default, in the hand-written kernels and in FKL (fk::Resize<INTER_LINEAR>); "
                                     "source: seeded uint8 noise 3840x2160x3 (std::mt19937_64 seed 20261030), crop i at (i, i), 60x120 -> 64x128 bilinear, RGB to BGR, "
                                     "*0.3, -(1, 4, 3.2), /(3.2, 0.6, 11.8), planar float output; the block is the one fk::getDefaultBlockSize picks; "
