@@ -21,6 +21,12 @@
       "cacheVariables": { "FKLB_CUDA_ARCH": "89" }
     },
     {
+      "name": "rtx4090-e1",
+      "displayName": "RTX 4090 (sm_89), CUDA 13.4, no -lineinfo: the SASS comparison of E1 (hand-written kernels against FKL)",
+      "inherits": "cuda13.4",
+      "cacheVariables": { "FKLB_CUDA_ARCH": "89", "FKLB_LINEINFO": "OFF" }
+    },
+    {
       "name": "rtx4090-fmad-off",
       "displayName": "RTX 4090 (sm_89), CUDA 13.4, -fmad=false (E6)",
       "inherits": "cuda13.4",
@@ -35,6 +41,7 @@
   ],
   "buildPresets": [
     { "name": "rtx4090", "configurePreset": "rtx4090" },
+    { "name": "rtx4090-e1", "configurePreset": "rtx4090-e1" },
     { "name": "rtx4090-fmad-off", "configurePreset": "rtx4090-fmad-off" },
     { "name": "rtx5050", "configurePreset": "rtx5050" }
   ]
