@@ -22,7 +22,7 @@
 # build/local-rtx4090). Each experiment runs in results/rtx4090/<name>/ (stdout.txt, stderr.txt, exit_code.txt, the CSVs the
 # benchmark writes in its working directory). Refuses to run when
 #   - the tracked files have uncommitted changes (the CSV header would say -dirty; set FKLB_ALLOW_DIRTY=1 to override),
-#   - another process uses the GPU (the measurement would be contended),
+#   - another process uses the GPU (the measurement would be contended; the desktop session's own processes are ignored),
 #   - results/rtx4090/<name>/ already holds files (move them away; nothing is overwritten).
 set -u
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
@@ -65,12 +65,22 @@ case $GPU_NAME in *4090*) ;; *) echo "GPU $CUDA_VISIBLE_DEVICES is '$GPU_NAME', 
 if [ -n "$(git -C "$ROOT" status --porcelain --untracked-files=no)" ] && [ "${FKLB_ALLOW_DIRTY:-0}" != 1 ]; then
   echo "uncommitted changes in tracked files: commit them, rebuild, and run again (or FKLB_ALLOW_DIRTY=1)"; exit 1
 fi
-# the binaries must have been built from this commit: the build info is rewritten by every build
+# The binaries must have been built from a clean commit, and nothing that affects them may have changed since (scripts/, results/
+# and the docs may). The build info is rewritten by every build; BUILD can be a frozen copy of bin/ and generated/.
 BUILT=$(grep -o 'FKLB_COMMIT_REPO "[^"]*"' "$BUILD/generated/fklb_build_info.h" | cut -d'"' -f2)
-HEAD=$(git -C "$ROOT" rev-parse HEAD)
-if [ "$BUILT" != "$HEAD" ] && [ "${FKLB_ALLOW_DIRTY:-0}" != 1 ]; then
-  echo "the build ($BUILT) is not of the current commit ($HEAD): run cmake --build $BUILD first"; exit 1
+case $BUILT in *-dirty|unknown) [ "${FKLB_ALLOW_DIRTY:-0}" = 1 ] || { echo "the build is of an uncommitted tree ($BUILT): commit, rebuild, run again"; exit 1; };; esac
+if [ "${FKLB_ALLOW_DIRTY:-0}" != 1 ] && ! git -C "$ROOT" diff --quiet "${BUILT%-dirty}" HEAD -- common cmake fkl-self opencv-cuda npp external CMakeLists.txt CMakePresets.json; then
+  echo "sources changed since the build ($BUILT): rebuild first"; exit 1
 fi
+echo "binaries: $BUILD/bin, built from fkl-benchmarks $BUILT"
+
+# GPU processes of the desktop session (the 4090 drives the display) do not count; anything else does
+DESKTOP='/usr/bin/(ptyxis|nautilus|gnome-shell|Xwayland|Xorg|gnome-terminal|firefox)'
+gpu_busy() {
+  nvidia-smi -i "$CUDA_VISIBLE_DEVICES" --query-compute-apps=process_name --format=csv,noheader | grep -v -E "$DESKTOP" | grep -q . && return 0
+  local u; for _ in 1 2 3; do u=$(nvidia-smi -i "$CUDA_VISIBLE_DEVICES" --query-gpu=utilization.gpu --format=csv,noheader,nounits); [ "$u" -gt 10 ] && return 0; sleep 1; done
+  return 1
+}
 
 mkdir -p "$OUT"
 for e in "${EXPERIMENTS[@]}"; do
@@ -81,9 +91,7 @@ for e in "${EXPERIMENTS[@]}"; do
   dir=$OUT/$name
   if [ -d "$dir" ] && [ -n "$(ls -A "$dir" 2>/dev/null)" ]; then echo "$name: $dir is not empty, skipped"; continue; fi
   [ -x "$BUILD/bin/$bin" ] || { echo "$name: $BUILD/bin/$bin is not built, skipped"; continue; }
-  if [ -n "$(nvidia-smi -i "$CUDA_VISIBLE_DEVICES" --query-compute-apps=pid --format=csv,noheader)" ]; then
-    echo "$name: another process is using the GPU, stopping"; exit 1
-  fi
+  if gpu_busy; then echo "$name: another process is using the GPU, stopping"; exit 1; fi
   mkdir -p "$dir"
   echo "$(date -Iseconds) $name: $desc"
   start=$(date +%s)

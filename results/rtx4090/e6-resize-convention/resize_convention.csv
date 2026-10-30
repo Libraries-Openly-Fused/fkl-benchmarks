@@ -1,0 +1,76 @@
+# experiment: resize sampling convention: candidates vs two scalar double references
+# notes: seeded float noise in [0,255), seed 20261030 + 1000003*width + 7919*height; reference FKL: src=x*scale; reference pixel centre: src=(x+0.5)*scale-0.5 with clamped reads; float images, so no rounding is involved
+# repo: fkl-benchmarks a334424a213ca307266219c2b47de45b9e8e17e2
+# fkl: fb9ac3ad4a64aad40ae3122e14143f03814f2cc0
+# cvGPUSpeedup: 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c
+# FastNPP: 9dfc4f430225e40ded392bfa777b2e724367c5c1
+# nvcc: 13.4.92 (/home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/nvcc), architectures 89, -fmad on, -lineinfo on
+# host compiler: GNU 15.2.0, Release, -march=native, -ftemplate-depth=1000
+# opencv: 4.14.0
+# cpu: AMD Ryzen 9 5950X 16-Core Processor
+# gpu: NVIDIA GeForce RTX 4090, cc 8.9, 128 SMs, 24106 MiB, PCI 0000:09:00.0
+# cuda driver api: 13.3, cuda runtime: 13.4
+# nvidia-smi driver: 610.43.02
+# clocks (sm, mem, max sm, max mem, MHz): 2550 MHz, 10251 MHz, 3105 MHz, 10501 MHz
+# power limit, temperature at start: 450.00 W, 37
+case,candidate,reference,max_abs_diff,mean_abs_diff,fraction_gt_1e-3
+benchmark crop 60x120 -> 64x128 (up, x1.07),scalar reference FKL,scalar reference pixel centre,13.7025051,3.0643668,0.999471029
+benchmark crop 60x120 -> 64x128 (up, x1.07),FKL (cvGS::resize, INTER_LINEAR),scalar reference FKL,3.05175781e-05,2.38571859e-06,0
+benchmark crop 60x120 -> 64x128 (up, x1.07),FKL (cvGS::resize, INTER_LINEAR),scalar reference pixel centre,13.7025051,3.06436684,0.999471029
+benchmark crop 60x120 -> 64x128 (up, x1.07),cv::cuda::resize (INTER_LINEAR),scalar reference FKL,3.05175781e-05,2.34499263e-06,0
+benchmark crop 60x120 -> 64x128 (up, x1.07),cv::cuda::resize (INTER_LINEAR),scalar reference pixel centre,13.7025051,3.06436682,0.999471029
+benchmark crop 60x120 -> 64x128 (up, x1.07),nppiResize_32f_C3R_Ctx (NPPI_INTER_LINEAR),scalar reference FKL,13.7025032,3.06436678,0.999471029
+benchmark crop 60x120 -> 64x128 (up, x1.07),nppiResize_32f_C3R_Ctx (NPPI_INTER_LINEAR),scalar reference pixel centre,3.05175781e-05,2.81144942e-06,0
+benchmark crop 60x120 -> 64x128 (up, x1.07),nppiResizeBatch_32f_C3R_Advanced_Ctx (batch of 2, NPPI_INTER_LINEAR),scalar reference FKL,13.7025032,3.06436678,0.999471029
+benchmark crop 60x120 -> 64x128 (up, x1.07),nppiResizeBatch_32f_C3R_Advanced_Ctx (batch of 2, NPPI_INTER_LINEAR),scalar reference pixel centre,3.05175781e-05,2.81144942e-06,0
+benchmark crop 60x120 -> 64x128 (up, x1.07),FKL (cvGS::resize, INTER_LINEAR),cv::cuda::resize (INTER_LINEAR),3.05175781e-05,1.12804507e-06,0
+benchmark crop 60x120 -> 64x128 (up, x1.07),FKL (cvGS::resize, INTER_LINEAR),nppiResize_32f_C3R_Ctx (NPPI_INTER_LINEAR),13.7025032,3.06436682,0.999471029
+benchmark crop 60x120 -> 64x128 (up, x1.07),FKL (cvGS::resize, INTER_LINEAR),nppiResizeBatch_32f_C3R_Advanced_Ctx (batch of 2, NPPI_INTER_LINEAR),13.7025032,3.06436682,0.999471029
+benchmark crop 60x120 -> 64x128 (up, x1.07),cv::cuda::resize (INTER_LINEAR),nppiResize_32f_C3R_Ctx (NPPI_INTER_LINEAR),13.7025032,3.0643668,0.999471029
+benchmark crop 60x120 -> 64x128 (up, x1.07),cv::cuda::resize (INTER_LINEAR),nppiResizeBatch_32f_C3R_Advanced_Ctx (batch of 2, NPPI_INTER_LINEAR),13.7025032,3.0643668,0.999471029
+benchmark crop 60x120 -> 64x128 (up, x1.07),nppiResize_32f_C3R_Ctx (NPPI_INTER_LINEAR),nppiResizeBatch_32f_C3R_Advanced_Ctx (batch of 2, NPPI_INTER_LINEAR),0,0,0
+60x120 -> 30x60 (down, x2),scalar reference FKL,scalar reference pixel centre,169.45266,52.972303,1
+60x120 -> 30x60 (down, x2),FKL (cvGS::resize, INTER_LINEAR),scalar reference FKL,0,0,0
+60x120 -> 30x60 (down, x2),FKL (cvGS::resize, INTER_LINEAR),scalar reference pixel centre,169.45266,52.972303,1
+60x120 -> 30x60 (down, x2),cv::cuda::resize (INTER_LINEAR),scalar reference FKL,0,0,0
+60x120 -> 30x60 (down, x2),cv::cuda::resize (INTER_LINEAR),scalar reference pixel centre,169.45266,52.972303,1
+60x120 -> 30x60 (down, x2),nppiResize_32f_C3R_Ctx (NPPI_INTER_LINEAR),scalar reference FKL,169.45266,52.972303,1
+60x120 -> 30x60 (down, x2),nppiResize_32f_C3R_Ctx (NPPI_INTER_LINEAR),scalar reference pixel centre,1.52587891e-05,2.34603882e-06,0
+60x120 -> 30x60 (down, x2),nppiResizeBatch_32f_C3R_Advanced_Ctx (batch of 2, NPPI_INTER_LINEAR),scalar reference FKL,169.45266,52.972303,1
+60x120 -> 30x60 (down, x2),nppiResizeBatch_32f_C3R_Advanced_Ctx (batch of 2, NPPI_INTER_LINEAR),scalar reference pixel centre,1.52587891e-05,2.34603882e-06,0
+60x120 -> 30x60 (down, x2),FKL (cvGS::resize, INTER_LINEAR),cv::cuda::resize (INTER_LINEAR),0,0,0
+60x120 -> 30x60 (down, x2),FKL (cvGS::resize, INTER_LINEAR),nppiResize_32f_C3R_Ctx (NPPI_INTER_LINEAR),169.45266,52.972303,1
+60x120 -> 30x60 (down, x2),FKL (cvGS::resize, INTER_LINEAR),nppiResizeBatch_32f_C3R_Advanced_Ctx (batch of 2, NPPI_INTER_LINEAR),169.45266,52.972303,1
+60x120 -> 30x60 (down, x2),cv::cuda::resize (INTER_LINEAR),nppiResize_32f_C3R_Ctx (NPPI_INTER_LINEAR),169.45266,52.972303,1
+60x120 -> 30x60 (down, x2),cv::cuda::resize (INTER_LINEAR),nppiResizeBatch_32f_C3R_Advanced_Ctx (batch of 2, NPPI_INTER_LINEAR),169.45266,52.972303,1
+60x120 -> 30x60 (down, x2),nppiResize_32f_C3R_Ctx (NPPI_INTER_LINEAR),nppiResizeBatch_32f_C3R_Advanced_Ctx (batch of 2, NPPI_INTER_LINEAR),0,0,0
+33x17 -> 67x31 (odd sizes, up),scalar reference FKL,scalar reference pixel centre,80.9127197,21.4354083,0.998074145
+33x17 -> 67x31 (odd sizes, up),FKL (cvGS::resize, INTER_LINEAR),scalar reference FKL,0.000289916992,3.43240105e-05,0
+33x17 -> 67x31 (odd sizes, up),FKL (cvGS::resize, INTER_LINEAR),scalar reference pixel centre,80.9127808,21.4354251,0.998074145
+33x17 -> 67x31 (odd sizes, up),cv::cuda::resize (INTER_LINEAR),scalar reference FKL,0.000289916992,3.43345712e-05,0
+33x17 -> 67x31 (odd sizes, up),cv::cuda::resize (INTER_LINEAR),scalar reference pixel centre,80.9127808,21.4354251,0.998074145
+33x17 -> 67x31 (odd sizes, up),nppiResize_32f_C3R_Ctx (NPPI_INTER_LINEAR),scalar reference FKL,80.9126587,21.4353918,0.998074145
+33x17 -> 67x31 (odd sizes, up),nppiResize_32f_C3R_Ctx (NPPI_INTER_LINEAR),scalar reference pixel centre,0.000286102295,3.26613939e-05,0
+33x17 -> 67x31 (odd sizes, up),nppiResizeBatch_32f_C3R_Advanced_Ctx (batch of 2, NPPI_INTER_LINEAR),scalar reference FKL,80.9126587,21.4353918,0.998074145
+33x17 -> 67x31 (odd sizes, up),nppiResizeBatch_32f_C3R_Advanced_Ctx (batch of 2, NPPI_INTER_LINEAR),scalar reference pixel centre,0.000286102295,3.26613939e-05,0
+33x17 -> 67x31 (odd sizes, up),FKL (cvGS::resize, INTER_LINEAR),cv::cuda::resize (INTER_LINEAR),1.52587891e-05,1.15478618e-06,0
+33x17 -> 67x31 (odd sizes, up),FKL (cvGS::resize, INTER_LINEAR),nppiResize_32f_C3R_Ctx (NPPI_INTER_LINEAR),80.9127197,21.4354086,0.998074145
+33x17 -> 67x31 (odd sizes, up),FKL (cvGS::resize, INTER_LINEAR),nppiResizeBatch_32f_C3R_Advanced_Ctx (batch of 2, NPPI_INTER_LINEAR),80.9127197,21.4354086,0.998074145
+33x17 -> 67x31 (odd sizes, up),cv::cuda::resize (INTER_LINEAR),nppiResize_32f_C3R_Ctx (NPPI_INTER_LINEAR),80.9127197,21.4354086,0.998074145
+33x17 -> 67x31 (odd sizes, up),cv::cuda::resize (INTER_LINEAR),nppiResizeBatch_32f_C3R_Advanced_Ctx (batch of 2, NPPI_INTER_LINEAR),80.9127197,21.4354086,0.998074145
+33x17 -> 67x31 (odd sizes, up),nppiResize_32f_C3R_Ctx (NPPI_INTER_LINEAR),nppiResizeBatch_32f_C3R_Advanced_Ctx (batch of 2, NPPI_INTER_LINEAR),0,0,0
+3840x2160 -> 640x360 (down, x6),scalar reference FKL,scalar reference pixel centre,245.156317,69.0209519,0.999994213
+3840x2160 -> 640x360 (down, x6),FKL (cvGS::resize, INTER_LINEAR),scalar reference FKL,0,0,0
+3840x2160 -> 640x360 (down, x6),FKL (cvGS::resize, INTER_LINEAR),scalar reference pixel centre,245.156317,69.0209519,0.999994213
+3840x2160 -> 640x360 (down, x6),cv::cuda::resize (INTER_LINEAR),scalar reference FKL,0,0,0
+3840x2160 -> 640x360 (down, x6),cv::cuda::resize (INTER_LINEAR),scalar reference pixel centre,245.156317,69.0209519,0.999994213
+3840x2160 -> 640x360 (down, x6),nppiResize_32f_C3R_Ctx (NPPI_INTER_LINEAR),scalar reference FKL,245.156317,69.0209519,0.999994213
+3840x2160 -> 640x360 (down, x6),nppiResize_32f_C3R_Ctx (NPPI_INTER_LINEAR),scalar reference pixel centre,1.52587891e-05,2.38500501e-06,0
+3840x2160 -> 640x360 (down, x6),nppiResizeBatch_32f_C3R_Advanced_Ctx (batch of 2, NPPI_INTER_LINEAR),scalar reference FKL,245.156317,69.0209519,0.999994213
+3840x2160 -> 640x360 (down, x6),nppiResizeBatch_32f_C3R_Advanced_Ctx (batch of 2, NPPI_INTER_LINEAR),scalar reference pixel centre,1.52587891e-05,2.38500501e-06,0
+3840x2160 -> 640x360 (down, x6),FKL (cvGS::resize, INTER_LINEAR),cv::cuda::resize (INTER_LINEAR),0,0,0
+3840x2160 -> 640x360 (down, x6),FKL (cvGS::resize, INTER_LINEAR),nppiResize_32f_C3R_Ctx (NPPI_INTER_LINEAR),245.156317,69.0209519,0.999994213
+3840x2160 -> 640x360 (down, x6),FKL (cvGS::resize, INTER_LINEAR),nppiResizeBatch_32f_C3R_Advanced_Ctx (batch of 2, NPPI_INTER_LINEAR),245.156317,69.0209519,0.999994213
+3840x2160 -> 640x360 (down, x6),cv::cuda::resize (INTER_LINEAR),nppiResize_32f_C3R_Ctx (NPPI_INTER_LINEAR),245.156317,69.0209519,0.999994213
+3840x2160 -> 640x360 (down, x6),cv::cuda::resize (INTER_LINEAR),nppiResizeBatch_32f_C3R_Advanced_Ctx (batch of 2, NPPI_INTER_LINEAR),245.156317,69.0209519,0.999994213
+3840x2160 -> 640x360 (down, x6),nppiResize_32f_C3R_Ctx (NPPI_INTER_LINEAR),nppiResizeBatch_32f_C3R_Advanced_Ctx (batch of 2, NPPI_INTER_LINEAR),0,0,0
