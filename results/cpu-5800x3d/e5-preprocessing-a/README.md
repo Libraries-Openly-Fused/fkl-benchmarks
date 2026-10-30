@@ -17,6 +17,7 @@ per crop). `_mt` is ParArch::CPU_MULTITHREAD.
 Conditions: the machine was idle (nothing else running), governor `powersave` with amd-pstate-epp / balance_performance, boost
 on (recorded in the header), OpenCV 4.14.0 built by `scripts/build-opencv-cpu.sh`, FKL pinned in `external/fkl`. FKL and OpenCV do not
 sample at the same source positions (`common/resize_reference.h`), so FKL against OpenCV is informational; each is checked against
-the scalar reference of its own convention. The g++ 13 sweep was run twice (a scratch build and this repository's build): over all points and variants the medians differ by
-0.9% (median absolute difference), the worst point by 17.5% (`fkl_perop_batch_cpu_mt`, batch 100); the multithreaded points at small
-batches are the noisiest ones (see the min and max columns).
+the scalar reference of its own convention. The g++ 13 sweep was run twice, before and after fixes to the labels and the header (an earlier scratch build, and this repository's
+build; the committed CSVs are from the second): over all points and variants the medians differ by 0.8% (median absolute
+difference), the worst point by 17.3% (`fkl_perop_batch_cpu_mt`, batch 100); the multithreaded points at small batches are the noisiest ones (see the
+min and max columns). The memory speed is not recorded (it needs root, `E5_MEMORY_SPEED` records it).

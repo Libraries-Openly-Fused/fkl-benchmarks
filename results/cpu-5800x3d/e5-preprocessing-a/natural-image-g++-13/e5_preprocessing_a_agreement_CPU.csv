@@ -1,6 +1,6 @@
 # experiment: e5_preprocessing_a_batched_dnn
 # notes: FKL CPU back-end vs OpenCV on the CPU, batched DNN pre-processing (cvGPUSpeedup test_batchresize_x_split3D chain)
-# repo: fkl-benchmarks 0c76a4166ce0c7306abd0f16d964677b5fc56ba0
+# repo: fkl-benchmarks f796f9fd7e938574e97b82d411dd52785ddf5b39
 # fkl: fb9ac3ad4a64aad40ae3122e14143f03814f2cc0
 # cvGPUSpeedup: 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c
 # FastNPP: 9dfc4f430225e40ded392bfa777b2e724367c5c1
@@ -10,7 +10,7 @@
 # cpu: AMD Ryzen 7 5800X3D 8-Core Processor
 # gpu: none (CPU back-end)
 # cpu threads: 16 logical, cpufreq max 4552952 kHz, governor powersave, driver amd-pstate-epp, EPP balance_performance, boost 1
-# memory speed: PLACEHOLDER (sudo dmidecode -t memory | grep -m2 Speed)
+# memory: 60 GiB visible, speed not recorded (dmidecode needs root)
 # opencv default threads: 16 (cv::getNumThreads()), useOptimized 1, useIPP 1
 # fkl cpu_multithread pool size: 16 (default hardware concurrency)
 # opencv build: Version control:               unknown
@@ -28,360 +28,360 @@ batch, comparison, max_abs_diff, mean_abs_diff, fraction_over_1e-4, pass, requir
 10, opencv_default vs opencv_1thread (identical), 0, 0, 0, 1, 1
 10, opencv_percrop vs opencv_default (<= 1e-4), 0, 0, 0, 1, 1
 10, opencv_percrop_parallel vs opencv_percrop (identical), 0, 0, 0, 1, 1
-10, opencv_default vs scalar reference, pixel-centre sampling (<= 1e-4), 7.62939e-06, 7.0658e-07, 0, 1, 1
-10, fkl_fused_cpu vs scalar reference, FKL sampling x*(src/dst) (<= 1e-4), 7.62939e-06, 6.01816e-07, 0, 1, 1
+10, opencv_default vs scalar reference, HALF_PIXEL sampling (<= 1e-4), 7.62939e-06, 7.0658e-07, 0, 1, 1
+10, fkl_fused_cpu vs scalar reference, ASYMMETRIC sampling x*(src/dst) (<= 1e-4), 7.62939e-06, 6.01816e-07, 0, 1, 1
 10, fkl_fused_cpu_mt vs fkl_fused_cpu (identical), 0, 0, 0, 1, 1
 10, fkl_perop_crop_cpu vs fkl_fused_cpu (<= 1e-4), 3.8147e-06, 1.86778e-07, 0, 1, 1
 10, fkl_perop_crop_cpu_mt vs fkl_perop_crop_cpu (identical), 0, 0, 0, 1, 1
 10, fkl_perop_batch_cpu vs fkl_fused_cpu (<= 1e-4), 3.8147e-06, 1.86778e-07, 0, 1, 1
 10, fkl_perop_batch_cpu_mt vs fkl_perop_batch_cpu (identical), 0, 0, 0, 1, 1
 10, fkl_fused_cpu vs opencv_default (the two sampling conventions), 0.240242, 0.0167884, 0.947262, 0, 0
-10, scalar reference FKL sampling vs pixel-centre sampling, 0.240234, 0.0167886, 0.947262, 0, 0
+10, scalar reference ASYMMETRIC sampling vs HALF_PIXEL sampling, 0.240234, 0.0167886, 0.947262, 0, 0
 20, opencv_default vs opencv_1thread (identical), 0, 0, 0, 1, 1
 20, opencv_percrop vs opencv_default (<= 1e-4), 0, 0, 0, 1, 1
 20, opencv_percrop_parallel vs opencv_percrop (identical), 0, 0, 0, 1, 1
-20, opencv_default vs scalar reference, pixel-centre sampling (<= 1e-4), 7.62939e-06, 6.18773e-07, 0, 1, 1
-20, fkl_fused_cpu vs scalar reference, FKL sampling x*(src/dst) (<= 1e-4), 7.62939e-06, 5.88726e-07, 0, 1, 1
+20, opencv_default vs scalar reference, HALF_PIXEL sampling (<= 1e-4), 7.62939e-06, 6.18773e-07, 0, 1, 1
+20, fkl_fused_cpu vs scalar reference, ASYMMETRIC sampling x*(src/dst) (<= 1e-4), 7.62939e-06, 5.88726e-07, 0, 1, 1
 20, fkl_fused_cpu_mt vs fkl_fused_cpu (identical), 0, 0, 0, 1, 1
 20, fkl_perop_crop_cpu vs fkl_fused_cpu (<= 1e-4), 3.8147e-06, 1.94141e-07, 0, 1, 1
 20, fkl_perop_crop_cpu_mt vs fkl_perop_crop_cpu (identical), 0, 0, 0, 1, 1
 20, fkl_perop_batch_cpu vs fkl_fused_cpu (<= 1e-4), 3.8147e-06, 1.94141e-07, 0, 1, 1
 20, fkl_perop_batch_cpu_mt vs fkl_perop_batch_cpu (identical), 0, 0, 0, 1, 1
 20, fkl_fused_cpu vs opencv_default (the two sampling conventions), 0.240242, 0.0160484, 0.945036, 0, 0
-20, scalar reference FKL sampling vs pixel-centre sampling, 0.240234, 0.0160485, 0.945036, 0, 0
+20, scalar reference ASYMMETRIC sampling vs HALF_PIXEL sampling, 0.240234, 0.0160485, 0.945036, 0, 0
 30, opencv_default vs opencv_1thread (identical), 0, 0, 0, 1, 1
 30, opencv_percrop vs opencv_default (<= 1e-4), 0, 0, 0, 1, 1
 30, opencv_percrop_parallel vs opencv_percrop (identical), 0, 0, 0, 1, 1
-30, opencv_default vs scalar reference, pixel-centre sampling (<= 1e-4), 7.62939e-06, 5.57559e-07, 0, 1, 1
-30, fkl_fused_cpu vs scalar reference, FKL sampling x*(src/dst) (<= 1e-4), 7.62939e-06, 5.7378e-07, 0, 1, 1
+30, opencv_default vs scalar reference, HALF_PIXEL sampling (<= 1e-4), 7.62939e-06, 5.57559e-07, 0, 1, 1
+30, fkl_fused_cpu vs scalar reference, ASYMMETRIC sampling x*(src/dst) (<= 1e-4), 7.62939e-06, 5.7378e-07, 0, 1, 1
 30, fkl_fused_cpu_mt vs fkl_fused_cpu (identical), 0, 0, 0, 1, 1
 30, fkl_perop_crop_cpu vs fkl_fused_cpu (<= 1e-4), 3.8147e-06, 1.95891e-07, 0, 1, 1
 30, fkl_perop_crop_cpu_mt vs fkl_perop_crop_cpu (identical), 0, 0, 0, 1, 1
 30, fkl_perop_batch_cpu vs fkl_fused_cpu (<= 1e-4), 3.8147e-06, 1.95891e-07, 0, 1, 1
 30, fkl_perop_batch_cpu_mt vs fkl_perop_batch_cpu (identical), 0, 0, 0, 1, 1
 30, fkl_fused_cpu vs opencv_default (the two sampling conventions), 0.240242, 0.0152454, 0.942459, 0, 0
-30, scalar reference FKL sampling vs pixel-centre sampling, 0.240234, 0.0152454, 0.942459, 0, 0
+30, scalar reference ASYMMETRIC sampling vs HALF_PIXEL sampling, 0.240234, 0.0152454, 0.942459, 0, 0
 40, opencv_default vs opencv_1thread (identical), 0, 0, 0, 1, 1
 40, opencv_percrop vs opencv_default (<= 1e-4), 0, 0, 0, 1, 1
 40, opencv_percrop_parallel vs opencv_percrop (identical), 0, 0, 0, 1, 1
-40, opencv_default vs scalar reference, pixel-centre sampling (<= 1e-4), 7.62939e-06, 5.25418e-07, 0, 1, 1
-40, fkl_fused_cpu vs scalar reference, FKL sampling x*(src/dst) (<= 1e-4), 7.62939e-06, 5.65421e-07, 0, 1, 1
+40, opencv_default vs scalar reference, HALF_PIXEL sampling (<= 1e-4), 7.62939e-06, 5.25418e-07, 0, 1, 1
+40, fkl_fused_cpu vs scalar reference, ASYMMETRIC sampling x*(src/dst) (<= 1e-4), 7.62939e-06, 5.65421e-07, 0, 1, 1
 40, fkl_fused_cpu_mt vs fkl_fused_cpu (identical), 0, 0, 0, 1, 1
 40, fkl_perop_crop_cpu vs fkl_fused_cpu (<= 1e-4), 3.8147e-06, 1.96137e-07, 0, 1, 1
 40, fkl_perop_crop_cpu_mt vs fkl_perop_crop_cpu (identical), 0, 0, 0, 1, 1
 40, fkl_perop_batch_cpu vs fkl_fused_cpu (<= 1e-4), 3.8147e-06, 1.96137e-07, 0, 1, 1
 40, fkl_perop_batch_cpu_mt vs fkl_perop_batch_cpu (identical), 0, 0, 0, 1, 1
 40, fkl_fused_cpu vs opencv_default (the two sampling conventions), 0.240242, 0.0146769, 0.940796, 0, 0
-40, scalar reference FKL sampling vs pixel-centre sampling, 0.240234, 0.0146769, 0.940796, 0, 0
+40, scalar reference ASYMMETRIC sampling vs HALF_PIXEL sampling, 0.240234, 0.0146769, 0.940796, 0, 0
 50, opencv_default vs opencv_1thread (identical), 0, 0, 0, 1, 1
 50, opencv_percrop vs opencv_default (<= 1e-4), 0, 0, 0, 1, 1
 50, opencv_percrop_parallel vs opencv_percrop (identical), 0, 0, 0, 1, 1
-50, opencv_default vs scalar reference, pixel-centre sampling (<= 1e-4), 7.62939e-06, 5.10307e-07, 0, 1, 1
-50, fkl_fused_cpu vs scalar reference, FKL sampling x*(src/dst) (<= 1e-4), 7.62939e-06, 5.59484e-07, 0, 1, 1
+50, opencv_default vs scalar reference, HALF_PIXEL sampling (<= 1e-4), 7.62939e-06, 5.10307e-07, 0, 1, 1
+50, fkl_fused_cpu vs scalar reference, ASYMMETRIC sampling x*(src/dst) (<= 1e-4), 7.62939e-06, 5.59484e-07, 0, 1, 1
 50, fkl_fused_cpu_mt vs fkl_fused_cpu (identical), 0, 0, 0, 1, 1
 50, fkl_perop_crop_cpu vs fkl_fused_cpu (<= 1e-4), 3.8147e-06, 1.95429e-07, 0, 1, 1
 50, fkl_perop_crop_cpu_mt vs fkl_perop_crop_cpu (identical), 0, 0, 0, 1, 1
 50, fkl_perop_batch_cpu vs fkl_fused_cpu (<= 1e-4), 3.8147e-06, 1.95429e-07, 0, 1, 1
 50, fkl_perop_batch_cpu_mt vs fkl_perop_batch_cpu (identical), 0, 0, 0, 1, 1
 50, fkl_fused_cpu vs opencv_default (the two sampling conventions), 0.240242, 0.0144487, 0.940828, 0, 0
-50, scalar reference FKL sampling vs pixel-centre sampling, 0.240234, 0.0144487, 0.940828, 0, 0
+50, scalar reference ASYMMETRIC sampling vs HALF_PIXEL sampling, 0.240234, 0.0144487, 0.940828, 0, 0
 60, opencv_default vs opencv_1thread (identical), 0, 0, 0, 1, 1
 60, opencv_percrop vs opencv_default (<= 1e-4), 0, 0, 0, 1, 1
 60, opencv_percrop_parallel vs opencv_percrop (identical), 0, 0, 0, 1, 1
-60, opencv_default vs scalar reference, pixel-centre sampling (<= 1e-4), 7.62939e-06, 4.99268e-07, 0, 1, 1
-60, fkl_fused_cpu vs scalar reference, FKL sampling x*(src/dst) (<= 1e-4), 7.62939e-06, 5.55654e-07, 0, 1, 1
+60, opencv_default vs scalar reference, HALF_PIXEL sampling (<= 1e-4), 7.62939e-06, 4.99268e-07, 0, 1, 1
+60, fkl_fused_cpu vs scalar reference, ASYMMETRIC sampling x*(src/dst) (<= 1e-4), 7.62939e-06, 5.55654e-07, 0, 1, 1
 60, fkl_fused_cpu_mt vs fkl_fused_cpu (identical), 0, 0, 0, 1, 1
 60, fkl_perop_crop_cpu vs fkl_fused_cpu (<= 1e-4), 3.8147e-06, 1.91567e-07, 0, 1, 1
 60, fkl_perop_crop_cpu_mt vs fkl_perop_crop_cpu (identical), 0, 0, 0, 1, 1
 60, fkl_perop_batch_cpu vs fkl_fused_cpu (<= 1e-4), 3.8147e-06, 1.91567e-07, 0, 1, 1
 60, fkl_perop_batch_cpu_mt vs fkl_perop_batch_cpu (identical), 0, 0, 0, 1, 1
 60, fkl_fused_cpu vs opencv_default (the two sampling conventions), 0.240242, 0.0144423, 0.941583, 0, 0
-60, scalar reference FKL sampling vs pixel-centre sampling, 0.240234, 0.0144422, 0.941583, 0, 0
+60, scalar reference ASYMMETRIC sampling vs HALF_PIXEL sampling, 0.240234, 0.0144422, 0.941583, 0, 0
 70, opencv_default vs opencv_1thread (identical), 0, 0, 0, 1, 1
 70, opencv_percrop vs opencv_default (<= 1e-4), 0, 0, 0, 1, 1
 70, opencv_percrop_parallel vs opencv_percrop (identical), 0, 0, 0, 1, 1
-70, opencv_default vs scalar reference, pixel-centre sampling (<= 1e-4), 7.62939e-06, 4.93627e-07, 0, 1, 1
-70, fkl_fused_cpu vs scalar reference, FKL sampling x*(src/dst) (<= 1e-4), 7.62939e-06, 5.50757e-07, 0, 1, 1
+70, opencv_default vs scalar reference, HALF_PIXEL sampling (<= 1e-4), 7.62939e-06, 4.93627e-07, 0, 1, 1
+70, fkl_fused_cpu vs scalar reference, ASYMMETRIC sampling x*(src/dst) (<= 1e-4), 7.62939e-06, 5.50757e-07, 0, 1, 1
 70, fkl_fused_cpu_mt vs fkl_fused_cpu (identical), 0, 0, 0, 1, 1
 70, fkl_perop_crop_cpu vs fkl_fused_cpu (<= 1e-4), 3.8147e-06, 1.87796e-07, 0, 1, 1
 70, fkl_perop_crop_cpu_mt vs fkl_perop_crop_cpu (identical), 0, 0, 0, 1, 1
 70, fkl_perop_batch_cpu vs fkl_fused_cpu (<= 1e-4), 3.8147e-06, 1.87796e-07, 0, 1, 1
 70, fkl_perop_batch_cpu_mt vs fkl_perop_batch_cpu (identical), 0, 0, 0, 1, 1
 70, fkl_fused_cpu vs opencv_default (the two sampling conventions), 1.40626, 0.014565, 0.942507, 0, 0
-70, scalar reference FKL sampling vs pixel-centre sampling, 1.40625, 0.014565, 0.942507, 0, 0
+70, scalar reference ASYMMETRIC sampling vs HALF_PIXEL sampling, 1.40625, 0.014565, 0.942507, 0, 0
 80, opencv_default vs opencv_1thread (identical), 0, 0, 0, 1, 1
 80, opencv_percrop vs opencv_default (<= 1e-4), 0, 0, 0, 1, 1
 80, opencv_percrop_parallel vs opencv_percrop (identical), 0, 0, 0, 1, 1
-80, opencv_default vs scalar reference, pixel-centre sampling (<= 1e-4), 1.52588e-05, 4.92965e-07, 0, 1, 1
-80, fkl_fused_cpu vs scalar reference, FKL sampling x*(src/dst) (<= 1e-4), 7.62939e-06, 5.44941e-07, 0, 1, 1
+80, opencv_default vs scalar reference, HALF_PIXEL sampling (<= 1e-4), 1.52588e-05, 4.92965e-07, 0, 1, 1
+80, fkl_fused_cpu vs scalar reference, ASYMMETRIC sampling x*(src/dst) (<= 1e-4), 7.62939e-06, 5.44941e-07, 0, 1, 1
 80, fkl_fused_cpu_mt vs fkl_fused_cpu (identical), 0, 0, 0, 1, 1
 80, fkl_perop_crop_cpu vs fkl_fused_cpu (<= 1e-4), 7.62939e-06, 1.86024e-07, 0, 1, 1
 80, fkl_perop_crop_cpu_mt vs fkl_perop_crop_cpu (identical), 0, 0, 0, 1, 1
 80, fkl_perop_batch_cpu vs fkl_fused_cpu (<= 1e-4), 7.62939e-06, 1.86024e-07, 0, 1, 1
 80, fkl_perop_batch_cpu_mt vs fkl_perop_batch_cpu (identical), 0, 0, 0, 1, 1
 80, fkl_fused_cpu vs opencv_default (the two sampling conventions), 2.76953, 0.0151962, 0.943345, 0, 0
-80, scalar reference FKL sampling vs pixel-centre sampling, 2.76953, 0.0151962, 0.943345, 0, 0
+80, scalar reference ASYMMETRIC sampling vs HALF_PIXEL sampling, 2.76953, 0.0151962, 0.943345, 0, 0
 90, opencv_default vs opencv_1thread (identical), 0, 0, 0, 1, 1
 90, opencv_percrop vs opencv_default (<= 1e-4), 0, 0, 0, 1, 1
 90, opencv_percrop_parallel vs opencv_percrop (identical), 0, 0, 0, 1, 1
-90, opencv_default vs scalar reference, pixel-centre sampling (<= 1e-4), 1.52588e-05, 4.9518e-07, 0, 1, 1
-90, fkl_fused_cpu vs scalar reference, FKL sampling x*(src/dst) (<= 1e-4), 7.62939e-06, 5.42684e-07, 0, 1, 1
+90, opencv_default vs scalar reference, HALF_PIXEL sampling (<= 1e-4), 1.52588e-05, 4.9518e-07, 0, 1, 1
+90, fkl_fused_cpu vs scalar reference, ASYMMETRIC sampling x*(src/dst) (<= 1e-4), 7.62939e-06, 5.42684e-07, 0, 1, 1
 90, fkl_fused_cpu_mt vs fkl_fused_cpu (identical), 0, 0, 0, 1, 1
 90, fkl_perop_crop_cpu vs fkl_fused_cpu (<= 1e-4), 7.62939e-06, 1.84252e-07, 0, 1, 1
 90, fkl_perop_crop_cpu_mt vs fkl_perop_crop_cpu (identical), 0, 0, 0, 1, 1
 90, fkl_perop_batch_cpu vs fkl_fused_cpu (<= 1e-4), 7.62939e-06, 1.84252e-07, 0, 1, 1
 90, fkl_perop_batch_cpu_mt vs fkl_perop_batch_cpu (identical), 0, 0, 0, 1, 1
 90, fkl_fused_cpu vs opencv_default (the two sampling conventions), 2.87891, 0.0166336, 0.944238, 0, 0
-90, scalar reference FKL sampling vs pixel-centre sampling, 2.87891, 0.0166336, 0.944238, 0, 0
+90, scalar reference ASYMMETRIC sampling vs HALF_PIXEL sampling, 2.87891, 0.0166336, 0.944238, 0, 0
 100, opencv_default vs opencv_1thread (identical), 0, 0, 0, 1, 1
 100, opencv_percrop vs opencv_default (<= 1e-4), 0, 0, 0, 1, 1
 100, opencv_percrop_parallel vs opencv_percrop (identical), 0, 0, 0, 1, 1
-100, opencv_default vs scalar reference, pixel-centre sampling (<= 1e-4), 1.52588e-05, 5.00692e-07, 0, 1, 1
-100, fkl_fused_cpu vs scalar reference, FKL sampling x*(src/dst) (<= 1e-4), 7.62939e-06, 5.42732e-07, 0, 1, 1
+100, opencv_default vs scalar reference, HALF_PIXEL sampling (<= 1e-4), 1.52588e-05, 5.00692e-07, 0, 1, 1
+100, fkl_fused_cpu vs scalar reference, ASYMMETRIC sampling x*(src/dst) (<= 1e-4), 7.62939e-06, 5.42732e-07, 0, 1, 1
 100, fkl_fused_cpu_mt vs fkl_fused_cpu (identical), 0, 0, 0, 1, 1
 100, fkl_perop_crop_cpu vs fkl_fused_cpu (<= 1e-4), 7.62939e-06, 1.84244e-07, 0, 1, 1
 100, fkl_perop_crop_cpu_mt vs fkl_perop_crop_cpu (identical), 0, 0, 0, 1, 1
 100, fkl_perop_batch_cpu vs fkl_fused_cpu (<= 1e-4), 7.62939e-06, 1.84244e-07, 0, 1, 1
 100, fkl_perop_batch_cpu_mt vs fkl_perop_batch_cpu (identical), 0, 0, 0, 1, 1
 100, fkl_fused_cpu vs opencv_default (the two sampling conventions), 2.87989, 0.0188738, 0.945523, 0, 0
-100, scalar reference FKL sampling vs pixel-centre sampling, 2.87988, 0.0188738, 0.945523, 0, 0
+100, scalar reference ASYMMETRIC sampling vs HALF_PIXEL sampling, 2.87988, 0.0188738, 0.945523, 0, 0
 110, opencv_default vs opencv_1thread (identical), 0, 0, 0, 1, 1
 110, opencv_percrop vs opencv_default (<= 1e-4), 0, 0, 0, 1, 1
 110, opencv_percrop_parallel vs opencv_percrop (identical), 0, 0, 0, 1, 1
-110, opencv_default vs scalar reference, pixel-centre sampling (<= 1e-4), 1.52588e-05, 5.12159e-07, 0, 1, 1
-110, fkl_fused_cpu vs scalar reference, FKL sampling x*(src/dst) (<= 1e-4), 7.62939e-06, 5.43821e-07, 0, 1, 1
+110, opencv_default vs scalar reference, HALF_PIXEL sampling (<= 1e-4), 1.52588e-05, 5.12159e-07, 0, 1, 1
+110, fkl_fused_cpu vs scalar reference, ASYMMETRIC sampling x*(src/dst) (<= 1e-4), 7.62939e-06, 5.43821e-07, 0, 1, 1
 110, fkl_fused_cpu_mt vs fkl_fused_cpu (identical), 0, 0, 0, 1, 1
 110, fkl_perop_crop_cpu vs fkl_fused_cpu (<= 1e-4), 7.62939e-06, 1.82756e-07, 0, 1, 1
 110, fkl_perop_crop_cpu_mt vs fkl_perop_crop_cpu (identical), 0, 0, 0, 1, 1
 110, fkl_perop_batch_cpu vs fkl_fused_cpu (<= 1e-4), 7.62939e-06, 1.82756e-07, 0, 1, 1
 110, fkl_perop_batch_cpu_mt vs fkl_perop_batch_cpu (identical), 0, 0, 0, 1, 1
 110, fkl_fused_cpu vs opencv_default (the two sampling conventions), 2.87989, 0.0217325, 0.94705, 0, 0
-110, scalar reference FKL sampling vs pixel-centre sampling, 2.87988, 0.0217325, 0.94705, 0, 0
+110, scalar reference ASYMMETRIC sampling vs HALF_PIXEL sampling, 2.87988, 0.0217325, 0.94705, 0, 0
 120, opencv_default vs opencv_1thread (identical), 0, 0, 0, 1, 1
 120, opencv_percrop vs opencv_default (<= 1e-4), 0, 0, 0, 1, 1
 120, opencv_percrop_parallel vs opencv_percrop (identical), 0, 0, 0, 1, 1
-120, opencv_default vs scalar reference, pixel-centre sampling (<= 1e-4), 1.52588e-05, 5.33775e-07, 0, 1, 1
-120, fkl_fused_cpu vs scalar reference, FKL sampling x*(src/dst) (<= 1e-4), 7.62939e-06, 5.46739e-07, 0, 1, 1
+120, opencv_default vs scalar reference, HALF_PIXEL sampling (<= 1e-4), 1.52588e-05, 5.33775e-07, 0, 1, 1
+120, fkl_fused_cpu vs scalar reference, ASYMMETRIC sampling x*(src/dst) (<= 1e-4), 7.62939e-06, 5.46739e-07, 0, 1, 1
 120, fkl_fused_cpu_mt vs fkl_fused_cpu (identical), 0, 0, 0, 1, 1
 120, fkl_perop_crop_cpu vs fkl_fused_cpu (<= 1e-4), 7.62939e-06, 1.79758e-07, 0, 1, 1
 120, fkl_perop_crop_cpu_mt vs fkl_perop_crop_cpu (identical), 0, 0, 0, 1, 1
 120, fkl_perop_batch_cpu vs fkl_fused_cpu (<= 1e-4), 7.62939e-06, 1.79758e-07, 0, 1, 1
 120, fkl_perop_batch_cpu_mt vs fkl_perop_batch_cpu (identical), 0, 0, 0, 1, 1
 120, fkl_fused_cpu vs opencv_default (the two sampling conventions), 3.23633, 0.025594, 0.948647, 0, 0
-120, scalar reference FKL sampling vs pixel-centre sampling, 3.23633, 0.025594, 0.948647, 0, 0
+120, scalar reference ASYMMETRIC sampling vs HALF_PIXEL sampling, 3.23633, 0.025594, 0.948647, 0, 0
 130, opencv_default vs opencv_1thread (identical), 0, 0, 0, 1, 1
 130, opencv_percrop vs opencv_default (<= 1e-4), 0, 0, 0, 1, 1
 130, opencv_percrop_parallel vs opencv_percrop (identical), 0, 0, 0, 1, 1
-130, opencv_default vs scalar reference, pixel-centre sampling (<= 1e-4), 1.52588e-05, 5.65483e-07, 0, 1, 1
-130, fkl_fused_cpu vs scalar reference, FKL sampling x*(src/dst) (<= 1e-4), 7.62939e-06, 5.51336e-07, 0, 1, 1
+130, opencv_default vs scalar reference, HALF_PIXEL sampling (<= 1e-4), 1.52588e-05, 5.65483e-07, 0, 1, 1
+130, fkl_fused_cpu vs scalar reference, ASYMMETRIC sampling x*(src/dst) (<= 1e-4), 7.62939e-06, 5.51336e-07, 0, 1, 1
 130, fkl_fused_cpu_mt vs fkl_fused_cpu (identical), 0, 0, 0, 1, 1
 130, fkl_perop_crop_cpu vs fkl_fused_cpu (<= 1e-4), 7.62939e-06, 1.77248e-07, 0, 1, 1
 130, fkl_perop_crop_cpu_mt vs fkl_perop_crop_cpu (identical), 0, 0, 0, 1, 1
 130, fkl_perop_batch_cpu vs fkl_fused_cpu (<= 1e-4), 7.62939e-06, 1.77248e-07, 0, 1, 1
 130, fkl_perop_batch_cpu_mt vs fkl_perop_batch_cpu (identical), 0, 0, 0, 1, 1
 130, fkl_fused_cpu vs opencv_default (the two sampling conventions), 4.20313, 0.0309562, 0.950399, 0, 0
-130, scalar reference FKL sampling vs pixel-centre sampling, 4.20312, 0.0309561, 0.950399, 0, 0
+130, scalar reference ASYMMETRIC sampling vs HALF_PIXEL sampling, 4.20312, 0.0309561, 0.950399, 0, 0
 140, opencv_default vs opencv_1thread (identical), 0, 0, 0, 1, 1
 140, opencv_percrop vs opencv_default (<= 1e-4), 0, 0, 0, 1, 1
 140, opencv_percrop_parallel vs opencv_percrop (identical), 0, 0, 0, 1, 1
-140, opencv_default vs scalar reference, pixel-centre sampling (<= 1e-4), 1.52588e-05, 6.07989e-07, 0, 1, 1
-140, fkl_fused_cpu vs scalar reference, FKL sampling x*(src/dst) (<= 1e-4), 7.62939e-06, 5.59131e-07, 0, 1, 1
+140, opencv_default vs scalar reference, HALF_PIXEL sampling (<= 1e-4), 1.52588e-05, 6.07989e-07, 0, 1, 1
+140, fkl_fused_cpu vs scalar reference, ASYMMETRIC sampling x*(src/dst) (<= 1e-4), 7.62939e-06, 5.59131e-07, 0, 1, 1
 140, fkl_fused_cpu_mt vs fkl_fused_cpu (identical), 0, 0, 0, 1, 1
 140, fkl_perop_crop_cpu vs fkl_fused_cpu (<= 1e-4), 7.62939e-06, 1.75334e-07, 0, 1, 1
 140, fkl_perop_crop_cpu_mt vs fkl_perop_crop_cpu (identical), 0, 0, 0, 1, 1
 140, fkl_perop_batch_cpu vs fkl_fused_cpu (<= 1e-4), 7.62939e-06, 1.75334e-07, 0, 1, 1
 140, fkl_perop_batch_cpu_mt vs fkl_perop_batch_cpu (identical), 0, 0, 0, 1, 1
 140, fkl_fused_cpu vs opencv_default (the two sampling conventions), 4.45313, 0.0378659, 0.952187, 0, 0
-140, scalar reference FKL sampling vs pixel-centre sampling, 4.45312, 0.0378659, 0.952187, 0, 0
+140, scalar reference ASYMMETRIC sampling vs HALF_PIXEL sampling, 4.45312, 0.0378659, 0.952187, 0, 0
 150, opencv_default vs opencv_1thread (identical), 0, 0, 0, 1, 1
 150, opencv_percrop vs opencv_default (<= 1e-4), 0, 0, 0, 1, 1
 150, opencv_percrop_parallel vs opencv_percrop (identical), 0, 0, 0, 1, 1
-150, opencv_default vs scalar reference, pixel-centre sampling (<= 1e-4), 1.52588e-05, 6.58711e-07, 0, 1, 1
-150, fkl_fused_cpu vs scalar reference, FKL sampling x*(src/dst) (<= 1e-4), 7.62939e-06, 5.69551e-07, 0, 1, 1
+150, opencv_default vs scalar reference, HALF_PIXEL sampling (<= 1e-4), 1.52588e-05, 6.58711e-07, 0, 1, 1
+150, fkl_fused_cpu vs scalar reference, ASYMMETRIC sampling x*(src/dst) (<= 1e-4), 7.62939e-06, 5.69551e-07, 0, 1, 1
 150, fkl_fused_cpu_mt vs fkl_fused_cpu (identical), 0, 0, 0, 1, 1
 150, fkl_perop_crop_cpu vs fkl_fused_cpu (<= 1e-4), 7.62939e-06, 1.73892e-07, 0, 1, 1
 150, fkl_perop_crop_cpu_mt vs fkl_perop_crop_cpu (identical), 0, 0, 0, 1, 1
 150, fkl_perop_batch_cpu vs fkl_fused_cpu (<= 1e-4), 7.62939e-06, 1.73892e-07, 0, 1, 1
 150, fkl_perop_batch_cpu_mt vs fkl_perop_batch_cpu (identical), 0, 0, 0, 1, 1
 150, fkl_fused_cpu vs opencv_default (the two sampling conventions), 4.45313, 0.0454121, 0.953945, 0, 0
-150, scalar reference FKL sampling vs pixel-centre sampling, 4.45312, 0.0454121, 0.953945, 0, 0
+150, scalar reference ASYMMETRIC sampling vs HALF_PIXEL sampling, 4.45312, 0.0454121, 0.953945, 0, 0
 160, opencv_default vs opencv_1thread (identical), 0, 0, 0, 1, 1
 160, opencv_percrop vs opencv_default (<= 1e-4), 0, 0, 0, 1, 1
 160, opencv_percrop_parallel vs opencv_percrop (identical), 0, 0, 0, 1, 1
-160, opencv_default vs scalar reference, pixel-centre sampling (<= 1e-4), 1.52588e-05, 7.14291e-07, 0, 1, 1
-160, fkl_fused_cpu vs scalar reference, FKL sampling x*(src/dst) (<= 1e-4), 7.62939e-06, 5.81303e-07, 0, 1, 1
+160, opencv_default vs scalar reference, HALF_PIXEL sampling (<= 1e-4), 1.52588e-05, 7.14291e-07, 0, 1, 1
+160, fkl_fused_cpu vs scalar reference, ASYMMETRIC sampling x*(src/dst) (<= 1e-4), 7.62939e-06, 5.81303e-07, 0, 1, 1
 160, fkl_fused_cpu_mt vs fkl_fused_cpu (identical), 0, 0, 0, 1, 1
 160, fkl_perop_crop_cpu vs fkl_fused_cpu (<= 1e-4), 7.62939e-06, 1.72577e-07, 0, 1, 1
 160, fkl_perop_crop_cpu_mt vs fkl_perop_crop_cpu (identical), 0, 0, 0, 1, 1
 160, fkl_perop_batch_cpu vs fkl_fused_cpu (<= 1e-4), 7.62939e-06, 1.72577e-07, 0, 1, 1
 160, fkl_perop_batch_cpu_mt vs fkl_perop_batch_cpu (identical), 0, 0, 0, 1, 1
 160, fkl_fused_cpu vs opencv_default (the two sampling conventions), 4.45313, 0.0527989, 0.955487, 0, 0
-160, scalar reference FKL sampling vs pixel-centre sampling, 4.45312, 0.0527989, 0.955487, 0, 0
+160, scalar reference ASYMMETRIC sampling vs HALF_PIXEL sampling, 4.45312, 0.0527989, 0.955487, 0, 0
 170, opencv_default vs opencv_1thread (identical), 0, 0, 0, 1, 1
 170, opencv_percrop vs opencv_default (<= 1e-4), 0, 0, 0, 1, 1
 170, opencv_percrop_parallel vs opencv_percrop (identical), 0, 0, 0, 1, 1
-170, opencv_default vs scalar reference, pixel-centre sampling (<= 1e-4), 1.52588e-05, 7.72057e-07, 0, 1, 1
-170, fkl_fused_cpu vs scalar reference, FKL sampling x*(src/dst) (<= 1e-4), 7.62939e-06, 5.93175e-07, 0, 1, 1
+170, opencv_default vs scalar reference, HALF_PIXEL sampling (<= 1e-4), 1.52588e-05, 7.72057e-07, 0, 1, 1
+170, fkl_fused_cpu vs scalar reference, ASYMMETRIC sampling x*(src/dst) (<= 1e-4), 7.62939e-06, 5.93175e-07, 0, 1, 1
 170, fkl_fused_cpu_mt vs fkl_fused_cpu (identical), 0, 0, 0, 1, 1
 170, fkl_perop_crop_cpu vs fkl_fused_cpu (<= 1e-4), 7.62939e-06, 1.72212e-07, 0, 1, 1
 170, fkl_perop_crop_cpu_mt vs fkl_perop_crop_cpu (identical), 0, 0, 0, 1, 1
 170, fkl_perop_batch_cpu vs fkl_fused_cpu (<= 1e-4), 7.62939e-06, 1.72212e-07, 0, 1, 1
 170, fkl_perop_batch_cpu_mt vs fkl_perop_batch_cpu (identical), 0, 0, 0, 1, 1
 170, fkl_fused_cpu vs opencv_default (the two sampling conventions), 4.45313, 0.0596352, 0.95678, 0, 0
-170, scalar reference FKL sampling vs pixel-centre sampling, 4.45312, 0.0596352, 0.95678, 0, 0
+170, scalar reference ASYMMETRIC sampling vs HALF_PIXEL sampling, 4.45312, 0.0596352, 0.95678, 0, 0
 180, opencv_default vs opencv_1thread (identical), 0, 0, 0, 1, 1
 180, opencv_percrop vs opencv_default (<= 1e-4), 0, 0, 0, 1, 1
 180, opencv_percrop_parallel vs opencv_percrop (identical), 0, 0, 0, 1, 1
-180, opencv_default vs scalar reference, pixel-centre sampling (<= 1e-4), 1.52588e-05, 8.26535e-07, 0, 1, 1
-180, fkl_fused_cpu vs scalar reference, FKL sampling x*(src/dst) (<= 1e-4), 7.62939e-06, 6.03447e-07, 0, 1, 1
+180, opencv_default vs scalar reference, HALF_PIXEL sampling (<= 1e-4), 1.52588e-05, 8.26535e-07, 0, 1, 1
+180, fkl_fused_cpu vs scalar reference, ASYMMETRIC sampling x*(src/dst) (<= 1e-4), 7.62939e-06, 6.03447e-07, 0, 1, 1
 180, fkl_fused_cpu_mt vs fkl_fused_cpu (identical), 0, 0, 0, 1, 1
 180, fkl_perop_crop_cpu vs fkl_fused_cpu (<= 1e-4), 7.62939e-06, 1.7203e-07, 0, 1, 1
 180, fkl_perop_crop_cpu_mt vs fkl_perop_crop_cpu (identical), 0, 0, 0, 1, 1
 180, fkl_perop_batch_cpu vs fkl_fused_cpu (<= 1e-4), 7.62939e-06, 1.7203e-07, 0, 1, 1
 180, fkl_perop_batch_cpu_mt vs fkl_perop_batch_cpu (identical), 0, 0, 0, 1, 1
 180, fkl_fused_cpu vs opencv_default (the two sampling conventions), 4.45313, 0.0654198, 0.957906, 0, 0
-180, scalar reference FKL sampling vs pixel-centre sampling, 4.45312, 0.0654198, 0.957906, 0, 0
+180, scalar reference ASYMMETRIC sampling vs HALF_PIXEL sampling, 4.45312, 0.0654198, 0.957906, 0, 0
 190, opencv_default vs opencv_1thread (identical), 0, 0, 0, 1, 1
 190, opencv_percrop vs opencv_default (<= 1e-4), 0, 0, 0, 1, 1
 190, opencv_percrop_parallel vs opencv_percrop (identical), 0, 0, 0, 1, 1
-190, opencv_default vs scalar reference, pixel-centre sampling (<= 1e-4), 1.52588e-05, 8.71858e-07, 0, 1, 1
-190, fkl_fused_cpu vs scalar reference, FKL sampling x*(src/dst) (<= 1e-4), 7.62939e-06, 6.10636e-07, 0, 1, 1
+190, opencv_default vs scalar reference, HALF_PIXEL sampling (<= 1e-4), 1.52588e-05, 8.71858e-07, 0, 1, 1
+190, fkl_fused_cpu vs scalar reference, ASYMMETRIC sampling x*(src/dst) (<= 1e-4), 7.62939e-06, 6.10636e-07, 0, 1, 1
 190, fkl_fused_cpu_mt vs fkl_fused_cpu (identical), 0, 0, 0, 1, 1
 190, fkl_perop_crop_cpu vs fkl_fused_cpu (<= 1e-4), 7.62939e-06, 1.70656e-07, 0, 1, 1
 190, fkl_perop_crop_cpu_mt vs fkl_perop_crop_cpu (identical), 0, 0, 0, 1, 1
 190, fkl_perop_batch_cpu vs fkl_fused_cpu (<= 1e-4), 7.62939e-06, 1.70656e-07, 0, 1, 1
 190, fkl_perop_batch_cpu_mt vs fkl_perop_batch_cpu (identical), 0, 0, 0, 1, 1
 190, fkl_fused_cpu vs opencv_default (the two sampling conventions), 4.45313, 0.0695228, 0.958727, 0, 0
-190, scalar reference FKL sampling vs pixel-centre sampling, 4.45312, 0.0695228, 0.958726, 0, 0
+190, scalar reference ASYMMETRIC sampling vs HALF_PIXEL sampling, 4.45312, 0.0695228, 0.958726, 0, 0
 200, opencv_default vs opencv_1thread (identical), 0, 0, 0, 1, 1
 200, opencv_percrop vs opencv_default (<= 1e-4), 0, 0, 0, 1, 1
 200, opencv_percrop_parallel vs opencv_percrop (identical), 0, 0, 0, 1, 1
-200, opencv_default vs scalar reference, pixel-centre sampling (<= 1e-4), 1.52588e-05, 9.08031e-07, 0, 1, 1
-200, fkl_fused_cpu vs scalar reference, FKL sampling x*(src/dst) (<= 1e-4), 7.62939e-06, 6.14713e-07, 0, 1, 1
+200, opencv_default vs scalar reference, HALF_PIXEL sampling (<= 1e-4), 1.52588e-05, 9.08031e-07, 0, 1, 1
+200, fkl_fused_cpu vs scalar reference, ASYMMETRIC sampling x*(src/dst) (<= 1e-4), 7.62939e-06, 6.14713e-07, 0, 1, 1
 200, fkl_fused_cpu_mt vs fkl_fused_cpu (identical), 0, 0, 0, 1, 1
 200, fkl_perop_crop_cpu vs fkl_fused_cpu (<= 1e-4), 7.62939e-06, 1.68559e-07, 0, 1, 1
 200, fkl_perop_crop_cpu_mt vs fkl_perop_crop_cpu (identical), 0, 0, 0, 1, 1
 200, fkl_perop_batch_cpu vs fkl_fused_cpu (<= 1e-4), 7.62939e-06, 1.68559e-07, 0, 1, 1
 200, fkl_perop_batch_cpu_mt vs fkl_perop_batch_cpu (identical), 0, 0, 0, 1, 1
 200, fkl_fused_cpu vs opencv_default (the two sampling conventions), 4.45313, 0.0718868, 0.958717, 0, 0
-200, scalar reference FKL sampling vs pixel-centre sampling, 4.45312, 0.0718868, 0.958716, 0, 0
+200, scalar reference ASYMMETRIC sampling vs HALF_PIXEL sampling, 4.45312, 0.0718868, 0.958716, 0, 0
 210, opencv_default vs opencv_1thread (identical), 0, 0, 0, 1, 1
 210, opencv_percrop vs opencv_default (<= 1e-4), 0, 0, 0, 1, 1
 210, opencv_percrop_parallel vs opencv_percrop (identical), 0, 0, 0, 1, 1
-210, opencv_default vs scalar reference, pixel-centre sampling (<= 1e-4), 1.52588e-05, 9.38467e-07, 0, 1, 1
-210, fkl_fused_cpu vs scalar reference, FKL sampling x*(src/dst) (<= 1e-4), 7.62939e-06, 6.16774e-07, 0, 1, 1
+210, opencv_default vs scalar reference, HALF_PIXEL sampling (<= 1e-4), 1.52588e-05, 9.38467e-07, 0, 1, 1
+210, fkl_fused_cpu vs scalar reference, ASYMMETRIC sampling x*(src/dst) (<= 1e-4), 7.62939e-06, 6.16774e-07, 0, 1, 1
 210, fkl_fused_cpu_mt vs fkl_fused_cpu (identical), 0, 0, 0, 1, 1
 210, fkl_perop_crop_cpu vs fkl_fused_cpu (<= 1e-4), 7.62939e-06, 1.65837e-07, 0, 1, 1
 210, fkl_perop_crop_cpu_mt vs fkl_perop_crop_cpu (identical), 0, 0, 0, 1, 1
 210, fkl_perop_batch_cpu vs fkl_fused_cpu (<= 1e-4), 7.62939e-06, 1.65837e-07, 0, 1, 1
 210, fkl_perop_batch_cpu_mt vs fkl_perop_batch_cpu (identical), 0, 0, 0, 1, 1
 210, fkl_fused_cpu vs opencv_default (the two sampling conventions), 4.45313, 0.0726906, 0.957997, 0, 0
-210, scalar reference FKL sampling vs pixel-centre sampling, 4.45312, 0.0726906, 0.957996, 0, 0
+210, scalar reference ASYMMETRIC sampling vs HALF_PIXEL sampling, 4.45312, 0.0726906, 0.957996, 0, 0
 220, opencv_default vs opencv_1thread (identical), 0, 0, 0, 1, 1
 220, opencv_percrop vs opencv_default (<= 1e-4), 0, 0, 0, 1, 1
 220, opencv_percrop_parallel vs opencv_percrop (identical), 0, 0, 0, 1, 1
-220, opencv_default vs scalar reference, pixel-centre sampling (<= 1e-4), 1.52588e-05, 9.67006e-07, 0, 1, 1
-220, fkl_fused_cpu vs scalar reference, FKL sampling x*(src/dst) (<= 1e-4), 7.62939e-06, 6.18598e-07, 0, 1, 1
+220, opencv_default vs scalar reference, HALF_PIXEL sampling (<= 1e-4), 1.52588e-05, 9.67006e-07, 0, 1, 1
+220, fkl_fused_cpu vs scalar reference, ASYMMETRIC sampling x*(src/dst) (<= 1e-4), 7.62939e-06, 6.18598e-07, 0, 1, 1
 220, fkl_fused_cpu_mt vs fkl_fused_cpu (identical), 0, 0, 0, 1, 1
 220, fkl_perop_crop_cpu vs fkl_fused_cpu (<= 1e-4), 7.62939e-06, 1.6223e-07, 0, 1, 1
 220, fkl_perop_crop_cpu_mt vs fkl_perop_crop_cpu (identical), 0, 0, 0, 1, 1
 220, fkl_perop_batch_cpu vs fkl_fused_cpu (<= 1e-4), 7.62939e-06, 1.6223e-07, 0, 1, 1
 220, fkl_perop_batch_cpu_mt vs fkl_perop_batch_cpu (identical), 0, 0, 0, 1, 1
 220, fkl_fused_cpu vs opencv_default (the two sampling conventions), 4.45313, 0.0724543, 0.956593, 0, 0
-220, scalar reference FKL sampling vs pixel-centre sampling, 4.45312, 0.0724543, 0.956592, 0, 0
+220, scalar reference ASYMMETRIC sampling vs HALF_PIXEL sampling, 4.45312, 0.0724543, 0.956592, 0, 0
 230, opencv_default vs opencv_1thread (identical), 0, 0, 0, 1, 1
 230, opencv_percrop vs opencv_default (<= 1e-4), 0, 0, 0, 1, 1
 230, opencv_percrop_parallel vs opencv_percrop (identical), 0, 0, 0, 1, 1
-230, opencv_default vs scalar reference, pixel-centre sampling (<= 1e-4), 1.52588e-05, 9.98287e-07, 0, 1, 1
-230, fkl_fused_cpu vs scalar reference, FKL sampling x*(src/dst) (<= 1e-4), 7.62939e-06, 6.24242e-07, 0, 1, 1
+230, opencv_default vs scalar reference, HALF_PIXEL sampling (<= 1e-4), 1.52588e-05, 9.98287e-07, 0, 1, 1
+230, fkl_fused_cpu vs scalar reference, ASYMMETRIC sampling x*(src/dst) (<= 1e-4), 7.62939e-06, 6.24242e-07, 0, 1, 1
 230, fkl_fused_cpu_mt vs fkl_fused_cpu (identical), 0, 0, 0, 1, 1
 230, fkl_perop_crop_cpu vs fkl_fused_cpu (<= 1e-4), 7.62939e-06, 1.58772e-07, 0, 1, 1
 230, fkl_perop_crop_cpu_mt vs fkl_perop_crop_cpu (identical), 0, 0, 0, 1, 1
 230, fkl_perop_batch_cpu vs fkl_fused_cpu (<= 1e-4), 7.62939e-06, 1.58772e-07, 0, 1, 1
 230, fkl_perop_batch_cpu_mt vs fkl_perop_batch_cpu (identical), 0, 0, 0, 1, 1
 230, fkl_fused_cpu vs opencv_default (the two sampling conventions), 4.45313, 0.0714829, 0.953845, 0, 0
-230, scalar reference FKL sampling vs pixel-centre sampling, 4.45312, 0.0714829, 0.953843, 0, 0
+230, scalar reference ASYMMETRIC sampling vs HALF_PIXEL sampling, 4.45312, 0.0714829, 0.953843, 0, 0
 240, opencv_default vs opencv_1thread (identical), 0, 0, 0, 1, 1
 240, opencv_percrop vs opencv_default (<= 1e-4), 0, 0, 0, 1, 1
 240, opencv_percrop_parallel vs opencv_percrop (identical), 0, 0, 0, 1, 1
-240, opencv_default vs scalar reference, pixel-centre sampling (<= 1e-4), 1.52588e-05, 1.03673e-06, 0, 1, 1
-240, fkl_fused_cpu vs scalar reference, FKL sampling x*(src/dst) (<= 1e-4), 7.62939e-06, 6.36156e-07, 0, 1, 1
+240, opencv_default vs scalar reference, HALF_PIXEL sampling (<= 1e-4), 1.52588e-05, 1.03673e-06, 0, 1, 1
+240, fkl_fused_cpu vs scalar reference, ASYMMETRIC sampling x*(src/dst) (<= 1e-4), 7.62939e-06, 6.36156e-07, 0, 1, 1
 240, fkl_fused_cpu_mt vs fkl_fused_cpu (identical), 0, 0, 0, 1, 1
 240, fkl_perop_crop_cpu vs fkl_fused_cpu (<= 1e-4), 7.62939e-06, 1.54766e-07, 0, 1, 1
 240, fkl_perop_crop_cpu_mt vs fkl_perop_crop_cpu (identical), 0, 0, 0, 1, 1
 240, fkl_perop_batch_cpu vs fkl_fused_cpu (<= 1e-4), 7.62939e-06, 1.54766e-07, 0, 1, 1
 240, fkl_perop_batch_cpu_mt vs fkl_perop_batch_cpu (identical), 0, 0, 0, 1, 1
 240, fkl_fused_cpu vs opencv_default (the two sampling conventions), 4.45313, 0.070178, 0.948736, 0, 0
-240, scalar reference FKL sampling vs pixel-centre sampling, 4.45312, 0.070178, 0.948734, 0, 0
+240, scalar reference ASYMMETRIC sampling vs HALF_PIXEL sampling, 4.45312, 0.070178, 0.948734, 0, 0
 250, opencv_default vs opencv_1thread (identical), 0, 0, 0, 1, 1
 250, opencv_percrop vs opencv_default (<= 1e-4), 0, 0, 0, 1, 1
 250, opencv_percrop_parallel vs opencv_percrop (identical), 0, 0, 0, 1, 1
-250, opencv_default vs scalar reference, pixel-centre sampling (<= 1e-4), 1.52588e-05, 1.08036e-06, 0, 1, 1
-250, fkl_fused_cpu vs scalar reference, FKL sampling x*(src/dst) (<= 1e-4), 7.62939e-06, 6.51484e-07, 0, 1, 1
+250, opencv_default vs scalar reference, HALF_PIXEL sampling (<= 1e-4), 1.52588e-05, 1.08036e-06, 0, 1, 1
+250, fkl_fused_cpu vs scalar reference, ASYMMETRIC sampling x*(src/dst) (<= 1e-4), 7.62939e-06, 6.51484e-07, 0, 1, 1
 250, fkl_fused_cpu_mt vs fkl_fused_cpu (identical), 0, 0, 0, 1, 1
 250, fkl_perop_crop_cpu vs fkl_fused_cpu (<= 1e-4), 7.62939e-06, 1.50856e-07, 0, 1, 1
 250, fkl_perop_crop_cpu_mt vs fkl_perop_crop_cpu (identical), 0, 0, 0, 1, 1
 250, fkl_perop_batch_cpu vs fkl_fused_cpu (<= 1e-4), 7.62939e-06, 1.50856e-07, 0, 1, 1
 250, fkl_perop_batch_cpu_mt vs fkl_perop_batch_cpu (identical), 0, 0, 0, 1, 1
 250, fkl_fused_cpu vs opencv_default (the two sampling conventions), 4.45313, 0.0687743, 0.942505, 0, 0
-250, scalar reference FKL sampling vs pixel-centre sampling, 4.45312, 0.0687743, 0.942502, 0, 0
+250, scalar reference ASYMMETRIC sampling vs HALF_PIXEL sampling, 4.45312, 0.0687743, 0.942502, 0, 0
 260, opencv_default vs opencv_1thread (identical), 0, 0, 0, 1, 1
 260, opencv_percrop vs opencv_default (<= 1e-4), 0, 0, 0, 1, 1
 260, opencv_percrop_parallel vs opencv_percrop (identical), 0, 0, 0, 1, 1
-260, opencv_default vs scalar reference, pixel-centre sampling (<= 1e-4), 1.52588e-05, 1.12387e-06, 0, 1, 1
-260, fkl_fused_cpu vs scalar reference, FKL sampling x*(src/dst) (<= 1e-4), 7.62939e-06, 6.67248e-07, 0, 1, 1
+260, opencv_default vs scalar reference, HALF_PIXEL sampling (<= 1e-4), 1.52588e-05, 1.12387e-06, 0, 1, 1
+260, fkl_fused_cpu vs scalar reference, ASYMMETRIC sampling x*(src/dst) (<= 1e-4), 7.62939e-06, 6.67248e-07, 0, 1, 1
 260, fkl_fused_cpu_mt vs fkl_fused_cpu (identical), 0, 0, 0, 1, 1
 260, fkl_perop_crop_cpu vs fkl_fused_cpu (<= 1e-4), 7.62939e-06, 1.48191e-07, 0, 1, 1
 260, fkl_perop_crop_cpu_mt vs fkl_perop_crop_cpu (identical), 0, 0, 0, 1, 1
 260, fkl_perop_batch_cpu vs fkl_fused_cpu (<= 1e-4), 7.62939e-06, 1.48191e-07, 0, 1, 1
 260, fkl_perop_batch_cpu_mt vs fkl_perop_batch_cpu (identical), 0, 0, 0, 1, 1
 260, fkl_fused_cpu vs opencv_default (the two sampling conventions), 4.45313, 0.0674506, 0.937721, 0, 0
-260, scalar reference FKL sampling vs pixel-centre sampling, 4.45312, 0.0674505, 0.937718, 0, 0
+260, scalar reference ASYMMETRIC sampling vs HALF_PIXEL sampling, 4.45312, 0.0674505, 0.937718, 0, 0
 270, opencv_default vs opencv_1thread (identical), 0, 0, 0, 1, 1
 270, opencv_percrop vs opencv_default (<= 1e-4), 0, 0, 0, 1, 1
 270, opencv_percrop_parallel vs opencv_percrop (identical), 0, 0, 0, 1, 1
-270, opencv_default vs scalar reference, pixel-centre sampling (<= 1e-4), 1.52588e-05, 1.16278e-06, 0, 1, 1
-270, fkl_fused_cpu vs scalar reference, FKL sampling x*(src/dst) (<= 1e-4), 7.62939e-06, 6.82798e-07, 0, 1, 1
+270, opencv_default vs scalar reference, HALF_PIXEL sampling (<= 1e-4), 1.52588e-05, 1.16278e-06, 0, 1, 1
+270, fkl_fused_cpu vs scalar reference, ASYMMETRIC sampling x*(src/dst) (<= 1e-4), 7.62939e-06, 6.82798e-07, 0, 1, 1
 270, fkl_fused_cpu_mt vs fkl_fused_cpu (identical), 0, 0, 0, 1, 1
 270, fkl_perop_crop_cpu vs fkl_fused_cpu (<= 1e-4), 7.62939e-06, 1.46146e-07, 0, 1, 1
 270, fkl_perop_crop_cpu_mt vs fkl_perop_crop_cpu (identical), 0, 0, 0, 1, 1
 270, fkl_perop_batch_cpu vs fkl_fused_cpu (<= 1e-4), 7.62939e-06, 1.46146e-07, 0, 1, 1
 270, fkl_perop_batch_cpu_mt vs fkl_perop_batch_cpu (identical), 0, 0, 0, 1, 1
 270, fkl_fused_cpu vs opencv_default (the two sampling conventions), 4.45313, 0.0662633, 0.934587, 0, 0
-270, scalar reference FKL sampling vs pixel-centre sampling, 4.45312, 0.0662633, 0.934585, 0, 0
+270, scalar reference ASYMMETRIC sampling vs HALF_PIXEL sampling, 4.45312, 0.0662633, 0.934585, 0, 0
 280, opencv_default vs opencv_1thread (identical), 0, 0, 0, 1, 1
 280, opencv_percrop vs opencv_default (<= 1e-4), 0, 0, 0, 1, 1
 280, opencv_percrop_parallel vs opencv_percrop (identical), 0, 0, 0, 1, 1
-280, opencv_default vs scalar reference, pixel-centre sampling (<= 1e-4), 1.52588e-05, 1.19585e-06, 0, 1, 1
-280, fkl_fused_cpu vs scalar reference, FKL sampling x*(src/dst) (<= 1e-4), 7.62939e-06, 6.9701e-07, 0, 1, 1
+280, opencv_default vs scalar reference, HALF_PIXEL sampling (<= 1e-4), 1.52588e-05, 1.19585e-06, 0, 1, 1
+280, fkl_fused_cpu vs scalar reference, ASYMMETRIC sampling x*(src/dst) (<= 1e-4), 7.62939e-06, 6.9701e-07, 0, 1, 1
 280, fkl_fused_cpu_mt vs fkl_fused_cpu (identical), 0, 0, 0, 1, 1
 280, fkl_perop_crop_cpu vs fkl_fused_cpu (<= 1e-4), 7.62939e-06, 1.44113e-07, 0, 1, 1
 280, fkl_perop_crop_cpu_mt vs fkl_perop_crop_cpu (identical), 0, 0, 0, 1, 1
 280, fkl_perop_batch_cpu vs fkl_fused_cpu (<= 1e-4), 7.62939e-06, 1.44113e-07, 0, 1, 1
 280, fkl_perop_batch_cpu_mt vs fkl_perop_batch_cpu (identical), 0, 0, 0, 1, 1
 280, fkl_fused_cpu vs opencv_default (the two sampling conventions), 4.45313, 0.065141, 0.93212, 0, 0
-280, scalar reference FKL sampling vs pixel-centre sampling, 4.45312, 0.0651409, 0.932117, 0, 0
+280, scalar reference ASYMMETRIC sampling vs HALF_PIXEL sampling, 4.45312, 0.0651409, 0.932117, 0, 0
 290, opencv_default vs opencv_1thread (identical), 0, 0, 0, 1, 1
 290, opencv_percrop vs opencv_default (<= 1e-4), 0, 0, 0, 1, 1
 290, opencv_percrop_parallel vs opencv_percrop (identical), 0, 0, 0, 1, 1
-290, opencv_default vs scalar reference, pixel-centre sampling (<= 1e-4), 1.52588e-05, 1.22342e-06, 0, 1, 1
-290, fkl_fused_cpu vs scalar reference, FKL sampling x*(src/dst) (<= 1e-4), 7.62939e-06, 7.08642e-07, 0, 1, 1
+290, opencv_default vs scalar reference, HALF_PIXEL sampling (<= 1e-4), 1.52588e-05, 1.22342e-06, 0, 1, 1
+290, fkl_fused_cpu vs scalar reference, ASYMMETRIC sampling x*(src/dst) (<= 1e-4), 7.62939e-06, 7.08642e-07, 0, 1, 1
 290, fkl_fused_cpu_mt vs fkl_fused_cpu (identical), 0, 0, 0, 1, 1
 290, fkl_perop_crop_cpu vs fkl_fused_cpu (<= 1e-4), 7.62939e-06, 1.42021e-07, 0, 1, 1
 290, fkl_perop_crop_cpu_mt vs fkl_perop_crop_cpu (identical), 0, 0, 0, 1, 1
 290, fkl_perop_batch_cpu vs fkl_fused_cpu (<= 1e-4), 7.62939e-06, 1.42021e-07, 0, 1, 1
 290, fkl_perop_batch_cpu_mt vs fkl_perop_batch_cpu (identical), 0, 0, 0, 1, 1
 290, fkl_fused_cpu vs opencv_default (the two sampling conventions), 4.45313, 0.0639885, 0.930583, 0, 0
-290, scalar reference FKL sampling vs pixel-centre sampling, 4.45312, 0.0639886, 0.93058, 0, 0
+290, scalar reference ASYMMETRIC sampling vs HALF_PIXEL sampling, 4.45312, 0.0639886, 0.93058, 0, 0
 300, opencv_default vs opencv_1thread (identical), 0, 0, 0, 1, 1
 300, opencv_percrop vs opencv_default (<= 1e-4), 0, 0, 0, 1, 1
 300, opencv_percrop_parallel vs opencv_percrop (identical), 0, 0, 0, 1, 1
-300, opencv_default vs scalar reference, pixel-centre sampling (<= 1e-4), 1.52588e-05, 1.24427e-06, 0, 1, 1
-300, fkl_fused_cpu vs scalar reference, FKL sampling x*(src/dst) (<= 1e-4), 7.62939e-06, 7.1646e-07, 0, 1, 1
+300, opencv_default vs scalar reference, HALF_PIXEL sampling (<= 1e-4), 1.52588e-05, 1.24427e-06, 0, 1, 1
+300, fkl_fused_cpu vs scalar reference, ASYMMETRIC sampling x*(src/dst) (<= 1e-4), 7.62939e-06, 7.1646e-07, 0, 1, 1
 300, fkl_fused_cpu_mt vs fkl_fused_cpu (identical), 0, 0, 0, 1, 1
 300, fkl_perop_crop_cpu vs fkl_fused_cpu (<= 1e-4), 7.62939e-06, 1.39831e-07, 0, 1, 1
 300, fkl_perop_crop_cpu_mt vs fkl_perop_crop_cpu (identical), 0, 0, 0, 1, 1
 300, fkl_perop_batch_cpu vs fkl_fused_cpu (<= 1e-4), 7.62939e-06, 1.39831e-07, 0, 1, 1
 300, fkl_perop_batch_cpu_mt vs fkl_perop_batch_cpu (identical), 0, 0, 0, 1, 1
 300, fkl_fused_cpu vs opencv_default (the two sampling conventions), 4.45313, 0.0628085, 0.930659, 0, 0
-300, scalar reference FKL sampling vs pixel-centre sampling, 4.45312, 0.0628085, 0.930656, 0, 0
+300, scalar reference ASYMMETRIC sampling vs HALF_PIXEL sampling, 4.45312, 0.0628085, 0.930656, 0, 0
