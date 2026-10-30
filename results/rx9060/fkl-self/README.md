@@ -35,4 +35,4 @@ there is no median in these files). Horizontal fusion has three CSVs: with the C
 |---|--:|--:|--:|--:|--:|
 | time | 1.944 | 2.149 | 4.139 | 7.282 | 13.164 |
 
-(The iterated batch with the HIP graph is slower than with plain launches on this GPU and ROCm: the graph of N child graphs launches the kernels one after the other.)
+(On this GPU and ROCm 10.1 the iterated batch as a HIP graph is slower than with plain launches, about twice from batch 101 on; the cause was not investigated.)
