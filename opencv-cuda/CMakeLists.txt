@@ -30,3 +30,8 @@ fklb_add_benchmark(graph_instantiate_time
 fklb_add_benchmark(benchmark_data_type
     BACKENDS cu LIBS cvgs opencv
     SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/data-type/test_batchread_x_write3D.cu")
+
+# E6: which pixel-sampling convention does each bilinear resize follow (FKL, cv::cuda::resize, NPP)?
+fklb_add_benchmark(resize_convention
+    BACKENDS cu LIBS cvgs opencv npp
+    SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/resize-convention/resize_convention.cu")
