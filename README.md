@@ -27,7 +27,7 @@ Everything is built with CUDA 13.4 and strict C++17. Source the environment file
 ```bash
 export FKLB_CUDA_HOME=/usr/local/cuda-13.4 CUDA_VISIBLE_DEVICES=0   # the CUDA 13.4 toolkit root and the GPU (nvidia-smi index)
 source scripts/env-cuda13.4.sh                                       # PATH, LD_LIBRARY_PATH, PCI_BUS_ID order
-git submodule update --init                 # external/fkl, external/cvGPUSpeedup, external/FastNPP
+git submodule update --init --recursive     # external/fkl (and its thread-pool, for ParArch::CPU_MULTITHREAD), external/cvGPUSpeedup, external/FastNPP
 cmake --preset rtx4090 -DOPENCV_DIR=<OpenCV install prefix>
 cmake --build build/rtx4090 -j 16
 ```
