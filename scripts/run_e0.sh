@@ -62,14 +62,15 @@ nvcc --version | grep -q 'release 13\.4' || { echo "nvcc is not CUDA 13.4"; exit
 [ "${CUDA_DEVICE_ORDER:-}" = PCI_BUS_ID ] && [ -n "${CUDA_VISIBLE_DEVICES:-}" ] || { echo "set CUDA_DEVICE_ORDER=PCI_BUS_ID and CUDA_VISIBLE_DEVICES (source scripts/env-cuda13.4.sh)"; exit 1; }
 GPU_NAME=$(nvidia-smi -i "$CUDA_VISIBLE_DEVICES" --query-gpu=name --format=csv,noheader)
 case $GPU_NAME in *4090*) ;; *) echo "GPU $CUDA_VISIBLE_DEVICES is '$GPU_NAME', not the RTX 4090"; exit 1;; esac
-if [ -n "$(git -C "$ROOT" status --porcelain --untracked-files=no)" ] && [ "${FKLB_ALLOW_DIRTY:-0}" != 1 ]; then
-  echo "uncommitted changes in tracked files: commit them, rebuild, and run again (or FKLB_ALLOW_DIRTY=1)"; exit 1
+SRC_PATHS="common cmake fkl-self opencv-cuda npp external CMakeLists.txt CMakePresets.json"   # what the binaries are built from
+if [ -n "$(git -C "$ROOT" status --porcelain --untracked-files=no -- $SRC_PATHS)" ] && [ "${FKLB_ALLOW_DIRTY:-0}" != 1 ]; then
+  echo "uncommitted changes in the sources of the binaries ($SRC_PATHS): commit them, rebuild, and run again (or FKLB_ALLOW_DIRTY=1)"; exit 1
 fi
 # The binaries must have been built from a clean commit, and nothing that affects them may have changed since (scripts/, results/
 # and the docs may). The build info is rewritten by every build; BUILD can be a frozen copy of bin/ and generated/.
 BUILT=$(grep -o 'FKLB_COMMIT_REPO "[^"]*"' "$BUILD/generated/fklb_build_info.h" | cut -d'"' -f2)
 case $BUILT in *-dirty|unknown) [ "${FKLB_ALLOW_DIRTY:-0}" = 1 ] || { echo "the build is of an uncommitted tree ($BUILT): commit, rebuild, run again"; exit 1; };; esac
-if [ "${FKLB_ALLOW_DIRTY:-0}" != 1 ] && ! git -C "$ROOT" diff --quiet "${BUILT%-dirty}" HEAD -- common cmake fkl-self opencv-cuda npp external CMakeLists.txt CMakePresets.json; then
+if [ "${FKLB_ALLOW_DIRTY:-0}" != 1 ] && ! git -C "$ROOT" diff --quiet "${BUILT%-dirty}" HEAD -- $SRC_PATHS; then
   echo "sources changed since the build ($BUILT): rebuild first"; exit 1
 fi
 echo "binaries: $BUILD/bin, built from fkl-benchmarks $BUILT"
