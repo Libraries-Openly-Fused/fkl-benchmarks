@@ -1,0 +1,61 @@
+# experiment: benchmark_rpp_preprocessing_b
+# notes: FKL HIP vs RPP; source: seeded noise (LCG, seed 12345); RPP 3.2.0 (ROCm package amdrocm-rpp), rppt tensor API, HIP back-end; rppt_resize_mirror_normalize: BILINEAR, ROI XYWH, source U8 NHWC (batch stride 0, one ROI per crop), destination F32 NCHW, mirror off; rppt_channel_permute F32 NCHW; rppt_yuv_to_rgb: RpptColorStandard_BT601, RpptColorRange_STUDIO, default chroma upsampling; output widths are multiples of 8; wall clock including the stream synchronisation, 3 warm-up runs and at least 0.5 s of warm-up
+# repo: fkl-benchmarks f81306d8d836995d888edd41cee760632dbf05e9-dirty
+# fkl: fb9ac3ad4a64aad40ae3122e14143f03814f2cc0
+# cvGPUSpeedup: 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c
+# FastNPP: 9dfc4f430225e40ded392bfa777b2e724367c5c1
+# nvcc: none (none), architectures native, -fmad on, -lineinfo on
+# hip: 24.0.0 (/opt/rocm/core-10.1/bin/amdclang++), architectures gfx1200
+# host compiler: Clang 24.0.0, Release, -march=native, -ftemplate-depth=1000
+# opencv: none
+# cpu: AMD Ryzen 7 5800X3D 8-Core Processor
+# gpu: AMD Radeon RX 9060, gfx1200, 14 WGPs (28 CUs), wave32, 8144 MiB, PCI 0000:0d:00.0
+# hip driver: 7.16.26385, hip runtime: 7.16.26385
+# clocks (gfx, mem, max gfx, max mem, MHz): 2966, 875, 2966, 1124
+# amd-smi: AMDSMI Tool: 27.1.0+7da43026 | AMDSMI Library version: 27.1.0 | ROCm version: 10.1.0 | amdgpu version: 7.1.9.31600000 | ionic version: N/A
+crops,variant,calls,median_ms,min_ms,max_ms,mean_ms,iters
+1,rpp_convert,1,0.3069665,0.304532,0.313722,0.307591367,30
+1,fkl_convert,1,0.2826165,0.281102,0.284721,0.282709867,30
+1,fkl_chain_fused,1,0.02844,0.028161,0.029031,0.0285468333,30
+1,fkl_chain_perop_batch,5,0.0421105,0.041171,0.04372,0.0421385667,30
+1,rpp_chain_fused_api,1,0.058181,0.05648,0.062381,0.0584256667,30
+1,fkl_pipeline_fused,2,0.285136,0.283692,0.288372,0.2854079,30
+1,fkl_pipeline_perop_batch,6,0.296682,0.294731,0.298572,0.296845633,30
+1,rpp_pipeline_fused_api,2,0.399957,0.395752,0.403492,0.3999812,30
+1,mixed_fkl_convert_rpp_chain,2,0.339507,0.337442,0.344642,0.3399172,30
+8,rpp_convert,1,0.3105415,0.307982,0.319752,0.3108327,30
+8,fkl_convert,1,0.283736,0.281911,0.285962,0.2837802,30
+8,fkl_chain_fused,1,0.033,0.03258,0.03398,0.0331135333,30
+8,fkl_chain_perop_batch,5,0.050155,0.04946,0.05188,0.0501976,30
+8,rpp_chain_fused_api,1,0.0623,0.06152,0.06303,0.0622733333,30
+8,fkl_pipeline_fused,2,0.290002,0.288952,0.291292,0.2899436,30
+8,fkl_pipeline_perop_batch,6,0.3080865,0.306921,0.313552,0.308110333,30
+8,rpp_pipeline_fused_api,2,0.402847,0.397982,0.409062,0.402980233,30
+8,mixed_fkl_convert_rpp_chain,2,0.335512,0.334032,0.337972,0.335657533,30
+16,rpp_convert,1,0.310546,0.306691,0.316412,0.3111594,30
+16,fkl_convert,1,0.283496,0.282372,0.285451,0.283656567,30
+16,fkl_chain_fused,1,0.03537,0.034491,0.037211,0.0354682,30
+16,fkl_chain_perop_batch,5,0.0592355,0.0579,0.06127,0.0593056333,30
+16,rpp_chain_fused_api,1,0.066365,0.06527,0.07207,0.0666090333,30
+16,fkl_pipeline_fused,2,0.2926015,0.291322,0.293762,0.2925253,30
+16,fkl_pipeline_perop_batch,6,0.318667,0.317602,0.319982,0.318698433,30
+16,rpp_pipeline_fused_api,2,0.407277,0.404792,0.410962,0.407264567,30
+16,mixed_fkl_convert_rpp_chain,2,0.350717,0.349182,0.352982,0.350691933,30
+32,rpp_convert,1,0.310107,0.305442,0.316502,0.310242367,30
+32,fkl_convert,1,0.284156,0.281532,0.287602,0.284477567,30
+32,fkl_chain_fused,1,0.0424055,0.04102,0.043091,0.0423289,30
+32,fkl_chain_perop_batch,5,0.08363,0.082381,0.084911,0.0836024667,30
+32,rpp_chain_fused_api,1,0.071291,0.069541,0.07373,0.0713850333,30
+32,fkl_pipeline_fused,2,0.3015315,0.299612,0.304162,0.301475667,30
+32,fkl_pipeline_perop_batch,6,0.343587,0.342102,0.344721,0.343605533,30
+32,rpp_pipeline_fused_api,2,0.416737,0.410642,0.424292,0.4160433,30
+32,mixed_fkl_convert_rpp_chain,2,0.360622,0.358462,0.363802,0.360772333,30
+64,rpp_convert,1,0.316362,0.313922,0.322842,0.316649733,30
+64,fkl_convert,1,0.2835065,0.282091,0.285242,0.283522867,30
+64,fkl_chain_fused,1,0.0539805,0.05277,0.0547,0.0538309667,30
+64,fkl_chain_perop_batch,5,0.1280705,0.126941,0.130381,0.128166733,30
+64,rpp_chain_fused_api,1,0.085425,0.084361,0.086561,0.0853598,30
+64,fkl_pipeline_fused,2,0.314202,0.312991,0.315892,0.3142344,30
+64,fkl_pipeline_perop_batch,6,0.389022,0.387932,0.394092,0.389201133,30
+64,rpp_pipeline_fused_api,2,0.4219925,0.418902,0.428472,0.422424667,30
+64,mixed_fkl_convert_rpp_chain,2,0.378302,0.376242,0.386972,0.3788311,30

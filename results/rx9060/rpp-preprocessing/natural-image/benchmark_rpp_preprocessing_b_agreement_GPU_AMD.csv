@@ -1,0 +1,51 @@
+# experiment: benchmark_rpp_preprocessing_b
+# notes: FKL HIP vs RPP; source: natural image /home/cudeiro/rocm-fkl-benchmarks/e5-cpu/data/kodim23.ppm (768x512) tiled over the frame; Kodak Lossless True Color Image Suite kodim23.png https://r0k.us/graphics/kodak/kodak/kodim23.png sha256 e3111a2fd4da24af15d6459ef9eacfe54106b38e27b4a21821b75c3f5d2d5baf (released by Kodak for unrestricted usage); timing rows of this folder are 5 runs, only the agreement is meant; RPP 3.2.0 (ROCm package amdrocm-rpp), rppt tensor API, HIP back-end; rppt_resize_mirror_normalize: BILINEAR, ROI XYWH, source U8 NHWC (batch stride 0, one ROI per crop), destination F32 NCHW, mirror off; rppt_channel_permute F32 NCHW; rppt_yuv_to_rgb: RpptColorStandard_BT601, RpptColorRange_STUDIO, default chroma upsampling; output widths are multiples of 8; wall clock including the stream synchronisation, 3 warm-up runs and at least 0.5 s of warm-up; pass -1 = informational; tolerance 1e-4 absolute
+# repo: fkl-benchmarks f81306d8d836995d888edd41cee760632dbf05e9-dirty
+# fkl: fb9ac3ad4a64aad40ae3122e14143f03814f2cc0
+# cvGPUSpeedup: 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c
+# FastNPP: 9dfc4f430225e40ded392bfa777b2e724367c5c1
+# nvcc: none (none), architectures native, -fmad on, -lineinfo on
+# hip: 24.0.0 (/opt/rocm/core-10.1/bin/amdclang++), architectures gfx1200
+# host compiler: Clang 24.0.0, Release, -march=native, -ftemplate-depth=1000
+# opencv: none
+# cpu: AMD Ryzen 7 5800X3D 8-Core Processor
+# gpu: AMD Radeon RX 9060, gfx1200, 14 WGPs (28 CUs), wave32, 8144 MiB, PCI 0000:0d:00.0
+# hip driver: 7.16.26385, hip runtime: 7.16.26385
+# clocks (gfx, mem, max gfx, max mem, MHz): 52, 456, 2400, 1124
+# amd-smi: AMDSMI Tool: 27.1.0+7da43026 | AMDSMI Library version: 27.1.0 | ROCm version: 10.1.0 | amdgpu version: 7.1.9.31600000 | ionic version: N/A
+crops,comparison,region,max_abs_diff,mean_abs_diff,fraction_over_1e-4,pass,note
+1,RGB frame: rppt_yuv_to_rgb vs FKL ConvertYUVToRGB (levels),frame,1,2.41126543e-06,0,-1,BT.601 studio swing, default chroma upsampling of RPP
+1,fkl_fused vs scalar reference,interior,2.38418579e-07,1.79710652e-08,0,1,
+1,fkl_fused vs scalar reference,last 2 columns and rows,1.1920929e-07,2.24657063e-08,0,1,
+1,fkl_perop_batch vs fkl_fused,interior,2.38418579e-07,3.25592371e-08,0,1,
+1,fkl_perop_batch vs fkl_fused,last 2 columns and rows,2.38418579e-07,3.15643487e-08,0,1,
+1,rpp_fused_api vs fkl_fused,interior,1.14283887,0.0581750516,0.99505035,-1,different RGB frames and sampling conventions
+1,rpp_fused_api vs fkl_fused,last 2 columns and rows,0.171471179,0.0238014995,0.994736842,-1,different RGB frames and sampling conventions
+8,RGB frame: rppt_yuv_to_rgb vs FKL ConvertYUVToRGB (levels),frame,1,2.41126543e-06,0,-1,BT.601 studio swing, default chroma upsampling of RPP
+8,fkl_fused vs scalar reference,interior,2.38418579e-07,1.81960359e-08,0,1,
+8,fkl_fused vs scalar reference,last 2 columns and rows,2.38418579e-07,1.7135544e-08,0,1,
+8,fkl_perop_batch vs fkl_fused,interior,4.76837158e-07,3.40316393e-08,0,1,
+8,fkl_perop_batch vs fkl_fused,last 2 columns and rows,4.76837158e-07,3.39298208e-08,0,1,
+8,rpp_fused_api vs fkl_fused,interior,1.60728371,0.0419807761,0.982489546,-1,different RGB frames and sampling conventions
+8,rpp_fused_api vs fkl_fused,last 2 columns and rows,1.17877698,0.0478470751,0.973464912,-1,different RGB frames and sampling conventions
+16,RGB frame: rppt_yuv_to_rgb vs FKL ConvertYUVToRGB (levels),frame,1,2.41126543e-06,0,-1,BT.601 studio swing, default chroma upsampling of RPP
+16,fkl_fused vs scalar reference,interior,2.38418579e-07,1.75389422e-08,0,1,
+16,fkl_fused vs scalar reference,last 2 columns and rows,2.38418579e-07,1.66620993e-08,0,1,
+16,fkl_perop_batch vs fkl_fused,interior,4.76837158e-07,3.33799621e-08,0,1,
+16,fkl_perop_batch vs fkl_fused,last 2 columns and rows,4.76837158e-07,3.3242816e-08,0,1,
+16,rpp_fused_api vs fkl_fused,interior,1.9361427,0.0408818931,0.978747973,-1,different RGB frames and sampling conventions
+16,rpp_fused_api vs fkl_fused,last 2 columns and rows,1.22424024,0.0462407029,0.978508772,-1,different RGB frames and sampling conventions
+32,RGB frame: rppt_yuv_to_rgb vs FKL ConvertYUVToRGB (levels),frame,1,2.41126543e-06,0,-1,BT.601 studio swing, default chroma upsampling of RPP
+32,fkl_fused vs scalar reference,interior,2.38418579e-07,1.75195005e-08,0,1,
+32,fkl_fused vs scalar reference,last 2 columns and rows,2.38418579e-07,1.79201475e-08,0,1,
+32,fkl_perop_batch vs fkl_fused,interior,4.76837158e-07,3.40911382e-08,0,1,
+32,fkl_perop_batch vs fkl_fused,last 2 columns and rows,4.76837158e-07,3.47906158e-08,0,1,
+32,rpp_fused_api vs fkl_fused,interior,2.00034562,0.0422542749,0.981173462,-1,different RGB frames and sampling conventions
+32,rpp_fused_api vs fkl_fused,last 2 columns and rows,2.48066476,0.0504028408,0.979714912,-1,different RGB frames and sampling conventions
+64,RGB frame: rppt_yuv_to_rgb vs FKL ConvertYUVToRGB (levels),frame,1,2.41126543e-06,0,-1,BT.601 studio swing, default chroma upsampling of RPP
+64,fkl_fused vs scalar reference,interior,2.38418579e-07,1.7893689e-08,0,1,
+64,fkl_fused vs scalar reference,last 2 columns and rows,2.38418579e-07,1.82789373e-08,0,1,
+64,fkl_perop_batch vs fkl_fused,interior,4.76837158e-07,3.60084356e-08,0,1,
+64,fkl_perop_batch vs fkl_fused,last 2 columns and rows,4.76837158e-07,3.63488113e-08,0,1,
+64,rpp_fused_api vs fkl_fused,interior,3.0014981,0.0426933302,0.981764833,-1,different RGB frames and sampling conventions
+64,rpp_fused_api vs fkl_fused,last 2 columns and rows,3.18259835,0.0458640683,0.97908443,-1,different RGB frames and sampling conventions
