@@ -18,24 +18,35 @@
 Prints the number of values, the number of bit-identical values, the maximum absolute and relative difference, and the number of values that
 differ by more than 1e-3 relative. Exit code 0 when the files have the same size and no value is NaN or infinite where the other is not.
 """
+import array
+import math
+import struct
 import sys
 
-import numpy as np
+
+def read(path):
+    a = array.array("f")
+    with open(path, "rb") as f:
+        a.fromfile(f, len(open(path, "rb").read()) // 4)
+    return a
 
 
 def main():
-    a = np.fromfile(sys.argv[1], dtype=np.float32)
-    b = np.fromfile(sys.argv[2], dtype=np.float32)
-    if a.size != b.size or a.size == 0:
-        print(f"different sizes or empty: {a.size} and {b.size}")
+    a, b = read(sys.argv[1]), read(sys.argv[2])
+    if len(a) != len(b) or len(a) == 0:
+        print(f"different sizes or empty: {len(a)} and {len(b)}")
         sys.exit(1)
-    finite = np.isfinite(a) & np.isfinite(b)
-    d = np.abs(a.astype(np.float64) - b.astype(np.float64))
-    rel = d / np.maximum(np.abs(b.astype(np.float64)), 1e-30)
-    print(f"{a.size} values; bit-identical {int(np.sum(a.view(np.uint32) == b.view(np.uint32)))}; non-finite in a {int(np.sum(~np.isfinite(a)))}, in b {int(np.sum(~np.isfinite(b)))}; "
-          f"max abs diff {np.max(d[finite]) if finite.any() else float('nan'):.6g}; max rel diff {np.max(rel[finite]) if finite.any() else float('nan'):.6g}; "
-          f"values with rel diff > 1e-3: {int(np.sum(rel[finite] > 1e-3))}; range of b [{np.min(b[np.isfinite(b)]):.6g}, {np.max(b[np.isfinite(b)]):.6g}]")
-    sys.exit(0 if np.array_equal(np.isfinite(a), np.isfinite(b)) else 1)
+    identical = sum(1 for x, y in zip(a, b) if struct.pack("f", x) == struct.pack("f", y))
+    nonfinite_a = sum(1 for x in a if not math.isfinite(x))
+    nonfinite_b = sum(1 for x in b if not math.isfinite(x))
+    pairs = [(x, y) for x, y in zip(a, b) if math.isfinite(x) and math.isfinite(y)]
+    maxabs = max((abs(x - y) for x, y in pairs), default=float("nan"))
+    maxrel = max((abs(x - y) / max(abs(y), 1e-30) for x, y in pairs), default=float("nan"))
+    over = sum(1 for x, y in pairs if abs(x - y) / max(abs(y), 1e-30) > 1e-3)
+    finite_b = [y for y in b if math.isfinite(y)]
+    print(f"{len(a)} values; bit-identical {identical}; non-finite in a {nonfinite_a}, in b {nonfinite_b}; max abs diff {maxabs:.6g}; max rel diff {maxrel:.6g}; "
+          f"values with rel diff > 1e-3: {over}; range of b [{min(finite_b, default=float('nan')):.6g}, {max(finite_b, default=float('nan')):.6g}]")
+    sys.exit(0 if nonfinite_a == nonfinite_b else 1)
 
 
 if __name__ == "__main__":
