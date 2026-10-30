@@ -15,7 +15,7 @@
 // E4b: the NV12 video pre-processing pipeline (fkl-self/pipelines/nv12_pipeline.h) on the back-end this target is built
 // for (CUDA, HIP or the CPU; the CPU target also runs ParArch::CPU_MULTITHREAD), for N = 1, 8, 16, 32, 64 detection crops of
 // a 4K NV12 frame. Per point and variant: wall clock of the whole run including the synchronisation of the stream (the frame is
-// already in device memory; the upload is not timed), 3 warm-up runs and E5_ITERS (30) timed runs, median, min, max and mean.
+// already in device memory; the upload is not timed), 3 warm-up runs (on a GPU also at least 0.5 s of them) and E5_ITERS (30) timed runs, median, min, max and mean.
 // Variants: convert (kernel 1 alone), chain_fused (kernel 2 alone), chain_perop_batch (kernel 2 as one execution per
 // operation for all the crops), pipeline_fused (kernels 1 and 2: two launches), pipeline_perop_batch, and on the CPU
 // back-ends pipeline_perop_crop (one execution per operation and per crop).
@@ -35,6 +35,7 @@
 namespace nv12bench {
 
 constexpr double TOLERANCE = 1e-4;
+constexpr double GPU_WARMUP_SECONDS = 0.5; // the GPU runs at a low clock until it has work for a while
 constexpr int BATCHES[] = {1, 8, 16, 32, 64};
 
 inline int envInt(const char* name, const int fallback) {
@@ -105,7 +106,7 @@ void runPoint(nv12::Frame& frame, fk::Ptr2D<nv12::U3>& rgb, Output& out, std::ve
         threads = 1;
     }
     const auto time = [&](const std::string& variant, const int kernels, const std::function<void()>& fn) {
-        const nv12::Stats s = nv12::measure(fn, out.warmup, out.iters);
+        const nv12::Stats s = nv12::measure(fn, out.warmup, out.iters, cpu ? 0.0 : GPU_WARMUP_SECONDS);
         out.timing.row(N, backEnd, variant, kernels, threads, s.median, s.min, s.max, s.mean, s.iters);
         std::cout << "  " << variant << ": median " << s.median << " ms (min " << s.min << ", max " << s.max << ")" << std::endl;
     };
@@ -158,7 +159,7 @@ int launch() {
 
     const std::string arch(fk::toStrView(fk::defaultParArch));
     const std::string notes = "E4b NV12 pipeline: NV12 4K frame -> RGB kernel -> fused crops, resize 64x128, normalise, NCHW split; source: " +
-                              source + "; the frame is already in device memory, wall clock includes the stream synchronisation";
+                              source + "; the frame is already in device memory, wall clock includes the stream synchronisation, 3 warm-up runs (a GPU: and at least 0.5 s of them)";
     nv12bench::Output out{
         fklb::CsvWriter("benchmark_nv12_pipeline_" + arch + ".csv", "benchmark_nv12_pipeline",
                         {"crops", "back_end", "variant", "kernels", "threads", "median_ms", "min_ms", "max_ms", "mean_ms", "iters"}, notes),

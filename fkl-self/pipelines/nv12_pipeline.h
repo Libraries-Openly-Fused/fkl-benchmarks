@@ -324,8 +324,10 @@ struct Stats {
     size_t iters{0};
 };
 
-inline Stats measure(const std::function<void()>& fn, const int warmup, const int iters) {
-    for (int i = 0; i < warmup; ++i) {
+// minWarmupSeconds: the warm-up also lasts at least that long (a GPU at rest runs at a low clock until it has work for a while)
+inline Stats measure(const std::function<void()>& fn, const int warmup, const int iters, const double minWarmupSeconds = 0.0) {
+    const auto begin = std::chrono::steady_clock::now();
+    for (int i = 0; i < warmup || std::chrono::duration<double>(std::chrono::steady_clock::now() - begin).count() < minWarmupSeconds; ++i) {
         fn();
     }
     std::vector<double> ms(static_cast<size_t>(iters));
