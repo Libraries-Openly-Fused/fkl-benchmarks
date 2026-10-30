@@ -219,8 +219,8 @@ int launch() {
                          "hand_vec_mean_ms", "hand_vec_min_ms", "fkl_mean_ms", "fkl_min_ms", "fkl_tf_mean_ms", "fkl_tf_min_ms",
                          "fkl_over_hand_params", "fkl_over_hand_vec", "fkl_tf_over_hand_vec", "fkl_bitexact", "fkl_tf_bitexact",
                          "hand_imm_bitexact", "hand_vec_bitexact"},
-                        "input: seeded uint8 noise (std::mt19937_64 seed 20261030); alpha 1.0, c 0.54; 32x8 threads per block "
-                        std::string("(the block FKL picks); 100 timed iterations after one warm-up; *_bitexact = bit-identical to hand_params") +
+                        std::string("input: seeded uint8 noise (std::mt19937_64 seed 20261030); alpha 1.0, c 0.54; 32x8 threads per block "
+                                    "(the block FKL picks); 100 timed iterations after one warm-up; *_bitexact = bit-identical to hand_params") +
                             (e1::profileMode() ? "; PROFILE MODE (E1_PROFILE=1): nothing was timed, the times are zero" : ""));
     const bool ok = runAll(std::make_index_sequence<sizeof(OPS) / sizeof(OPS[0])>{}, cs, fkStream, csv, noise);
     return ok ? 0 : -1;

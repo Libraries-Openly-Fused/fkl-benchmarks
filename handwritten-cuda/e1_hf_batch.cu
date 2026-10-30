@@ -211,8 +211,8 @@ int launch() {
                         {"batch", "hand_mean_ms", "hand_min_ms", "fkl_mean_ms", "fkl_min_ms", "fkl_tf_mean_ms", "fkl_tf_min_ms", "iterated_mean_ms",
                          "iterated_min_ms", "fkl_over_hand", "iterated_over_fkl", "fkl_bitexact", "fkl_tf_bitexact", "iterated_bitexact",
                          "hand_generic_mean_ms", "hand_generic_min_ms", "fkl_over_hand_generic", "hand_generic_bitexact", "hand_param_bytes", "hand_generic_param_bytes"},
-                        "source: seeded uint8 noise 3840x2160 (std::mt19937_64 seed 20261030), crop i at (i, i); cast, *1.0, -1.0, /3.2; the block is the one "
-                        std::string("fk::getDefaultBlockSize picks; 100 timed iterations after one warm-up; *_bitexact = same bytes as hand_batch") +
+                        std::string("source: seeded uint8 noise 3840x2160 (std::mt19937_64 seed 20261030), crop i at (i, i); cast, *1.0, -1.0, /3.2; the block is the one "
+                                    "fk::getDefaultBlockSize picks; 100 timed iterations after one warm-up; *_bitexact = same bytes as hand_batch") +
                             (e1::profileMode() ? "; PROFILE MODE (E1_PROFILE=1): nothing was timed and the iterated version was not run, the times are zero" : ""));
     return runAll(std::make_index_sequence<sizeof(BATCHES) / sizeof(BATCHES[0])>{}, cs, fkStream, csv, noise) ? 0 : -1;
 }
