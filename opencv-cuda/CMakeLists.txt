@@ -20,3 +20,8 @@ add_subdirectory(verticalfusion)
 fklb_add_benchmark(benchmark_batched_preprocessing
     BACKENDS cu LIBS cvgs opencv
     SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/batched-preprocessing/test_batchresize_x_split3D.cu")
+
+# E0: how far can the CUDA-Graphs baseline of the VF + HF sweep go? (capture + instantiate time of its graph)
+fklb_add_benchmark(graph_instantiate_time
+    BACKENDS cu LIBS cvgs opencv
+    SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/graphs/graph_instantiate_time.cu")
