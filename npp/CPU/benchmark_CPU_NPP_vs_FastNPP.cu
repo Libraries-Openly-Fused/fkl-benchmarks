@@ -14,6 +14,7 @@
 
 #include <tests/testsNppCommon.h>
 #include <npp/nppbenchmark.h>
+#include <npp/resize_agreement.h>
 #include <fast_npp.h>
 
 #include <common/main.h>
@@ -46,9 +47,11 @@ bool test_NPP_cpu_batchresize_x_split3D(size_t NUM_ELEMS_X, size_t NUM_ELEMS_Y, 
         constexpr uchar UP_H = 128;
         try {
             // Original image from where we will crop
-            constexpr uchar3 init_val{ 1, 2, 3 };
             fk::Ptr2D<uchar3> d_input(NUM_ELEMS_X, NUM_ELEMS_Y);
-            fk::setTo(init_val, d_input, stream);
+            // Seeded noise instead of a constant colour (npp/resize_agreement.h)
+            const std::vector<unsigned char>& sourceNoise = fklb_npp::seededNoise(static_cast<int>(NUM_ELEMS_X), static_cast<int>(NUM_ELEMS_Y));
+            gpuErrchk(cudaMemcpy2DAsync(d_input.ptr().data, d_input.ptr().dims.pitch, sourceNoise.data(), NUM_ELEMS_X * 3, NUM_ELEMS_X * 3,
+                                        NUM_ELEMS_Y, cudaMemcpyHostToDevice, stream));
 
             // Batches of crops (fk)
             std::array<fk::Ptr2D<uchar3>, BATCH> d_cropped;
@@ -227,39 +230,17 @@ bool test_NPP_cpu_batchresize_x_split3D(size_t NUM_ELEMS_X, size_t NUM_ELEMS_Y, 
             gpuErrchk(cudaFreeHost(hBatchDst));
             gpuErrchk(cudaFreeHost(hBatchROI));
 
-            // compare data
-            constexpr int COLOR_PLANE = UP_H * UP_W;
-            constexpr int IMAGE_STRIDE = (COLOR_PLANE * 3);
-            const float TOLERANCE = 1e-3;
-            for (int j = 0; j < BATCH; ++j) {
-                for (int c = 0; c < 3; ++c) {
-                    for (int i = 0; i < COLOR_PLANE; ++i) {
-                        const int i_tensor = i + (COLOR_PLANE * c);
-                        const float result = h_tensor.ptr().data[(j * IMAGE_STRIDE) + i_tensor];
-                        switch (c) {
-                        case RED: {
-                            float nppResult = h_channelA[j].ptr().data[i];
-                            float diff = std::abs(result - nppResult);
-
-                            passed &= diff < TOLERANCE;
-
-                            break;
-                        }
-                        case GREEN: {
-                            float nppResult = h_channelB[j].ptr().data[i];
-                            float diff = std::abs(result - nppResult);
-                            passed &= diff < TOLERANCE;
-                            break;
-                        }
-                        case BLUE: {
-                            float nppResult = h_channelC[j].ptr().data[i];
-                            float diff = std::abs(result - nppResult);
-                            passed &= diff < TOLERANCE;
-                            break;
-                        }
-                        }
-                    }
-                }
+            // compare data: each implementation must match ONE of the two sampling conventions (npp/resize_agreement.h);
+            // the difference between FastNPP and NPP is recorded, not required to be small
+            {
+                constexpr int COLOR_PLANE_ = UP_H * UP_W;
+                constexpr int IMAGE_STRIDE_ = COLOR_PLANE_ * 3;
+                const auto fastAt = [&](int j, int c, int k) { return h_tensor.ptr().data[(j * IMAGE_STRIDE_) + k + (COLOR_PLANE_ * c)]; };
+                const auto nppAt = [&](int j, int c, int k) {
+                    return c == RED ? h_channelA[j].ptr().data[k] : (c == GREEN ? h_channelB[j].ptr().data[k] : h_channelC[j].ptr().data[k]);
+                };
+                passed &= fklb_npp::checkBatch(std::string(__func__), BATCH, static_cast<int>(NUM_ELEMS_X), CROP_W, CROP_H, UP_W, UP_H, aDstOrder,
+                                               mulValue, subValue, divValue, fastAt, nppAt, sourceNoise);
             }
         } catch (const std::exception& e) {
             error_s << e.what();

@@ -47,7 +47,8 @@ bool benchmark_Horizontal_Fusion(const size_t& NUM_ELEMS_X, const size_t& NUM_EL
     const OutputType val_div = 3.2f;
     try {
         const fk::Size cropSize(60, 120);
-        fk::Ptr2D<InputType> d_input((int)NUM_ELEMS_Y, (int)NUM_ELEMS_X);
+        // width x height = NUM_ELEMS_X x NUM_ELEMS_Y = 3840 x 2160, as the paper states (the arguments used to be swapped: 2160 x 3840)
+        fk::Ptr2D<InputType> d_input((int)NUM_ELEMS_X, (int)NUM_ELEMS_Y);
         fk::setTo(val_init, d_input, stream);
         std::array<fk::Ptr2D<OutputType>, BATCH> d_output_cv;
         std::array<fk::Ptr2D<OutputType>, BATCH> h_cvGSResults;
@@ -135,7 +136,8 @@ bool benchmark_Horizontal_Fusion_NO_CPU_OVERHEAD(const size_t& NUM_ELEMS_X, cons
     const OutputType val_div = 3.2f;
     try {
         const fk::Size cropSize(60, 120);
-        fk::Ptr2D<InputType> d_input((int)NUM_ELEMS_Y, (int)NUM_ELEMS_X);
+        // width x height = NUM_ELEMS_X x NUM_ELEMS_Y = 3840 x 2160, as the paper states (the arguments used to be swapped: 2160 x 3840)
+        fk::Ptr2D<InputType> d_input((int)NUM_ELEMS_X, (int)NUM_ELEMS_Y);
         fk::setTo(val_init, d_input, stream);
         std::array<fk::Ptr2D<OutputType>, BATCH> d_output_cv;
 
@@ -227,7 +229,8 @@ bool benchmark_Horizontal_Fusion_NO_CPU_OVERHEAD_CUDAGraphs(const size_t& NUM_EL
     const OutputType val_div = 3.2f;
     try {
         const fk::Size cropSize(60, 120);
-        fk::Ptr2D<InputType> d_input((int)NUM_ELEMS_Y, (int)NUM_ELEMS_X);
+        // width x height = NUM_ELEMS_X x NUM_ELEMS_Y = 3840 x 2160, as the paper states (the arguments used to be swapped: 2160 x 3840)
+        fk::Ptr2D<InputType> d_input((int)NUM_ELEMS_X, (int)NUM_ELEMS_Y);
         fk::setTo(val_init, d_input, stream);
         std::array<fk::Ptr2D<OutputType>, BATCH> d_output_cv;
 
@@ -350,7 +353,8 @@ bool benchmark_Horizontal_Fusion_NO_CPU_OVERHEAD_HIPGraphs(const size_t& NUM_ELE
     const OutputType val_div = 3.2f;
     try {
         const fk::Size cropSize(60, 120);
-        fk::Ptr2D<InputType> d_input((int)NUM_ELEMS_Y, (int)NUM_ELEMS_X);
+        // width x height = NUM_ELEMS_X x NUM_ELEMS_Y = 3840 x 2160, as the paper states (the arguments used to be swapped: 2160 x 3840)
+        fk::Ptr2D<InputType> d_input((int)NUM_ELEMS_X, (int)NUM_ELEMS_Y);
         fk::setTo(val_init, d_input, stream);
         std::array<fk::Ptr2D<OutputType>, BATCH> d_output_cv;
 
@@ -477,6 +481,7 @@ bool launch_benchmark_Horizontal_Fusion_NO_CPU_OVERHEAD(const size_t& NUM_ELEMS_
 int launch() {
     constexpr size_t NUM_ELEMS_X = 3840;
     constexpr size_t NUM_ELEMS_Y = 2160;
+    benchmarkNotes = "source image 3840 wide x 2160 high (uint8, constant 10), crops of 60x120 at (i, i), batch 1 + 10 k; the earlier versions of this benchmark allocated the source 2160 wide x 3840 high by passing the dimensions swapped, which does not change the crops";
     fk::Stream stream;
     bool passed = true;
 

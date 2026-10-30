@@ -1,0 +1,22 @@
+# experiment: E1a hand-written MAD chain vs FKL (4096x2160 uchar -> float)
+# notes: input: seeded uint8 noise (std::mt19937_64 seed 20261030); alpha 1.0, c 0.54; 32x8 threads per block (the block FKL picks); 100 timed iterations after one warm-up; *_bitexact = bit-identical to hand_params
+# repo: fkl-benchmarks 1a70cab091da75c6d691a08a56117aab783e50df
+# fkl: fb9ac3ad4a64aad40ae3122e14143f03814f2cc0
+# cvGPUSpeedup: 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c
+# FastNPP: 9dfc4f430225e40ded392bfa777b2e724367c5c1
+# nvcc: 13.4.92 (/home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/nvcc), architectures 89, -fmad on, -lineinfo off
+# host compiler: GNU 15.2.0, Release, -march=native, -ftemplate-depth=1000
+# opencv: none
+# cpu: AMD Ryzen 9 5950X 16-Core Processor
+# gpu: NVIDIA GeForce RTX 4090, cc 8.9, 128 SMs, 24106 MiB, PCI 0000:09:00.0
+# cuda driver api: 13.3, cuda runtime: 13.4
+# nvidia-smi driver: 610.43.02
+# clocks (sm, mem, max sm, max mem, MHz): 2550 MHz, 10251 MHz, 3105 MHz, 10501 MHz
+# power limit, temperature at start: 450.00 W, 39
+ops,pairs,hand_params_mean_ms,hand_params_min_ms,hand_imm_mean_ms,hand_imm_min_ms,hand_vec_mean_ms,hand_vec_min_ms,fkl_mean_ms,fkl_min_ms,fkl_tf_mean_ms,fkl_tf_min_ms,fkl_over_hand_params,fkl_over_hand_vec,fkl_tf_over_hand_vec,fkl_bitexact,fkl_tf_bitexact,hand_imm_bitexact,hand_vec_bitexact
+2,1,0.0214662399,0.0204799995,0.0213817599,0.0204799995,0.0180192003,0.0174080003,0.0209721598,0.0204799995,0.0180454402,0.0174080003,0.976983389,1.1638785,1.00145622,1,1,1,1
+102,51,0.02790592,0.0274880007,0.02779648,0.0273599997,0.0185187204,0.0181440003,0.0269532798,0.0264960006,0.0185574404,0.0180799998,0.965862433,1.45546124,1.00209086,1,1,1,1
+1002,501,0.122074558,0.121664003,0.121730559,0.120832004,0.113672641,0.112640001,0.120471682,0.119808003,0.113488961,0.112640001,0.986869697,1.05981247,0.998384132,1,1,1,1
+5002,2501,0.546712638,0.545791984,0.546518714,0.545791984,0.60494432,0.581344008,0.534326404,0.519967973,0.559238398,0.544767976,0.97734416,0.883265428,0.924446068,1,1,1,1
+10002,5001,1.07516415,1.02899206,1.08930462,1.08828795,1.25840704,1.22246397,1.04600958,1.02787197,1.33218112,1.29740798,0.972883609,0.831217207,1.05862498,1,1,1,1
+19902,9951,2.21491168,2.08070397,2.21672032,2.18595195,2.45358975,2.42790389,2.21604321,2.0848639,2.77948096,2.74137592,1.00051087,0.903184082,1.13282221,1,1,1,1

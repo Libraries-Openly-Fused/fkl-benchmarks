@@ -1,0 +1,56 @@
+# experiment: E6 NaN through fk::SaturateCast on the device
+# notes: quiet NaN 0x7fc00000 / 0x7ff8..., signalling NaN 0x7fa00000 / 0x7ff4... (the signalling bit patterns are loaded as bits, not computed); hardware_cvt_rni_sat is PTX cvt.rni.sat for float only; values of the 8-bit types are printed as signed or unsigned values of the type
+# repo: fkl-benchmarks f3afadcaefb960ef72e8fdd742756fc4bb8bf33d
+# fkl: fb9ac3ad4a64aad40ae3122e14143f03814f2cc0
+# cvGPUSpeedup: 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c
+# FastNPP: 9dfc4f430225e40ded392bfa777b2e724367c5c1
+# nvcc: 13.4.92 (/home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/nvcc), architectures 89, -fmad on, -lineinfo on
+# host compiler: GNU 15.2.0, Release, -march=native, -ftemplate-depth=1000
+# opencv: 4.14.0
+# cpu: AMD Ryzen 9 5950X 16-Core Processor
+# gpu: NVIDIA GeForce RTX 4090, cc 8.9, 128 SMs, 24106 MiB, PCI 0000:09:00.0
+# cuda driver api: 13.3, cuda runtime: 13.4
+# nvidia-smi driver: 610.43.02
+# clocks (sm, mem, max sm, max mem, MHz): 2685 MHz, 10251 MHz, 3105 MHz, 10501 MHz
+# power limit, temperature at start: 450.00 W, 40
+input,bits,source_type,target_type,fkl_saturate_cast,hardware_cvt_rni_sat
++qNaN,0x000000007fc00000,float,uchar,0,0
++qNaN,0x000000007fc00000,float,schar,0,0
++qNaN,0x000000007fc00000,float,short,0,0
++qNaN,0x000000007fc00000,float,ushort,0,0
++qNaN,0x000000007fc00000,float,int,0,0
++qNaN,0x7ff8000000000000,double,uchar,0,n/a
++qNaN,0x7ff8000000000000,double,schar,0,n/a
++qNaN,0x7ff8000000000000,double,short,0,n/a
++qNaN,0x7ff8000000000000,double,ushort,0,n/a
++qNaN,0x7ff8000000000000,double,int,-2147483648,n/a
++sNaN,0x000000007fa00000,float,uchar,0,0
++sNaN,0x000000007fa00000,float,schar,0,0
++sNaN,0x000000007fa00000,float,short,0,0
++sNaN,0x000000007fa00000,float,ushort,0,0
++sNaN,0x000000007fa00000,float,int,0,0
++sNaN,0x7ff4000000000000,double,uchar,0,n/a
++sNaN,0x7ff4000000000000,double,schar,0,n/a
++sNaN,0x7ff4000000000000,double,short,0,n/a
++sNaN,0x7ff4000000000000,double,ushort,0,n/a
++sNaN,0x7ff4000000000000,double,int,-2147483648,n/a
+-qNaN,0x00000000ffc00000,float,uchar,0,0
+-qNaN,0x00000000ffc00000,float,schar,0,0
+-qNaN,0x00000000ffc00000,float,short,0,0
+-qNaN,0x00000000ffc00000,float,ushort,0,0
+-qNaN,0x00000000ffc00000,float,int,0,0
+-qNaN,0xfff8000000000000,double,uchar,0,n/a
+-qNaN,0xfff8000000000000,double,schar,0,n/a
+-qNaN,0xfff8000000000000,double,short,0,n/a
+-qNaN,0xfff8000000000000,double,ushort,0,n/a
+-qNaN,0xfff8000000000000,double,int,-2147483648,n/a
+-sNaN,0x00000000ffa00000,float,uchar,0,0
+-sNaN,0x00000000ffa00000,float,schar,0,0
+-sNaN,0x00000000ffa00000,float,short,0,0
+-sNaN,0x00000000ffa00000,float,ushort,0,0
+-sNaN,0x00000000ffa00000,float,int,0,0
+-sNaN,0xfff4000000000000,double,uchar,0,n/a
+-sNaN,0xfff4000000000000,double,schar,0,n/a
+-sNaN,0xfff4000000000000,double,short,0,n/a
+-sNaN,0xfff4000000000000,double,ushort,0,n/a
+-sNaN,0xfff4000000000000,double,int,-2147483648,n/a

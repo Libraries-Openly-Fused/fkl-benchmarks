@@ -21,6 +21,8 @@
 //                   x1 = floor(src), x2 = x1 + 1, the second read is clamped to the last column/row, weights (x2 - src), (src - x1)
 //   "pixel centre"  src = (x + 0.5) * (srcSize / dstSize) - 0.5      (cv::resize)
 //                   x1 = floor(src), weights (1 - f), f with f = src - x1, both reads clamped to [0, size - 1]
+// The float cases are followed by the same cases with an 8UC3 source (the type of the benchmarks), where cv::cuda::resize and the 8-bit NPP
+// call round their output.
 // Candidates: FKL through cvGS::resize, cv::cuda::resize (INTER_LINEAR), nppiResize_32f_C3R_Ctx (NPPI_INTER_LINEAR) and
 // nppiResizeBatch_32f_C3R_Advanced_Ctx with a batch of two (the call the NPP baseline of the paper uses; the batch API rejects a batch of one). For each candidate and
 // each reference: maximum and mean absolute difference and the fraction of values that differ by more than 1e-3. A candidate
@@ -278,6 +280,65 @@ int launch() {
             for (size_t j = i + 1; j < candidates.size(); ++j) {
                 const Diff d = compare(candidates[i].second, candidates[j].second);
                 csv.row(cs.what, candidates[i].first, candidates[j].first, d.maxAbs, d.meanAbs, d.fracGt);
+            }
+        }
+        csv.flush();
+
+        // The same cases with an 8-bit 3-channel source (the type of the benchmarks): the integer image holds the rounded noise values.
+        // cv::cuda::resize and nppiResize_8u_C3R round their output to 8 bits, so a candidate that follows a convention is within
+        // about 0.5 of that reference (never exactly 0 or 1e-5); the FKL path (cvGS::resize) keeps float output.
+        {
+            Image src8f(src.size());
+            std::vector<unsigned char> src8(src.size());
+            for (size_t i = 0; i < src.size(); ++i) { src8[i] = static_cast<unsigned char>(std::floor(src[i])); src8f[i] = src8[i]; }
+            const Image ref8FKL = referenceFKL(src8f, cs.sw, cs.sh, cs.dw, cs.dh);
+            const Image ref8PC = referencePixelCentre(src8f, cs.sw, cs.sh, cs.dw, cs.dh);
+            cv::Mat hSrc8(cs.sh, cs.sw, CV_8UC3, src8.data());
+            cv::cuda::GpuMat dSrc8;
+            dSrc8.upload(hSrc8, cvStream);
+            std::vector<std::pair<std::string, Image>> cand8;
+            {
+                cv::cuda::GpuMat dOut(dsize, CV_32FC3);
+                cvGS::executeOperations(cvStream, cvGS::resize<CV_8UC3, cv::INTER_LINEAR>(dSrc8, dsize, 0., 0.), cvGS::write<CV_32FC3>(dOut));
+                cv::Mat hOut;
+                dOut.download(hOut, cvStream);
+                cvStream.waitForCompletion();
+                cand8.emplace_back("FKL (cvGS::resize, 8UC3 input, float output)", Image((float*)hOut.data, (float*)hOut.data + hOut.total() * 3));
+            }
+            {
+                cv::cuda::GpuMat dOut;
+                cv::cuda::resize(dSrc8, dOut, dsize, 0., 0., cv::INTER_LINEAR, cvStream);
+                cv::Mat hOut;
+                dOut.download(hOut, cvStream);
+                cvStream.waitForCompletion();
+                Image out(hOut.total() * 3);
+                for (size_t i = 0; i < out.size(); ++i) out[i] = hOut.data[i];
+                cand8.emplace_back("cv::cuda::resize (INTER_LINEAR, 8UC3 input and output)", out);
+            }
+            {
+                Npp8u *dNppSrc = nullptr, *dNppDst = nullptr;
+                size_t srcPitch = 0, dstPitch = 0;
+                CHECK_CUDA(cudaMallocPitch(reinterpret_cast<void**>(&dNppSrc), &srcPitch, cs.sw * 3, cs.sh));
+                CHECK_CUDA(cudaMallocPitch(reinterpret_cast<void**>(&dNppDst), &dstPitch, cs.dw * 3, cs.dh));
+                CHECK_CUDA(cudaMemcpy2DAsync(dNppSrc, srcPitch, src8.data(), cs.sw * 3, cs.sw * 3, cs.sh, cudaMemcpyHostToDevice, stream));
+                const NppiSize srcSize{cs.sw, cs.sh}, dstSize{cs.dw, cs.dh};
+                const NppiRect srcROI{0, 0, cs.sw, cs.sh}, dstROI{0, 0, cs.dw, cs.dh};
+                CHECK_NPP(nppiResize_8u_C3R_Ctx(dNppSrc, static_cast<int>(srcPitch), srcSize, srcROI, dNppDst, static_cast<int>(dstPitch), dstSize,
+                                                dstROI, NPPI_INTER_LINEAR, nppCtx));
+                std::vector<unsigned char> out8(static_cast<size_t>(cs.dw) * cs.dh * 3);
+                CHECK_CUDA(cudaMemcpy2DAsync(out8.data(), cs.dw * 3, dNppDst, dstPitch, cs.dw * 3, cs.dh, cudaMemcpyDeviceToHost, stream));
+                CHECK_CUDA(cudaStreamSynchronize(stream));
+                Image out(out8.size());
+                for (size_t i = 0; i < out.size(); ++i) out[i] = out8[i];
+                cand8.emplace_back("nppiResize_8u_C3R_Ctx (NPPI_INTER_LINEAR, 8UC3 input and output)", out);
+                cudaFree(dNppSrc); cudaFree(dNppDst);
+            }
+            for (const auto& [name, img] : cand8) {
+                const Diff dF = compare(img, ref8FKL), dP = compare(img, ref8PC);
+                csv.row(cs.what, name, "scalar reference FKL (8-bit source)", dF.maxAbs, dF.meanAbs, dF.fracGt);
+                csv.row(cs.what, name, "scalar reference pixel centre (8-bit source)", dP.maxAbs, dP.meanAbs, dP.fracGt);
+                std::cout << "  [8UC3] " << name << "\n      vs FKL convention:          max " << dF.maxAbs << ", mean " << dF.meanAbs
+                          << "\n      vs pixel-centre convention: max " << dP.maxAbs << ", mean " << dP.meanAbs << "\n";
             }
         }
         csv.flush();

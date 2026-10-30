@@ -20,7 +20,7 @@
 #include <fused_kernel/algorithms/basic_ops/static_loop.h>
 
 #ifdef ENABLE_BENCHMARK
-constexpr char VARIABLE_DIMENSION[]{ "Number of pixels per side" };
+constexpr char VARIABLE_DIMENSION[]{ "Number of elements" };  // the data is a row of N elements (it used to be labelled "Number of pixels per side")
 
 constexpr size_t NUM_EXPERIMENTS = 60;
 constexpr size_t FIRST_VALUE = 100;

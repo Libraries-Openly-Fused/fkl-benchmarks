@@ -1,0 +1,92 @@
+benchmark crop 60x120 -> 64x128 (up, x1.07)
+  reference FKL vs reference pixel centre: max 13.7025, fraction > 1e-3 0.999471
+  FKL (cvGS::resize, INTER_LINEAR)
+      vs FKL convention:          max 3.05176e-05, mean 2.38572e-06, fraction>1e-3 0
+      vs pixel-centre convention: max 13.7025, mean 3.06437, fraction>1e-3 0.999471
+  cv::cuda::resize (INTER_LINEAR)
+      vs FKL convention:          max 3.05176e-05, mean 2.34499e-06, fraction>1e-3 0
+      vs pixel-centre convention: max 13.7025, mean 3.06437, fraction>1e-3 0.999471
+  nppiResize_32f_C3R_Ctx (NPPI_INTER_LINEAR)
+      vs FKL convention:          max 13.7025, mean 3.06437, fraction>1e-3 0.999471
+      vs pixel-centre convention: max 3.05176e-05, mean 2.81145e-06, fraction>1e-3 0
+  nppiResizeBatch_32f_C3R_Advanced_Ctx (batch of 2, NPPI_INTER_LINEAR)
+      vs FKL convention:          max 13.7025, mean 3.06437, fraction>1e-3 0.999471
+      vs pixel-centre convention: max 3.05176e-05, mean 2.81145e-06, fraction>1e-3 0
+  [8UC3] FKL (cvGS::resize, 8UC3 input, float output)
+      vs FKL convention:          max 0, mean 0
+      vs pixel-centre convention: max 13.751, mean 3.06441
+  [8UC3] cv::cuda::resize (INTER_LINEAR, 8UC3 input and output)
+      vs FKL convention:          max 0.5, mean 0.248362
+      vs pixel-centre convention: max 13.751, mean 3.07417
+  [8UC3] nppiResize_8u_C3R_Ctx (NPPI_INTER_LINEAR, 8UC3 input and output)
+      vs FKL convention:          max 14, mean 3.07393
+      vs pixel-centre convention: max 0.5, mean 0.250152
+60x120 -> 30x60 (down, x2)
+  reference FKL vs reference pixel centre: max 169.453, fraction > 1e-3 1
+  FKL (cvGS::resize, INTER_LINEAR)
+      vs FKL convention:          max 0, mean 0, fraction>1e-3 0
+      vs pixel-centre convention: max 169.453, mean 52.9723, fraction>1e-3 1
+  cv::cuda::resize (INTER_LINEAR)
+      vs FKL convention:          max 0, mean 0, fraction>1e-3 0
+      vs pixel-centre convention: max 169.453, mean 52.9723, fraction>1e-3 1
+  nppiResize_32f_C3R_Ctx (NPPI_INTER_LINEAR)
+      vs FKL convention:          max 169.453, mean 52.9723, fraction>1e-3 1
+      vs pixel-centre convention: max 1.52588e-05, mean 2.34604e-06, fraction>1e-3 0
+  nppiResizeBatch_32f_C3R_Advanced_Ctx (batch of 2, NPPI_INTER_LINEAR)
+      vs FKL convention:          max 169.453, mean 52.9723, fraction>1e-3 1
+      vs pixel-centre convention: max 1.52588e-05, mean 2.34604e-06, fraction>1e-3 0
+  [8UC3] FKL (cvGS::resize, 8UC3 input, float output)
+      vs FKL convention:          max 0, mean 0
+      vs pixel-centre convention: max 169.75, mean 52.9668
+  [8UC3] cv::cuda::resize (INTER_LINEAR, 8UC3 input and output)
+      vs FKL convention:          max 0, mean 0
+      vs pixel-centre convention: max 169.75, mean 52.9668
+  [8UC3] nppiResize_8u_C3R_Ctx (NPPI_INTER_LINEAR, 8UC3 input and output)
+      vs FKL convention:          max 170, mean 52.9706
+      vs pixel-centre convention: max 0.5, mean 0.252546
+33x17 -> 67x31 (odd sizes, up)
+  reference FKL vs reference pixel centre: max 80.9127, fraction > 1e-3 0.998074
+  FKL (cvGS::resize, INTER_LINEAR)
+      vs FKL convention:          max 0.000289917, mean 3.4324e-05, fraction>1e-3 0
+      vs pixel-centre convention: max 80.9128, mean 21.4354, fraction>1e-3 0.998074
+  cv::cuda::resize (INTER_LINEAR)
+      vs FKL convention:          max 0.000289917, mean 3.43346e-05, fraction>1e-3 0
+      vs pixel-centre convention: max 80.9128, mean 21.4354, fraction>1e-3 0.998074
+  nppiResize_32f_C3R_Ctx (NPPI_INTER_LINEAR)
+      vs FKL convention:          max 80.9127, mean 21.4354, fraction>1e-3 0.998074
+      vs pixel-centre convention: max 0.000286102, mean 3.26614e-05, fraction>1e-3 0
+  nppiResizeBatch_32f_C3R_Advanced_Ctx (batch of 2, NPPI_INTER_LINEAR)
+      vs FKL convention:          max 80.9127, mean 21.4354, fraction>1e-3 0.998074
+      vs pixel-centre convention: max 0.000286102, mean 3.26614e-05, fraction>1e-3 0
+  [8UC3] FKL (cvGS::resize, 8UC3 input, float output)
+      vs FKL convention:          max 0.000305176, mean 3.44226e-05
+      vs pixel-centre convention: max 80.8917, mean 21.4362
+  [8UC3] cv::cuda::resize (INTER_LINEAR, 8UC3 input and output)
+      vs FKL convention:          max 0.499756, mean 0.246734
+      vs pixel-centre convention: max 80.533, mean 21.4359
+  [8UC3] nppiResize_8u_C3R_Ctx (NPPI_INTER_LINEAR, 8UC3 input and output)
+      vs FKL convention:          max 81.3587, mean 21.4393
+      vs pixel-centre convention: max 0.49976, mean 0.247528
+3840x2160 -> 640x360 (down, x6)
+  reference FKL vs reference pixel centre: max 245.156, fraction > 1e-3 0.999994
+  FKL (cvGS::resize, INTER_LINEAR)
+      vs FKL convention:          max 0, mean 0, fraction>1e-3 0
+      vs pixel-centre convention: max 245.156, mean 69.021, fraction>1e-3 0.999994
+  cv::cuda::resize (INTER_LINEAR)
+      vs FKL convention:          max 0, mean 0, fraction>1e-3 0
+      vs pixel-centre convention: max 245.156, mean 69.021, fraction>1e-3 0.999994
+  nppiResize_32f_C3R_Ctx (NPPI_INTER_LINEAR)
+      vs FKL convention:          max 245.156, mean 69.021, fraction>1e-3 0.999994
+      vs pixel-centre convention: max 1.52588e-05, mean 2.38501e-06, fraction>1e-3 0
+  nppiResizeBatch_32f_C3R_Advanced_Ctx (batch of 2, NPPI_INTER_LINEAR)
+      vs FKL convention:          max 245.156, mean 69.021, fraction>1e-3 0.999994
+      vs pixel-centre convention: max 1.52588e-05, mean 2.38501e-06, fraction>1e-3 0
+  [8UC3] FKL (cvGS::resize, 8UC3 input, float output)
+      vs FKL convention:          max 0, mean 0
+      vs pixel-centre convention: max 244.75, mean 69.0205
+  [8UC3] cv::cuda::resize (INTER_LINEAR, 8UC3 input and output)
+      vs FKL convention:          max 0, mean 0
+      vs pixel-centre convention: max 244.75, mean 69.0205
+  [8UC3] nppiResize_8u_C3R_Ctx (NPPI_INTER_LINEAR, 8UC3 input and output)
+      vs FKL convention:          max 245, mean 69.0201
+      vs pixel-centre convention: max 0.5, mean 0.249591
