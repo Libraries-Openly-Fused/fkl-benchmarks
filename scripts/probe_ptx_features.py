@@ -120,7 +120,7 @@ def main():
     args = ap.parse_args()
     ptxas = shutil.which("ptxas")
     if not ptxas:
-        sys.exit("ptxas not found: source toolchains/env-cuda13.4.sh")
+        sys.exit("ptxas not found: source scripts/env-cuda13.4.sh")
     version = subprocess.run([ptxas, "--version"], capture_output=True, text=True).stdout.strip().splitlines()[-2:]
     os.makedirs(args.out_dir, exist_ok=True)
     results = {}

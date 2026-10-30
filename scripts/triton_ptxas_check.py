@@ -1,7 +1,7 @@
 # Compiles a trivial Triton kernel with the ptxas override of scripts/triton_env.sh and prints the toolkit string stamped
 # in the cubin. Run it on each GPU:  CUDA_DEVICE_ORDER=PCI_BUS_ID CUDA_VISIBLE_DEVICES=1 python scripts/triton_ptxas_check.py
 import os, re, subprocess, sys, tempfile
-C = "/home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin"
+C = os.environ["FKLB_CUDA_HOME"] + "/bin"   # source scripts/env-cuda13.4.sh first
 os.environ["TRITON_PTXAS_PATH"] = f"{C}/ptxas"
 os.environ["TRITON_PTXAS_BLACKWELL_PATH"] = f"{C}/ptxas"
 os.environ["TRITON_CUOBJDUMP_PATH"] = f"{C}/cuobjdump"

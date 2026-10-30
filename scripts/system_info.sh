@@ -2,14 +2,14 @@
 # Dumps what an experiment ran on into results/<system>/system-info/ (committed with the CSVs):
 #   scripts/system_info.sh <system> <nvidia-smi index>      e.g.  scripts/system_info.sh rtx4090 1
 #   scripts/system_info.sh rtx5050 0
-# nvidia-smi indices are PCI-bus ordered (CUDA_DEVICE_ORDER=PCI_BUS_ID is forced here). Source toolchains/env-cuda13.4.sh first.
+# nvidia-smi indices are PCI-bus ordered (CUDA_DEVICE_ORDER=PCI_BUS_ID is forced here). Source scripts/env-cuda13.4.sh first.
 set -u
 SYSTEM=${1:?system name, e.g. rtx4090}; IDX=${2:?nvidia-smi index of the GPU}
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 OUT=$ROOT/results/$SYSTEM/system-info
 mkdir -p "$OUT"
 export CUDA_DEVICE_ORDER=PCI_BUS_ID CUDA_VISIBLE_DEVICES=$IDX
-command -v nvcc >/dev/null || { echo "nvcc not found: source toolchains/env-cuda13.4.sh"; exit 1; }
+command -v nvcc >/dev/null || { echo "nvcc not found: source scripts/env-cuda13.4.sh"; exit 1; }
 
 {
   echo "# system-info of $SYSTEM, $(date -Iseconds)"

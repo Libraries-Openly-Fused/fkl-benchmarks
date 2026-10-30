@@ -29,7 +29,7 @@ kernels with the same instructions compare equal wherever they sit; with --renam
 by first appearance, so that two kernels that only differ in the register allocation compare equal. Constant-bank operands
 (c[0x0][0x...]) are kept: a parameter at another offset is a real difference and the report says so.
 
-Run it with the tools of CUDA 13.4 in PATH (source toolchains/env-cuda13.4.sh): the tool records which cuobjdump it used.
+Run it with the tools of CUDA 13.4 in PATH (source scripts/env-cuda13.4.sh): the tool records which cuobjdump it used.
 """
 import argparse
 import collections

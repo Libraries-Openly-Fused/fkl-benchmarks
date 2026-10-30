@@ -17,14 +17,14 @@ if(FKLB_ENABLE_CUDA)
                 message(FATAL_ERROR
                     "nvcc ${CMAKE_CUDA_COMPILER_VERSION} (${CMAKE_CUDA_COMPILER}) is not CUDA ${FKLB_REQUIRED_NVCC}. "
                     "Use a preset (it pins the 13.4.3 nvcc) or -DCMAKE_CUDA_COMPILER=<path>/nvcc, "
-                    "and source toolchains/env-cuda13.4.sh. -DFKLB_REQUIRED_NVCC= disables this check.")
+                    "and source scripts/env-cuda13.4.sh. -DFKLB_REQUIRED_NVCC= disables this check.")
             endif()
         endif()
         find_package(CUDAToolkit REQUIRED)
         set(FKLB_HAVE_cu ON)
         message(STATUS "fkl-benchmarks: CUDA ${CMAKE_CUDA_COMPILER_VERSION} (${CMAKE_CUDA_COMPILER}), architectures ${FKLB_CUDA_ARCH}")
     else()
-        message(FATAL_ERROR "No CUDA compiler found. Source toolchains/env-cuda13.4.sh and use a preset (they pin the "
+        message(FATAL_ERROR "No CUDA compiler found. Source scripts/env-cuda13.4.sh and use a preset (they pin the "
                             "CUDA 13.4 nvcc through FKLB_CUDA_HOME), or configure with -DFKLB_ENABLE_CUDA=OFF for a "
                             "build without the cu back-end.")
     endif()
