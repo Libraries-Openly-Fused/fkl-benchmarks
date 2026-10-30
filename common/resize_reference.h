@@ -16,11 +16,12 @@
 // reference that has no vectorisation, no fixed point and no fusion. Header only, host code, no library dependency,
 // so it compiles with nvcc, amdclang++ and the host compiler.
 //
-// The two libraries do not sample at the same positions, so there are two references:
-//   ResizeSampling::FKL           the destination pixel x reads the source position x * (src / dst)
-//                                 (fused_kernel/algorithms/image_processing/resize.h, exec_resize, in fb9ac3a)
-//   ResizeSampling::PIXEL_CENTRE  the centre of the destination pixel reads (x + 0.5) * (src / dst) - 0.5, as cv::resize
-//                                 and cv::cuda::resize (INTER_LINEAR on float images) do
+// The libraries do not all sample at the same positions, so there are two references (the names are those of FKL's
+// ResizeSampling, fused_kernel/algorithms/image_processing/resize.h):
+//   ResizeSampling::ASYMMETRIC  the destination pixel x reads the source position x * (src / dst). What FKL's Resize does
+//                               (exec_resize, up to fb9ac3a and by default after) and what cv::cuda::resize (INTER_LINEAR) does
+//   ResizeSampling::HALF_PIXEL  the centre of the destination pixel reads (x + 0.5) * (src / dst) - 0.5. What cv::resize
+//                               (INTER_LINEAR on float images) and NPP (nppiResize, nppiResizeBatch) do
 // Both clamp a position before the first pixel to the first pixel, and the second neighbour to the last pixel. They give
 // the same image only when the input is constant.
 
@@ -32,7 +33,7 @@
 
 namespace fklb {
 
-enum class ResizeSampling { FKL, PIXEL_CENTRE };
+enum class ResizeSampling { ASYMMETRIC, HALF_PIXEL };
 
 // src: srcW x srcH pixels of `channels` interleaved values of type T, rows srcPitchBytes apart.
 // dst: dstW * dstH * channels doubles, interleaved, rows dstW * channels apart.
@@ -46,7 +47,7 @@ void resizeBilinear(const T* src, const size_t srcPitchBytes, const int srcW, co
         return static_cast<double>(row[static_cast<size_t>(x) * channels + c]);
     };
     for (int y = 0; y < dstH; ++y) {
-        double fy = sampling == ResizeSampling::FKL ? y * scaleY : (y + 0.5) * scaleY - 0.5;
+        double fy = sampling == ResizeSampling::ASYMMETRIC ? y * scaleY : (y + 0.5) * scaleY - 0.5;
         fy = std::max(fy, 0.0);
         int y1 = static_cast<int>(std::floor(fy));
         double ay = fy - y1;
@@ -56,7 +57,7 @@ void resizeBilinear(const T* src, const size_t srcPitchBytes, const int srcW, co
         }
         const int y2 = std::min(y1 + 1, srcH - 1);
         for (int x = 0; x < dstW; ++x) {
-            double fx = sampling == ResizeSampling::FKL ? x * scaleX : (x + 0.5) * scaleX - 0.5;
+            double fx = sampling == ResizeSampling::ASYMMETRIC ? x * scaleX : (x + 0.5) * scaleX - 0.5;
             fx = std::max(fx, 0.0);
             int x1 = static_cast<int>(std::floor(fx));
             double ax = fx - x1;
