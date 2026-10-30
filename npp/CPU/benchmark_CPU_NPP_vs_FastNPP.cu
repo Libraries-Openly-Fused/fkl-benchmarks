@@ -13,10 +13,10 @@
    limitations under the License. */
 
 #include <tests/testsNppCommon.h>
-#include <benchmarks/nppbenchmark.h>
+#include <npp/nppbenchmark.h>
 #include <fast_npp.h>
 
-#include "tests/main.h"
+#include <common/main.h>
 
 #ifdef ENABLE_BENCHMARK
 constexpr char VARIABLE_DIMENSION[]{ "Batch size" };

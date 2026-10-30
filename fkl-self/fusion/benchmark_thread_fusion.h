@@ -13,10 +13,10 @@
    See the License for the specific language governing permissions and
    limitations under the License. */
 
-#include <tests/main.h>
+#include <common/main.h>
 
-#include <benchmarks/fkBenchmarksCommon.h>
-#include <benchmarks/twoExecutionsBenchmark.h>
+#include <fkl-self/fkBenchmarksCommon.h>
+#include <fkl-self/twoExecutionsBenchmark.h>
 
 #include <fused_kernel/core/core.h>
 #include <fused_kernel/algorithms/image_processing/saturate.h>
@@ -25,7 +25,7 @@
 
 #include <iostream>
 #include <fused_kernel/fused_kernel.h>
-#include "tests/nvtx.h"
+#include "common/nvtx.h"
 
 constexpr size_t NUM_EXPERIMENTS = 5;
 constexpr size_t FIRST_VALUE = 1024;

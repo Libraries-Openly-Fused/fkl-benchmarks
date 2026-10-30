@@ -1,0 +1,16 @@
+# cvGPUSpeedup against OpenCV-CUDA. CUDA only: the baselines are OpenCV-CUDA calls.
+# Every benchmark is built for the cu back-end only (BACKENDS cu); hip and cpp never see this code.
+
+fklb_add_benchmark(benchmark_CPU_OpenCV_vs_cvGS
+    BACKENDS cu LIBS cvgs opencv
+    SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/benchmark_CPU_OpenCV_vs_cvGS.cu")
+
+fklb_add_benchmark(benchmark_CPUandGPU_cvGS_vs_fk
+    BACKENDS cu LIBS cvgs opencv
+    SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/benchmark_CPUandGPU_cvGS_vs_fk.cu")
+
+fklb_add_benchmark(benchmark_image_resolution_MAD_loop
+    BACKENDS cu LIBS cvgs opencv
+    SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/benchmark_image_resolution_MAD_loop.cu")
+
+add_subdirectory(verticalfusion)

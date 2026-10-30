@@ -13,7 +13,7 @@
    See the License for the specific language governing permissions and
    limitations under the License. */
 
-#include <tests/main.h>
+#include <common/main.h>
 
 #include <nppi_geometry_transforms.h>
 
@@ -31,7 +31,7 @@
 #include <vector>
  
 #include <tests/testsNppCommon.h>
-#include <benchmarks/nppbenchmark.h>
+#include <npp/nppbenchmark.h>
 #include <include/fast_npp.h>
 
 constexpr char VARIABLE_DIMENSION[]{"Batch size"};

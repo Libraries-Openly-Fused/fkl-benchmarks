@@ -14,7 +14,7 @@
    limitations under the License. */
 
  
-#include <tests/main.h>
+#include <common/main.h>
 int main(int argc, char **argv) {
  return launch();
 }

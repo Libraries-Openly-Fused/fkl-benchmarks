@@ -18,7 +18,7 @@
 #include <sstream>
 #include <fstream>
 
-#include <benchmarks/fkBenchmarksCommon.h>
+#include <fkl-self/fkBenchmarksCommon.h>
 
 bool warmup{false};
 

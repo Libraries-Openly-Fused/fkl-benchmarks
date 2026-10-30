@@ -1,0 +1,41 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": { "major": 3, "minor": 28, "patch": 0 },
+  "configurePresets": [
+    {
+      "name": "cuda13.4",
+      "description": "Pins the CUDA 13.4 nvcc: FKLB_CUDA_HOME is exported by toolchains/env-cuda13.4.sh (source it first). Never falls back to the nvcc of PATH or /usr/local/cuda.",
+      "hidden": true,
+      "generator": "Unix Makefiles",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_CUDA_COMPILER": "$env{FKLB_CUDA_HOME}/bin/nvcc",
+        "FKLB_REQUIRED_NVCC": "13.4"
+      }
+    },
+    {
+      "name": "rtx4090",
+      "displayName": "RTX 4090 (sm_89), CUDA 13.4",
+      "inherits": "cuda13.4",
+      "cacheVariables": { "FKLB_CUDA_ARCH": "89" }
+    },
+    {
+      "name": "rtx4090-fmad-off",
+      "displayName": "RTX 4090 (sm_89), CUDA 13.4, -fmad=false (E6)",
+      "inherits": "cuda13.4",
+      "cacheVariables": { "FKLB_CUDA_ARCH": "89", "FKLB_FMAD_OFF": "ON" }
+    },
+    {
+      "name": "rtx5050",
+      "displayName": "RTX 5050 (sm_120), CUDA 13.4: flash attention (E16) only",
+      "inherits": "cuda13.4",
+      "cacheVariables": { "FKLB_CUDA_ARCH": "120", "FKLB_BUILD_OPENCV_CUDA": "OFF", "FKLB_BUILD_NPP": "OFF" }
+    }
+  ],
+  "buildPresets": [
+    { "name": "rtx4090", "configurePreset": "rtx4090" },
+    { "name": "rtx4090-fmad-off", "configurePreset": "rtx4090-fmad-off" },
+    { "name": "rtx5050", "configurePreset": "rtx5050" }
+  ]
+}

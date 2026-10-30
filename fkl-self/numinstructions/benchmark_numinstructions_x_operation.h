@@ -12,9 +12,9 @@
    See the License for the specific language governing permissions and
    limitations under the License. */
 
-#include <tests/main.h>
-#include <benchmarks/fkBenchmarksCommon.h>
-#include <benchmarks/twoExecutionsBenchmark.h>
+#include <common/main.h>
+#include <fkl-self/fkBenchmarksCommon.h>
+#include <fkl-self/twoExecutionsBenchmark.h>
 
 #include <fused_kernel/fused_kernel.h>
 #include <fused_kernel/algorithms/basic_ops/arithmetic.h>

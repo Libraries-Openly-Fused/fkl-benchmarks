@@ -12,16 +12,16 @@
    See the License for the specific language governing permissions and
    limitations under the License. */
 
-#include "tests/main.h"
+#include <common/main.h>
 
-#include "tests/testsCommon.cuh"
+#include <opencv-cuda/testsCommon.cuh>
 #include <fused_kernel/algorithms/basic_ops/static_loop.h>
 #include <cvGPUSpeedup.cuh>
 #include <opencv2/cudaimgproc.hpp>
 
 #ifdef ENABLE_BENCHMARK
 #include "launcher.h"
-#include <benchmarks/verticalfusion/vertical_fusion_kernel_instances/mul_add/realBatch.h>
+#include <opencv-cuda/verticalfusion/vertical_fusion_kernel_instances/mul_add/realBatch.h>
 constexpr char VARIABLE_DIMENSION[]{ "Number of Operations" };
 
 constexpr std::array<size_t, NUM_EXPERIMENTS> batchValues = arrayIndexSecuence<FIRST_VALUE, INCREMENT, NUM_EXPERIMENTS>;

@@ -18,7 +18,7 @@
 #include <sstream>
 #include <fstream>
 
-#include <benchmarks/fkBenchmarksCommon.h>
+#include <fkl-self/fkBenchmarksCommon.h>
 
 template <size_t ITERATIONS>
 float computeVariance(const float& mean, const std::array<float, ITERATIONS>& times) {

@@ -12,9 +12,9 @@
    See the License for the specific language governing permissions and
    limitations under the License. */
 
-#include "tests/main.h"
+#include <common/main.h>
 
-#include "tests/testsCommon.cuh"
+#include <opencv-cuda/testsCommon.cuh>
 #include <cvGPUSpeedup.cuh>
 #include <fused_kernel/algorithms/basic_ops/static_loop.h>
 #include <opencv2/cudaimgproc.hpp>

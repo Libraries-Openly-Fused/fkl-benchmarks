@@ -14,10 +14,10 @@
 
 #ifdef ENABLE_BENCHMARK
 
-#include "tests/main.h"
+#include <common/main.h>
 
-#include "tests/testsCommon.cuh"
-#include "tests/nvtx.h"
+#include <opencv-cuda/testsCommon.cuh>
+#include <common/nvtx.h>
 
 #include <cvGPUSpeedup.cuh>
 #include <chrono>
