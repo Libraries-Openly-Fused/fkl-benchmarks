@@ -78,9 +78,10 @@ def phase_times(path):
     out = {}
     try:
         for r in csv.reader(open(path), skipinitialspace=True):
-            if len(r) == 8 and r[6].replace(".", "", 1).isdigit():
+            metric = r[6].strip() if len(r) == 8 else ""
+            if metric.replace(".", "", 1).isdigit() and r[7].strip() == "ms":
                 name = r[1].strip().split(" ")[0]
-                out[name] = out.get(name, 0.0) + float(r[6]) / 1000.0     # ms to s
+                out[name] = out.get(name, 0.0) + float(metric) / 1000.0     # ms to s
     except OSError:
         pass
     return out
@@ -104,6 +105,10 @@ def main():
     ap.add_argument("--out", required=True)
     ap.add_argument("--work", default=os.path.join(ROOT, "build", "e3"))
     ap.add_argument("--arch", default="sm_89")
+    ap.add_argument("--include", help="FKL include directory to compile against (default: external/fkl/include); for the older trees use variant L")
+    ap.add_argument("--style", default="new", help="API style of variant L: old (1f33224) or new")
+    ap.add_argument("--tree", default="current", help="label of the FKL tree in the CSV (current, 07b2cb3 (fold), 07b2cb3^ (pre-fold), 1f33224)")
+    ap.add_argument("--csv", default="e3_compile.csv", help="name of the CSV in --out")
     args = ap.parse_args()
     os.makedirs(args.out, exist_ok=True)
     os.makedirs(args.work, exist_ok=True)
@@ -111,30 +116,33 @@ def main():
     if not cuda_home:
         sys.exit("source scripts/env-cuda13.4.sh first (FKLB_CUDA_HOME)")
     nvcc = os.path.join(cuda_home, "bin", "nvcc")
-    include = os.path.join(ROOT, "external", "fkl", "include")
+    include = args.include or os.path.join(ROOT, "external", "fkl", "include")
     gen = os.path.join(ROOT, "fkl-self", "compiletime", "gen_chain.py")
     notes = (f"one core ({args.core}), nvcc --threads 1, -O3 -DNDEBUG -std=c++17 {args.arch} +PTX -ftemplate-depth=1000 -lineinfo; GNU time for the peak RSS; "
              f"timeout {args.timeout} s per compile; the programs are not executed; fkl include {include}")
-    cols = ["variant", "n", "rep", "status", "why", "cuda_wall_s", "cuda_user_s", "cuda_sys_s", "cuda_peak_rss_mb", "phase_cudafe_s", "phase_cicc_s", "phase_ptxas_s",
+    cols = ["tree", "variant", "n", "rep", "status", "why", "cuda_wall_s", "cuda_user_s", "cuda_sys_s", "cuda_peak_rss_mb", "phase_cudafe_s", "phase_cicc_s", "phase_ptxas_s",
             "phase_gcc_s", "phase_other_s", "registers", "spill_stores", "spill_loads", "stack_bytes", "cmem0_bytes", "sass_instructions", "text_bytes", "cubin_bytes",
             "host_status", "host_wall_s", "host_peak_rss_mb"]
-    with CsvWriter(os.path.join(args.out, "e3_compile.csv"), "E3 compile-time sweep", cols, notes=notes) as csv:
+    with CsvWriter(os.path.join(args.out, args.csv), "E3 compile-time sweep", cols, notes=notes) as csv:
         for variant in args.variants.split(","):
             stop = False
             for n in (int(x) for x in args.ns.split(",")):
                 if stop:
                     break
-                src = os.path.join(args.work, f"{variant}_{n}.cu")
-                binary = os.path.join(args.work, f"{variant}_{n}")
-                subprocess.run([sys.executable, gen, variant, str(n), src], check=True)
+                label = f"{args.tree}_{variant}_{n}".replace("^", "pre").replace("/", "_")
+                src = os.path.join(args.work, label + ".cu")
+                binary = os.path.join(args.work, label)
+                subprocess.run([sys.executable, gen, variant, str(n), src] + ([args.style] if variant == "L" else []), check=True)
                 rep = 0
                 while rep < 3:
-                    timefile = os.path.join(args.work, f"{variant}_{n}.time.csv")
+                    timefile = os.path.join(args.work, label + ".time.csv")
                     cmd = [nvcc, "-std=c++17", "-O3", "-DNDEBUG", f"--generate-code=arch=compute_{args.arch[3:]},code=[compute_{args.arch[3:]},{args.arch}]", "--threads", "1",
                            "-ftemplate-depth=1000", "-lineinfo", "--resource-usage", "--time", timefile, "-I", include, src, "-o", binary]
+                    if os.path.exists(timefile):
+                        os.remove(timefile)      # nvcc --time appends to an existing file
                     status, wall, user, sys_, rss, err = run_measured(cmd, args.core, args.timeout)
                     row = dict.fromkeys(cols, "")
-                    row.update(variant=variant, n=n, rep=rep, status=status, cuda_wall_s=f"{wall:.3f}", cuda_user_s=f"{user:.3f}", cuda_sys_s=f"{sys_:.3f}",
+                    row.update(tree=args.tree, variant=variant, n=n, rep=rep, status=status, cuda_wall_s=f"{wall:.3f}", cuda_user_s=f"{user:.3f}", cuda_sys_s=f"{sys_:.3f}",
                                cuda_peak_rss_mb=f"{rss:.0f}")
                     if status == "ok":
                         ph = phase_times(timefile)
@@ -159,7 +167,7 @@ def main():
                         subprocess.run(["rm", "-rf", tmp])
                     else:
                         row["why"] = first_error(err)
-                    if args.host and rep == 0:
+                    if args.host and rep == 0 and variant != "L":
                         hcmd = ["g++", "-std=c++17", "-O3", "-DNDEBUG", "-DE3_CPU", "-march=native", "-mtune=native", "-ftemplate-depth=1000", "-x", "c++", "-I", include, src,
                                 "-o", binary + "_cpu"]
                         hstatus, hwall, _, _, hrss, herr = run_measured(hcmd, args.core, args.timeout)
