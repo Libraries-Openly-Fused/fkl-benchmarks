@@ -76,10 +76,18 @@ echo "binaries: $BUILD/bin, built from fkl-benchmarks $BUILT"
 
 # GPU processes of the desktop session (the 4090 drives the display) do not count; anything else does
 DESKTOP='/usr/bin/(ptyxis|nautilus|gnome-shell|Xwayland|Xorg|gnome-terminal|firefox)'
+# True when a non-desktop process uses the GPU, or when the utilization does not settle at <= 10 % in three consecutive
+# one-second samples within 60 s (the utilization is averaged over the last second, so it is still high right after the
+# previous experiment ended)
 gpu_busy() {
   nvidia-smi -i "$CUDA_VISIBLE_DEVICES" --query-compute-apps=process_name --format=csv,noheader | grep -v -E "$DESKTOP" | grep -q . && return 0
-  local u; for _ in 1 2 3; do u=$(nvidia-smi -i "$CUDA_VISIBLE_DEVICES" --query-gpu=utilization.gpu --format=csv,noheader,nounits); [ "$u" -gt 10 ] && return 0; sleep 1; done
-  return 1
+  local u idle=0
+  for _ in $(seq 1 60); do
+    u=$(nvidia-smi -i "$CUDA_VISIBLE_DEVICES" --query-gpu=utilization.gpu --format=csv,noheader,nounits)
+    if [ "$u" -le 10 ]; then idle=$((idle + 1)); [ $idle -ge 3 ] && return 1; else idle=0; fi
+    sleep 1
+  done
+  return 0
 }
 
 mkdir -p "$OUT"
