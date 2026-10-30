@@ -102,13 +102,29 @@ def main():
 #include <fused_kernel/core/data/ptr_utils.h>
 #include <fused_kernel/core/execution_model/executors.h>
 
-int main() {{
-#ifdef E3_CPU
+#ifdef E3_CHECK
+// the input of the check: a deterministic pattern, the same on the CPU and on the GPU back-ends
+static float pattern(const float&, const int x, const int y) {{ return 0.25f * x + 0.5f * y; }}
+static fk::float3 pattern(const fk::float3&, const int x, const int y) {{
+    return fk::make_<fk::float3>(0.25f * x + 0.5f * y, 0.125f * x + 0.0625f * y + 1.f, 0.5f * x - 0.25f * y);
+}}
+static void writeOne(std::FILE* f, const float& v) {{ std::fwrite(&v, sizeof(float), 1, f); }}
+static void writeOne(std::FILE* f, const fk::float3& v) {{ const float a[3] = {{v.x, v.y, v.z}}; std::fwrite(a, sizeof(float), 3, f); }}
+#endif
+
+int main(int argc, char** argv) {{
+#if defined(E3_CPU)
     constexpr fk::ParArch PAR = fk::ParArch::CPU;
     constexpr int W = 64, H = 64;
     fk::Stream_<PAR> stream;
     fk::Ptr2D<{rd}> in(W, H, 0, fk::MemType::Host);
     fk::Ptr2D<{wr}> out(W, H, 0, fk::MemType::Host);
+#elif defined(E3_CHECK)
+    constexpr fk::ParArch PAR = fk::ParArch::GPU_NVIDIA;
+    constexpr int W = 64, H = 64;
+    fk::Stream_<PAR> stream;
+    fk::Ptr2D<{rd}> in(W, H);
+    fk::Ptr2D<{wr}> out(W, H);
 #else
     constexpr fk::ParArch PAR = fk::ParArch::GPU_NVIDIA;
     constexpr int W = 1920, H = 1080;
@@ -116,6 +132,13 @@ int main() {{
     fk::Ptr2D<{rd}> in(W, H);
     fk::Ptr2D<{wr}> out(W, H);
     cudaMemset(in.ptr().data, 0, in.sizeInBytes());
+#endif
+#ifdef E3_CHECK
+    for (int y = 0; y < H; ++y)
+        for (int x = 0; x < W; ++x) in.at(x, y) = pattern({rd}{{}}, x, y);
+#if !defined(E3_CPU)
+    in.upload(stream);
+#endif
 #endif
     const auto read = fk::PerThreadRead<fk::ND::_2D, {rd}>::build(in);
     const auto write = fk::PerThreadWrite<fk::ND::_2D, {wr}>::build(out);
@@ -125,6 +148,19 @@ int main() {{
             write);
     }};
     run();
+#ifdef E3_CHECK
+#if !defined(E3_CPU)
+    out.download(stream);
+#endif
+    stream.sync();
+    std::FILE* f = std::fopen(argc > 1 ? argv[1] : "e3_check_output.bin", "wb");
+    for (int y = 0; y < H; ++y)
+        for (int x = 0; x < W; ++x) writeOne(f, out.at(x, y));
+    std::fclose(f);
+    std::printf("variant {variant} N {n}: check output written (%d x %d)\\n", W, H);
+    return 0;
+#else
+    (void)argc; (void)argv;
     stream.sync();
     const auto t0 = std::chrono::steady_clock::now();
     for (int i = 0; i < 20; ++i) run();
@@ -132,6 +168,7 @@ int main() {{
     const auto t1 = std::chrono::steady_clock::now();
     std::printf("variant {variant} N {n}: %.6f ms per launch\\n", std::chrono::duration<double, std::milli>(t1 - t0).count() / 20);
     return 0;
+#endif
 }}
 '''
     open(out, "w").write(src)
