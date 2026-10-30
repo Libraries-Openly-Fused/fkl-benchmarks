@@ -2,9 +2,15 @@
 # configure_file() does not touch the header when the content is the same, so nothing is rebuilt needlessly.
 include("${FKLB_BIN}/generated/fklb_build_info_vars.cmake")
 
+# "-dirty" means: a tracked file the binaries are built from has uncommitted changes. For this repository that is the sources
+# (results/, logs and scripts change while experiments run and do not affect the binaries); for a submodule, any tracked file.
 function(fklb_git_describe OUT DIR)
+    set(PATHS "")
+    if("${DIR}" STREQUAL "${FKLB_SRC}")
+        set(PATHS -- common cmake fkl-self opencv-cuda npp external CMakeLists.txt CMakePresets.json)
+    endif()
     execute_process(COMMAND git -C "${DIR}" rev-parse HEAD OUTPUT_VARIABLE H OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET)
-    execute_process(COMMAND git -C "${DIR}" status --porcelain --untracked-files=no OUTPUT_VARIABLE D
+    execute_process(COMMAND git -C "${DIR}" status --porcelain --untracked-files=no ${PATHS} OUTPUT_VARIABLE D
                     OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET)
     if("${H}" STREQUAL "")
         set(H "unknown")
