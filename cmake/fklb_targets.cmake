@@ -83,6 +83,7 @@ function(fklb_add_benchmark NAME)
         endif()
 
         add_executable(${TGT} ${SRCS})
+        add_dependencies(${TGT} fklb_build_info)
         set_target_properties(${TGT} PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUIRED YES CXX_EXTENSIONS NO)
         target_link_libraries(${TGT} PRIVATE fklb_common)
         target_include_directories(${TGT} PRIVATE ${HDR_DIR} ${ARG_INCLUDE_DIRS})
