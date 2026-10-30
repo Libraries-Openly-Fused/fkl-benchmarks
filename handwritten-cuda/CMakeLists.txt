@@ -20,3 +20,12 @@ fklb_add_benchmark(e1_hf_batch
     BACKENDS cu LIBS fkl
     SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/e1_hf_batch.cu"
     INCLUDE_DIRS "${CMAKE_CURRENT_BINARY_DIR}")
+
+# E1c: the batched pre-processing pipeline of E4a (crop, resize, reorder, mul, sub, div, planar split); batch sizes within the paper's 10 .. 300
+set(E1_PP_BATCHES "10, 50, 100, 200, 300" CACHE STRING "E1c: batch sizes, comma separated")
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/e1_pp_batches.h.in" "${CMAKE_CURRENT_BINARY_DIR}/e1_pp_batches.h" @ONLY)
+
+fklb_add_benchmark(e1_preproc
+    BACKENDS cu LIBS fkl
+    SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/e1_preproc.cu"
+    INCLUDE_DIRS "${CMAKE_CURRENT_BINARY_DIR}")

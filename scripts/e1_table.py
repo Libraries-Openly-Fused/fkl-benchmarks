@@ -16,7 +16,7 @@
 
   e1_table.py probe-input --ncu ncu.csv > probe_input.tsv        kernel / threads / shared memory lines for build/tools/occupancy_probe
   e1_table.py cubin --binary <e1 binary> --out file.cubin         the sm_89 cubin of the binary, for occupancy_probe
-  e1_table.py table --experiment vf|hf --binary <e1 binary> --timing <e1 csv> --ncu ncu.csv --occupancy probe_output.tsv \\
+  e1_table.py table --experiment vf|hf|pp --binary <e1 binary> --timing <e1 csv> --ncu ncu.csv --occupancy probe_output.tsv \\
                     --out table.csv [--arch sm_89]
 
 Columns (one row per launched kernel):
@@ -146,7 +146,7 @@ def main():
     c.set_defaults(fn=cmd_cubin)
     p = sub.add_parser("probe-input"); p.add_argument("--ncu", required=True); p.set_defaults(fn=cmd_probe_input)
     t = sub.add_parser("table")
-    t.add_argument("--experiment", choices=["vf", "hf"], required=True)
+    t.add_argument("--experiment", choices=["vf", "hf", "pp"], required=True)
     t.add_argument("--binary", required=True); t.add_argument("--timing", required=True); t.add_argument("--ncu", required=True)
     t.add_argument("--occupancy"); t.add_argument("--out", required=True); t.add_argument("--arch", default="sm_89")
     t.set_defaults(fn=cmd_table)
@@ -187,19 +187,17 @@ def cmd_table(args):
         else:
             demangled = subprocess.run(["c++filt", name], capture_output=True, text=True).stdout
             point = k["grid"][2] if len(k["grid"]) > 2 else 1
-            if "handBatchGeneric" in name:
-                version = "hand_generic"
-            elif "handBatch" in name:
-                version = "hand"
-            else:
+            if "launchTransformDPP" in name:
                 version = "fkl_tf" if "(fk::TF)1" in demangled else "fkl"
+            else:
+                version = "hand_generic" if "Generic" in name else "hand"
         tr = timing.get(point, {})
         threads = 1
         for b in k["block"]:
             threads *= b
         api = occupancy.get(name)
         rows.append({
-            "experiment": "E1a" if args.experiment == "vf" else "E1b", "point": point, "version": version,
+            "experiment": {"vf": "E1a", "hf": "E1b", "pp": "E1c"}[args.experiment], "point": point, "version": version,
             "gpu_mean_ms": tr.get(f"{version}_mean_ms", ""), "gpu_min_ms": tr.get(f"{version}_min_ms", ""),
             "sass_instructions": instr,
             "FFMA": hist.get("FFMA", 0), "FMUL": hist.get("FMUL", 0), "FADD": hist.get("FADD", 0), "LDG": hist.get("LDG", 0), "STG": hist.get("STG", 0),

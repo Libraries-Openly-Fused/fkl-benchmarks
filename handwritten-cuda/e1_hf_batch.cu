@@ -25,8 +25,6 @@
 //                an fk::RawPtr<_2D, uchar>), the kernel reading the pitch and the bounds from that descriptor, as a kernel that accepts crops of
 //                different sizes must; the parameter block is then about as large as FKL's (the kernel itself still the same instructions)
 //   fkl          FKL, TransformDPP with a BatchRead of the crops and TensorWrite, thread fusion disabled
-//   fkl_tf       the same with thread fusion enabled (the crops start at (i, i), so their pointers are not aligned to the vector
-//                types and FKL falls back to the non thread fused path: this version measures that the fallback costs nothing)
 //   iterated     FKL, one kernel per crop (the baseline of the paper's horizontal-fusion figure); timed for reference
 // Every FKL result and the iterated one are compared bit by bit with hand_batch before anything is timed.
 //
@@ -135,7 +133,6 @@ bool runPoint(cudaStream_t cs, fk::Stream_<fk::ParArch::GPU_NVIDIA>& fkStream, f
     auto launchHand = [&] { handBatch<BATCH><<<grid, block, 0, cs>>>(cropPointers, inPitch, dTensor.ptr().data, pitch, planePitch, ALPHA, SUB, DIV); };
     auto launchHandGeneric = [&] { handBatchGeneric<BATCH><<<grid, block, 0, cs>>>(cropDescriptors, dTensor.ptr().data, pitch, planePitch, ALPHA, SUB, DIV); };
     auto launchFkl = [&] { fk::executeOperations<fk::TransformDPP<fk::ParArch::GPU_NVIDIA, fk::TF::DISABLED>>(fkStream, read, saturate, mul, sub, div, write); };
-    auto launchFklTf = [&] { fk::executeOperations<fk::TransformDPP<fk::ParArch::GPU_NVIDIA, fk::TF::ENABLED>>(fkStream, read, saturate, mul, sub, div, write); };
     auto launchIterated = [&] {
         for (int i = 0; i < BATCH; ++i) {
             fk::executeOperations<fk::TransformDPP<fk::ParArch::GPU_NVIDIA, fk::TF::DISABLED>>(fkStream, readArray[i], saturate, mul, sub, div, writeArray[i]);
@@ -148,12 +145,11 @@ bool runPoint(cudaStream_t cs, fk::Stream_<fk::ParArch::GPU_NVIDIA>& fkStream, f
     };
     auto clearTensor = [&] { cudaMemset(dTensor.ptr().data, 0, tensorBytes); };
 
-    std::vector<float> refHand, outFkl, outFklTf, outIterated;
+    std::vector<float> refHand, outFkl, outIterated;
     clearTensor(); launchHand(); E1_CHECK(cudaStreamSynchronize(cs)); downloadTensor(refHand);
     std::vector<float> outHandGeneric;
     clearTensor(); launchHandGeneric(); E1_CHECK(cudaStreamSynchronize(cs)); downloadTensor(outHandGeneric);
     clearTensor(); launchFkl(); E1_CHECK(cudaStreamSynchronize(cs)); downloadTensor(outFkl);
-    clearTensor(); launchFklTf(); E1_CHECK(cudaStreamSynchronize(cs)); downloadTensor(outFklTf);
     // the iterated version writes one Ptr2D per crop: copy the crops into the tensor layout of the hand kernel to compare
     // (not in profile mode: it launches one kernel per crop and the profiler would profile each of them)
     if (!e1::profileMode()) { launchIterated(); E1_CHECK(cudaStreamSynchronize(cs)); }
@@ -176,18 +172,18 @@ bool runPoint(cudaStream_t cs, fk::Stream_<fk::ParArch::GPU_NVIDIA>& fkStream, f
                     return false;
         return true;
     };
-    const bool exactFkl = sameWritten(refHand, outFkl), exactFklTf = sameWritten(refHand, outFklTf), exactIterated = e1::profileMode() || sameWritten(refHand, outIterated);
+    const bool exactFkl = sameWritten(refHand, outFkl), exactIterated = e1::profileMode() || sameWritten(refHand, outIterated);
     const bool exactHandGeneric = sameWritten(refHand, outHandGeneric);
 
-    Timing tHand, tHandGeneric, tFkl, tFklTf, tIterated;
-    if (!timeIt(cs, launchHand, tHand) || !timeIt(cs, launchHandGeneric, tHandGeneric) || !timeIt(cs, launchFkl, tFkl) || !timeIt(cs, launchFklTf, tFklTf) || !timeIt(cs, launchIterated, tIterated)) return false;
-    csv.row(BATCH, tHand.mean, tHand.min, tFkl.mean, tFkl.min, tFklTf.mean, tFklTf.min, tIterated.mean, tIterated.min, tFkl.mean / tHand.mean,
-            tIterated.mean / tFkl.mean, int(exactFkl), int(exactFklTf), int(exactIterated), tHandGeneric.mean, tHandGeneric.min,
+    Timing tHand, tHandGeneric, tFkl, tIterated;
+    if (!timeIt(cs, launchHand, tHand) || !timeIt(cs, launchHandGeneric, tHandGeneric) || !timeIt(cs, launchFkl, tFkl) || !timeIt(cs, launchIterated, tIterated)) return false;
+    csv.row(BATCH, tHand.mean, tHand.min, tFkl.mean, tFkl.min, tIterated.mean, tIterated.min, tFkl.mean / tHand.mean,
+            tIterated.mean / tFkl.mean, int(exactFkl), int(exactIterated), tHandGeneric.mean, tHandGeneric.min,
             tFkl.mean / tHandGeneric.mean, int(exactHandGeneric), sizeof(CropPointers<BATCH>), sizeof(CropDescriptors<BATCH>));
     csv.flush();
-    std::cout << BATCH << " crops: hand " << tHand.mean << " ms, hand_generic " << tHandGeneric.mean << ", fkl " << tFkl.mean << ", fkl_tf " << tFklTf.mean << ", iterated " << tIterated.mean
-              << " | bit-exact vs hand: fkl " << exactFkl << ", fkl_tf " << exactFklTf << ", iterated " << exactIterated << std::endl;
-    return exactFkl && exactFklTf && exactIterated && exactHandGeneric;
+    std::cout << BATCH << " crops: hand " << tHand.mean << " ms, hand_generic " << tHandGeneric.mean << ", fkl " << tFkl.mean << ", iterated " << tIterated.mean
+              << " | bit-exact vs hand: fkl " << exactFkl << ", iterated " << exactIterated << std::endl;
+    return exactFkl && exactIterated && exactHandGeneric;
 }
 
 template <size_t... Is>
@@ -208,10 +204,10 @@ int launch() {
     for (auto& v : noise) v = static_cast<unsigned char>(dist(gen));
 
     fklb::CsvWriter csv("e1_hf_batch.csv", "E1b hand-written horizontal-fusion batch vs FKL (60x120 uchar crops -> float tensor)",
-                        {"batch", "hand_mean_ms", "hand_min_ms", "fkl_mean_ms", "fkl_min_ms", "fkl_tf_mean_ms", "fkl_tf_min_ms", "iterated_mean_ms",
-                         "iterated_min_ms", "fkl_over_hand", "iterated_over_fkl", "fkl_bitexact", "fkl_tf_bitexact", "iterated_bitexact",
+                        {"batch", "hand_mean_ms", "hand_min_ms", "fkl_mean_ms", "fkl_min_ms", "iterated_mean_ms",
+                         "iterated_min_ms", "fkl_over_hand", "iterated_over_fkl", "fkl_bitexact", "iterated_bitexact",
                          "hand_generic_mean_ms", "hand_generic_min_ms", "fkl_over_hand_generic", "hand_generic_bitexact", "hand_param_bytes", "hand_generic_param_bytes"},
-                        std::string("source: seeded uint8 noise 3840x2160 (std::mt19937_64 seed 20261030), crop i at (i, i); cast, *1.0, -1.0, /3.2; the block is the one "
+                        std::string("thread fusion: off (fk::TF::DISABLED, the default); source: seeded uint8 noise 3840x2160 (std::mt19937_64 seed 20261030), crop i at (i, i); cast, *1.0, -1.0, /3.2; the block is the one "
                                     "fk::getDefaultBlockSize picks; 100 timed iterations after one warm-up; *_bitexact = same bytes as hand_batch") +
                             (e1::profileMode() ? "; PROFILE MODE (E1_PROFILE=1): nothing was timed and the iterated version was not run, the times are zero" : ""));
     return runAll(std::make_index_sequence<sizeof(BATCHES) / sizeof(BATCHES[0])>{}, cs, fkStream, csv, noise) ? 0 : -1;

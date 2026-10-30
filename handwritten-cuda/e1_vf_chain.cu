@@ -23,9 +23,9 @@
 //   hand_params  scalar kernel, alpha, c and the image size are kernel arguments, like the parameters of FKL's operations (constant
 //                bank operands)
 //   hand_imm     scalar kernel, alpha and c are compile-time constants (what an expert writes when the constants are known)
-//   hand_vec     uchar4 -> float4, four elements per thread, constants as arguments (the vectorised upper bound)
 //   fkl          FKL, thread fusion disabled (the configuration of every experiment of the paper)
-//   fkl_tf       FKL, thread fusion enabled (it vectorises the reads and writes by itself)
+// (A vectorised hand kernel and FKL with thread fusion were part of the first runs, kept in results/rtx4090/e1-vf-chain and e1-sass for the
+// record; they are not measured any more.)
 // The hand kernels do the operations in the same order as FKL: v = (float)in; v = v * alpha; then v = v * c; v = v + c (the
 // compiler contracts the pair to one FFMA under the default -fmad=true, in both). Every FKL result is compared bit by bit with
 // hand_params before anything is timed. Timing: CUDA events around one launch, 100 iterations after a warm-up launch.
@@ -94,28 +94,9 @@ __global__ void handImmediates(const unsigned char* __restrict__ in, const size_
     reinterpret_cast<float*>(reinterpret_cast<char*>(out) + y * outPitch)[x] = v;
 }
 
-template <int PAIRS>
-__global__ void handVectorized(const unsigned char* __restrict__ in, const size_t inPitch, float* __restrict__ out,
-                               const size_t outPitch, const int width, const int height, const float alpha, const float c) {
-    const int x4 = blockIdx.x * blockDim.x + threadIdx.x;  // four elements per thread
-    const int y = blockIdx.y * blockDim.y + threadIdx.y;
-    if (x4 * 4 >= width || y >= height) return;
-    const uchar4 u = reinterpret_cast<const uchar4*>(in + y * inPitch)[x4];
-    float4 v = make_float4(static_cast<float>(u.x), static_cast<float>(u.y), static_cast<float>(u.z), static_cast<float>(u.w));
-    v.x = v.x * alpha; v.y = v.y * alpha; v.z = v.z * alpha; v.w = v.w * alpha;
-#pragma unroll
-    for (int p = 0; p < PAIRS; ++p) {
-        v.x = v.x * c; v.x = v.x + c;
-        v.y = v.y * c; v.y = v.y + c;
-        v.z = v.z * c; v.z = v.z + c;
-        v.w = v.w * c; v.w = v.w + c;
-    }
-    reinterpret_cast<float4*>(reinterpret_cast<char*>(out) + y * outPitch)[x4] = v;
-}
-
 // ---- FKL: the chain, built like cvGS's VerticalFusion (nested loops of 50 pairs, then the remainder) -------------------
 // StaticLoop<X, 0> executes X once, not zero times, so the cases without a nested loop or without a remainder are separate.
-template <enum fk::TF TFEN, int PAIRS, typename ReadIOp, typename WriteIOp>
+template <int PAIRS, typename ReadIOp, typename WriteIOp>
 void launchFKL(fk::Stream_<fk::ParArch::GPU_NVIDIA>& stream, const ReadIOp& readIOp, const WriteIOp& writeIOp) {
     const auto cast = fk::SaturateCast<unsigned char, float>::build();
     const auto scale = fk::Mul<float>::build(ALPHA);
@@ -125,16 +106,16 @@ void launchFKL(fk::Stream_<fk::ParArch::GPU_NVIDIA>& stream, const ReadIOp& read
     if constexpr (PAIRS < INNER) {
         using Loop = fk::Binary<fk::StaticLoop<PairOperation, PAIRS>>;
         const Loop loop{{pairOp.params}};
-        fk::executeOperations<fk::TransformDPP<fk::ParArch::GPU_NVIDIA, TFEN>>(stream, readIOp, cast, scale, loop, writeIOp);
+        fk::executeOperations<fk::TransformDPP<fk::ParArch::GPU_NVIDIA, fk::TF::DISABLED>>(stream, readIOp, cast, scale, loop, writeIOp);
     } else {
         using Loop = fk::Binary<fk::StaticLoop<fk::StaticLoop<PairOperation, INNER>, PAIRS / INNER>>;
         const Loop loop{{pairOp.params}};
         if constexpr (PAIRS % INNER == 0) {
-            fk::executeOperations<fk::TransformDPP<fk::ParArch::GPU_NVIDIA, TFEN>>(stream, readIOp, cast, scale, loop, writeIOp);
+            fk::executeOperations<fk::TransformDPP<fk::ParArch::GPU_NVIDIA, fk::TF::DISABLED>>(stream, readIOp, cast, scale, loop, writeIOp);
         } else {
             using Remainder = fk::Binary<fk::StaticLoop<PairOperation, PAIRS % INNER>>;
             const Remainder remainder{{pairOp.params}};
-            fk::executeOperations<fk::TransformDPP<fk::ParArch::GPU_NVIDIA, TFEN>>(stream, readIOp, cast, scale, loop, remainder,
+            fk::executeOperations<fk::TransformDPP<fk::ParArch::GPU_NVIDIA, fk::TF::DISABLED>>(stream, readIOp, cast, scale, loop, remainder,
                                                                                  writeIOp);
         }
     }
@@ -156,8 +137,6 @@ bool runPoint(cudaStream_t cs, fk::Stream_<fk::ParArch::GPU_NVIDIA>& fkStream, f
 
     const dim3 block(32, 8);
     const dim3 grid((WIDTH + block.x - 1) / block.x, (HEIGHT + block.y - 1) / block.y);
-    const dim3 blockV(32, 8);
-    const dim3 gridV((WIDTH / 4 + blockV.x - 1) / blockV.x, (HEIGHT + blockV.y - 1) / blockV.y);
 
     auto download = [&](std::vector<float>& host) {
         host.resize(static_cast<size_t>(WIDTH) * HEIGHT);
@@ -166,35 +145,27 @@ bool runPoint(cudaStream_t cs, fk::Stream_<fk::ParArch::GPU_NVIDIA>& fkStream, f
     };
     auto clearOut = [&]() { cudaMemset2D(dOut.ptr().data, outPitch, 0, WIDTH * sizeof(float), HEIGHT); };
 
-    std::vector<float> refHand, outImm, outVec, outFkl, outFklTf;
+    std::vector<float> refHand, outImm, outFkl;
     auto launchHandParams = [&] { handParams<PAIRS><<<grid, block, 0, cs>>>(dIn.ptr().data, inPitch, dOut.ptr().data, outPitch, WIDTH, HEIGHT, ALPHA, COEF); };
     auto launchHandImm = [&] { handImmediates<PAIRS><<<grid, block, 0, cs>>>(dIn.ptr().data, inPitch, dOut.ptr().data, outPitch); };
-    auto launchHandVec = [&] { handVectorized<PAIRS><<<gridV, blockV, 0, cs>>>(dIn.ptr().data, inPitch, dOut.ptr().data, outPitch, WIDTH, HEIGHT, ALPHA, COEF); };
-    auto launchFkl = [&] { launchFKL<fk::TF::DISABLED, PAIRS>(fkStream, readIOp, writeIOp); };
-    auto launchFklTf = [&] { launchFKL<fk::TF::ENABLED, PAIRS>(fkStream, readIOp, writeIOp); };
+    auto launchFkl = [&] { launchFKL<PAIRS>(fkStream, readIOp, writeIOp); };
 
     // results first (bit-exact against hand_params), then times
     clearOut(); launchHandParams(); E1_CHECK(cudaStreamSynchronize(cs)); download(refHand);
     clearOut(); launchHandImm(); E1_CHECK(cudaStreamSynchronize(cs)); download(outImm);
-    clearOut(); launchHandVec(); E1_CHECK(cudaStreamSynchronize(cs)); download(outVec);
     clearOut(); launchFkl(); E1_CHECK(cudaStreamSynchronize(cs)); download(outFkl);
-    clearOut(); launchFklTf(); E1_CHECK(cudaStreamSynchronize(cs)); download(outFklTf);
-    const bool exactImm = sameBits(refHand, outImm), exactVec = sameBits(refHand, outVec);
-    const bool exactFkl = sameBits(refHand, outFkl), exactFklTf = sameBits(refHand, outFklTf);
+    const bool exactImm = sameBits(refHand, outImm), exactFkl = sameBits(refHand, outFkl);
 
-    Timing tHandParams, tHandImm, tHandVec, tFkl, tFklTf;
-    if (!timeIt(cs, launchHandParams, tHandParams) || !timeIt(cs, launchHandImm, tHandImm) ||
-        !timeIt(cs, launchHandVec, tHandVec) || !timeIt(cs, launchFkl, tFkl) || !timeIt(cs, launchFklTf, tFklTf)) {
+    Timing tHandParams, tHandImm, tFkl;
+    if (!timeIt(cs, launchHandParams, tHandParams) || !timeIt(cs, launchHandImm, tHandImm) || !timeIt(cs, launchFkl, tFkl)) {
         return false;
     }
-    csv.row(OPS_N, PAIRS, tHandParams.mean, tHandParams.min, tHandImm.mean, tHandImm.min, tHandVec.mean, tHandVec.min, tFkl.mean,
-            tFkl.min, tFklTf.mean, tFklTf.min, tFkl.mean / tHandParams.mean, tFkl.mean / tHandVec.mean, tFklTf.mean / tHandVec.mean,
-            int(exactFkl), int(exactFklTf), int(exactImm), int(exactVec));
+    csv.row(OPS_N, PAIRS, tHandParams.mean, tHandParams.min, tHandImm.mean, tHandImm.min, tFkl.mean, tFkl.min, tFkl.mean / tHandParams.mean,
+            int(exactFkl), int(exactImm));
     csv.flush();
-    std::cout << OPS_N << " ops: hand " << tHandParams.mean << " ms, hand_imm " << tHandImm.mean << ", hand_vec " << tHandVec.mean
-              << ", fkl " << tFkl.mean << ", fkl_tf " << tFklTf.mean << " | bit-exact vs hand_params: fkl " << exactFkl << ", fkl_tf "
-              << exactFklTf << ", hand_imm " << exactImm << ", hand_vec " << exactVec << std::endl;
-    return exactFkl && exactFklTf;
+    std::cout << OPS_N << " ops: hand " << tHandParams.mean << " ms, hand_imm " << tHandImm.mean << ", fkl " << tFkl.mean
+              << " | bit-exact vs hand_params: fkl " << exactFkl << ", hand_imm " << exactImm << std::endl;
+    return exactFkl && exactImm;
 }
 
 template <size_t... Is>
@@ -216,10 +187,8 @@ int launch() {
 
     fklb::CsvWriter csv("e1_vf_chain.csv", "E1a hand-written MAD chain vs FKL (4096x2160 uchar -> float)",
                         {"ops", "pairs", "hand_params_mean_ms", "hand_params_min_ms", "hand_imm_mean_ms", "hand_imm_min_ms",
-                         "hand_vec_mean_ms", "hand_vec_min_ms", "fkl_mean_ms", "fkl_min_ms", "fkl_tf_mean_ms", "fkl_tf_min_ms",
-                         "fkl_over_hand_params", "fkl_over_hand_vec", "fkl_tf_over_hand_vec", "fkl_bitexact", "fkl_tf_bitexact",
-                         "hand_imm_bitexact", "hand_vec_bitexact"},
-                        std::string("input: seeded uint8 noise (std::mt19937_64 seed 20261030); alpha 1.0, c 0.54; 32x8 threads per block "
+                         "fkl_mean_ms", "fkl_min_ms", "fkl_over_hand_params", "fkl_bitexact", "hand_imm_bitexact"},
+                        std::string("thread fusion: off (fk::TF::DISABLED, the default); input: seeded uint8 noise (std::mt19937_64 seed 20261030); alpha 1.0, c 0.54; 32x8 threads per block "
                                     "(the block FKL picks); 100 timed iterations after one warm-up; *_bitexact = bit-identical to hand_params") +
                             (e1::profileMode() ? "; PROFILE MODE (E1_PROFILE=1): nothing was timed, the times are zero" : ""));
     const bool ok = runAll(std::make_index_sequence<sizeof(OPS) / sizeof(OPS[0])>{}, cs, fkStream, csv, noise);
