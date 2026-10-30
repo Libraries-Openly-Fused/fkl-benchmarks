@@ -81,7 +81,7 @@ def main():
 
     a = [("Mul+Add chain", ma), ("Mul+Mul chain", mm)]
     b = [("Mul+Add chain", ma_g), ("Mul+Mul chain", mm_g)]
-    c = [("vs OpenCV-CUDA", hf)] + ([("vs OpenCV-CUDA + CUDA Graphs", hf_g)] if hf_g else [])
+    c = [("vs OpenCV-CUDA", hf)] + ([("vs OpenCV-CUDA\n+ CUDA Graphs", hf_g)] if hf_g else [])
     specs = [("vf_a_r2.pdf", a, "Speedup vs\nOpenCV-CUDA", "lower right"), ("vf_b_r2.pdf", b, "Speedup vs OpenCV-CUDA\n+ CUDA Graphs", "lower right"), ("vfhf_c_r2.pdf", c, "Speedup", "center right")]
 
     pc.apply_style()
