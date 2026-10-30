@@ -90,6 +90,9 @@ def main():
         for name, (x, y) in curves:
             j = y.index(max(y))
             notes.append(f"({label}) {name}: {len(x)} points, {x[0]:.0f} to {x[-1]:.0f} operations; maximum {max(y):.2f}x at {x[j]:.0f}; last {y[-1]:.2f}x")
+    first_run_kept = os.path.isdir(dirs["mul-add1"].rstrip("/") + "-run1")
+    notes.append("e0-vf-mul-add1 run read: " + ("the SECOND run (the first, in e0-vf-mul-add1-run1, has one row disturbed by another process, at 5,402 operations)" if first_run_kept else
+                 "the FIRST run (one row, at 5,402 operations, was disturbed by another process; it changes the mean by at most 0.07 %; the second run is pending)"))
     if not hf_g:
         notes.append("(c) WARNING: the CUDA Graphs file of e0-vf-mul-add does not exist yet; the panel has only the OpenCV-CUDA series")
     for (name, curves, ylabel, legend) in specs:

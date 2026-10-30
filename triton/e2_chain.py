@@ -50,7 +50,9 @@ import triton
 import triton.language as tl
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "common"))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "scripts"))
 from fklb_csv import CsvWriter  # noqa: E402
+import sass_tools as st  # noqa: E402
 
 H, W = 2160, 4096
 ALPHA = 1.0
@@ -131,6 +133,23 @@ def ulp_error(result, exact64):
     return ((r - exact64).abs() / ulp.abs().clamp_min(1e-300)).max().item()
 
 
+def sass_counts(cache_dir):
+    """FFMA, FMUL and FADD instructions of every kernel Triton compiled in this process (TorchInductor's kernels are Triton kernels too): tells whether the Mul and the
+    Add of the chain were contracted into one FMA (FFMA) or kept as two instructions (FMUL + FADD). cuobjdump -sass of every cubin of the cache."""
+    import glob
+    totals = {"sass_ffma": 0, "sass_fmul": 0, "sass_fadd": 0}
+    if not cache_dir:
+        return totals
+    for cubin in glob.glob(os.path.join(cache_dir, "**", "*.cubin"), recursive=True):
+        sass = subprocess.run(["cuobjdump", "-sass", cubin], capture_output=True, text=True).stdout
+        for body in st.split_functions(sass).values():
+            _, hist = st.classify(st.normalise_sass(body, rename=False))
+            totals["sass_ffma"] += hist.get("FFMA", 0)
+            totals["sass_fmul"] += hist.get("FMUL", 0)
+            totals["sass_fadd"] += hist.get("FADD", 0)
+    return totals
+
+
 def load_input(path):
     """The image: the raw uint8 file written by handwritten-cuda/e2_fkl_chain.cu (the bytes FKL ran on), or torch.randint with seed 20261030 when no file is given."""
     if path:
@@ -196,6 +215,8 @@ def worker(version, ops, ref_path, input_path=None, fkl_dir=None):
     mean, mn, host = cuda_time(call, x, out)
     res.update(gpu_mean_ms=mean, gpu_min_ms=mn, host_launch_us=host)
     res["kernels"] = count_kernels(call, x, out) if version != "eager_graphs" else count_kernels(lambda a, b: g.replay(), x, out)
+    if version not in ("eager", "eager_graphs"):    # eager runs PyTorch's own precompiled kernels, one per operation: nothing is contracted across operations
+        res.update(sass_counts(os.environ.get("TRITON_CACHE_DIR")))
     res_t = result.clone()
     if fkl_path and os.path.exists(fkl_path):    # agreement with FKL, bit by bit and in ULPs of the FKL value
         fkl = torch.from_numpy(np.fromfile(fkl_path, dtype=np.float32).reshape(H, W)).cuda()
@@ -243,7 +264,7 @@ def main():
              f"ULP error against an exact float64 evaluation (max_ulp_vs_exact) and against the FKL output (max_ulp_vs_fkl, in ULPs of the FKL value; bitexact_fraction_vs_fkl); "
              f"FKL row: time from {args.fkl_csv}, cold compile time from {args.fkl_compile}; timeout {args.timeout} s per point")
     cols = ["ops", "version", "status", "why", "gpu_mean_ms", "gpu_min_ms", "host_launch_us", "kernels", "compile_s", "max_ulp_vs_exact", "bitexact_fraction_vs_triton_hand",
-            "bitexact_fraction_vs_fkl", "max_ulp_vs_fkl"]
+            "bitexact_fraction_vs_fkl", "max_ulp_vs_fkl", "sass_ffma", "sass_fmul", "sass_fadd"]
     with CsvWriter(args.out, "E2a element-wise chain: Triton and TorchInductor", cols, notes=notes) as csv:
         versions = args.versions.split(",")
         if args.fkl_dir and "fkl" not in versions:

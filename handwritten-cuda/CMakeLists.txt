@@ -32,7 +32,7 @@ fklb_add_benchmark(e1_preproc
 
 # E2, the FKL side: the element-wise chain of triton/e2_chain.py through FKL on the same image (the file E2_INPUT), writing its outputs for the comparison with Triton and
 # TorchInductor. k = 2, 10, 50, 100, 500 as the Triton driver; (1000 optional).
-set(E2_FKL_KS "2, 10, 50, 100, 500" CACHE STRING "E2 (FKL side): number of operations k of each point, comma separated, even numbers")
+set(E2_FKL_KS "2, 10, 50, 100, 500, 5002" CACHE STRING "E2 (FKL side): number of operations k of each point, comma separated, even numbers")
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/e2_fkl_ks.h.in" "${CMAKE_CURRENT_BINARY_DIR}/e2_fkl_ks.h" @ONLY)
 
 fklb_add_benchmark(e2_fkl_chain
