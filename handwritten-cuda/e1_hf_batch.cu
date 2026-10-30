@@ -21,6 +21,9 @@
 // Versions:
 //   hand_batch   one kernel, blockIdx.z = image, the crop pointers in a `const __grid_constant__` array (the parameter space), the
 //                constants as kernel arguments (FKL keeps them in its parameter block too)
+//   hand_generic the same with what FKL carries per crop: the pointer and the dimensions of the image it points into (24 bytes, the size of
+//                an fk::RawPtr<_2D, uchar>), the kernel reading the pitch and the bounds from that descriptor, as a kernel that accepts crops of
+//                different sizes must; the parameter block is then about as large as FKL's (the kernel itself still the same instructions)
 //   fkl          FKL, TransformDPP with a BatchRead of the crops and TensorWrite, thread fusion disabled
 //   fkl_tf       the same with thread fusion enabled (the crops start at (i, i), so their pointers are not aligned to the vector
 //                types and FKL falls back to the non thread fused path: this version measures that the fallback costs nothing)
@@ -61,6 +64,27 @@ struct CropPointers {
 };
 
 template <int BATCH>
+struct CropDescriptors {
+    struct Crop { const unsigned char* data; unsigned int width, height, pitch; };
+    Crop crop[BATCH];
+};
+
+template <int BATCH>
+__global__ void handBatchGeneric(const __grid_constant__ CropDescriptors<BATCH> crops, float* __restrict__ tensor,
+                                 const size_t pitch, const size_t planePitch, const float alpha, const float sub, const float div) {
+    const int x = blockIdx.x * blockDim.x + threadIdx.x;
+    const int y = blockIdx.y * blockDim.y + threadIdx.y;
+    const int z = blockIdx.z;
+    const auto& c = crops.crop[z];
+    if (x >= static_cast<int>(c.width) || y >= static_cast<int>(c.height)) return;
+    float v = static_cast<float>(c.data[static_cast<size_t>(y) * c.pitch + x]);
+    v = v * alpha;
+    v = v - sub;
+    v = v / div;
+    reinterpret_cast<float*>(reinterpret_cast<char*>(tensor) + z * planePitch + y * pitch)[x] = v;
+}
+
+template <int BATCH>
 __global__ void handBatch(const __grid_constant__ CropPointers<BATCH> crops, const size_t inPitch, float* __restrict__ tensor,
                           const size_t pitch, const size_t planePitch, const float alpha, const float sub, const float div) {
     const int x = blockIdx.x * blockDim.x + threadIdx.x;
@@ -82,9 +106,11 @@ bool runPoint(cudaStream_t cs, fk::Stream_<fk::ParArch::GPU_NVIDIA>& fkStream, f
 
     std::array<fk::Ptr2D<unsigned char>, BATCH> crops;
     CropPointers<BATCH> cropPointers;
+    CropDescriptors<BATCH> cropDescriptors;
     for (int i = 0; i < BATCH; ++i) {
         crops[i] = dInput.crop(fk::Point{i, i, 0}, fk::PtrDims<fk::ND::_2D>{static_cast<uint>(CROP_W), static_cast<uint>(CROP_H), static_cast<uint>(inPitch)});
         cropPointers.data[i] = crops[i].ptr().data;
+        cropDescriptors.crop[i] = {crops[i].ptr().data, static_cast<unsigned int>(CROP_W), static_cast<unsigned int>(CROP_H), static_cast<unsigned int>(inPitch)};
     }
     fk::Tensor<float> dTensor(CROP_W, CROP_H, BATCH);
     const size_t pitch = dTensor.ptr().dims.pitch, planePitch = dTensor.ptr().dims.plane_pitch;
@@ -106,6 +132,7 @@ bool runPoint(cudaStream_t cs, fk::Stream_<fk::ParArch::GPU_NVIDIA>& fkStream, f
     const dim3 grid((CROP_W + block.x - 1) / block.x, (CROP_H + block.y - 1) / block.y, BATCH);
 
     auto launchHand = [&] { handBatch<BATCH><<<grid, block, 0, cs>>>(cropPointers, inPitch, dTensor.ptr().data, pitch, planePitch, ALPHA, SUB, DIV); };
+    auto launchHandGeneric = [&] { handBatchGeneric<BATCH><<<grid, block, 0, cs>>>(cropDescriptors, dTensor.ptr().data, pitch, planePitch, ALPHA, SUB, DIV); };
     auto launchFkl = [&] { fk::executeOperations<fk::TransformDPP<fk::ParArch::GPU_NVIDIA, fk::TF::DISABLED>>(fkStream, read, saturate, mul, sub, div, write); };
     auto launchFklTf = [&] { fk::executeOperations<fk::TransformDPP<fk::ParArch::GPU_NVIDIA, fk::TF::ENABLED>>(fkStream, read, saturate, mul, sub, div, write); };
     auto launchIterated = [&] {
@@ -122,6 +149,8 @@ bool runPoint(cudaStream_t cs, fk::Stream_<fk::ParArch::GPU_NVIDIA>& fkStream, f
 
     std::vector<float> refHand, outFkl, outFklTf, outIterated;
     clearTensor(); launchHand(); E1_CHECK(cudaStreamSynchronize(cs)); downloadTensor(refHand);
+    std::vector<float> outHandGeneric;
+    clearTensor(); launchHandGeneric(); E1_CHECK(cudaStreamSynchronize(cs)); downloadTensor(outHandGeneric);
     clearTensor(); launchFkl(); E1_CHECK(cudaStreamSynchronize(cs)); downloadTensor(outFkl);
     clearTensor(); launchFklTf(); E1_CHECK(cudaStreamSynchronize(cs)); downloadTensor(outFklTf);
     // the iterated version writes one Ptr2D per crop: copy the crops into the tensor layout of the hand kernel to compare
@@ -146,15 +175,17 @@ bool runPoint(cudaStream_t cs, fk::Stream_<fk::ParArch::GPU_NVIDIA>& fkStream, f
         return true;
     };
     const bool exactFkl = sameWritten(refHand, outFkl), exactFklTf = sameWritten(refHand, outFklTf), exactIterated = sameWritten(refHand, outIterated);
+    const bool exactHandGeneric = sameWritten(refHand, outHandGeneric);
 
-    Timing tHand, tFkl, tFklTf, tIterated;
-    if (!timeIt(cs, launchHand, tHand) || !timeIt(cs, launchFkl, tFkl) || !timeIt(cs, launchFklTf, tFklTf) || !timeIt(cs, launchIterated, tIterated)) return false;
+    Timing tHand, tHandGeneric, tFkl, tFklTf, tIterated;
+    if (!timeIt(cs, launchHand, tHand) || !timeIt(cs, launchHandGeneric, tHandGeneric) || !timeIt(cs, launchFkl, tFkl) || !timeIt(cs, launchFklTf, tFklTf) || !timeIt(cs, launchIterated, tIterated)) return false;
     csv.row(BATCH, tHand.mean, tHand.min, tFkl.mean, tFkl.min, tFklTf.mean, tFklTf.min, tIterated.mean, tIterated.min, tFkl.mean / tHand.mean,
-            tIterated.mean / tFkl.mean, int(exactFkl), int(exactFklTf), int(exactIterated));
+            tIterated.mean / tFkl.mean, int(exactFkl), int(exactFklTf), int(exactIterated), tHandGeneric.mean, tHandGeneric.min,
+            tFkl.mean / tHandGeneric.mean, int(exactHandGeneric), sizeof(CropPointers<BATCH>), sizeof(CropDescriptors<BATCH>));
     csv.flush();
-    std::cout << BATCH << " crops: hand " << tHand.mean << " ms, fkl " << tFkl.mean << ", fkl_tf " << tFklTf.mean << ", iterated " << tIterated.mean
+    std::cout << BATCH << " crops: hand " << tHand.mean << " ms, hand_generic " << tHandGeneric.mean << ", fkl " << tFkl.mean << ", fkl_tf " << tFklTf.mean << ", iterated " << tIterated.mean
               << " | bit-exact vs hand: fkl " << exactFkl << ", fkl_tf " << exactFklTf << ", iterated " << exactIterated << std::endl;
-    return exactFkl && exactFklTf && exactIterated;
+    return exactFkl && exactFklTf && exactIterated && exactHandGeneric;
 }
 
 template <size_t... Is>
@@ -176,7 +207,8 @@ int launch() {
 
     fklb::CsvWriter csv("e1_hf_batch.csv", "E1b hand-written horizontal-fusion batch vs FKL (60x120 uchar crops -> float tensor)",
                         {"batch", "hand_mean_ms", "hand_min_ms", "fkl_mean_ms", "fkl_min_ms", "fkl_tf_mean_ms", "fkl_tf_min_ms", "iterated_mean_ms",
-                         "iterated_min_ms", "fkl_over_hand", "iterated_over_fkl", "fkl_bitexact", "fkl_tf_bitexact", "iterated_bitexact"},
+                         "iterated_min_ms", "fkl_over_hand", "iterated_over_fkl", "fkl_bitexact", "fkl_tf_bitexact", "iterated_bitexact",
+                         "hand_generic_mean_ms", "hand_generic_min_ms", "fkl_over_hand_generic", "hand_generic_bitexact", "hand_param_bytes", "hand_generic_param_bytes"},
                         "source: seeded uint8 noise 3840x2160 (std::mt19937_64 seed 20261030), crop i at (i, i); cast, *1.0, -1.0, /3.2; the block is the one "
                         "fk::getDefaultBlockSize picks; 100 timed iterations after one warm-up; *_bitexact = same bytes as hand_batch");
     return runAll(std::make_index_sequence<sizeof(BATCHES) / sizeof(BATCHES[0])>{}, cs, fkStream, csv, noise) ? 0 : -1;
