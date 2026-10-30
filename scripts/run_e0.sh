@@ -101,6 +101,9 @@ for e in "${EXPERIMENTS[@]}"; do
   if [ -d "$dir" ] && [ -n "$(ls -A "$dir" 2>/dev/null)" ]; then echo "$name: $dir is not empty, skipped"; continue; fi
   [ -x "$BUILD/bin/$bin" ] || { echo "$name: $BUILD/bin/$bin is not built, skipped"; continue; }
   if gpu_busy; then echo "$name: another process is using the GPU, stopping"; exit 1; fi
+  # A pause file holds the runner between experiments (for GPU work that must not overlap a measurement): touch it to pause,
+  # remove it to continue. The experiment in flight is never interrupted.
+  if [ -e "$OUT/.pause" ]; then echo "$(date -Iseconds) paused before $name (remove $OUT/.pause to continue)"; while [ -e "$OUT/.pause" ]; do sleep 5; done; fi
   mkdir -p "$dir"
   echo "$(date -Iseconds) $name: $desc"
   start=$(date +%s)
