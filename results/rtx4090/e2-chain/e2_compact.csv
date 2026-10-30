@@ -1,0 +1,25 @@
+k,impl,kernels,gpu_ms,compile_s,bitwise,ulp_fkl,ulp_exact,host_us,status
+10,FKL,1,0.0213,3.65,1.0000,0,4.6,,ok
+10,Triton (hand-written),1,0.0288,0.69,1.0000,0,4.6,9.3,ok
+10,TorchInductor,1,0.0448,1.21,1.0000,0,4.6,25.2,ok
+10,TorchInductor (wide fusion window),1,0.0462,1.22,1.0000,0,4.6,25.5,ok
+10,TorchInductor + CUDA Graphs,1,0.0569,1.23,1.0000,0,4.6,39.7,ok
+10,PyTorch eager,12,0.3628,0.03,0.3709,4,4.76,56.7,ok
+100,FKL,1,0.0266,3.67,1.0000,0,1.65,,ok
+100,Triton (hand-written),1,0.0290,0.72,1.0000,0,1.65,8.8,ok
+100,TorchInductor,1,0.0463,1.72,1.0000,0,1.65,24.0,ok
+100,TorchInductor (wide fusion window),1,0.0469,1.72,1.0000,0,1.65,24.2,ok
+100,TorchInductor + CUDA Graphs,1,0.0590,1.79,1.0000,0,1.65,40.3,ok
+100,PyTorch eager,102,2.9173,0.04,0.9921,1,1.65,2596.0,ok
+500,FKL,1,0.0673,3.72,1.0000,0,1.65,,ok
+500,Triton (hand-written),1,0.0708,0.90,1.0000,0,1.65,9.2,ok
+500,TorchInductor,1,0.0884,3.24,1.0000,0,1.65,25.6,ok
+500,TorchInductor (wide fusion window),1,0.0875,3.27,1.0000,0,1.65,24.0,ok
+500,TorchInductor + CUDA Graphs,1,0.0997,3.45,1.0000,0,1.65,39.0,ok
+500,PyTorch eager,502,14.1686,0.05,0.9921,1,1.65,13860.1,ok
+5002,FKL,1,0.5453,5.23,1.0000,0,1.65,,ok
+5002,Triton (hand-written),1,0.7953,4.98,1.0000,0,1.65,9.1,ok
+5002,TorchInductor,1,0.5681,25.65,1.0000,0,1.65,25.2,ok
+5002,TorchInductor (wide fusion window),1,0.5680,25.59,1.0000,0,1.65,25.2,ok
+5002,TorchInductor + CUDA Graphs,1,0.5795,26.00,1.0000,0,1.65,38.7,ok
+5002,PyTorch eager,5004,140.9104,0.17,0.9921,1,1.65,140634.4,ok

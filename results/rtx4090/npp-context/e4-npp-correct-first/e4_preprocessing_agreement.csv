@@ -1,0 +1,115 @@
+# experiment: E4a/E4c pre-processing: agreement with the scalar references
+# notes: informational where the conventions differ: the columns vs_asymmetric and vs_half_pixel compare the output with both references; ok_own is the strict check
+# repo: fkl-benchmarks b0abcfeaa03c90727e5b996acb1d82886912d666-dirty
+# fkl: 38c4f32d887b4530c54362eb526c9a5411ee92fe
+# cvGPUSpeedup: 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c
+# FastNPP: 9dfc4f430225e40ded392bfa777b2e724367c5c1
+# nvcc: 13.4.92 (/home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/nvcc), architectures 89, -fmad on, -lineinfo on
+# host compiler: GNU 15.2.0, Release, -march=native, -ftemplate-depth=1000
+# opencv: 4.14.0
+# cpu: AMD Ryzen 9 5950X 16-Core Processor
+# gpu: NVIDIA GeForce RTX 4090, cc 8.9, 128 SMs, 24106 MiB, PCI 0000:09:00.0
+# cuda driver api: 13.3, cuda runtime: 13.4
+# nvidia-smi driver: 610.43.02
+# clocks (sm, mem, max sm, max mem, MHz): 2685 MHz, 10251 MHz, 3105 MHz, 10501 MHz
+# power limit, temperature at start: 450.00 W, 48
+experiment,batch,version,convention,max_abs_err_own_reference,ok_own,max_abs_err_vs_asymmetric,max_abs_err_vs_half_pixel
+E4a,10,npp,HALF_PIXEL,5.35117255e-06,1,6.76660691,5.35117255e-06
+E4a,10,npp_ctx_as_tests,HALF_PIXEL,5.35117255e-06,1,6.76660691,5.35117255e-06
+E4a,10,npp_ctx_as_tests_vs_npp,HALF_PIXEL,0,1,,
+E4a,20,npp,HALF_PIXEL,5.35117255e-06,1,6.77392806,5.35117255e-06
+E4a,20,npp_ctx_as_tests,HALF_PIXEL,5.35117255e-06,1,6.77392806,5.35117255e-06
+E4a,20,npp_ctx_as_tests_vs_npp,HALF_PIXEL,0,1,,
+E4a,30,npp,HALF_PIXEL,5.35117255e-06,1,6.77392806,5.35117255e-06
+E4a,30,npp_ctx_as_tests,HALF_PIXEL,5.35117255e-06,1,6.77392806,5.35117255e-06
+E4a,30,npp_ctx_as_tests_vs_npp,HALF_PIXEL,0,1,,
+E4a,40,npp,HALF_PIXEL,5.35117255e-06,1,6.98144759,5.35117255e-06
+E4a,40,npp_ctx_as_tests,HALF_PIXEL,5.35117255e-06,1,6.98144759,5.35117255e-06
+E4a,40,npp_ctx_as_tests_vs_npp,HALF_PIXEL,0,1,,
+E4a,50,npp,HALF_PIXEL,5.35117255e-06,1,7.04687272,5.35117255e-06
+E4a,50,npp_ctx_as_tests,HALF_PIXEL,5.35117255e-06,1,7.04687272,5.35117255e-06
+E4a,50,npp_ctx_as_tests_vs_npp,HALF_PIXEL,0,1,,
+E4a,60,npp,HALF_PIXEL,5.35117255e-06,1,7.04687272,5.35117255e-06
+E4a,60,npp_ctx_as_tests,HALF_PIXEL,5.35117255e-06,1,7.04687272,5.35117255e-06
+E4a,60,npp_ctx_as_tests_vs_npp,HALF_PIXEL,0,1,,
+E4a,70,npp,HALF_PIXEL,5.35117255e-06,1,7.04687272,5.35117255e-06
+E4a,70,npp_ctx_as_tests,HALF_PIXEL,5.35117255e-06,1,7.04687272,5.35117255e-06
+E4a,70,npp_ctx_as_tests_vs_npp,HALF_PIXEL,0,1,,
+E4a,80,npp,HALF_PIXEL,5.35117255e-06,1,7.04687272,5.35117255e-06
+E4a,80,npp_ctx_as_tests,HALF_PIXEL,5.35117255e-06,1,7.04687272,5.35117255e-06
+E4a,80,npp_ctx_as_tests_vs_npp,HALF_PIXEL,0,1,,
+E4a,90,npp,HALF_PIXEL,5.35117255e-06,1,7.04687272,5.35117255e-06
+E4a,90,npp_ctx_as_tests,HALF_PIXEL,5.35117255e-06,1,7.04687272,5.35117255e-06
+E4a,90,npp_ctx_as_tests_vs_npp,HALF_PIXEL,0,1,,
+E4a,100,npp,HALF_PIXEL,5.35117255e-06,1,7.04687272,5.35117255e-06
+E4a,100,npp_ctx_as_tests,HALF_PIXEL,5.35117255e-06,1,7.04687272,5.35117255e-06
+E4a,100,npp_ctx_as_tests_vs_npp,HALF_PIXEL,0,1,,
+E4a,110,npp,HALF_PIXEL,5.35117255e-06,1,7.04687272,5.35117255e-06
+E4a,110,npp_ctx_as_tests,HALF_PIXEL,5.35117255e-06,1,7.04687272,5.35117255e-06
+E4a,110,npp_ctx_as_tests_vs_npp,HALF_PIXEL,0,1,,
+E4a,120,npp,HALF_PIXEL,5.35117255e-06,1,7.04687272,5.35117255e-06
+E4a,120,npp_ctx_as_tests,HALF_PIXEL,5.35117255e-06,1,7.04687272,5.35117255e-06
+E4a,120,npp_ctx_as_tests_vs_npp,HALF_PIXEL,0,1,,
+E4a,130,npp,HALF_PIXEL,5.35117255e-06,1,7.04687272,5.35117255e-06
+E4a,130,npp_ctx_as_tests,HALF_PIXEL,5.35117255e-06,1,7.04687272,5.35117255e-06
+E4a,130,npp_ctx_as_tests_vs_npp,HALF_PIXEL,0,1,,
+E4a,140,npp,HALF_PIXEL,5.35117255e-06,1,7.04687272,5.35117255e-06
+E4a,140,npp_ctx_as_tests,HALF_PIXEL,5.35117255e-06,1,7.04687272,5.35117255e-06
+E4a,140,npp_ctx_as_tests_vs_npp,HALF_PIXEL,0,1,,
+E4a,150,npp,HALF_PIXEL,5.35117255e-06,1,7.04687272,5.35117255e-06
+E4a,150,npp_ctx_as_tests,HALF_PIXEL,5.35117255e-06,1,7.04687272,5.35117255e-06
+E4a,150,npp_ctx_as_tests_vs_npp,HALF_PIXEL,0,1,,
+E4a,160,npp,HALF_PIXEL,5.35117255e-06,1,7.04687272,5.35117255e-06
+E4a,160,npp_ctx_as_tests,HALF_PIXEL,5.35117255e-06,1,7.04687272,5.35117255e-06
+E4a,160,npp_ctx_as_tests_vs_npp,HALF_PIXEL,0,1,,
+E4a,170,npp,HALF_PIXEL,5.35117255e-06,1,7.04687272,5.35117255e-06
+E4a,170,npp_ctx_as_tests,HALF_PIXEL,5.35117255e-06,1,7.04687272,5.35117255e-06
+E4a,170,npp_ctx_as_tests_vs_npp,HALF_PIXEL,0,1,,
+E4a,180,npp,HALF_PIXEL,5.35117255e-06,1,7.04687272,5.35117255e-06
+E4a,180,npp_ctx_as_tests,HALF_PIXEL,5.35117255e-06,1,7.04687272,5.35117255e-06
+E4a,180,npp_ctx_as_tests_vs_npp,HALF_PIXEL,0,1,,
+E4a,190,npp,HALF_PIXEL,5.35117255e-06,1,7.04687272,5.35117255e-06
+E4a,190,npp_ctx_as_tests,HALF_PIXEL,5.35117255e-06,1,7.04687272,5.35117255e-06
+E4a,190,npp_ctx_as_tests_vs_npp,HALF_PIXEL,0,1,,
+E4a,200,npp,HALF_PIXEL,5.35117255e-06,1,7.12158193,5.35117255e-06
+E4a,200,npp_ctx_as_tests,HALF_PIXEL,5.35117255e-06,1,7.12158193,5.35117255e-06
+E4a,200,npp_ctx_as_tests_vs_npp,HALF_PIXEL,0,1,,
+E4a,210,npp,HALF_PIXEL,5.35117255e-06,1,7.12158193,5.35117255e-06
+E4a,210,npp_ctx_as_tests,HALF_PIXEL,5.35117255e-06,1,7.12158193,5.35117255e-06
+E4a,210,npp_ctx_as_tests_vs_npp,HALF_PIXEL,0,1,,
+E4a,220,npp,HALF_PIXEL,5.35117255e-06,1,7.12158193,5.35117255e-06
+E4a,220,npp_ctx_as_tests,HALF_PIXEL,5.35117255e-06,1,7.12158193,5.35117255e-06
+E4a,220,npp_ctx_as_tests_vs_npp,HALF_PIXEL,0,1,,
+E4a,230,npp,HALF_PIXEL,5.35117255e-06,1,7.12158193,5.35117255e-06
+E4a,230,npp_ctx_as_tests,HALF_PIXEL,5.35117255e-06,1,7.12158193,5.35117255e-06
+E4a,230,npp_ctx_as_tests_vs_npp,HALF_PIXEL,0,1,,
+E4a,240,npp,HALF_PIXEL,5.35117255e-06,1,7.12158193,5.35117255e-06
+E4a,240,npp_ctx_as_tests,HALF_PIXEL,5.35117255e-06,1,7.12158193,5.35117255e-06
+E4a,240,npp_ctx_as_tests_vs_npp,HALF_PIXEL,0,1,,
+E4a,250,npp,HALF_PIXEL,5.35117255e-06,1,7.12158193,5.35117255e-06
+E4a,250,npp_ctx_as_tests,HALF_PIXEL,5.35117255e-06,1,7.12158193,5.35117255e-06
+E4a,250,npp_ctx_as_tests_vs_npp,HALF_PIXEL,0,1,,
+E4a,260,npp,HALF_PIXEL,5.35117255e-06,1,7.20166053,5.35117255e-06
+E4a,260,npp_ctx_as_tests,HALF_PIXEL,5.35117255e-06,1,7.20166053,5.35117255e-06
+E4a,260,npp_ctx_as_tests_vs_npp,HALF_PIXEL,0,1,,
+E4a,270,npp,HALF_PIXEL,5.35117255e-06,1,7.20166053,5.35117255e-06
+E4a,270,npp_ctx_as_tests,HALF_PIXEL,5.35117255e-06,1,7.20166053,5.35117255e-06
+E4a,270,npp_ctx_as_tests_vs_npp,HALF_PIXEL,0,1,,
+E4a,280,npp,HALF_PIXEL,5.35117255e-06,1,7.20166053,5.35117255e-06
+E4a,280,npp_ctx_as_tests,HALF_PIXEL,5.35117255e-06,1,7.20166053,5.35117255e-06
+E4a,280,npp_ctx_as_tests_vs_npp,HALF_PIXEL,0,1,,
+E4a,290,npp,HALF_PIXEL,5.35117255e-06,1,7.20166053,5.35117255e-06
+E4a,290,npp_ctx_as_tests,HALF_PIXEL,5.35117255e-06,1,7.20166053,5.35117255e-06
+E4a,290,npp_ctx_as_tests_vs_npp,HALF_PIXEL,0,1,,
+E4a,300,npp,HALF_PIXEL,5.35117255e-06,1,7.20166053,5.35117255e-06
+E4a,300,npp_ctx_as_tests,HALF_PIXEL,5.35117255e-06,1,7.20166053,5.35117255e-06
+E4a,300,npp_ctx_as_tests_vs_npp,HALF_PIXEL,0,1,,
+E4c,1,npp,HALF_PIXEL,126.640625,0,127.5,126.640625
+E4c,1,npp_ctx_as_tests,HALF_PIXEL,133.307292,0,134.166667,133.307292
+E4c,1,npp_ctx_as_tests_vs_npp,HALF_PIXEL,0,1,,
+E4c,1,npp,HALF_PIXEL,127.390625,0,127.5,127.390625
+E4c,1,npp_ctx_as_tests,HALF_PIXEL,134.057292,0,134.166667,134.057292
+E4c,1,npp_ctx_as_tests_vs_npp,HALF_PIXEL,0,1,,
+E4c,1,npp,HALF_PIXEL,127.251465,0,127.5,127.251465
+E4c,1,npp_ctx_as_tests,HALF_PIXEL,133.918131,0,134.166667,133.918131
+E4c,1,npp_ctx_as_tests_vs_npp,HALF_PIXEL,0,1,,
