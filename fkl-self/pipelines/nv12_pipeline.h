@@ -286,7 +286,7 @@ private:
 };
 
 // ------------------------------------------------------------------------------------------------------------------
-// The scalar reference of kernel 2 (double precision, the sampling of FKL): from the RGB frame on the host
+// The scalar reference of kernel 2 (double precision, ASYMMETRIC sampling, as FKL): from the RGB frame on the host
 template <int N>
 std::vector<float> referenceTensor(const fk::RawPtr<fk::ND::_2D, U3>& hostRgb, const std::array<fk::Rect, N>& crops) {
     std::vector<float> out(static_cast<size_t>(N) * 3 * PLANE);
@@ -294,7 +294,7 @@ std::vector<float> referenceTensor(const fk::RawPtr<fk::ND::_2D, U3>& hostRgb, c
     for (int i = 0; i < N; ++i) {
         const Rgb2D roi = roiOf(hostRgb, crops[i]);
         fklb::resizeBilinear(reinterpret_cast<const uchar*>(roi.data), roi.dims.pitch, crops[i].width, crops[i].height, 3,
-                             OUT_W, OUT_H, fklb::ResizeSampling::FKL, resized.data());
+                             OUT_W, OUT_H, fklb::ResizeSampling::ASYMMETRIC, resized.data());
         for (int p = 0; p < PLANE; ++p) {
             for (int c = 0; c < 3; ++c) {
                 out[(static_cast<size_t>(i) * 3 + c) * PLANE + p] = static_cast<float>(

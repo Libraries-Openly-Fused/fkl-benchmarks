@@ -7,8 +7,8 @@
 //            (opencv_percrop_*: default threads and one thread; opencv_percrop_parallel: the crops in parallel with
 //            cv::parallel_for_)
 // Wall clock (std::chrono::steady_clock): warm-up runs, then timed runs; median, min, max and mean per point. The checks before
-// timing: the FKL chain against a scalar double precision reference (FKL sampling) computed from the FKL RGB frame, the
-// OpenCV tensor against one with pixel-centre sampling computed from the OpenCV RGB frame (both 1e-4), single against
+// timing: the FKL chain against a scalar double precision reference (ASYMMETRIC sampling) computed from the FKL RGB frame, the
+// OpenCV tensor against one with HALF_PIXEL sampling computed from the OpenCV RGB frame (both 1e-4), single against
 // multithreaded FKL byte for byte; the RGB frames of FKL and OpenCV (levels) and the two tensors (the sampling conventions
 // differ, see common/resize_reference.h) are reported as informational.
 // Environment variables: E5_ITERS (default 30), E5_WARMUP (3), E5_OUT_DIR (default "."), E5_CHECK_ONLY=1, E5_IMAGE (a binary PPM
@@ -124,7 +124,7 @@ double fractionOver(const float* a, const float* b, const size_t n, const double
     return static_cast<double>(over) / static_cast<double>(n);
 }
 
-// The scalar reference of kernel 2 with pixel-centre sampling, from an OpenCV RGB frame
+// The scalar reference of kernel 2 with HALF_PIXEL sampling, from an OpenCV RGB frame
 template <int N>
 std::vector<float> referenceOpenCv(const cv::Mat& rgb, const std::array<fk::Rect, N>& crops) {
     std::vector<float> out(static_cast<size_t>(N) * 3 * nv12::PLANE);
@@ -132,7 +132,7 @@ std::vector<float> referenceOpenCv(const cv::Mat& rgb, const std::array<fk::Rect
     for (int i = 0; i < N; ++i) {
         const fk::Rect& r = crops[i];
         fklb::resizeBilinear(rgb.ptr<uchar>(static_cast<int>(r.y)) + static_cast<size_t>(r.x) * 3, rgb.step[0], r.width, r.height, 3,
-                             nv12::OUT_W, nv12::OUT_H, fklb::ResizeSampling::PIXEL_CENTRE, resized.data());
+                             nv12::OUT_W, nv12::OUT_H, fklb::ResizeSampling::HALF_PIXEL, resized.data());
         for (int p = 0; p < nv12::PLANE; ++p) {
             for (int c = 0; c < 3; ++c) {
                 out[(static_cast<size_t>(i) * 3 + c) * nv12::PLANE + p] = static_cast<float>(
@@ -213,8 +213,8 @@ void runPoint(nv12::Frame& frame, fk::Ptr2D<nv12::U3>& rgb, const e5::Context& c
     }
     compare("opencv_percrop_parallel vs opencv_percrop (identical)", ocv.tensor(), ocvTensor.data(), true);
     (void)parallelSame;
-    compare("opencv_percrop vs scalar reference, pixel-centre sampling (<= 1e-4)", ocvTensor.data(), refOcv.data(), false);
-    compare("fkl_chain_fused_cpu vs scalar reference, FKL sampling (<= 1e-4)", fusedST.data(), refFkl.data(), false);
+    compare("opencv_percrop vs scalar reference, HALF_PIXEL sampling (<= 1e-4)", ocvTensor.data(), refOcv.data(), false);
+    compare("fkl_chain_fused_cpu vs scalar reference, ASYMMETRIC sampling (<= 1e-4)", fusedST.data(), refFkl.data(), false);
     compare("fkl_chain_perop_batch_cpu vs fkl_chain_fused_cpu (<= 1e-4)", batchST.data(), fusedST.data(), false);
     compare("fkl_chain_perop_crop_cpu vs fkl_chain_fused_cpu (<= 1e-4)", cropST.data(), fusedST.data(), false);
     compare("fkl_chain_fused_cpu_mt vs fkl_chain_fused_cpu (identical)", mt.fusedOut(), fusedST.data(), true);
