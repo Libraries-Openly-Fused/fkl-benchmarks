@@ -35,3 +35,8 @@ fklb_add_benchmark(benchmark_data_type
 fklb_add_benchmark(resize_convention
     BACKENDS cu LIBS cvgs opencv npp
     SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/resize-convention/resize_convention.cu")
+
+# Diagnostic of the data-size experiment: the OpenCV-CUDA side alone, by element count (N mod 4 = 0 against N mod 4 = 2). Run only in a paused window.
+fklb_add_benchmark(opencv_parity_probe
+    BACKENDS cu LIBS cvgs opencv
+    SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/parity/opencv_parity_probe.cu")
