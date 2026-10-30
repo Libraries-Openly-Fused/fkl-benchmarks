@@ -16,7 +16,8 @@
 
   python scripts/e2_compact.py results/rtx4090/e2-chain
 
-Columns: k, impl, kernels (launched per call), gpu_ms (CUDA events, mean of 100 calls, warm), compile_s (cold: a fresh process and fresh caches; FKL: nvcc, one core),
+Columns: k, impl, timing ("warm": the data of the previous call is still in the 72 MB L2; "L2-flushed": a kernel that reads 256 MB ran before the call, outside the timed interval; the
+flushed rows exist for FKL, Triton and the three Inductor variants, eager has warm rows only), kernels (launched per call), gpu_ms (CUDA events, mean of 100 calls), compile_s (cold: a fresh process and fresh caches; FKL: nvcc, one core),
 bitwise (fraction of output elements identical to FKL's), ulp_fkl (maximum difference to FKL in float32 ULPs of FKL's value), ulp_exact (maximum difference to an exact
 float64 evaluation in ULPs), host_us (host time to launch one call, no synchronisation; not measured for FKL).
 Rows: k = 10, 100, 500 and the bounded larger attempt k = 5,002. Left out: gpu_min_ms, the SASS counts (README), the 'eager captured in one CUDA graph by hand' version.
@@ -41,12 +42,14 @@ def main():
         for ver, name in NAMES.items():
             r = next((x for x in data if int(x["ops"]) == k and x["version"] == ver), None)
             if r is None or r["status"] != "ok":
-                out.append({"k": k, "impl": name, "kernels": "", "gpu_ms": "", "compile_s": "", "bitwise": "", "ulp_fkl": "", "ulp_exact": "", "host_us": "", "status": r["status"] if r else "missing"})
+                out.append({"k": k, "impl": name, "timing": "", "kernels": "", "gpu_ms": "", "compile_s": "", "bitwise": "", "ulp_fkl": "", "ulp_exact": "", "host_us": "", "status": r["status"] if r else "missing"})
                 continue
-            f = lambda key, fmt: fmt.format(float(r[key])) if r[key] != "" else ""
-            out.append({"k": k, "impl": name, "kernels": r["kernels"], "gpu_ms": f("gpu_mean_ms", "{:.4f}"), "compile_s": f("compile_s", "{:.2f}"),
-                        "bitwise": f("bitexact_fraction_vs_fkl", "{:.4f}"), "ulp_fkl": f("max_ulp_vs_fkl", "{:.3g}"), "ulp_exact": f("max_ulp_vs_exact", "{:.3g}"),
-                        "host_us": f("host_launch_us", "{:.1f}"), "status": "ok"})
+            f = lambda key, fmt: fmt.format(float(r[key])) if r.get(key, "") != "" else ""
+            base = {"k": k, "impl": name, "kernels": r["kernels"], "compile_s": f("compile_s", "{:.2f}"), "bitwise": f("bitexact_fraction_vs_fkl", "{:.4f}"),
+                    "ulp_fkl": f("max_ulp_vs_fkl", "{:.3g}"), "ulp_exact": f("max_ulp_vs_exact", "{:.3g}"), "host_us": f("host_launch_us", "{:.1f}"), "status": "ok"}
+            out.append(dict(base, timing="warm", gpu_ms=f("gpu_mean_ms", "{:.4f}")))
+            if ver != "eager" and r.get("gpu_flushed_mean_ms", "") != "":
+                out.append(dict(base, timing="L2-flushed", gpu_ms=f("gpu_flushed_mean_ms", "{:.4f}")))
     path = os.path.join(d, "e2_compact.csv")
     with open(path, "w", newline="") as fh:
         w = csv.DictWriter(fh, fieldnames=list(out[0].keys()))

@@ -34,6 +34,7 @@
 #include <fused_kernel/core/data/ptr_utils.h>
 #include <fused_kernel/core/execution_model/executors.h>
 
+#include <algorithm>
 #include <cstdio>
 #include <cstdlib>
 #include <fstream>
@@ -56,6 +57,44 @@ using e1::Timing; using e1::timeIt;
 constexpr float ALPHA = 1.0f;
 constexpr float COEF = 0.54f;
 constexpr int KS[] = {E2_FKL_KS_LIST};
+
+// Flushing the L2 between launches: a kernel that READS a 256 MB buffer (more than three times the 72 MB L2 of the RTX 4090; reading leaves clean lines, so the dirty output of the previous
+// launch is written back during the flush and not during the timed launch). It runs on the same stream before the start event, so it is outside the timed interval.
+constexpr size_t FLUSH_BYTES = 256ull << 20;
+__global__ void l2Flush(const float4* __restrict__ p, const size_t n, float* sink) {
+    float acc = 0.f;
+    for (size_t i = static_cast<size_t>(blockIdx.x) * blockDim.x + threadIdx.x; i < n; i += static_cast<size_t>(gridDim.x) * blockDim.x) {
+        const float4 v = p[i];
+        acc += v.x + v.y + v.z + v.w;
+    }
+    if (acc == 12345.f) *sink = acc;   // never true for a zeroed buffer: keeps the loads
+}
+
+template <typename Launch>
+bool timeFlushed(cudaStream_t stream, const Launch& launch, const float4* flushBuf, float* sink, Timing& t) {
+    if (e1::profileMode()) return true;
+    cudaEvent_t start, stop;
+    E1_CHECK(cudaEventCreate(&start));
+    E1_CHECK(cudaEventCreate(&stop));
+    launch();   // warm-up
+    E1_CHECK(cudaStreamSynchronize(stream));
+    double sum = 0;
+    for (int i = 0; i < e1::ITERATIONS; ++i) {
+        l2Flush<<<4096, 256, 0, stream>>>(flushBuf, FLUSH_BYTES / sizeof(float4), sink);
+        E1_CHECK(cudaEventRecord(start, stream));
+        launch();
+        E1_CHECK(cudaEventRecord(stop, stream));
+        E1_CHECK(cudaEventSynchronize(stop));
+        float ms = 0;
+        E1_CHECK(cudaEventElapsedTime(&ms, start, stop));
+        sum += ms;
+        t.min = std::min<double>(t.min, ms);
+    }
+    t.mean = sum / e1::ITERATIONS;
+    E1_CHECK(cudaEventDestroy(start));
+    E1_CHECK(cudaEventDestroy(stop));
+    return true;
+}
 
 // The chain, built like cvGS's VerticalFusion and like E1a (nested loops of 50 pairs, then the remainder; StaticLoop<X, 0> executes X once, not zero times)
 template <int PAIRS, typename ReadIOp, typename WriteIOp>
@@ -108,11 +147,20 @@ bool runPoint(cudaStream_t cs, fk::Stream_<fk::ParArch::GPU_NVIDIA>& fkStream, f
             return false;
         }
     }
-    Timing t;
+    Timing t, tFlushed;
     if (!timeIt(cs, launchFkl, t)) return false;
-    csv.row(K, PAIRS, t.mean, t.min, 1, path);
+    float4* flushBuf = nullptr;
+    float* sink = nullptr;
+    E1_CHECK(cudaMalloc(&flushBuf, FLUSH_BYTES));
+    E1_CHECK(cudaMemset(flushBuf, 0, FLUSH_BYTES));
+    E1_CHECK(cudaMalloc(&sink, sizeof(float)));
+    const bool flushedOk = timeFlushed(cs, launchFkl, flushBuf, sink, tFlushed);
+    cudaFree(flushBuf);
+    cudaFree(sink);
+    if (!flushedOk) return false;
+    csv.row(K, PAIRS, t.mean, t.min, 1, path, tFlushed.mean, tFlushed.min);
     csv.flush();
-    std::cout << K << " ops: fkl " << t.mean << " ms (min " << t.min << "), output " << path << std::endl;
+    std::cout << K << " ops: fkl " << t.mean << " ms (min " << t.min << "), L2 flushed " << tFlushed.mean << " ms (min " << tFlushed.min << "), output " << path << std::endl;
     return true;
 }
 
@@ -152,9 +200,10 @@ int launch() {
             }
         }
     }
-    fklb::CsvWriter csv("e2_fkl_chain.csv", "E2 element-wise chain through FKL (4096x2160 uchar -> float)", {"ops", "pairs", "fkl_mean_ms", "fkl_min_ms", "kernels", "output_file"},
+    fklb::CsvWriter csv("e2_fkl_chain.csv", "E2 element-wise chain through FKL (4096x2160 uchar -> float)", {"ops", "pairs", "fkl_mean_ms", "fkl_min_ms", "kernels", "output_file", "fkl_flushed_mean_ms", "fkl_flushed_min_ms"},
                         std::string("thread fusion: off (fk::TF::DISABLED, the default); input: ") + inputPath + " (uint8 noise, std::mt19937_64 seed 20261030 as E1a, uniform 0..255, row after row); "
                         "alpha 1.0, c 0.54, k operations alternating Mul c and Add c; 32x8 threads per block (the block FKL picks); 100 timed iterations after one warm-up; "
+                        "fkl_flushed_*: the same launch with the L2 flushed before it (a kernel that reads 256 MB, outside the timed interval); "
                         "outputs are raw float32 files, one per k, for the bitwise and ULP comparison of triton/e2_chain.py" + (e1::profileMode() ? "; PROFILE MODE: nothing was timed" : ""));
     return runAll(std::make_index_sequence<sizeof(KS) / sizeof(KS[0])>{}, cs, fkStream, csv, noise, outDir) ? 0 : -1;
 }

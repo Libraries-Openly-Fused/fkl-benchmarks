@@ -117,6 +117,24 @@ def cuda_time(call, x, out):
     return sum(times) / len(times), min(times), host_us
 
 
+FLUSH_BYTES = 256 << 20
+
+
+def cuda_time_flushed(call, x, out, flush_buf):
+    """Mean and min GPU time (ms) of 100 calls with the L2 flushed before each one: a kernel that READS a 256 MB buffer (more than three times the 72 MB L2 of the RTX 4090; reading leaves
+    clean lines, so the output of the previous call is written back during the flush) runs on the same stream before the start event, outside the timed interval."""
+    start, stop = torch.cuda.Event(enable_timing=True), torch.cuda.Event(enable_timing=True)
+    times = []
+    for _ in range(ITERATIONS):
+        flush_buf.sum()
+        start.record()
+        call(x, out)
+        stop.record()
+        stop.synchronize()
+        times.append(start.elapsed_time(stop))
+    return sum(times) / len(times), min(times)
+
+
 def count_kernels(call, x, out):
     from torch.profiler import ProfilerActivity, profile
     torch.cuda.synchronize()
@@ -214,6 +232,9 @@ def worker(version, ops, ref_path, input_path=None, fkl_dir=None):
         result = out if version == "triton_hand" else r
     mean, mn, host = cuda_time(call, x, out)
     res.update(gpu_mean_ms=mean, gpu_min_ms=mn, host_launch_us=host)
+    flush_buf = torch.zeros(FLUSH_BYTES // 4, dtype=torch.float32, device="cuda")
+    res["gpu_flushed_mean_ms"], res["gpu_flushed_min_ms"] = cuda_time_flushed(call, x, out, flush_buf)
+    del flush_buf
     res["kernels"] = count_kernels(call, x, out) if version != "eager_graphs" else count_kernels(lambda a, b: g.replay(), x, out)
     if version not in ("eager", "eager_graphs"):    # eager runs PyTorch's own precompiled kernels, one per operation: nothing is contracted across operations
         res.update(sass_counts(os.environ.get("TRITON_CACHE_DIR")))
@@ -261,10 +282,11 @@ def main():
     image = (f"the file {args.input} (written by e2_fkl_chain: std::mt19937_64 seed 20261030, as E1a)" if args.input else "torch.randint, torch.manual_seed 20261030")
     notes = (f"k values: {','.join(str(k) for k in ks)}; 4096x2160 uint8 noise ({image}) -> float32, alpha {ALPHA}, c {C}, k operations alternating mul and add; each (version, k) in its own process "
              f"with fresh Triton and Inductor caches (compile_s = the first call, cold); {ITERATIONS} timed calls after warm-up; kernels counted with torch.profiler; "
+             f"gpu_flushed_*: the same timing with the L2 flushed before every call (a kernel that reads 256 MB, outside the timed interval); "
              f"ULP error against an exact float64 evaluation (max_ulp_vs_exact) and against the FKL output (max_ulp_vs_fkl, in ULPs of the FKL value; bitexact_fraction_vs_fkl); "
              f"FKL row: time from {args.fkl_csv}, cold compile time from {args.fkl_compile}; timeout {args.timeout} s per point")
     cols = ["ops", "version", "status", "why", "gpu_mean_ms", "gpu_min_ms", "host_launch_us", "kernels", "compile_s", "max_ulp_vs_exact", "bitexact_fraction_vs_triton_hand",
-            "bitexact_fraction_vs_fkl", "max_ulp_vs_fkl", "sass_ffma", "sass_fmul", "sass_fadd"]
+            "bitexact_fraction_vs_fkl", "max_ulp_vs_fkl", "sass_ffma", "sass_fmul", "sass_fadd", "gpu_flushed_mean_ms", "gpu_flushed_min_ms"]
     with CsvWriter(args.out, "E2a element-wise chain: Triton and TorchInductor", cols, notes=notes) as csv:
         versions = args.versions.split(",")
         if args.fkl_dir and "fkl" not in versions:
@@ -298,6 +320,8 @@ def main():
                 if version == "fkl" and status == "ok":   # the time of FKL and the cold compile time of its chain come from their own programs
                     if ops in fkl_times:
                         r["gpu_mean_ms"], r["gpu_min_ms"] = float(fkl_times[ops]["fkl_mean_ms"]), float(fkl_times[ops]["fkl_min_ms"])
+                        if fkl_times[ops].get("fkl_flushed_mean_ms"):
+                            r["gpu_flushed_mean_ms"], r["gpu_flushed_min_ms"] = float(fkl_times[ops]["fkl_flushed_mean_ms"]), float(fkl_times[ops]["fkl_flushed_min_ms"])
                     if ops in fkl_compile:
                         r["compile_s"] = float(fkl_compile[ops]["nvcc_s"])
                 csv.row(ops, version, status, why, *[r.get(c, "") for c in cols[4:]])
