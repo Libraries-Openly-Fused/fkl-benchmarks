@@ -60,6 +60,19 @@ using Frame = fk::Image<fk::PixelFormat::NV12>;
 using ToRgb = fk::ConvertYUVToRGB<fk::PixelFormat::NV12, fk::ColorRange::Full, fk::ColorPrimitives::bt601, false, U3>;
 using Rgb2D = fk::RawPtr<fk::ND::_2D, U3>;
 
+// The sampling of the linear resize: FKL's Resize samples the source at x * (src / dst) (ResizeSampling::ASYMMETRIC, the default).
+// With -DE5_RESIZE_HALF_PIXEL the resize is ResizeHalfPixel, (x + 0.5) * (src / dst) - 0.5, which needs an FKL with ResizeSampling
+// (FKL pull request #409).
+#ifdef E5_RESIZE_HALF_PIXEL
+using LinearResize = fk::ResizeHalfPixel<fk::InterpolationType::INTER_LINEAR>;
+constexpr fklb::ResizeSampling RESIZE_SAMPLING = fklb::ResizeSampling::HALF_PIXEL;
+constexpr const char* RESIZE_SAMPLING_NAME = "HALF_PIXEL";
+#else
+using LinearResize = fk::Resize<fk::InterpolationType::INTER_LINEAR>;
+constexpr fklb::ResizeSampling RESIZE_SAMPLING = fklb::ResizeSampling::ASYMMETRIC;
+constexpr const char* RESIZE_SAMPLING_NAME = "ASYMMETRIC";
+#endif
+
 // Normalisation of a DNN input: (x / 255 - mean) / std
 constexpr float MEAN[3] = {0.485f, 0.456f, 0.406f}, STD[3] = {0.229f, 0.224f, 0.225f};
 
@@ -166,8 +179,7 @@ inline fk::RawPtr<fk::ND::_3D, float> tensorSlice(fk::RawPtr<fk::ND::_3D, float>
 }
 
 inline auto resizeOf(const Rgb2D& roi) {
-    return fk::Resize<fk::InterpolationType::INTER_LINEAR>::build(fk::PerThreadRead<fk::ND::_2D, U3>::build(roi),
-                                                                  fk::Size(OUT_W, OUT_H));
+    return LinearResize::build(fk::PerThreadRead<fk::ND::_2D, U3>::build(roi), fk::Size(OUT_W, OUT_H));
 }
 inline auto read2D(const fk::RawPtr<fk::ND::_2D, F3>& p) { return fk::PerThreadRead<fk::ND::_2D, F3>::build(p); }
 inline auto write2D(const fk::RawPtr<fk::ND::_2D, F3>& p) { return fk::PerThreadWrite<fk::ND::_2D, F3>::build(p); }
@@ -194,8 +206,8 @@ auto batchResizeOf(const Rgb2D& frame, const std::array<fk::Rect, N>& crops) {
     for (int i = 0; i < N; ++i) {
         rois[i] = roiOf(frame, crops[i]);
     }
-    return fk::Resize<fk::InterpolationType::INTER_LINEAR>::build(fk::PerThreadRead<fk::ND::_2D, U3>::build_batch(rois),
-                                                                  fk::make_set_std_array<N>(fk::Size(OUT_W, OUT_H)));
+    return LinearResize::build(fk::PerThreadRead<fk::ND::_2D, U3>::build_batch(rois),
+                               fk::make_set_std_array<N>(fk::Size(OUT_W, OUT_H)));
 }
 
 // ------------------------------------------------------------------------------------------------------------------
@@ -286,7 +298,7 @@ private:
 };
 
 // ------------------------------------------------------------------------------------------------------------------
-// The scalar reference of kernel 2 (double precision, ASYMMETRIC sampling, as FKL): from the RGB frame on the host
+// The scalar reference of kernel 2 (double precision, the sampling of the resize above): from the RGB frame on the host
 template <int N>
 std::vector<float> referenceTensor(const fk::RawPtr<fk::ND::_2D, U3>& hostRgb, const std::array<fk::Rect, N>& crops) {
     std::vector<float> out(static_cast<size_t>(N) * 3 * PLANE);
@@ -294,7 +306,7 @@ std::vector<float> referenceTensor(const fk::RawPtr<fk::ND::_2D, U3>& hostRgb, c
     for (int i = 0; i < N; ++i) {
         const Rgb2D roi = roiOf(hostRgb, crops[i]);
         fklb::resizeBilinear(reinterpret_cast<const uchar*>(roi.data), roi.dims.pitch, crops[i].width, crops[i].height, 3,
-                             OUT_W, OUT_H, fklb::ResizeSampling::ASYMMETRIC, resized.data());
+                             OUT_W, OUT_H, RESIZE_SAMPLING, resized.data());
         for (int p = 0; p < PLANE; ++p) {
             for (int c = 0; c < 3; ++c) {
                 out[(static_cast<size_t>(i) * 3 + c) * PLANE + p] = static_cast<float>(

@@ -214,13 +214,13 @@ void runPoint(nv12::Frame& frame, fk::Ptr2D<nv12::U3>& rgb, const e5::Context& c
     compare("opencv_percrop_parallel vs opencv_percrop (identical)", ocv.tensor(), ocvTensor.data(), true);
     (void)parallelSame;
     compare("opencv_percrop vs scalar reference, HALF_PIXEL sampling (<= 1e-4)", ocvTensor.data(), refOcv.data(), false);
-    compare("fkl_chain_fused_cpu vs scalar reference, ASYMMETRIC sampling (<= 1e-4)", fusedST.data(), refFkl.data(), false);
+    compare(std::string("fkl_chain_fused_cpu vs scalar reference, ") + nv12::RESIZE_SAMPLING_NAME + " sampling (<= 1e-4)", fusedST.data(), refFkl.data(), false);
     compare("fkl_chain_perop_batch_cpu vs fkl_chain_fused_cpu (<= 1e-4)", batchST.data(), fusedST.data(), false);
     compare("fkl_chain_perop_crop_cpu vs fkl_chain_fused_cpu (<= 1e-4)", cropST.data(), fusedST.data(), false);
     compare("fkl_chain_fused_cpu_mt vs fkl_chain_fused_cpu (identical)", mt.fusedOut(), fusedST.data(), true);
     compare("fkl_chain_perop_batch_cpu_mt vs fkl_chain_perop_batch_cpu (identical)", mt.batchOut(), batchST.data(), true);
     compare("fkl_chain_perop_crop_cpu_mt vs fkl_chain_perop_crop_cpu (identical)", mt.cropOut(), cropST.data(), true);
-    compare("fkl_chain_fused_cpu vs opencv_percrop (RGB frame and sampling convention differ)", fusedST.data(), ocvTensor.data(), false, false);
+    compare(std::string("fkl_chain_fused_cpu (") + nv12::RESIZE_SAMPLING_NAME + " sampling) vs opencv_percrop (HALF_PIXEL; the RGB frames differ too)", fusedST.data(), ocvTensor.data(), false, false);
     if (checkOnly) {
         return;
     }

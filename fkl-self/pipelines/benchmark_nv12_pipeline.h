@@ -84,7 +84,7 @@ void runPoint(nv12::Frame& frame, fk::Ptr2D<nv12::U3>& rgb, Output& out, std::ve
         out.allPass &= pass;
         std::cout << "  " << what << ": max abs diff " << d << (pass ? " ok" : " FAIL") << std::endl;
     };
-    check("chain_fused vs scalar reference (ASYMMETRIC sampling)", pipe.fusedOut(), reference.data(), false);
+    check(std::string("chain_fused vs scalar reference (") + nv12::RESIZE_SAMPLING_NAME + " sampling)", pipe.fusedOut(), reference.data(), false);
     check("chain_perop_batch vs chain_fused", pipe.batchOut(), pipe.fusedOut(), false);
     if constexpr (cpu) {
         check("chain_perop_crop vs chain_fused", pipe.cropOut(), pipe.fusedOut(), false);
