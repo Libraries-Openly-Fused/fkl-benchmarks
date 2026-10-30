@@ -1,0 +1,10 @@
+compiletime_stacked_r2.pdf: drawn by scripts/plot_compiletime.py
+size: 3.40 x 4.40 in (the printed width)
+csv: results/rtx4090/e3-compile/e3_table_chains.csv
+  results commit that last changed it: e3769bc1ff7abc5f57d20c4a0dc5f183e1444fd0
+csv: results/rtx4090/e3-compile/e3_table_staticloop.csv
+  results commit that last changed it: 9afddfbe353ee6141a1ce477b13ce81fdde4547a
+variant A without the change: tree 'current' (LTS-C++17 before PR #417); with: tree 'getarg-pr' (PR branch) where measured, else 'patched' (same function in a scratch copy)
+distinct operations without: N 1..4000 (32 points) + timeout at [6000]; with: N 1..4000 (12 points) + timeout at [6000]
+StaticLoop: N 2..19902 (14 points), nvcc 4.0 s to 35.1 s
+derived by scripts/e3_table.py from e3_compile.csv, e3_compile_A_knee*.csv, e3_patched_A.csv, e3_getarg_pr_A.csv, compile-times-1-100-500-2000/*.csv, e3_staticloop_mul_add1.csv, e3_limit_B_384*.csv
