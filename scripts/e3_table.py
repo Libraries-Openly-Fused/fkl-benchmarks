@@ -73,7 +73,7 @@ def main():
             kt[(r["tree"], r["variant"], int(r["n"]))] = r["kernel_ms_median"]
     sources = {"e3_compile.csv": "current", "e3_compile_B.csv": "current", "e3_compile_A_knee.csv": "current", "e3_compile_A_knee_fine.csv": "current",
                "e3_limit_B_3847.csv": "current", "e3_limit_B_3848.csv": "current", "e3_patched_A.csv": "patched", "e3_patched_B.csv": "patched",
-               "e3_getarg_pr_A.csv": "getarg-pr", "compile-times-1-100-500-2000/without_fix.csv": "current", "compile-times-1-100-500-2000/with_fix.csv": "getarg-pr"}
+               "e3_getarg_pr_A.csv": "getarg-pr", "compile-times-1-100-500-2000/without_fix.csv": "current", "compile-times-1-100-500-2000/with_fix.csv": "getarg-pr", "cubin-sizes/e3_cubin_A.csv": "getarg-pr"}
     groups = {}
     for fn, tree in sources.items():
         p = os.path.join(d, fn)

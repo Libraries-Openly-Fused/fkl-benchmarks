@@ -30,7 +30,7 @@ one call (no synchronisation; mean of 100), the number of CUDA kernels one call 
 of bit-identical elements against triton_hand). Tools: the CUDA 13.4 ptxas must be the one Triton uses (source scripts/triton_env.sh;
 common/fklb_csv.py writes the version it resolved in the CSV header).
 
-  python triton/e2_chain.py [--ks 2,10,50,100,500] [--out e2_chain.csv] [--versions triton_hand,eager,...]
+  python triton/e2_chain.py [--ks 2,10,50,100,500] [--out e2_chain.csv] [--versions triton_hand,eager,...] [--timeout 1800]
 """
 import argparse
 import json
@@ -181,7 +181,7 @@ def worker(version, ops, ref_path):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--ks", default="2,102,1002,5002,10002,19902")
+    ap.add_argument("--ks", default="2,10,50,100,500", help="chain lengths; add 1000 (optional) and one bounded attempt at a large k such as 5002 with --timeout 900 to document the limit")
     ap.add_argument("--out", default="e2_chain.csv")
     ap.add_argument("--versions", default="triton_hand,eager,inductor_default,inductor_wide,inductor_graphs,eager_graphs")
     ap.add_argument("--timeout", type=int, default=1800, help="seconds per (version, ops): a worker that is slower is killed and recorded")
@@ -192,7 +192,7 @@ def main():
         print("E2JSON " + json.dumps(worker(args.worker[0], int(args.worker[1]), args.ref)))
         return
     ks = [int(k) for k in args.ks.split(",")]
-    notes = (f"4096x2160 uint8 noise (torch seed 20261030) -> float32, alpha {ALPHA}, c {C}, k operations alternating mul and add; each (version, k) in its own process "
+    notes = (f"k values: {','.join(str(k) for k in ks)}; 4096x2160 uint8 noise (torch.randint, torch.manual_seed 20261030) -> float32, alpha {ALPHA}, c {C}, k operations alternating mul and add; each (version, k) in its own process "
              f"with fresh Triton and Inductor caches (compile_s = the first call, cold); {ITERATIONS} timed calls after warm-up; kernels counted with torch.profiler; "
              f"ULP error against a float64 reference; timeout {args.timeout} s per point")
     cols = ["ops", "version", "status", "why", "gpu_mean_ms", "gpu_min_ms", "host_launch_us", "kernels", "compile_s", "max_ulp_vs_exact", "bitexact_fraction_vs_triton_hand"]

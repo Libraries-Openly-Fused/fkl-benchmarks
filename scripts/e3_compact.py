@@ -21,6 +21,10 @@
   e3_compact_limits.csv        what stops a fused kernel and at which N: the register cliff (before the change), the ptxas parameter-space limit (variant B),
                                and the recursive fk::get of the old trees (the fold-versus-recursion rows)
 
+A third file, e3_compact_current.csv, is the one for the paper: the library as it is now, variant A, without any comparison with an earlier state (columns N,
+param_B, regs, spill_B, sass, nvcc_s, rss_GB, ms: the kernel time of the fused kernel where it was measured). The two files above compare the state before and after the
+get_arg change of PR #417: they are material for the response letter and the README of the results folder, not for paper-facing files.
+
 Columns of e3_table_before_after.csv that the compact table leaves out: param_space_bytes, sass_*, cicc_s_*, ptxas_s_*, rss_mb_*, status_*, with_tree
 (the full table keeps them; the peak memory is in the compile-time figure).
 """
@@ -53,6 +57,17 @@ def main():
         w = csv.DictWriter(f, fieldnames=list(out[0].keys()))
         w.writeheader()
         w.writerows(out)
+
+    cur = []
+    for n in ROWS_A:
+        r = ba[("A", n)]
+        cur.append({"N": n, "param_B": r["param_space_bytes"], "regs": r["registers_with"], "spill_B": r["spill_bytes_with"], "sass": r["sass_with"],
+                    "nvcc_s": fnum(r["nvcc_s_with"], 1), "rss_GB": fnum(float(r["rss_mb_with"]) / 1024.0, 1) if r["rss_mb_with"] else "",
+                    "ms": fnum(r["kernel_ms_with"], 3) if r["kernel_ms_with"] else ""})
+    with open(os.path.join(d, "e3_compact_current.csv"), "w", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=list(cur[0].keys()))
+        w.writeheader()
+        w.writerows(cur)
 
     chains = list(csv.DictReader(open(os.path.join(d, "e3_table_chains.csv"))))
     trees = list(csv.DictReader(open(os.path.join(d, "e3_table_trees.csv"))))

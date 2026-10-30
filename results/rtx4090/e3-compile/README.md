@@ -31,3 +31,18 @@ The kernel parameter block is the same at N = 1,023 and 1,024 (4,152 B of parame
 - Variant B (float3 / int3, 12 B per parameterised operation): ok to N = 3,847 (731 s, 12.8 GB, parameter space 32,752 B); N = 3,848 (32,768 B by the layout model) fails with a ptxas error (exit 255; the sweep CSV keeps only the truncated first line); the full message was captured at N = 4,000
   (`ptxas_error_B_4000.txt`): `Entry function ... uses too much parameter space (0x8508 bytes, 0x7ffc max)`. The layout model reproduces the 0x8508 exactly; the N = 3,848 failure was predicted by it and confirmed by a compile.
 - Older trees: 1f33224 first fails at N = 248, 07b2cb3^ and 07b2cb3 at N = 245: `cannot deduce the return type of function "fk::get<Index, ...>"` at parameter_pack_utils.h(34).
+
+## Compact tables (one column, 3.4 in at 8 pt) and what each is for
+
+Paper-facing (the library as it is now, no comparison with an earlier state):
+- `e3_compact_current.csv`: distinct operations (variant A), N = 1 ... 4,000: parameter bytes, registers, spill bytes, SASS instructions, nvcc wall time, peak compiler memory, kernel time of the fused kernel where it was measured.
+- `e3_compact_phases.csv`: nvcc phases (front end, cicc, ptxas, host compiler) and the cubin size, distinct operations at N = 100, 1,000, 2,000, 4,000 and StaticLoop at 2, 10,002, 19,902 operations (`scripts/e3_compact_phases.py`; the cubin sizes of the distinct-operations rows come from `cubin-sizes/e3_cubin_A.csv`, compiled from the PR #417 tree).
+- the figure `figures/compiletime_single_r2.pdf` (`scripts/plot_compiletime.py`).
+
+Response letter and this README only (they compare the library before and after the get_arg change of PR #417, or list the old trees):
+- `e3_compact_before_after.csv`, `e3_compact_limits.csv`, `e3_table_before_after.csv`, `e3_table.md`, and `scripts/plot_compiletime.py --history`.
+
+## Tree check: the PR #417 branch against the copy of the pinned tree
+
+The distinct-operations series of the compile-time figure comes from two include trees with the same one-function get_arg change: N = 1 ... 3,000 from the PR #417 branch (worktree, based on LTS-C++17 d776713) and N = 1,020, 4,000 and the time-out from a copy of the pin 38c4f32 (code of `pp_detail::Nth` / `Skip` identical, only comments and one `static_assert` message differ). Check, 2026-10-30: the generated translation units of N = 1,000 and N = 2,000 (`build/e3/getarg-pr_A_<N>.cu`, `gen_chain.py` variant A) compiled with identical flags (`-O3 -std=c++17 sm_89 + PTX`, nvcc 13.4.92) from both trees give the same kernel, compared with `cuobjdump -sass` after normalisation: 3,640 instructions at N = 1,000 and 7,136 at N = 2,000 in both, identical line by line.
+To repeat after PR #417 is merged (the merge commit may differ from the branch in other files that these TUs include): compile N = 1,000 from the merge commit and compare against the same dump.
