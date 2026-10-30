@@ -28,7 +28,7 @@ thousands of local-memory instructions from **N = 1,024**, with the kernel param
 
 PTX of the chain kernel: N = 1,020: `ld.param` only. N = 1,023: the generic address of every parameter is taken (`cvta.param`, 1,025 of them) and kept in
 registers. N = 1,024: those addresses are stored into `.local .align 8 .b8 __local_depot0[8200]` (`st.local.u64` x 1,025) and reloaded; N = 1,030: depot
-of 8,248 B. SASS: no `STL`, `LDL` or `LDC` up to N = 1,023; from N = 1,024 about half of the instructions are address arithmetic and local memory.
+of 8,248 B. SASS: no `STL`, `LDL` or `LDC` up to N = 1,023; at N = 1,024, 62 percent of the 8,800 instructions are STL (1,957), LDL (932), IADD3 (1,387) and IMAD (1,204), i.e. local memory and 64-bit address arithmetic.
 
 Cause: `fk::get_arg<I>(args...)` (`core/utils/parameter_pack_utils.h`, used by `ppFirst`, `ppLast` and `get_arg<0>(iOps...)` in
 `data_parallel_patterns.h`) is `TupleUtil::get<I>(forward_as_tuple(args...))`: each call builds a `Tuple<Args&&...>`, one pointer per argument, and
