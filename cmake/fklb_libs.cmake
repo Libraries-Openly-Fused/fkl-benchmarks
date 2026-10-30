@@ -71,3 +71,14 @@ if(TARGET fklb_opencv_cpu)
         target_link_libraries(fklb_opencv_cpu INTERFACE opencv_imgcodecs)
     endif()
 endif()
+
+# RPP, the Radeon Performance Primitives of ROCm (the tensor API, rppt_*, with the HIP back-end), for rpp/
+if(FKLB_BUILD_RPP AND FKLB_HAVE_hip)
+    find_package(rpp CONFIG REQUIRED)
+    get_target_property(FKLB_RPP_INCLUDE rpp::rpp INTERFACE_INCLUDE_DIRECTORIES)
+    add_library(fklb_rpp INTERFACE)
+    target_link_libraries(fklb_rpp INTERFACE fklb_fkl rpp::rpp)
+    # the headers include each other as <rppdefs.h>
+    target_include_directories(fklb_rpp INTERFACE "${FKLB_RPP_INCLUDE}/rpp")
+    message(STATUS "fkl-benchmarks: RPP ${rpp_VERSION} (${rpp_DIR})")
+endif()
