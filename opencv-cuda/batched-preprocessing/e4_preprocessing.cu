@@ -39,6 +39,7 @@
 // Timing: CUDA events around one launch of the whole implementation (including the host calls that enqueue it), 100 launches after one warm-up, mean and min;
 // intermediate bytes: what the implementation allocates besides the source and the output tensor (tallied) and the change of free device memory (cudaMemGetInfo).
 //
+//   E4_BATCHES_ONLY=100,300 / E4_FRAMES_ONLY=3840 (frame widths): only these points of the sweeps (for the profiler)
 //   E4_NPP_TESTS_FIRST=1 measures npp_ctx_as_tests before npp (order check of the NPP stream-context diagnostic; both run only when named in E4_ONLY)
 //   E4_ONLY=a,b   run only these implementations (default all); E4_PROFILE=1: every implementation launches once and nothing is timed (for ncu, one
 //   implementation per run with E4_ONLY, to count its kernels and its DRAM bytes). E4_EXPERIMENTS=E4a,E4c (default both).
@@ -111,6 +112,13 @@ bool selected(const std::string& name) {
     if (only == nullptr) return name != "npp_ctx_as_tests";   // the diagnostic variant runs only when it is named
     const std::string list = std::string(",") + only + ",";
     return list.find("," + name + ",") != std::string::npos;
+}
+
+// E4_BATCHES_ONLY=100,300 and E4_FRAMES_ONLY=1920,3840 (widths) restrict a run to some points of the sweep, for the profiler (one launch of every kernel of a batch of 300 crops is thousands of kernels)
+bool listed(const char* env, const int value) {
+    const char* e = std::getenv(env);
+    if (e == nullptr) return true;
+    return (std::string(",") + e + ",").find("," + std::to_string(value) + ",") != std::string::npos;
 }
 
 bool experimentSelected(const std::string& name) {
@@ -433,7 +441,7 @@ bool runCase(const Geometry& g, const std::vector<unsigned char>& noise, cudaStr
 template <size_t... Is>
 bool runBatches(std::index_sequence<Is...>, const std::vector<unsigned char>& noise, cudaStream_t cs, fk::Stream_<fk::ParArch::GPU_NVIDIA>& fkStream, Writers& w, bool& allOk) {
     bool ok = true;
-    ((ok = ok && runCase<BATCHES[Is]>(Geometry{"E4a", BATCHES[Is], SRC_W, SRC_H, CROP_W, CROP_H, UP_W, UP_H, true}, noise, cs, fkStream, w, allOk)), ...);
+    ((ok = ok && (!listed("E4_BATCHES_ONLY", BATCHES[Is]) || runCase<BATCHES[Is]>(Geometry{"E4a", BATCHES[Is], SRC_W, SRC_H, CROP_W, CROP_H, UP_W, UP_H, true}, noise, cs, fkStream, w, allOk))), ...);
     return ok;
 }
 }  // namespace
@@ -460,6 +468,7 @@ int launch() {
         struct Frame { int w, h; };
         const Frame frames[] = {{720, 480}, {1920, 1080}, {3840, 2160}};   // "480p", "1080p", "4K" of the CPU rows
         for (const Frame& f : frames) {
+            if (!listed("E4_FRAMES_ONLY", f.w)) continue;
             const std::vector<unsigned char> noise = seededNoise(f.w, f.h);
             const Geometry g{"E4c", 1, f.w, f.h, f.w, f.h, f.w * 64 / 60, f.h * 128 / 120, false};
             ok = runCase<1>(g, noise, cs, fkStream, w, allOk) && ok;
