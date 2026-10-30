@@ -15,7 +15,7 @@
 // E1 (b): the horizontal-fusion batch of the paper written by hand, against FKL.
 //
 // The workload is benchmark_Horizontal_Fusion_NO_CPU_OVERHEAD: BATCH crops of 60 x 120 uchar, the crop i taken at (i, i) of the
-// source image (2160 wide and 3840 high, as that benchmark allocates it), converted to float, multiplied by 1.0, minus 1.0, divided by
+// source image (3840 wide and 2160 high), converted to float, multiplied by 1.0, minus 1.0, divided by
 // 3.2 and written as plane i of a float tensor. One kernel for the whole batch.
 //
 // Versions:
@@ -50,7 +50,7 @@
 namespace {
 using e1::Timing; using e1::timeIt; using e1::sameBits;
 
-constexpr int SRC_W = 2160, SRC_H = 3840;   // as the benchmark allocates its source: Ptr2D(NUM_ELEMS_Y, NUM_ELEMS_X)
+constexpr int SRC_W = 3840, SRC_H = 2160;   // as the benchmark allocates its source and as the paper states
 constexpr int CROP_W = 60, CROP_H = 120;
 constexpr float ALPHA = 1.0f, SUB = 1.0f, DIV = 3.2f;
 constexpr int BATCHES[] = {E1_HF_BATCHES};
@@ -177,7 +177,7 @@ int launch() {
     fklb::CsvWriter csv("e1_hf_batch.csv", "E1b hand-written horizontal-fusion batch vs FKL (60x120 uchar crops -> float tensor)",
                         {"batch", "hand_mean_ms", "hand_min_ms", "fkl_mean_ms", "fkl_min_ms", "fkl_tf_mean_ms", "fkl_tf_min_ms", "iterated_mean_ms",
                          "iterated_min_ms", "fkl_over_hand", "iterated_over_fkl", "fkl_bitexact", "fkl_tf_bitexact", "iterated_bitexact"},
-                        "source: seeded uint8 noise 2160x3840 (std::mt19937_64 seed 20261030), crop i at (i, i); cast, *1.0, -1.0, /3.2; the block is the one "
+                        "source: seeded uint8 noise 3840x2160 (std::mt19937_64 seed 20261030), crop i at (i, i); cast, *1.0, -1.0, /3.2; the block is the one "
                         "fk::getDefaultBlockSize picks; 100 timed iterations after one warm-up; *_bitexact = same bytes as hand_batch");
     return runAll(std::make_index_sequence<sizeof(BATCHES) / sizeof(BATCHES[0])>{}, cs, fkStream, csv, noise) ? 0 : -1;
 }
