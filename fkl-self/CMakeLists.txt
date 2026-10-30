@@ -26,3 +26,8 @@ fklb_add_benchmark(batch_build_compilation_time
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/pipelines/CMakeLists.txt")
     add_subdirectory(pipelines)
 endif()
+
+# E6: the value of fk::SaturateCast for NaN on the device (cu only: it reads the hardware conversions through inline PTX)
+fklb_add_benchmark(nan_saturate
+    BACKENDS cu LIBS fkl
+    SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/numerics/nan_saturate.cu")
