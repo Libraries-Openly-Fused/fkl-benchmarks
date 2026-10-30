@@ -5,6 +5,19 @@ include("${FKLB_BIN}/generated/fklb_build_info_vars.cmake")
 # "-dirty" means: a tracked file the binaries are built from has uncommitted changes. For this repository that is the sources
 # (results/, logs and scripts change while experiments run and do not affect the binaries); for a submodule, any tracked file.
 function(fklb_git_describe OUT DIR)
+    if(NOT "${DIR}" STREQUAL "${FKLB_SRC}" AND NOT EXISTS "${DIR}/.git")
+        # A submodule that is not checked out: git -C <dir> would walk up to this repository and report ITS commit. Report the state, and the
+        # commit this repository pins (the gitlink), which needs no checkout.
+        file(RELATIVE_PATH REL "${FKLB_SRC}" "${DIR}")
+        execute_process(COMMAND git -C "${FKLB_SRC}" ls-tree HEAD "${REL}" OUTPUT_VARIABLE LINK OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET)
+        string(REGEX MATCH "commit ([0-9a-f]+)" LINK_MATCH "${LINK}")
+        if(CMAKE_MATCH_1)
+            set(${OUT} "not checked out (pinned ${CMAKE_MATCH_1})" PARENT_SCOPE)
+        else()
+            set(${OUT} "not checked out" PARENT_SCOPE)
+        endif()
+        return()
+    endif()
     set(PATHS "")
     if("${DIR}" STREQUAL "${FKLB_SRC}")
         set(PATHS -- common cmake fkl-self opencv-cuda npp external CMakeLists.txt CMakePresets.json)
