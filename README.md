@@ -54,6 +54,17 @@ that used to write a first block of junk is no longer written.
 Serialise the GPU jobs: one benchmark at a time on the GPU being measured. `CUDA_DEVICE_ORDER=PCI_BUS_ID` and
 `CUDA_VISIBLE_DEVICES` (set by the environment file) select it.
 
+### Compiling while a run is measuring
+
+`scripts/run_e0.sh` runs the E0 experiments one after the other and holds between two experiments while the directory
+`results/rtx4090/.pause` exists (a file inside it keeps it held; whoever creates one removes it). Anything else that needs the GPU
+(a test run, a profiler, a new experiment) happens inside such a paused window, never while an experiment is measuring.
+Compile-only work does not need a window and may run at the same time on other CPU cores: the E0 runs are pinned to cores 0-3 and
+their SMT siblings 16-19, builds use 4-15 and 20-31 (`taskset`, `nice`), and `scripts/e3_sweep.py` (compile-time sweep) uses one
+core of its own and never executes the programs it builds. **Do not execute a binary you have just built to see if it works while
+a run is measuring**: a CUDA context on the GPU being measured disturbs the row that is being measured (this happened once, on
+2026-10-30, and is recorded in `results/rtx4090/e0-run.log`; that experiment was run again).
+
 ## Environment of the reported results
 
 - GPU: RTX 4090 (sm_89, `results/rtx4090/system-info/`); the RTX 5050 (sm_120) is used for the flash-attention experiment only.
