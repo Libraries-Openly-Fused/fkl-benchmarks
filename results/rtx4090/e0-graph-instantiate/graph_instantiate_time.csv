@@ -1,0 +1,19 @@
+# experiment: E0 CUDA Graphs: capture + instantiate time of the OpenCV baseline graph
+# repo: fkl-benchmarks a266bc941b057b3de0c3d0b88535c985169f2735
+# fkl: fb9ac3ad4a64aad40ae3122e14143f03814f2cc0
+# cvGPUSpeedup: 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c
+# FastNPP: 9dfc4f430225e40ded392bfa777b2e724367c5c1
+# nvcc: 13.4.92 (/home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/nvcc), architectures 89, -fmad on, -lineinfo on
+# host compiler: GNU 15.2.0, Release, -march=native, -ftemplate-depth=1000
+# opencv: 4.14.0
+# cpu: AMD Ryzen 9 5950X 16-Core Processor
+# gpu: NVIDIA GeForce RTX 4090, cc 8.9, 128 SMs, 24106 MiB, PCI 0000:09:00.0
+# cuda driver api: 13.3, cuda runtime: 13.4
+# nvidia-smi driver: 610.43.02
+# clocks (sm, mem, max sm, max mem, MHz): 2550 MHz, 10251 MHz, 3105 MHz, 10501 MHz
+# power limit, temperature at start: 450.00 W, 41
+ops,batch,kernel_nodes,capture_s,instantiate_s,launch_ms,graph_device_MiB
+502,50,25150,0.05458826,0.086032588,6.37235212,178
+2002,50,100150,0.12326076,0.349678099,26.6670074,514
+5002,50,250150,0.26976464,0.841063414,67.8491516,1026
+10002,50,500150,0.587249656,1.58061054,133.426178,1710

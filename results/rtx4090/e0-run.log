@@ -6,3 +6,60 @@ binaries: /home/oscar/tfkl-bench/fkl-benchmarks/build/e0-frozen-a334424/bin, bui
 2026-10-30T08:48:01+01:00 e0-numinstructions: exit 0 after 76 s; csv: 1
 e0-wrapper-overhead: another process is using the GPU, stopping
 runner exit=1
+# E0 run resumed 2026-10-30T08:49:22+01:00 (the first attempt stopped at e0-wrapper-overhead on a utilization sample taken right after the previous experiment); pinned to CPUs 0-3,16-19, governor performance, build /home/oscar/tfkl-bench/fkl-benchmarks/build/e0-frozen-a334424
+uncommitted changes in tracked files: commit them, rebuild, and run again (or FKLB_ALLOW_DIRTY=1)
+runner exit=1
+# E0 run resumed again 2026-10-30T08:50:19+01:00 (the second attempt refused to start while sources were being edited); pinned to CPUs 0-3,16-19, governor performance, build /home/oscar/tfkl-bench/fkl-benchmarks/build/e0-frozen-a334424
+sources changed since the build (a334424a213ca307266219c2b47de45b9e8e17e2): rebuild first
+runner exit=1
+# E0 run resumed 2026-10-30T08:56:14+01:00 from the frozen build of fkl-benchmarks 269d229 (latency hiding and instructions per op ran from a334424: same sources); pinned to CPUs 0-3,16-19, governor performance
+binaries: /home/oscar/tfkl-bench/fkl-benchmarks/build/e0-frozen-269d229/bin, built from fkl-benchmarks 269d229c220e00d4c7f04a7dd61d5542cbe318e6
+2026-10-30T08:56:16+01:00 e0-wrapper-overhead: cvGS wrapper overhead (bit-exact check, GPU and CPU enqueue time)
+2026-10-30T08:56:17+01:00 e0-wrapper-overhead: exit 0 after 1 s; csv: 2
+2026-10-30T08:56:19+01:00 e0-cpu-time-opencv: CPU execution time, OpenCV-CUDA vs cvGS
+2026-10-30T08:56:22+01:00 e0-cpu-time-opencv: exit 0 after 3 s; csv: 1
+2026-10-30T08:56:25+01:00 e0-data-type: data type (26 type combinations, batch 50)
+2026-10-30T08:56:27+01:00 e0-data-type: exit 0 after 2 s; csv: 1
+2026-10-30T08:56:30+01:00 e0-data-size: data size (60 points, 6 type combinations; hours)
+# 2026-10-30T08:59:53+01:00 I interrupted e0-data-size (started under a minute earlier) to run a one-minute NPP verification on the GPU; its partial output was moved aside and e0-data-size restarts from scratch
+# E0 run resumed 2026-10-30T09:00:39+01:00 from the frozen build of fkl-benchmarks 269d229; pinned to CPUs 0-3,16-19, governor performance
+binaries: /home/oscar/tfkl-bench/fkl-benchmarks/build/e0-frozen-269d229/bin, built from fkl-benchmarks 269d229c220e00d4c7f04a7dd61d5542cbe318e6
+2026-10-30T09:00:41+01:00 e0-data-size: data size (60 points, 6 type combinations; hours)
+# 2026-10-30T09:01:48+01:00 e0-data-size restarted again: my own rebuild step accidentally ran a 5 s NPP benchmark on the GPU two minutes into the run (my mistake); the partial output was moved aside and the experiment restarts from scratch. No GPU work of mine happens during E0 from now on
+# E0 run resumed 2026-10-30T09:01:48+01:00 from the frozen build of fkl-benchmarks 269d229; pinned to CPUs 0-3,16-19, governor performance
+binaries: /home/oscar/tfkl-bench/fkl-benchmarks/build/e0-frozen-269d229/bin, built from fkl-benchmarks 269d229c220e00d4c7f04a7dd61d5542cbe318e6
+2026-10-30T09:01:51+01:00 e0-data-size: data size (60 points, 6 type combinations; hours)
+runner exit=147
+# 2026-10-30T09:05:01+01:00 I stopped (SIGSTOP) the runner script, not the benchmark: when e0-data-size ends, nothing new starts until I resume it (SIGCONT), to get a GPU gap for the verification of FKL PR 409 and the NPP checks
+# 2026-10-30T09:08:26+01:00 the data-size run was killed at 55/60 points when I stopped the runner script (my mistake, the managed task took the benchmark with it); partial output moved aside. E0 resumed from the frozen build of fkl-benchmarks a266bc9 (the NPP informational checks are in): cpu-time-npp, npp, data-size, hf, graph-instantiate, VF x3; pinned to CPUs 0-3,16-19, governor performance
+binaries: /home/oscar/tfkl-bench/fkl-benchmarks/build/e0-frozen-a266bc9/bin, built from fkl-benchmarks a266bc941b057b3de0c3d0b88535c985169f2735
+2026-10-30T09:08:29+01:00 e0-cpu-time-npp: CPU execution time, NPP vs FastNPP
+2026-10-30T09:08:34+01:00 e0-cpu-time-npp: exit 0 after 5 s; csv: 2
+  WARNING: -nan in test_NPP_cpu_batchresize_x_split3D.csv 
+2026-10-30T09:08:37+01:00 e0-npp: comparison with NPP (both variants, fixed ROI)
+2026-10-30T09:08:47+01:00 e0-npp: exit 0 after 10 s; csv: 4
+  WARNING: -nan in test_npp_batchresize_x_split3D.csv test_npp_batchresize_x_split3D_No_CPU_Overhead.csv 
+2026-10-30T09:08:49+01:00 e0-data-size: data size (60 points, 6 type combinations; hours)
+# 2026-10-30T09:16:41+01:00 .pause created: the runner holds after e0-data-size for GPU verification work (FKL PR 409/411, NPP re-runs); I remove it when done
+2026-10-30T09:47:10+01:00 e0-data-size: exit 0 after 2301 s; csv: 1
+2026-10-30T09:47:12+01:00 paused before e0-hf (remove /home/oscar/tfkl-bench/fkl-benchmarks/results/rtx4090/.pause to continue)
+# 2026-10-30T09:50:58+01:00 the paused runner will use the horizontal-fusion binary of fkl-benchmarks 1a70cab (source 3840x2160); the other binaries of build/e0-frozen-a266bc9 are unchanged. e0-data-size is to be re-run from 1a70cab for its 'Number of elements' label
+2026-10-30T09:57:15+01:00 e0-cpu-time-npp: exit 0 after 5 s; csv 2; -nan in: 0 files
+2026-10-30T09:57:25+01:00 e0-npp: exit 0 after 10 s; csv 4; -nan in: 0 files
+# 2026-10-30T09:57:25+01:00 GPU window: FKL PR 409/411 ctest, wrapper suites, and the E0 NPP experiments re-run (fixed harness, build 5aac244)
+# 2026-10-30T09:59:46+01:00 GPU window 2 starts (runner held): resize 8UC3, wrapper-overhead order test, E1a/E1b, data-size re-run
+2026-10-30T10:37:55+01:00 e0-data-size (re-run from 1a70cab): exit 0 after 2282 s
+# 2026-10-30T10:37:55+01:00 GPU window 2 ended: pause removed
+# 2026-10-30T10:37:55+01:00 GPU window 3 starts (runner still held by .pause/hold-window3; window 2's rmdir failed on purpose): FKL PR 414 ctest, wrapper suites, NaN probes
+# 2026-10-30T10:43:25+01:00 GPU window 3 ended: hold and pause removed, the runner continues
+# 2026-10-30T10:43:28+01:00 GPU window 4 starts (runner held by .pause/hold-window4): NV12 pipeline (b) of fkl-benchmarks PR 5, 3 invocations
+# 2026-10-30T10:44:07+01:00 GPU window 4 ended: hold and pause removed, the runner continues
+# 2026-10-30T10:44:08+01:00 GPU window 5 starts (runner held by .pause/hold-window5): E1b with hand_generic, 3 invocations
+# 2026-10-30T10:44:11+01:00 GPU window 5 ended: hold and pause removed, the runner continues
+# 2026-10-30T10:44:14+01:00 GPU window 6 starts (runner held by .pause/hold-window6): E1 timing x3, ncu occupancy, occupancy probe
+# 2026-10-30T10:44:30+01:00 GPU window 6 ended: hold and pause removed, the runner continues
+2026-10-30T10:44:34+01:00 e0-hf: horizontal fusion + CUDA Graphs (120 points, batch 1..1191)
+2026-10-30T10:45:36+01:00 e0-hf: exit 0 after 62 s; csv: 3
+2026-10-30T10:45:39+01:00 e0-graph-instantiate: CUDA Graphs capture + instantiate time of the OpenCV baseline
+2026-10-30T10:45:45+01:00 e0-graph-instantiate: exit 0 after 6 s; csv: 1
+2026-10-30T10:45:47+01:00 e0-vf-mul-add1: VF mul_add1 (batch 1) + CUDA Graphs (200 points to 19,902 ops)

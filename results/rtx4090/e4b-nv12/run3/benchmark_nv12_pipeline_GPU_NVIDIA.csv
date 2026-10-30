@@ -1,0 +1,42 @@
+# experiment: benchmark_nv12_pipeline
+# notes: E4b NV12 pipeline: NV12 4K frame -> RGB kernel -> fused crops, resize 64x128, normalise, NCHW split; source: seeded noise (LCG, seed 424242), luma 16..235, chroma 16..240; the frame is already in device memory, wall clock includes the stream synchronisation, 3 warm-up runs (a GPU: and at least 0.5 s of them)
+# repo: fkl-benchmarks f81306d8d836995d888edd41cee760632dbf05e9
+# fkl: fb9ac3ad4a64aad40ae3122e14143f03814f2cc0
+# cvGPUSpeedup: f81306d8d836995d888edd41cee760632dbf05e9
+# FastNPP: f81306d8d836995d888edd41cee760632dbf05e9
+# nvcc: 13.4.92 (/home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/nvcc), architectures 89, -fmad on, -lineinfo on
+# hip: none (none), architectures none
+# host compiler: GNU 15.2.0, Release, -march=native, -ftemplate-depth=1000
+# opencv: none
+# cpu: AMD Ryzen 9 5950X 16-Core Processor
+# gpu: NVIDIA GeForce RTX 4090, cc 8.9, 128 SMs, 24106 MiB, PCI 0000:09:00.0
+# cuda driver api: 13.3, cuda runtime: 13.4
+# nvidia-smi driver: 610.43.02
+# clocks (sm, mem, max sm, max mem, MHz): 2685 MHz, 10251 MHz, 3105 MHz, 10501 MHz
+# power limit, temperature at start: 450.00 W, 50
+crops,back_end,variant,kernels,threads,median_ms,min_ms,max_ms,mean_ms,iters
+1,GPU_NVIDIA,convert,1,0,0.0409445,0.04084,0.041479,0.0409599333,30
+1,GPU_NVIDIA,chain_fused,1,0,0.00482,0.00475,0.00517,0.00485196667,30
+1,GPU_NVIDIA,chain_perop_batch,5,0,0.010975,0.01076,0.01304,0.0110715667,30
+1,GPU_NVIDIA,pipeline_fused,2,0,0.0427945,0.042639,0.043159,0.0428142333,30
+1,GPU_NVIDIA,pipeline_perop_batch,6,0,0.0489845,0.048639,0.04933,0.0490005333,30
+8,GPU_NVIDIA,convert,1,0,0.0410095,0.04086,0.04154,0.0410346,30
+8,GPU_NVIDIA,chain_fused,1,0,0.0052045,0.00512,0.00545,0.00520993333,30
+8,GPU_NVIDIA,chain_perop_batch,5,0,0.0120645,0.01188,0.01307,0.0121468667,30
+8,GPU_NVIDIA,pipeline_fused,2,0,0.043109,0.042969,0.0434,0.0431229,30
+8,GPU_NVIDIA,pipeline_perop_batch,6,0,0.05011,0.049829,0.050679,0.0501411667,30
+16,GPU_NVIDIA,convert,1,0,0.041019,0.04092,0.043179,0.0411072333,30
+16,GPU_NVIDIA,chain_fused,1,0,0.00578,0.00563,0.00613,0.00580226667,30
+16,GPU_NVIDIA,chain_perop_batch,5,0,0.01445,0.01419,0.01483,0.0144598667,30
+16,GPU_NVIDIA,pipeline_fused,2,0,0.0436045,0.043439,0.044129,0.0436645667,30
+16,GPU_NVIDIA,pipeline_perop_batch,6,0,0.05257,0.052379,0.052869,0.0525988,30
+32,GPU_NVIDIA,convert,1,0,0.0409945,0.040919,0.04138,0.0410309333,30
+32,GPU_NVIDIA,chain_fused,1,0,0.006775,0.00644,0.0071,0.0067936,30
+32,GPU_NVIDIA,chain_perop_batch,5,0,0.019145,0.019,0.01983,0.0192091667,30
+32,GPU_NVIDIA,pipeline_fused,2,0,0.044574,0.04443,0.045299,0.0446252333,30
+32,GPU_NVIDIA,pipeline_perop_batch,6,0,0.057329,0.056999,0.057769,0.0573467667,30
+64,GPU_NVIDIA,convert,1,0,0.0410395,0.040909,0.04138,0.0410619333,30
+64,GPU_NVIDIA,chain_fused,1,0,0.00851,0.00838,0.00897,0.00855426667,30
+64,GPU_NVIDIA,chain_perop_batch,5,0,0.02698,0.02666,0.02777,0.0270184,30
+64,GPU_NVIDIA,pipeline_fused,2,0,0.0461295,0.045949,0.04658,0.0461425333,30
+64,GPU_NVIDIA,pipeline_perop_batch,6,0,0.065569,0.065249,0.065949,0.0655633667,30

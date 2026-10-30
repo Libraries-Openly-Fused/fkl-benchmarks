@@ -1,0 +1,21 @@
+# experiment: E1b hand-written horizontal-fusion batch vs FKL (60x120 uchar crops -> float tensor)
+# notes: thread fusion: off (fk::TF::DISABLED, the default); source: seeded uint8 noise 3840x2160 (std::mt19937_64 seed 20261030), crop i at (i, i); cast, *1.0, -1.0, /3.2; the block is the one fk::getDefaultBlockSize picks; 100 timed iterations after one warm-up; *_bitexact = same bytes as hand_batch
+# repo: fkl-benchmarks 5201059f55ecaeb6e3b9de370bef026d8082915d
+# fkl: 38c4f32d887b4530c54362eb526c9a5411ee92fe
+# cvGPUSpeedup: 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c
+# FastNPP: 9dfc4f430225e40ded392bfa777b2e724367c5c1
+# nvcc: 13.4.92 (/home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/nvcc), architectures 89, -fmad on, -lineinfo off
+# host compiler: GNU 15.2.0, Release, -march=native, -ftemplate-depth=1000
+# opencv: none
+# cpu: AMD Ryzen 9 5950X 16-Core Processor
+# gpu: NVIDIA GeForce RTX 4090, cc 8.9, 128 SMs, 24106 MiB, PCI 0000:09:00.0
+# cuda driver api: 13.3, cuda runtime: 13.4
+# nvidia-smi driver: 610.43.02
+# clocks (sm, mem, max sm, max mem, MHz): 2685 MHz, 10251 MHz, 3105 MHz, 10501 MHz
+# power limit, temperature at start: 450.00 W, 48
+batch,hand_mean_ms,hand_min_ms,fkl_mean_ms,fkl_min_ms,iterated_mean_ms,iterated_min_ms,fkl_over_hand,iterated_over_fkl,fkl_bitexact,iterated_bitexact,hand_generic_mean_ms,hand_generic_min_ms,fkl_over_hand_generic,hand_generic_bitexact,hand_param_bytes,hand_generic_param_bytes
+1,0.00297920007,0.00204799999,0.00286496006,0.00204799999,0.00284672006,0.00204799999,0.961654133,0.993633416,1,1,0.00291776007,0.00204799999,0.981903925,1,8,24
+51,0.00418815999,0.00307200011,0.00419455998,0.0037440001,0.0862566391,0.0839679986,1.00152812,20.5639303,1,1,0.00416223998,0.00371200009,1.00776505,1,408,1224
+201,0.00733280004,0.00684799999,0.00775616003,0.0071680001,0.331806719,0.326656014,1.05773511,42.779767,1,1,0.00783424003,0.0071680001,0.990033494,1,1608,4824
+601,0.0157743998,0.0152000003,0.0174432001,0.016384,0.991837122,0.981855989,1.10579169,56.860961,1,1,0.0177436801,0.016384,0.983065519,1,4808,14424
+1191,0.02816384,0.0275519993,0.0320211196,0.0314880013,1.94885248,1.93740797,1.13695858,60.8614722,1,1,0.0330188801,0.0323840007,0.969782123,1,9528,28584

@@ -1,0 +1,17 @@
+# experiment: test_cvGS_VS_fk_CPU_and_GPU
+# notes: both versions are warmed up (run once) before the timed loop; both build the same BatchRead (PerThreadRead::build_batch) and the bit-exact comparison of their outputs must pass; ORDER SWAPPED (FKLB_ORDER=cvgs-first): column OpenCV = cvGS:: wrapper (measured first), column cvGS = raw fk:: API (measured second)
+# repo: fkl-benchmarks 1a70cab091da75c6d691a08a56117aab783e50df
+# fkl: fb9ac3ad4a64aad40ae3122e14143f03814f2cc0
+# cvGPUSpeedup: 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c
+# FastNPP: 9dfc4f430225e40ded392bfa777b2e724367c5c1
+# nvcc: 13.4.92 (/home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/nvcc), architectures 89, -fmad on, -lineinfo on
+# host compiler: GNU 15.2.0, Release, -march=native, -ftemplate-depth=1000
+# opencv: 4.14.0
+# cpu: AMD Ryzen 9 5950X 16-Core Processor
+# gpu: NVIDIA GeForce RTX 4090, cc 8.9, 128 SMs, 24106 MiB, PCI 0000:09:00.0
+# cuda driver api: 13.3, cuda runtime: 13.4
+# nvidia-smi driver: 610.43.02
+# clocks (sm, mem, max sm, max mem, MHz): 2550 MHz, 10251 MHz, 3105 MHz, 10501 MHz
+# power limit, temperature at start: 450.00 W, 39
+NONE (CV_8UC3XCV_32FC3), OpenCV MeanTime, OpenCV TimeVariance, OpenCV MaxTime, OpenCV MinTime, cvGS MeanTime, cvGS TimeVariance, cvGS MaxTime, cvGS MinTime, Mean Speedup
+50, 0.0074528, 2.76077e-07, 0.01024, 0.006272, 0.00764544, 8.20042e-07, 0.015392, 0.006528, 0.983009
