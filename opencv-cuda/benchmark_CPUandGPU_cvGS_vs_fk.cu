@@ -21,6 +21,7 @@
 
 #include <cvGPUSpeedup.cuh>
 #include <chrono>
+#include <cstdlib>
 
 constexpr char VARIABLE_DIMENSION[]{ "NONE" };
 constexpr size_t NUM_EXPERIMENTS = 1;
@@ -146,6 +147,14 @@ bool test_cvGS_VS_fk_CPU_and_GPU(cv::cuda::Stream& cv_stream, bool enabled) {
                     cvGS::split<CV_32FC3>(d_tensor_output, up));
             };
 
+            // FKLB_ORDER=cvgs-first measures the cvGS wrapper first and the raw API second in every iteration (the columns then
+            // hold, in this order, the wrapper and the raw API); the default is the raw API first. Comparing the two orders shows
+            // whether the version measured first pays for something of the loop (the first event record, the cache state).
+            const char* orderEnv = std::getenv("FKLB_ORDER");
+            const bool cvgsFirst = orderEnv != nullptr && std::string(orderEnv) == "cvgs-first";
+            auto launchFirst = [&]() { if (cvgsFirst) launchCvGS(); else launchFk(); };
+            auto launchSecond = [&]() { if (cvgsFirst) launchFk(); else launchCvGS(); };
+
             // Warm-up, outside the timed loop: the first launch of each version loads its module and initializes the
             // context state, which used to be counted in the first measured iteration of the version that ran first
             launchFk();
@@ -156,8 +165,8 @@ bool test_cvGS_VS_fk_CPU_and_GPU(cv::cuda::Stream& cv_stream, bool enabled) {
 
             // fk version
             const auto cpu_start1 = std::chrono::steady_clock::now();
-            PUSH_RANGE("Launching fk")
-            launchFk();
+            PUSH_RANGE("Launching the first version")
+            launchFirst();
             POP_RANGE
             const auto cpu_end1 = std::chrono::steady_clock::now();
             std::chrono::duration<float, std::milli> cpu_elapsed1 = cpu_end1 - cpu_start1;
@@ -167,8 +176,8 @@ bool test_cvGS_VS_fk_CPU_and_GPU(cv::cuda::Stream& cv_stream, bool enabled) {
 
             // cvGPUSpeedup
             const auto cpu_start = std::chrono::steady_clock::now();
-            PUSH_RANGE("Launching cvGS")
-            launchCvGS();
+            PUSH_RANGE("Launching the second version")
+            launchSecond();
             POP_RANGE
             const auto cpu_end = std::chrono::steady_clock::now();
             std::chrono::duration<float, std::milli> cpu_elapsed = cpu_end - cpu_start;
@@ -241,8 +250,12 @@ bool test_cvGS_VS_fk_CPU_and_GPU(cv::cuda::Stream& cv_stream, bool enabled) {
 
 int launch() {
 #ifdef ENABLE_BENCHMARK
+    const char* order = std::getenv("FKLB_ORDER");
+    const bool cvgsFirstNote = order != nullptr && std::string(order) == "cvgs-first";
     benchmarkNotes = "both versions are warmed up (run once) before the timed loop; both build the same BatchRead (PerThreadRead::build_batch) "
-                     "and the bit-exact comparison of their outputs must pass; columns OpenCV = raw fk:: API, cvGS = cvGS:: wrapper";
+                     "and the bit-exact comparison of their outputs must pass; " +
+                     std::string(cvgsFirstNote ? "ORDER SWAPPED (FKLB_ORDER=cvgs-first): column OpenCV = cvGS:: wrapper (measured first), column cvGS = raw fk:: API (measured second)"
+                                               : "columns OpenCV = raw fk:: API (measured first), cvGS = cvGS:: wrapper (measured second)");
     cv::cuda::Stream cv_stream;
     bool correct = test_cvGS_VS_fk_CPU_and_GPU(cv_stream, true);
 
