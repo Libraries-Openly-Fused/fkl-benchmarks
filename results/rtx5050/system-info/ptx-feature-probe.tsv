@@ -1,0 +1,77 @@
+# ptxas: Cuda compilation tools, release 13.4, V13.4.92 Build cuda_13.4.r13.4/compiler.38855100_0 (/home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/ptxas), PTX ISA 9.4
+feature	target	result	first assembler error
+mma.sync m16n8k16 bf16 (HMMA)	sm_89	ACCEPT	
+mma.sync m16n8k16 bf16 (HMMA)	sm_120	ACCEPT	
+mma.sync m16n8k16 bf16 (HMMA)	sm_120a	ACCEPT	
+mma.sync m16n8k16 bf16 (HMMA)	sm_100a	ACCEPT	
+mma.sync m16n8k16 bf16 (HMMA)	sm_90a	ACCEPT	
+mma.sync m16n8k32 e4m3 fp8 (QMMA)	sm_89	ACCEPT	
+mma.sync m16n8k32 e4m3 fp8 (QMMA)	sm_120	ACCEPT	
+mma.sync m16n8k32 e4m3 fp8 (QMMA)	sm_120a	ACCEPT	
+mma.sync m16n8k32 e4m3 fp8 (QMMA)	sm_100a	ACCEPT	
+mma.sync m16n8k32 e4m3 fp8 (QMMA)	sm_90a	ACCEPT	
+mma.sync block-scaled mxf4 e2m1 (fp4)	sm_89	REJECT	line 9; error   : Instruction 'mma with block scale' not supported on .target 'sm_89'
+mma.sync block-scaled mxf4 e2m1 (fp4)	sm_120	REJECT	line 9; error   : Instruction 'mma with block scale' not supported on .target 'sm_120'
+mma.sync block-scaled mxf4 e2m1 (fp4)	sm_120a	ACCEPT	
+mma.sync block-scaled mxf4 e2m1 (fp4)	sm_100a	REJECT	line 9; error   : Instruction 'mma with block scale' not supported on .target 'sm_100a'
+mma.sync block-scaled mxf4 e2m1 (fp4)	sm_90a	REJECT	line 9; error   : Instruction 'mma with block scale' not supported on .target 'sm_90a'
+ldmatrix (LDSM)	sm_89	ACCEPT	
+ldmatrix (LDSM)	sm_120	ACCEPT	
+ldmatrix (LDSM)	sm_120a	ACCEPT	
+ldmatrix (LDSM)	sm_100a	ACCEPT	
+ldmatrix (LDSM)	sm_90a	ACCEPT	
+cp.async 16 B (LDGSTS)	sm_89	ACCEPT	
+cp.async 16 B (LDGSTS)	sm_120	ACCEPT	
+cp.async 16 B (LDGSTS)	sm_120a	ACCEPT	
+cp.async 16 B (LDGSTS)	sm_100a	ACCEPT	
+cp.async 16 B (LDGSTS)	sm_90a	ACCEPT	
+redux.sync	sm_89	ACCEPT	
+redux.sync	sm_120	ACCEPT	
+redux.sync	sm_120a	ACCEPT	
+redux.sync	sm_100a	ACCEPT	
+redux.sync	sm_90a	ACCEPT	
+griddepcontrol (programmatic dependent launch)	sm_89	REJECT	line 8; error   : Modifier '.launch_dependents' requires .target sm_90 or higher
+griddepcontrol (programmatic dependent launch)	sm_120	ACCEPT	
+griddepcontrol (programmatic dependent launch)	sm_120a	ACCEPT	
+griddepcontrol (programmatic dependent launch)	sm_100a	ACCEPT	
+griddepcontrol (programmatic dependent launch)	sm_90a	ACCEPT	
+cluster special registers + barrier.cluster	sm_89	REJECT	line 9; error   : Feature '%cluster_ctaid' requires .target sm_90 or higher
+cluster special registers + barrier.cluster	sm_120	ACCEPT	
+cluster special registers + barrier.cluster	sm_120a	ACCEPT	
+cluster special registers + barrier.cluster	sm_100a	ACCEPT	
+cluster special registers + barrier.cluster	sm_90a	ACCEPT	
+mapa (distributed shared memory address)	sm_89	REJECT	line 10; error   : Feature 'mapa' requires .target sm_90 or higher
+mapa (distributed shared memory address)	sm_120	ACCEPT	
+mapa (distributed shared memory address)	sm_120a	ACCEPT	
+mapa (distributed shared memory address)	sm_100a	ACCEPT	
+mapa (distributed shared memory address)	sm_90a	ACCEPT	
+cp.async.bulk (non-tensor bulk copy)	sm_89	REJECT	line 10; error   : Feature 'cp.async.bulk' requires .target sm_90 or higher
+cp.async.bulk (non-tensor bulk copy)	sm_120	ACCEPT	
+cp.async.bulk (non-tensor bulk copy)	sm_120a	ACCEPT	
+cp.async.bulk (non-tensor bulk copy)	sm_100a	ACCEPT	
+cp.async.bulk (non-tensor bulk copy)	sm_90a	ACCEPT	
+cp.async.bulk.tensor 2d (TMA)	sm_89	REJECT	line 10; error   : Feature 'cp.async.bulk.tensor' requires .target sm_90 or higher
+cp.async.bulk.tensor 2d (TMA)	sm_120	ACCEPT	
+cp.async.bulk.tensor 2d (TMA)	sm_120a	ACCEPT	
+cp.async.bulk.tensor 2d (TMA)	sm_100a	ACCEPT	
+cp.async.bulk.tensor 2d (TMA)	sm_90a	ACCEPT	
+setmaxnreg	sm_89	REJECT	line 8; error   : Instruction 'setmaxnreg.inc' not supported on .target 'sm_89'
+setmaxnreg	sm_120	REJECT	line 8; error   : Instruction 'setmaxnreg.inc' not supported on .target 'sm_120'
+setmaxnreg	sm_120a	ACCEPT	
+setmaxnreg	sm_100a	ACCEPT	
+setmaxnreg	sm_90a	ACCEPT	
+elect.sync	sm_89	REJECT	line 9; error   : Feature 'elect' requires .target sm_90 or higher
+elect.sync	sm_120	ACCEPT	
+elect.sync	sm_120a	ACCEPT	
+elect.sync	sm_100a	ACCEPT	
+elect.sync	sm_90a	ACCEPT	
+wgmma.mma_async m64n8k16 bf16 (warpgroup MMA)	sm_89	REJECT	line 10; error   : Instruction 'wgmma.fence' not supported on .target 'sm_89'
+wgmma.mma_async m64n8k16 bf16 (warpgroup MMA)	sm_120	REJECT	line 10; error   : Instruction 'wgmma.fence' not supported on .target 'sm_120'
+wgmma.mma_async m64n8k16 bf16 (warpgroup MMA)	sm_120a	REJECT	line 10; error   : Instruction 'wgmma.fence' not supported on .target 'sm_120a'
+wgmma.mma_async m64n8k16 bf16 (warpgroup MMA)	sm_100a	REJECT	line 10; error   : Instruction 'wgmma.fence' not supported on .target 'sm_100a'
+wgmma.mma_async m64n8k16 bf16 (warpgroup MMA)	sm_90a	ACCEPT	
+tcgen05.alloc (Tensor Memory)	sm_89	REJECT	line 10; error   : Instruction 'tcgen05.alloc' not supported on .target 'sm_89'
+tcgen05.alloc (Tensor Memory)	sm_120	REJECT	line 10; error   : Instruction 'tcgen05.alloc' not supported on .target 'sm_120'
+tcgen05.alloc (Tensor Memory)	sm_120a	REJECT	line 10; error   : Instruction 'tcgen05.alloc' not supported on .target 'sm_120a'
+tcgen05.alloc (Tensor Memory)	sm_100a	ACCEPT	
+tcgen05.alloc (Tensor Memory)	sm_90a	REJECT	line 10; error   : Instruction 'tcgen05.alloc' not supported on .target 'sm_90a'

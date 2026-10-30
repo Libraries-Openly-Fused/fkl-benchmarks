@@ -60,3 +60,18 @@ Every file below was taken verbatim (first commit of this repository) from the s
 | moved | cvGPUSpeedup-FastOpenCV | `benchmarks/verticalfusion/vertical_fusion_kernel_instances/templates/experiment_launcher.h.in` | 6d26c65 | d4e654a | `opencv-cuda/verticalfusion/vertical_fusion_kernel_instances/templates/experiment_launcher.h.in` | 52bd96848d5a |
 | moved | cvGPUSpeedup-FastOpenCV | `benchmarks/verticalfusion/vertical_fusion_static_loop.cuh` | 6d26c65 | fdce43a | `opencv-cuda/verticalfusion/vertical_fusion_static_loop.cuh` | cd5a6452ea53 |
 | copied (shared harness file) | cvGPUSpeedup-FastOpenCV | `tests/testsCommon.cuh` | 6d26c65 | acf69a9 | `opencv-cuda/testsCommon.cuh` | e0c8581b7182 |
+
+## Copied from `tests/` (library repositories untouched)
+
+| kind | source repository | source path | pinned commit | file here |
+|---|---|---|---|---|
+| copied (benchmark mode of a test) | cvGPUSpeedup-FastOpenCV | `tests/batchresize/test_batchresize_x_split3D.cu` | 6d26c65 | `opencv-cuda/batched-preprocessing/test_batchresize_x_split3D.cu` (E4a; its `_OCVBatch` baseline is in the same file) |
+| copied (seed of the compile-time generator) | FusedKernelLibrary | `tests/buildAPI/batch_build_compilation_time.h` | 25057d8 | `fkl-self/compiletime/batch_build_compilation_time.h` (E3) |
+
+`external/fkl` was bumped from 25057d8 to fb9ac3a (the merge of PR #406) after these copies; none of the moved or copied files changed between the two.
+
+## Third-party baselines (Python environment `venv-torch`, outside this repository)
+
+- `torch 2.14.1+cu130` (CUDA runtime 13.0) with the bundled `triton 3.8.0`, from the PyTorch cu130 index; Python 3.12 (uv-managed).
+- Triton is pointed at the CUDA 13.4 `ptxas`, `cuobjdump` and `nvdisasm` (`scripts/triton_env.sh`); Triton's bundled copies are CUDA 12.9. `scripts/triton_ptxas_check.py` verifies that a compiled cubin carries the 13.4 toolchain string.
+- `flash-attn 2.8.3.post2` built from the PyPI source distribution (no wheel exists for this torch/CUDA). Two build-time changes, neither in code that is part of FKL or of this repository: `setup.py`'s `-std=c++17` is raised to `-std=c++20`, because the torch 2.14.1 C++ headers require C++20 (the first error of the C++17 attempt, `c10/util/intrusive_ptr.h(775): namespace "std" has no member "strong_ordering"`, is in `results/venv-setup/flash-attn-cxx17-evidence.txt`); and the sm_89 target, which `setup.py` does not list, is added with `NVCC_APPEND_FLAGS="-gencode arch=compute_89,code=sm_89"` next to `FLASH_ATTN_CUDA_ARCHS=120`. FKL and all code in this repository are C++17.
