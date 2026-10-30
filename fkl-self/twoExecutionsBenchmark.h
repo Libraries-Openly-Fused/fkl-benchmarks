@@ -46,7 +46,7 @@ inline void processExecution(const BenchmarkResultsNumbersTwo& resF, const std::
   if constexpr (BATCH == batchValues[0]) {
     if (currentFile.find(fileName) == currentFile.end()) {
       currentFile[fileName].open(path + fileName);
-      fklb::writeSystemInfoHeader(currentFile[fileName], functionName);
+      fklb::writeSystemInfoHeader(currentFile[fileName], functionName, benchmarkNotes);
     }
     currentFile[fileName] << variableDimension;
     currentFile[fileName] << ", " + firstLabel + " MeanTime";

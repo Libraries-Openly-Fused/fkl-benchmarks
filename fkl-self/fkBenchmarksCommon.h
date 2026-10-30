@@ -33,6 +33,8 @@ std::unordered_map<std::string, std::stringstream> benchmarkResultsText;
 std::unordered_map<std::string, std::ofstream> currentFile;
 // Select the path where to write the benchmark files
 const std::string path{ "" };
+// Free text for the "# notes:" line of the CSV header: set it at the start of launch() to state the protocol
+std::string benchmarkNotes;
 
 template <size_t START_VALUE, size_t INCREMENT, std::size_t... Is>
 constexpr std::array<size_t, sizeof...(Is)> generate_sequence(std::index_sequence<Is...>) {

@@ -25,3 +25,8 @@ fklb_add_benchmark(benchmark_batched_preprocessing
 fklb_add_benchmark(graph_instantiate_time
     BACKENDS cu LIBS cvgs opencv
     SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/graphs/graph_instantiate_time.cu")
+
+# E0 data-type experiment: copied from cvGPUSpeedup tests/batchread/ (benchmark mode, 26 type combinations)
+fklb_add_benchmark(benchmark_data_type
+    BACKENDS cu LIBS cvgs opencv
+    SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/data-type/test_batchread_x_write3D.cu")

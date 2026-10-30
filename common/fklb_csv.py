@@ -35,10 +35,12 @@ def _run(cmd):
         return "unavailable"
 
 
-def system_info_lines(experiment, device_index=None):
+def system_info_lines(experiment, device_index=None, notes=None):
     import torch
 
     lines = [f"experiment: {experiment}"]
+    if notes:
+        lines.append(f"notes: {notes}")
     repo = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     for name, path in (("repo", repo), ("fkl", f"{repo}/external/fkl"), ("cvGPUSpeedup", f"{repo}/external/cvGPUSpeedup"),
                        ("FastNPP", f"{repo}/external/FastNPP")):
@@ -74,9 +76,9 @@ def system_info_lines(experiment, device_index=None):
 
 
 class CsvWriter:
-    def __init__(self, path, experiment, columns, device_index=None):
+    def __init__(self, path, experiment, columns, device_index=None, notes=None):
         self._f = open(path, "w")
-        for line in system_info_lines(experiment, device_index):
+        for line in system_info_lines(experiment, device_index, notes):
             self._f.write(f"# {line}\n")
         self._f.write(",".join(columns) + "\n")
         self._n = len(columns)

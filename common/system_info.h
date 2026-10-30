@@ -51,8 +51,12 @@ inline std::string cpuModel() {
     return firstLineOf("grep -m1 'model name' /proc/cpuinfo | cut -d: -f2- | sed 's/^ *//'");
 }
 
-inline void writeSystemInfoHeader(std::ostream& os, const std::string& experiment) {
+// notes: free text about the protocol of this run (what was warmed up, which fix applies...), one "# notes:" line
+inline void writeSystemInfoHeader(std::ostream& os, const std::string& experiment, const std::string& notes = "") {
     os << "# experiment: " << experiment << "\n";
+    if (!notes.empty()) {
+        os << "# notes: " << notes << "\n";
+    }
     os << "# repo: fkl-benchmarks " << FKLB_COMMIT_REPO << "\n";
     os << "# fkl: " << FKLB_COMMIT_FKL << "\n";
     os << "# cvGPUSpeedup: " << FKLB_COMMIT_CVGS << "\n";

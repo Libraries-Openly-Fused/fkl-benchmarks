@@ -136,6 +136,8 @@ const std::string path{ "" };
 constexpr int ITERS = 100;
 constexpr int ITERS_W = 1;
 bool warmup = false;
+// Free text for the "# notes:" line of the CSV header: set it at the start of launch() to state the protocol
+std::string benchmarkNotes;
 
 template <size_t ITERATIONS>
 float computeVariance(const float& mean, const std::array<float, ITERATIONS>& times) {
@@ -164,7 +166,7 @@ inline void processExecution(const BenchmarkResultsNumbers& resF,
     if constexpr (BATCH == batchValues[0]) {
         if (currentFile.find(fileName) == currentFile.end()) {
             currentFile[fileName].open(path + fileName);
-            fklb::writeSystemInfoHeader(currentFile[fileName], functionName);
+            fklb::writeSystemInfoHeader(currentFile[fileName], functionName, benchmarkNotes);
         }
         currentFile[fileName]
             << variableDimension << " ("

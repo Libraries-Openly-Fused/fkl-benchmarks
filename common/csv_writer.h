@@ -45,12 +45,13 @@ class CsvWriter {
     }
 
 public:
-    CsvWriter(const std::string& path, const std::string& experiment, std::initializer_list<const char*> columns)
+    CsvWriter(const std::string& path, const std::string& experiment, std::initializer_list<const char*> columns,
+              const std::string& notes = "")
         : m_file(path), m_columns(columns.size()) {
         if (!m_file) {
             throw std::runtime_error("cannot open " + path);
         }
-        writeSystemInfoHeader(m_file, experiment);
+        writeSystemInfoHeader(m_file, experiment, notes);
         bool first = true;
         for (const char* column : columns) {
             put(column, first);

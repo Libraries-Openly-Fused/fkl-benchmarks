@@ -241,6 +241,8 @@ bool test_cvGS_VS_fk_CPU_and_GPU(cv::cuda::Stream& cv_stream, bool enabled) {
 
 int launch() {
 #ifdef ENABLE_BENCHMARK
+    benchmarkNotes = "both versions are warmed up (run once) before the timed loop; both build the same BatchRead (PerThreadRead::build_batch) "
+                     "and the bit-exact comparison of their outputs must pass; columns OpenCV = raw fk:: API, cvGS = cvGS:: wrapper";
     cv::cuda::Stream cv_stream;
     bool correct = test_cvGS_VS_fk_CPU_and_GPU(cv_stream, true);
 
