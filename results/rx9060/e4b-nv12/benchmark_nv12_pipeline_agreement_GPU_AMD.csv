@@ -1,0 +1,26 @@
+# experiment: benchmark_nv12_pipeline
+# notes: E4b NV12 pipeline: NV12 4K frame -> RGB kernel -> fused crops, resize 64x128, normalise, NCHW split; source: seeded noise (LCG, seed 424242), luma 16..235, chroma 16..240; the frame is already in device memory, wall clock includes the stream synchronisation, 3 warm-up runs (a GPU: and at least 0.5 s of them); tolerance 1e-4 absolute, identical = byte for byte
+# repo: fkl-benchmarks 4d528833dac2a8f5809dc0db1185d077d3c23302
+# fkl: fb9ac3ad4a64aad40ae3122e14143f03814f2cc0
+# cvGPUSpeedup: 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c
+# FastNPP: 9dfc4f430225e40ded392bfa777b2e724367c5c1
+# nvcc: none (none), architectures native, -fmad on, -lineinfo on
+# hip: 24.0.0 (/opt/rocm/core-10.1/bin/amdclang++), architectures gfx1200
+# host compiler: Clang 24.0.0, Release, -march=native, -ftemplate-depth=1000
+# opencv: none
+# cpu: AMD Ryzen 7 5800X3D 8-Core Processor
+# gpu: AMD Radeon RX 9060, gfx1200, 14 WGPs (28 CUs), wave32, 8144 MiB, PCI 0000:0d:00.0
+# hip driver: 7.16.26385, hip runtime: 7.16.26385
+# clocks (gfx, mem, max gfx, max mem, MHz): 61, 96, 2400, 1124
+# amd-smi: AMDSMI Tool: 27.1.0+7da43026 | AMDSMI Library version: 27.1.0 | ROCm version: 10.1.0 | amdgpu version: 7.1.9.31600000 | ionic version: N/A
+crops,back_end,comparison,max_abs_diff,pass
+1,GPU_AMD,chain_fused vs scalar reference (ASYMMETRIC sampling),2.38418579e-07,1
+1,GPU_AMD,chain_perop_batch vs chain_fused,4.76837158e-07,1
+8,GPU_AMD,chain_fused vs scalar reference (ASYMMETRIC sampling),2.38418579e-07,1
+8,GPU_AMD,chain_perop_batch vs chain_fused,4.76837158e-07,1
+16,GPU_AMD,chain_fused vs scalar reference (ASYMMETRIC sampling),2.38418579e-07,1
+16,GPU_AMD,chain_perop_batch vs chain_fused,4.76837158e-07,1
+32,GPU_AMD,chain_fused vs scalar reference (ASYMMETRIC sampling),2.38418579e-07,1
+32,GPU_AMD,chain_perop_batch vs chain_fused,4.76837158e-07,1
+64,GPU_AMD,chain_fused vs scalar reference (ASYMMETRIC sampling),2.38418579e-07,1
+64,GPU_AMD,chain_perop_batch vs chain_fused,4.76837158e-07,1
