@@ -200,20 +200,20 @@ using MulOp = decltype(mulOp());
 using SubOp = decltype(subOp());
 using DivOp = decltype(divOp());
 
-template <int N>
+template <int N, typename ResizeT = LinearResize>
 auto batchResizeOf(const Rgb2D& frame, const std::array<fk::Rect, N>& crops) {
     std::array<Rgb2D, N> rois;
     for (int i = 0; i < N; ++i) {
         rois[i] = roiOf(frame, crops[i]);
     }
-    return LinearResize::build(fk::PerThreadRead<fk::ND::_2D, U3>::build_batch(rois),
-                               fk::make_set_std_array<N>(fk::Size(OUT_W, OUT_H)));
+    return ResizeT::build(fk::PerThreadRead<fk::ND::_2D, U3>::build_batch(rois), fk::make_set_std_array<N>(fk::Size(OUT_W, OUT_H)));
 }
 
 // ------------------------------------------------------------------------------------------------------------------
 // The pipeline of one back-end PA and N crops. The RGB frame is shared by every PA of a program (host memory for the CPU
 // back-ends, device memory for the GPU ones). The operations are built once, in the constructor.
-template <fk::ParArch PA, int N>
+// ResizeT: the linear resize of the batch of crops (Resize or ResizeHalfPixel)
+template <fk::ParArch PA, int N, typename ResizeT = LinearResize>
 class Pipeline {
 public:
     using Dpp = fk::TransformDPP<PA>;
@@ -225,7 +225,7 @@ public:
           tmpA3D_(OUT_W, OUT_H, N, 1), tmpB3D_(OUT_W, OUT_H, N, 1), tmpA_(OUT_W, OUT_H), tmpB_(OUT_W, OUT_H),
           readFrame_(fk::ReadYUV<fk::PixelFormat::NV12>::build(frame)), toRgb_(ToRgb::build()),
           writeRgb_(fk::PerThreadWrite<fk::ND::_2D, U3>::build(rgb)),
-          fusedResize_(batchResizeOf<N>(rgb.ptr(), crops)), fusedSplit_(split3D(fusedOut_.ptr())),
+          fusedResize_(batchResizeOf<N, ResizeT>(rgb.ptr(), crops)), fusedSplit_(split3D(fusedOut_.ptr())),
           readA3D_(read3D(tmpA3D_.ptr())), readB3D_(read3D(tmpB3D_.ptr())), writeA3D_(write3D(tmpA3D_.ptr())),
           writeB3D_(write3D(tmpB3D_.ptr())), batchSplit_(split3D(batchOut_.ptr())),
           readA_(read2D(tmpA_.ptr())), readB_(read2D(tmpB_.ptr())), writeA_(write2D(tmpA_.ptr())),
@@ -283,7 +283,7 @@ private:
     decltype(fk::ReadYUV<fk::PixelFormat::NV12>::build(std::declval<const Frame&>())) readFrame_;
     decltype(ToRgb::build()) toRgb_;
     decltype(fk::PerThreadWrite<fk::ND::_2D, U3>::build(std::declval<fk::Ptr2D<U3>&>())) writeRgb_;
-    decltype(batchResizeOf<N>(std::declval<Rgb2D>(), std::declval<std::array<fk::Rect, N>>())) fusedResize_;
+    decltype(batchResizeOf<N, ResizeT>(std::declval<Rgb2D>(), std::declval<std::array<fk::Rect, N>>())) fusedResize_;
     SplitOp fusedSplit_;
     Read3DOp readA3D_, readB3D_;
     Write3DOp writeA3D_, writeB3D_;
@@ -300,13 +300,14 @@ private:
 // ------------------------------------------------------------------------------------------------------------------
 // The scalar reference of kernel 2 (double precision, the sampling of the resize above): from the RGB frame on the host
 template <int N>
-std::vector<float> referenceTensor(const fk::RawPtr<fk::ND::_2D, U3>& hostRgb, const std::array<fk::Rect, N>& crops) {
+std::vector<float> referenceTensor(const fk::RawPtr<fk::ND::_2D, U3>& hostRgb, const std::array<fk::Rect, N>& crops,
+                                   const fklb::ResizeSampling sampling = RESIZE_SAMPLING) {
     std::vector<float> out(static_cast<size_t>(N) * 3 * PLANE);
     std::vector<double> resized(static_cast<size_t>(PLANE) * 3);
     for (int i = 0; i < N; ++i) {
         const Rgb2D roi = roiOf(hostRgb, crops[i]);
         fklb::resizeBilinear(reinterpret_cast<const uchar*>(roi.data), roi.dims.pitch, crops[i].width, crops[i].height, 3,
-                             OUT_W, OUT_H, RESIZE_SAMPLING, resized.data());
+                             OUT_W, OUT_H, sampling, resized.data());
         for (int p = 0; p < PLANE; ++p) {
             for (int c = 0; c < 3; ++c) {
                 out[(static_cast<size_t>(i) * 3 + c) * PLANE + p] = static_cast<float>(

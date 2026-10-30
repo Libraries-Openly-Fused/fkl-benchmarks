@@ -24,6 +24,7 @@
 // Variants (wall clock including the synchronisation of the stream; 3 warm-up runs and at least 0.5 s of warm-up, E5_ITERS (30) timed
 // runs; median, min, max, mean):
 //   fkl_fused           FKL, one executeOperations for the whole chain (pipeline (b): after the conversion kernel)
+//   fkl_fused_halfpixel the same with ResizeHalfPixel (FKL ResizeSampling::HALF_PIXEL: the sampling of cv::resize, NPP and RPP)
 //   fkl_perop_batch     FKL, one executeOperations per operation for all the crops
 //   rpp_fused_api       RPP, its own fused function: rppt_resize_mirror_normalize (ROI per crop of one image, 8-bit input, float NCHW
 //                       output, per channel mean and standard deviation) and, in pipeline (a), rppt_channel_permute (RGB to BGR): two
@@ -204,7 +205,7 @@ inline fk::RawPtr<fk::ND::_2D, U3> cropRoi(const fk::RawPtr<fk::ND::_2D, U3>& fu
 }
 
 // FKL: the chain of pipeline (a) fused and one execution per operation, on ParArch::GPU_AMD
-template <int N>
+template <int N, typename ResizeT = nv12::LinearResize>
 class FklA {
 public:
     using Dpp = fk::TransformDPP<fk::ParArch::GPU_AMD>;
@@ -238,7 +239,7 @@ private:
         for (int i = 0; i < N; ++i) {
             rois[i] = cropRoi(source.ptr(), i, i, CROP_W, CROP_H);
         }
-        return nv12::LinearResize::build(fk::PerThreadRead<fk::ND::_2D, U3>::build_batch(rois), fk::make_set_std_array<N>(fk::Size(OUT_W, OUT_H)));
+        return ResizeT::build(fk::PerThreadRead<fk::ND::_2D, U3>::build_batch(rois), fk::make_set_std_array<N>(fk::Size(OUT_W, OUT_H)));
     }
     fk::Stream_<fk::ParArch::GPU_AMD>& stream_;
     fk::Tensor<float> fusedOut_, batchOut_;
@@ -300,7 +301,9 @@ inline void agreementRows(Output& out, const int batch, const std::string& what,
 template <int N>
 void runA(fk::Stream_<fk::ParArch::GPU_AMD>& stream, fk::Ptr2D<U3>& source, Output& out) {
     std::cout << "(a) batch " << N << std::endl;
+    using HalfPixel = fk::ResizeHalfPixel<fk::InterpolationType::INTER_LINEAR>;
     FklA<N> fkl(stream, source);
+    FklA<N, HalfPixel> fklHalf(stream, source);
     std::vector<std::array<int, 4>> crops(N);
     for (int i = 0; i < N; ++i) {
         crops[i] = {i, i, CROP_W, CROP_H};
@@ -312,6 +315,8 @@ void runA(fk::Stream_<fk::ParArch::GPU_AMD>& stream, fk::Ptr2D<U3>& source, Outp
     fkl.fused();
     fkl.perOpBatch();
     fkl.download();
+    fklHalf.fused();
+    fklHalf.download();
     fkl.sync();
     rpp.run();
     const std::vector<float> rppOut = rpp.download();
@@ -323,9 +328,13 @@ void runA(fk::Stream_<fk::ParArch::GPU_AMD>& stream, fk::Ptr2D<U3>& source, Outp
     agreementRows(out, N, "rpp_fused_api vs scalar reference HALF_PIXEL", rppOut.data(), refHalf.data(), N, false,
                   "RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference");
     agreementRows(out, N, "rpp_fused_api vs fkl_fused", rppOut.data(), fkl.fusedOut(), N, false, "FKL samples ASYMMETRIC, RPP HALF_PIXEL");
+    agreementRows(out, N, "fkl_fused_halfpixel vs scalar reference HALF_PIXEL", fklHalf.fusedOut(), refHalf.data(), N, true, "");
+    agreementRows(out, N, "rpp_fused_api vs fkl_fused_halfpixel", rppOut.data(), fklHalf.fusedOut(), N, false,
+                  "both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ");
 
     // Timing
     timeVariant(out, N, "fkl_fused", 1, [&] { fkl.fused(); fkl.sync(); });
+    timeVariant(out, N, "fkl_fused_halfpixel", 1, [&] { fklHalf.fused(); fklHalf.sync(); });
     timeVariant(out, N, "fkl_perop_batch", 6, [&] { fkl.perOpBatch(); fkl.sync(); });
     timeVariant(out, N, "rpp_fused_api", 2, [&] { rpp.run(); RPPB_CHECK_HIP(hipStreamSynchronize(stream.getHIPStream())); });
     out.timing->flush();
@@ -344,7 +353,9 @@ template <int N>
 void runB(fk::Stream_<fk::ParArch::GPU_AMD>& stream, nv12::Frame& frame, fk::Ptr2D<U3>& rgbFkl, fk::Ptr2D<U3>& rgbRpp, rppHandle_t convertHandle, Output& out) {
     std::cout << "(b) crops " << N << std::endl;
     const auto crops = nv12::makeCrops<N>();
+    using HalfPixel = fk::ResizeHalfPixel<fk::InterpolationType::INTER_LINEAR>;
     nv12::Pipeline<fk::ParArch::GPU_AMD, N> fkl(stream, frame, rgbFkl, crops);
+    nv12::Pipeline<fk::ParArch::GPU_AMD, N, HalfPixel> fklHalf(stream, frame, rgbFkl, crops);
     std::vector<std::array<int, 4>> roiList(N);
     for (int i = 0; i < N; ++i) {
         roiList[i] = {static_cast<int>(crops[i].x), static_cast<int>(crops[i].y), crops[i].width, crops[i].height};
@@ -368,6 +379,8 @@ void runB(fk::Stream_<fk::ParArch::GPU_AMD>& stream, nv12::Frame& frame, fk::Ptr
     fkl.fused();
     fkl.perOpBatch();
     fkl.download();
+    fklHalf.fused();
+    fklHalf.download();
     fkl.sync();
     convertRpp();
     rpp.run();
@@ -397,14 +410,20 @@ void runB(fk::Stream_<fk::ParArch::GPU_AMD>& stream, nv12::Frame& frame, fk::Ptr
     agreementRows(out, N, "fkl_fused vs scalar reference", fkl.fusedOut(), ref.data(), N, true, "");
     agreementRows(out, N, "fkl_perop_batch vs fkl_fused", fkl.batchOut(), fkl.fusedOut(), N, true, "");
     agreementRows(out, N, "rpp_fused_api vs fkl_fused", rppOut.data(), fkl.fusedOut(), N, false, "different RGB frames and sampling conventions");
+    const std::vector<float> refHalf = nv12::referenceTensor<N>(nv12::hostRaw(rgbFkl), crops, fklb::ResizeSampling::HALF_PIXEL);
+    agreementRows(out, N, "fkl_fused_halfpixel vs scalar reference HALF_PIXEL", fklHalf.fusedOut(), refHalf.data(), N, true, "");
+    agreementRows(out, N, "rpp_fused_api vs fkl_fused_halfpixel", rppOut.data(), fklHalf.fusedOut(), N, false,
+                  "both HALF_PIXEL; the RGB frames differ by at most 1 level; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ");
 
     // Timing
     timeVariant(out, N, "rpp_convert", 1, [&] { convertRpp(); RPPB_CHECK_HIP(hipStreamSynchronize(stream.getHIPStream())); });
     timeVariant(out, N, "fkl_convert", 1, [&] { fkl.convert(); fkl.sync(); });
     timeVariant(out, N, "fkl_chain_fused", 1, [&] { fkl.fused(); fkl.sync(); });
+    timeVariant(out, N, "fkl_chain_fused_halfpixel", 1, [&] { fklHalf.fused(); fklHalf.sync(); });
     timeVariant(out, N, "fkl_chain_perop_batch", 5, [&] { fkl.perOpBatch(); fkl.sync(); });
     timeVariant(out, N, "rpp_chain_fused_api", 1, [&] { rpp.run(); RPPB_CHECK_HIP(hipStreamSynchronize(stream.getHIPStream())); });
     timeVariant(out, N, "fkl_pipeline_fused", 2, [&] { fkl.convert(); fkl.fused(); fkl.sync(); });
+    timeVariant(out, N, "fkl_pipeline_fused_halfpixel", 2, [&] { fklHalf.convert(); fklHalf.fused(); fklHalf.sync(); });
     timeVariant(out, N, "fkl_pipeline_perop_batch", 6, [&] { fkl.convert(); fkl.perOpBatch(); fkl.sync(); });
     timeVariant(out, N, "rpp_pipeline_fused_api", 2, [&] { convertRpp(); rpp.run(); RPPB_CHECK_HIP(hipStreamSynchronize(stream.getHIPStream())); });
     timeVariant(out, N, "mixed_fkl_convert_rpp_chain", 2, [&] { fkl.convert(); fkl.sync(); rpp.run(); RPPB_CHECK_HIP(hipStreamSynchronize(stream.getHIPStream())); });

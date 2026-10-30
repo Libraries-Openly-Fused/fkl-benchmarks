@@ -1,7 +1,7 @@
 # experiment: benchmark_rpp_preprocessing_b
 # notes: FKL HIP vs RPP; source: seeded noise (LCG, seed 12345); RPP 3.2.0 (ROCm package amdrocm-rpp), rppt tensor API, HIP back-end; rppt_resize_mirror_normalize: BILINEAR, ROI XYWH, source U8 NHWC (batch stride 0, one ROI per crop), destination F32 NCHW, mirror off; rppt_channel_permute F32 NCHW; rppt_yuv_to_rgb: RpptColorStandard_BT601, RpptColorRange_STUDIO, default chroma upsampling; output widths are multiples of 8; wall clock including the stream synchronisation, 3 warm-up runs and at least 0.5 s of warm-up; pass -1 = informational; tolerance 1e-4 absolute
-# repo: fkl-benchmarks f81306d8d836995d888edd41cee760632dbf05e9-dirty
-# fkl: fb9ac3ad4a64aad40ae3122e14143f03814f2cc0
+# repo: fkl-benchmarks 51c97c0e34088fc3f306f6255a5699ff329822e9-dirty
+# fkl: 38c4f32d887b4530c54362eb526c9a5411ee92fe
 # cvGPUSpeedup: 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c
 # FastNPP: 9dfc4f430225e40ded392bfa777b2e724367c5c1
 # nvcc: none (none), architectures native, -fmad on, -lineinfo on
@@ -11,7 +11,7 @@
 # cpu: AMD Ryzen 7 5800X3D 8-Core Processor
 # gpu: AMD Radeon RX 9060, gfx1200, 14 WGPs (28 CUs), wave32, 8144 MiB, PCI 0000:0d:00.0
 # hip driver: 7.16.26385, hip runtime: 7.16.26385
-# clocks (gfx, mem, max gfx, max mem, MHz): 52, 772, 2400, 1124
+# clocks (gfx, mem, max gfx, max mem, MHz): 54, 772, 2400, 1124
 # amd-smi: AMDSMI Tool: 27.1.0+7da43026 | AMDSMI Library version: 27.1.0 | ROCm version: 10.1.0 | amdgpu version: 7.1.9.31600000 | ionic version: N/A
 crops,comparison,region,max_abs_diff,mean_abs_diff,fraction_over_1e-4,pass,note
 1,RGB frame: rppt_yuv_to_rgb vs FKL ConvertYUVToRGB (levels),frame,1,2.77295525e-06,0,-1,BT.601 studio swing, default chroma upsampling of RPP
@@ -21,6 +21,10 @@ crops,comparison,region,max_abs_diff,mean_abs_diff,fraction_over_1e-4,pass,note
 1,fkl_perop_batch vs fkl_fused,last 2 columns and rows,4.76837158e-07,4.61778734e-08,0,1,
 1,rpp_fused_api vs fkl_fused,interior,3.51589656,0.825141958,0.993300905,-1,different RGB frames and sampling conventions
 1,rpp_fused_api vs fkl_fused,last 2 columns and rows,3.36763024,0.841100578,0.995614035,-1,different RGB frames and sampling conventions
+1,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,interior,2.38418579e-07,2.20908306e-08,0,1,
+1,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,last 2 columns and rows,2.38418579e-07,1.94962986e-08,0,1,
+1,rpp_fused_api vs fkl_fused_halfpixel,interior,4.76837158e-07,4.13864833e-08,0,-1,both HALF_PIXEL; the RGB frames differ by at most 1 level; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+1,rpp_fused_api vs fkl_fused_halfpixel,last 2 columns and rows,2.53472239,0.345409612,0.488596491,-1,both HALF_PIXEL; the RGB frames differ by at most 1 level; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
 8,RGB frame: rppt_yuv_to_rgb vs FKL ConvertYUVToRGB (levels),frame,1,2.77295525e-06,0,-1,BT.601 studio swing, default chroma upsampling of RPP
 8,fkl_fused vs scalar reference,interior,2.38418579e-07,2.1475439e-08,0,1,
 8,fkl_fused vs scalar reference,last 2 columns and rows,2.38418579e-07,2.17433313e-08,0,1,
@@ -28,6 +32,10 @@ crops,comparison,region,max_abs_diff,mean_abs_diff,fraction_over_1e-4,pass,note
 8,fkl_perop_batch vs fkl_fused,last 2 columns and rows,4.76837158e-07,5.20277944e-08,0,1,
 8,rpp_fused_api vs fkl_fused,interior,4.13565934,0.86385942,0.992895545,-1,different RGB frames and sampling conventions
 8,rpp_fused_api vs fkl_fused,last 2 columns and rows,4.21233082,0.878502809,0.985745614,-1,different RGB frames and sampling conventions
+8,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,interior,2.38418579e-07,2.14393948e-08,0,1,
+8,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,last 2 columns and rows,2.38418579e-07,1.96989787e-08,0,1,
+8,rpp_fused_api vs fkl_fused_halfpixel,interior,0.00897580385,1.51948986e-07,1.60010241e-05,-1,both HALF_PIXEL; the RGB frames differ by at most 1 level; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+8,rpp_fused_api vs fkl_fused_halfpixel,last 2 columns and rows,3.52797592,0.292134839,0.486622807,-1,both HALF_PIXEL; the RGB frames differ by at most 1 level; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
 16,RGB frame: rppt_yuv_to_rgb vs FKL ConvertYUVToRGB (levels),frame,1,2.77295525e-06,0,-1,BT.601 studio swing, default chroma upsampling of RPP
 16,fkl_fused vs scalar reference,interior,2.38418579e-07,2.15892993e-08,0,1,
 16,fkl_fused vs scalar reference,last 2 columns and rows,2.38418579e-07,2.17524215e-08,0,1,
@@ -35,6 +43,10 @@ crops,comparison,region,max_abs_diff,mean_abs_diff,fraction_over_1e-4,pass,note
 16,fkl_perop_batch vs fkl_fused,last 2 columns and rows,4.76837158e-07,5.09574635e-08,0,1,
 16,rpp_fused_api vs fkl_fused,interior,4.13565934,0.778589059,0.990956755,-1,different RGB frames and sampling conventions
 16,rpp_fused_api vs fkl_fused,last 2 columns and rows,4.44444478,0.84143851,0.986129386,-1,different RGB frames and sampling conventions
+16,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,interior,2.38418579e-07,2.15482468e-08,0,1,
+16,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,last 2 columns and rows,2.38418579e-07,2.05404145e-08,0,1,
+16,rpp_fused_api vs fkl_fused_halfpixel,interior,0.00952075049,1.42356628e-07,1.86678614e-05,-1,both HALF_PIXEL; the RGB frames differ by at most 1 level; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+16,rpp_fused_api vs fkl_fused_halfpixel,last 2 columns and rows,4.44444478,0.344851255,0.518092105,-1,both HALF_PIXEL; the RGB frames differ by at most 1 level; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
 32,RGB frame: rppt_yuv_to_rgb vs FKL ConvertYUVToRGB (levels),frame,1,2.77295525e-06,0,-1,BT.601 studio swing, default chroma upsampling of RPP
 32,fkl_fused vs scalar reference,interior,2.38418579e-07,2.15015585e-08,0,1,
 32,fkl_fused vs scalar reference,last 2 columns and rows,2.38418579e-07,2.17316451e-08,0,1,
@@ -42,6 +54,10 @@ crops,comparison,region,max_abs_diff,mean_abs_diff,fraction_over_1e-4,pass,note
 32,fkl_perop_batch vs fkl_fused,last 2 columns and rows,4.76837158e-07,5.05151761e-08,0,1,
 32,rpp_fused_api vs fkl_fused,interior,4.13565934,0.763164153,0.99078341,-1,different RGB frames and sampling conventions
 32,rpp_fused_api vs fkl_fused,last 2 columns and rows,4.44444478,0.819576387,0.986650219,-1,different RGB frames and sampling conventions
+32,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,interior,2.38418579e-07,2.15993751e-08,0,1,
+32,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,last 2 columns and rows,2.38418579e-07,2.13694193e-08,0,1,
+32,rpp_fused_api vs fkl_fused_halfpixel,interior,0.0097515583,1.04569795e-07,1.06673494e-05,-1,both HALF_PIXEL; the RGB frames differ by at most 1 level; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+32,rpp_fused_api vs fkl_fused_halfpixel,last 2 columns and rows,4.44444478,0.336286247,0.522094298,-1,both HALF_PIXEL; the RGB frames differ by at most 1 level; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
 64,RGB frame: rppt_yuv_to_rgb vs FKL ConvertYUVToRGB (levels),frame,1,2.77295525e-06,0,-1,BT.601 studio swing, default chroma upsampling of RPP
 64,fkl_fused vs scalar reference,interior,2.38418579e-07,2.15227728e-08,0,1,
 64,fkl_fused vs scalar reference,last 2 columns and rows,2.38418579e-07,2.17357398e-08,0,1,
@@ -49,3 +65,7 @@ crops,comparison,region,max_abs_diff,mean_abs_diff,fraction_over_1e-4,pass,note
 64,fkl_perop_batch vs fkl_fused,last 2 columns and rows,4.76837158e-07,5.04463487e-08,0,1,
 64,rpp_fused_api vs fkl_fused,interior,4.20138919,0.72150145,0.989533997,-1,different RGB frames and sampling conventions
 64,rpp_fused_api vs fkl_fused,last 2 columns and rows,4.44780469,0.805962417,0.986581689,-1,different RGB frames and sampling conventions
+64,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,interior,2.38418579e-07,2.16644653e-08,0,1,
+64,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,last 2 columns and rows,2.38418579e-07,2.16265201e-08,0,1,
+64,rpp_fused_api vs fkl_fused_halfpixel,interior,0.0125340428,9.57080988e-08,1.000064e-05,-1,both HALF_PIXEL; the RGB frames differ by at most 1 level; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+64,rpp_fused_api vs fkl_fused_halfpixel,last 2 columns and rows,4.44568443,0.373168988,0.541474781,-1,both HALF_PIXEL; the RGB frames differ by at most 1 level; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
