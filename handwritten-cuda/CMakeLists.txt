@@ -11,3 +11,12 @@ fklb_add_benchmark(e1_vf_chain
     BACKENDS cu LIBS fkl
     SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/e1_vf_chain.cu"
     INCLUDE_DIRS "${CMAKE_CURRENT_BINARY_DIR}")
+
+# E1b: the horizontal-fusion batch; batch sizes as in the paper's figure (1 .. 1191)
+set(E1_HF_BATCHES "1, 51, 201, 601, 1191" CACHE STRING "E1b: batch sizes, comma separated")
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/e1_hf_batches.h.in" "${CMAKE_CURRENT_BINARY_DIR}/e1_hf_batches.h" @ONLY)
+
+fklb_add_benchmark(e1_hf_batch
+    BACKENDS cu LIBS fkl
+    SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/e1_hf_batch.cu"
+    INCLUDE_DIRS "${CMAKE_CURRENT_BINARY_DIR}")
