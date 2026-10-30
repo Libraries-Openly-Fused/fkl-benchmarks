@@ -15,6 +15,12 @@ if(FKLB_HAVE_CPU_MULTITHREAD)
         LIBS fkl_mt opencv_cpu
         SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/bench_preproc_b.cpp"
         INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}")
+    # Resolution sweep (c): the chain of pipeline (a) on whole frames
+    fklb_add_benchmark(e5_preprocessing_c
+        BACKENDS cpp
+        LIBS fkl_mt opencv_cpu
+        SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/bench_preproc_c.cpp"
+        INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}")
 else()
-    message(STATUS "fkl-benchmarks: e5_preprocessing_a and _b skipped (external/fkl/thread-pool is not checked out)")
+    message(STATUS "fkl-benchmarks: e5_preprocessing_a, _b and _c skipped (external/fkl/thread-pool is not checked out)")
 endif()
