@@ -33,6 +33,7 @@ common/fklb_csv.py writes the version it resolved in the CSV header).
   python triton/e2_chain.py [--ks 2,10,50,100,500] [--out e2_chain.csv] [--versions triton_hand,eager,...] [--timeout 1800]
 """
 import argparse
+import csv
 import json
 import os
 import shutil
@@ -41,6 +42,7 @@ import sys
 import tempfile
 import time
 
+import numpy as np
 import torch
 import torch._dynamo
 import torch._inductor.config as inductor_config
@@ -129,12 +131,42 @@ def ulp_error(result, exact64):
     return ((r - exact64).abs() / ulp.abs().clamp_min(1e-300)).max().item()
 
 
-def worker(version, ops, ref_path):
-    """One (version, ops) in this process: cold compile time (the caches are fresh), steady GPU time, kernels, accuracy. Returns a dict."""
+def load_input(path):
+    """The image: the raw uint8 file written by handwritten-cuda/e2_fkl_chain.cu (the bytes FKL ran on), or torch.randint with seed 20261030 when no file is given."""
+    if path:
+        a = np.fromfile(path, dtype=np.uint8)
+        if a.size != H * W:
+            raise SystemExit(f"{path}: {a.size} bytes, expected {H * W}")
+        return torch.from_numpy(a.reshape(H, W).copy()).cuda()
     torch.manual_seed(20261030)
-    x = torch.randint(0, 256, (H, W), dtype=torch.uint8, device="cuda")
+    return torch.randint(0, 256, (H, W), dtype=torch.uint8, device="cuda")
+
+
+def ulp_diff(result, reference):
+    """Max |result - reference| in float32 ULPs of the reference value (reference: a float32 tensor)."""
+    ulp = torch.nextafter(reference, torch.tensor(float("inf"), device=reference.device)).double() - reference.double()
+    return ((result.double() - reference.double()).abs() / ulp.abs().clamp_min(1e-300)).max().item()
+
+
+def worker(version, ops, ref_path, input_path=None, fkl_dir=None):
+    """One (version, ops) in this process: cold compile time (the caches are fresh), steady GPU time, kernels, accuracy. Returns a dict."""
+    x = load_input(input_path)
     out = torch.empty((H, W), dtype=torch.float32, device="cuda")
     res = {}
+    fkl_path = os.path.join(fkl_dir, f"fkl_out_k{ops}.f32") if fkl_dir else None
+    if version == "fkl":    # not run here: its output (written by e2_fkl_chain) is evaluated like the others; time and compile time come from the FKL CSVs (the driver)
+        if not fkl_path or not os.path.exists(fkl_path):
+            raise SystemExit(f"no FKL output {fkl_path}")
+        res_t = torch.from_numpy(np.fromfile(fkl_path, dtype=np.float32).reshape(H, W)).cuda()
+        exact = x.double() * ALPHA
+        for i in range(ops):
+            exact = exact * C if i % 2 == 0 else exact + C
+        res["max_ulp_vs_exact"] = ulp_error(res_t, exact)
+        res["bitexact_fraction_vs_fkl"], res["max_ulp_vs_fkl"] = 1.0, 0.0
+        if os.path.exists(ref_path):
+            res["bitexact_fraction_vs_triton_hand"] = (res_t.cpu() == torch.load(ref_path)).float().mean().item()
+        res["kernels"] = 1
+        return res
     if version == "eager_graphs":
         fn = make_eager(ops)
         t0 = time.perf_counter()
@@ -165,6 +197,10 @@ def worker(version, ops, ref_path):
     res.update(gpu_mean_ms=mean, gpu_min_ms=mn, host_launch_us=host)
     res["kernels"] = count_kernels(call, x, out) if version != "eager_graphs" else count_kernels(lambda a, b: g.replay(), x, out)
     res_t = result.clone()
+    if fkl_path and os.path.exists(fkl_path):    # agreement with FKL, bit by bit and in ULPs of the FKL value
+        fkl = torch.from_numpy(np.fromfile(fkl_path, dtype=np.float32).reshape(H, W)).cuda()
+        res["bitexact_fraction_vs_fkl"] = (res_t == fkl).float().mean().item()
+        res["max_ulp_vs_fkl"] = ulp_diff(res_t, fkl)
     exact = x.double() * ALPHA
     for i in range(ops):
         exact = exact * C if i % 2 == 0 else exact + C
@@ -179,6 +215,11 @@ def worker(version, ops, ref_path):
     return res
 
 
+def read_rows(path):
+    with open(path, newline="") as f:
+        return list(csv.DictReader(l for l in f if not l.startswith("#")))
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--ks", default="2,10,50,100,500", help="chain lengths; add 1000 (optional) and one bounded attempt at a large k such as 5002 with --timeout 900 to document the limit")
@@ -187,23 +228,39 @@ def main():
     ap.add_argument("--timeout", type=int, default=1800, help="seconds per (version, ops): a worker that is slower is killed and recorded")
     ap.add_argument("--worker", nargs=2, metavar=("VERSION", "OPS"), help="internal: run one point in this process and print a JSON line")
     ap.add_argument("--ref", default="triton_ref.pt")
+    ap.add_argument("--input", default=None, help="raw uint8 image 4096x2160 (written by handwritten-cuda e2_fkl_chain); default: torch.randint with seed 20261030")
+    ap.add_argument("--fkl-dir", default=None, help="directory with fkl_out_k<k>.f32 of e2_fkl_chain: adds the FKL row and the agreement columns against FKL")
+    ap.add_argument("--fkl-csv", default=None, help="e2_fkl_chain.csv (GPU time of FKL)")
+    ap.add_argument("--fkl-compile", default=None, help="CSV with the columns ops, nvcc_s (cold compile time of the FKL chain; scripts/e2_fkl_compile.py)")
     args = ap.parse_args()
     if args.worker:
-        print("E2JSON " + json.dumps(worker(args.worker[0], int(args.worker[1]), args.ref)))
+        print("E2JSON " + json.dumps(worker(args.worker[0], int(args.worker[1]), args.ref, args.input, args.fkl_dir)))
         return
     ks = [int(k) for k in args.ks.split(",")]
-    notes = (f"k values: {','.join(str(k) for k in ks)}; 4096x2160 uint8 noise (torch.randint, torch.manual_seed 20261030) -> float32, alpha {ALPHA}, c {C}, k operations alternating mul and add; each (version, k) in its own process "
+    image = (f"the file {args.input} (written by e2_fkl_chain: std::mt19937_64 seed 20261030, as E1a)" if args.input else "torch.randint, torch.manual_seed 20261030")
+    notes = (f"k values: {','.join(str(k) for k in ks)}; 4096x2160 uint8 noise ({image}) -> float32, alpha {ALPHA}, c {C}, k operations alternating mul and add; each (version, k) in its own process "
              f"with fresh Triton and Inductor caches (compile_s = the first call, cold); {ITERATIONS} timed calls after warm-up; kernels counted with torch.profiler; "
-             f"ULP error against a float64 reference; timeout {args.timeout} s per point")
-    cols = ["ops", "version", "status", "why", "gpu_mean_ms", "gpu_min_ms", "host_launch_us", "kernels", "compile_s", "max_ulp_vs_exact", "bitexact_fraction_vs_triton_hand"]
+             f"ULP error against an exact float64 evaluation (max_ulp_vs_exact) and against the FKL output (max_ulp_vs_fkl, in ULPs of the FKL value; bitexact_fraction_vs_fkl); "
+             f"FKL row: time from {args.fkl_csv}, cold compile time from {args.fkl_compile}; timeout {args.timeout} s per point")
+    cols = ["ops", "version", "status", "why", "gpu_mean_ms", "gpu_min_ms", "host_launch_us", "kernels", "compile_s", "max_ulp_vs_exact", "bitexact_fraction_vs_triton_hand",
+            "bitexact_fraction_vs_fkl", "max_ulp_vs_fkl"]
     with CsvWriter(args.out, "E2a element-wise chain: Triton and TorchInductor", cols, notes=notes) as csv:
+        versions = args.versions.split(",")
+        if args.fkl_dir and "fkl" not in versions:
+            versions.insert(min(1, len(versions)), "fkl")     # after triton_hand, whose output the FKL row is also compared with
+        fkl_times = {int(r["ops"]): r for r in read_rows(args.fkl_csv)} if args.fkl_csv else {}
+        fkl_compile = {int(r["ops"]): r for r in read_rows(args.fkl_compile)} if args.fkl_compile else {}
         for ops in ks:
             ref = os.path.join(tempfile.gettempdir(), f"e2_triton_ref_{os.getpid()}_{ops}.pt")
-            for version in args.versions.split(","):
+            for version in versions:
                 caches = tempfile.mkdtemp(prefix="e2cache")
                 env = dict(os.environ, TRITON_CACHE_DIR=os.path.join(caches, "triton"), TORCHINDUCTOR_CACHE_DIR=os.path.join(caches, "inductor"),
                            TORCHINDUCTOR_FX_GRAPH_CACHE="0", TORCHINDUCTOR_AUTOGRAD_CACHE="0")
                 cmd = [sys.executable, os.path.abspath(__file__), "--worker", version, str(ops), "--ref", ref]
+                if args.input:
+                    cmd += ["--input", args.input]
+                if args.fkl_dir:
+                    cmd += ["--fkl-dir", args.fkl_dir]
                 t0 = time.perf_counter()
                 try:
                     p = subprocess.run(cmd, env=env, capture_output=True, text=True, timeout=args.timeout, start_new_session=True)
@@ -217,8 +274,16 @@ def main():
                 except subprocess.TimeoutExpired:
                     r, status, why = {}, f"timeout ({args.timeout} s)", ""
                 shutil.rmtree(caches, ignore_errors=True)
+                if version == "fkl" and status == "ok":   # the time of FKL and the cold compile time of its chain come from their own programs
+                    if ops in fkl_times:
+                        r["gpu_mean_ms"], r["gpu_min_ms"] = float(fkl_times[ops]["fkl_mean_ms"]), float(fkl_times[ops]["fkl_min_ms"])
+                    if ops in fkl_compile:
+                        r["compile_s"] = float(fkl_compile[ops]["nvcc_s"])
                 csv.row(ops, version, status, why, *[r.get(c, "") for c in cols[4:]])
-                print(f"k={ops:6d} {version:17s} {status:18s} " + (f"gpu {r['gpu_mean_ms']:9.4f} ms (min {r['gpu_min_ms']:9.4f}) host {r['host_launch_us']:9.1f} us kernels {r['kernels']:5d} compile {r['compile_s']:8.2f} s ulp {r['max_ulp_vs_exact']:.3g} bitexact {r['bitexact_fraction_vs_triton_hand']:.4f}" if r else why) + f"  [{time.perf_counter() - t0:.0f} s]", flush=True)
+                nan = float("nan")
+                summary = (f"gpu {r.get('gpu_mean_ms', nan):9.4f} ms host {r.get('host_launch_us', nan):9.1f} us kernels {int(r.get('kernels', 0)):5d} compile {r.get('compile_s', nan):8.2f} s "
+                           f"ulp_exact {r.get('max_ulp_vs_exact', nan):.3g} ulp_fkl {r.get('max_ulp_vs_fkl', nan):.3g} bitexact_fkl {r.get('bitexact_fraction_vs_fkl', nan):.4f}" if r else why)
+                print(f"k={ops:6d} {version:17s} {status:18s} {summary}  [{time.perf_counter() - t0:.0f} s]", flush=True)
             if os.path.exists(ref):
                 os.remove(ref)
 
