@@ -14,7 +14,7 @@ The libraries are pinned as submodules; the benchmarks were moved here from thei
 | `common/` | shared harness: `main`, one-block CSV writers (C++ and Python), `system_info.h` (the CSV header), device-attribute dump |
 | `fkl-self/` | FKL against itself: horizontal fusion (+ CUDA Graphs), thread fusion, latency hiding, instructions per operation, compile-time seed |
 | `opencv-cuda/` | cvGPUSpeedup against OpenCV-CUDA: vertical fusion chains (generated), data size, CPU time, wrapper overhead, batched DNN preprocessing |
-| `opencv-cpu/` | FKL CPU back-end against OpenCV on the CPU (to come) |
+| `opencv-cpu/` | FKL CPU back-end against OpenCV on the CPU (`-DFKLB_BUILD_OPENCV_CPU=ON`; needs only OpenCV core, imgproc, imgcodecs) |
 | `npp/` | FastNPP against NPP |
 | `handwritten-cuda/`, `triton/`, `torch-inductor/`, `pytorch-attention/` | baselines added in revision 2 (to come) |
 | `scripts/` | SASS/PTX tools, system-info dump, one script per figure (to come) |

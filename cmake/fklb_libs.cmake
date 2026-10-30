@@ -21,7 +21,18 @@ if(FKLB_HAVE_cu)
     target_link_libraries(fklb_npp INTERFACE CUDA::nppc CUDA::nppial CUDA::nppidei CUDA::nppig)
 endif()
 
-# OpenCV (system build, with the CUDA modules). Only needed by opencv-cuda/.
+# OpenCV (system build). opencv-cuda/ needs the CUDA modules; opencv-cpu/ only core, imgproc and imgcodecs.
+if(FKLB_BUILD_OPENCV_CPU AND NOT (FKLB_BUILD_OPENCV_CUDA AND FKLB_HAVE_cu))
+    if(OPENCV_DIR)
+        list(APPEND CMAKE_PREFIX_PATH "${OPENCV_DIR}")
+    endif()
+    find_package(OpenCV CONFIG REQUIRED COMPONENTS core imgproc imgcodecs)
+    message(STATUS "fkl-benchmarks: OpenCV ${OpenCV_VERSION} (${OpenCV_DIR}), CPU modules only")
+endif()
+if(FKLB_BUILD_OPENCV_CPU OR (FKLB_BUILD_OPENCV_CUDA AND FKLB_HAVE_cu))
+    add_library(fklb_opencv_cpu INTERFACE)
+endif()
+
 if(FKLB_BUILD_OPENCV_CUDA AND FKLB_HAVE_cu)
     # OpenCVConfig.cmake calls the legacy FindCUDA module: keep it (CMP0146 OLD) and point it at the pinned toolkit, so
     # that OpenCV's CUDA dependencies resolve to the same CUDA as nvcc and never to another one on this machine.
@@ -35,4 +46,8 @@ if(FKLB_BUILD_OPENCV_CUDA AND FKLB_HAVE_cu)
     add_library(fklb_opencv INTERFACE)
     target_link_libraries(fklb_opencv INTERFACE
         opencv_core opencv_cudaarithm opencv_imgproc opencv_cudafilters opencv_cudaimgproc opencv_cudawarping opencv_imgcodecs)
+endif()
+
+if(TARGET fklb_opencv_cpu)
+    target_link_libraries(fklb_opencv_cpu INTERFACE opencv_core opencv_imgproc opencv_imgcodecs)
 endif()

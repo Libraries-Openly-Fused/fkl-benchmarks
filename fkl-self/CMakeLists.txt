@@ -21,3 +21,8 @@ fklb_add_benchmark(benchmark_numinstructions_x_operation
 fklb_add_benchmark(batch_build_compilation_time
     BACKENDS cu hip cpp LIBS fkl
     LAUNCHER_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/compiletime/batch_build_compilation_time.h")
+
+# FKL pipelines (e.g. the NV12 preprocessing, E4b): pipelines/CMakeLists.txt, when it exists
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/pipelines/CMakeLists.txt")
+    add_subdirectory(pipelines)
+endif()
