@@ -14,7 +14,7 @@ The libraries are pinned as submodules; the benchmarks were moved here from thei
 | `common/` | shared harness: `main`, one-block CSV writers (C++ and Python), `system_info.h` (the CSV header), device-attribute dump |
 | `fkl-self/` | FKL against itself: horizontal fusion (+ CUDA Graphs), thread fusion, latency hiding, instructions per operation, compile-time seed |
 | `opencv-cuda/` | cvGPUSpeedup against OpenCV-CUDA: vertical fusion chains (generated), data size, CPU time, wrapper overhead, batched DNN preprocessing |
-| `opencv-cpu/` | FKL CPU back-end against OpenCV on the CPU (`-DFKLB_BUILD_OPENCV_CPU=ON`; needs only OpenCV core, imgproc, imgcodecs) |
+| `opencv-cpu/` | FKL CPU back-end against OpenCV on the CPU (`-DFKLB_BUILD_OPENCV_CPU=ON`; needs only OpenCV core and imgproc, any 4.x) |
 | `npp/` | FastNPP against NPP |
 | `handwritten-cuda/`, `triton/`, `torch-inductor/`, `pytorch-attention/` | baselines added in revision 2 (to come) |
 | `scripts/` | SASS/PTX tools, system-info dump, one script per figure (to come) |
@@ -27,7 +27,7 @@ Everything is built with CUDA 13.4 and strict C++17. Source the environment file
 ```bash
 export FKLB_CUDA_HOME=/usr/local/cuda-13.4 CUDA_VISIBLE_DEVICES=0   # the CUDA 13.4 toolkit root and the GPU (nvidia-smi index)
 source scripts/env-cuda13.4.sh                                       # PATH, LD_LIBRARY_PATH, PCI_BUS_ID order
-git submodule update --init                 # external/fkl, external/cvGPUSpeedup, external/FastNPP
+git submodule update --init --recursive     # external/fkl (and its thread-pool, for ParArch::CPU_MULTITHREAD), external/cvGPUSpeedup, external/FastNPP
 cmake --preset rtx4090 -DOPENCV_DIR=<OpenCV install prefix>
 cmake --build build/rtx4090 -j 16
 ```
