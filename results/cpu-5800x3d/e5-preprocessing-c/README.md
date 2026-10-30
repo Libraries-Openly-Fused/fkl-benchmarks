@@ -7,3 +7,9 @@ out: the regime that the 60x120 crops of pipeline (a) never reach (a working set
 `g++-13/` and `clang++-23/`: `e5_preprocessing_c_CPU.csv` (3 warm-up and 30 timed runs, wall clock, median/min/max/mean) and the agreement.
 Variants: `opencv_default` and `opencv_1thread`, `fkl_fused_cpu[_mt]` (one executeOperations), `fkl_perop_cpu[_mt]` (one per operation, through
 two host buffers). Checks as in pipeline (a). Conditions: idle machine, governor powersave (amd-pstate-epp, balance_performance), boost on.
+
+Numerics, the float source positions: FKL's `Resize` computes the source position `x * (src / dst)` in `float`. When the factor is not exact in
+`float` the positions carry a rounding error that grows with the coordinate: with the 480p frame at 640x480 (output 683x512, factor 640/683) the fused
+FKL result differs from the double precision scalar reference of `common/resize_reference.h` by up to 0.0049 (the tolerance of the check is 1e-4;
+g++ 13, the same benchmark with only the 480p entry changed), against 7.6e-6 at 720x480 (output 768x512, factor 15/16, exact). The 480p entry is
+therefore 720x480. It is a property of the float source positions of the library, not of this benchmark; the library is not changed for it.
