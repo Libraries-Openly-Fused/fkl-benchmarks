@@ -1,0 +1,40 @@
+480p 720x480
+  opencv vs scalar reference, HALF_PIXEL sampling (<= 1e-4): max abs diff 1.52588e-05 ok
+  fkl_fused_cpu vs scalar reference, ASYMMETRIC sampling (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_fused_cpu_mt vs fkl_fused_cpu (identical): max abs diff 0 ok
+  fkl_perop_cpu vs fkl_fused_cpu (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_perop_cpu_mt vs fkl_perop_cpu (identical): max abs diff 0 ok
+  fkl_fused_cpu vs opencv (the sampling conventions): max abs diff 7.01367 (informational)
+  opencv_default: median 2.72778 ms (min 2.7055, max 3.03129)
+  opencv_1thread: median 2.46368 ms (min 2.45162, max 2.49758)
+  fkl_perop_cpu: median 4.16642 ms (min 4.07333, max 4.1932)
+  fkl_fused_cpu: median 4.20006 ms (min 4.19324, max 4.2821)
+  fkl_perop_cpu_mt: median 0.807695 ms (min 0.765585, max 1.2588)
+  fkl_fused_cpu_mt: median 0.532359 ms (min 0.521833, max 0.773505)
+1080p 1920x1080
+  opencv vs scalar reference, HALF_PIXEL sampling (<= 1e-4): max abs diff 1.52588e-05 ok
+  fkl_fused_cpu vs scalar reference, ASYMMETRIC sampling (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_fused_cpu_mt vs fkl_fused_cpu (identical): max abs diff 0 ok
+  fkl_perop_cpu vs fkl_fused_cpu (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_perop_cpu_mt vs fkl_perop_cpu (identical): max abs diff 0 ok
+  fkl_fused_cpu vs opencv (the sampling conventions): max abs diff 7.63184 (informational)
+  opencv_default: median 16.676 ms (min 16.3489, max 17.462)
+  opencv_1thread: median 17.7051 ms (min 17.4403, max 19.234)
+  fkl_perop_cpu: median 24.8869 ms (min 24.7477, max 26.3846)
+  fkl_fused_cpu: median 25.1963 ms (min 25.1584, max 25.54)
+  fkl_perop_cpu_mt: median 4.51289 ms (min 4.35855, max 5.53468)
+  fkl_fused_cpu_mt: median 3.10017 ms (min 2.99943, max 3.50615)
+4K 3840x2160
+  opencv vs scalar reference, HALF_PIXEL sampling (<= 1e-4): max abs diff 1.52588e-05 ok
+  fkl_fused_cpu vs scalar reference, ASYMMETRIC sampling (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_fused_cpu_mt vs fkl_fused_cpu (identical): max abs diff 0 ok
+  fkl_perop_cpu vs fkl_fused_cpu (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_perop_cpu_mt vs fkl_perop_cpu (identical): max abs diff 0 ok
+  fkl_fused_cpu vs opencv (the sampling conventions): max abs diff 7.51221 (informational)
+  opencv_default: median 169.304 ms (min 167.438, max 171.273)
+  opencv_1thread: median 167.063 ms (min 165.641, max 168.419)
+  fkl_perop_cpu: median 121.692 ms (min 121.131, max 122.755)
+  fkl_fused_cpu: median 100.868 ms (min 100.679, max 101.376)
+  fkl_perop_cpu_mt: median 46.9077 ms (min 45.5496, max 48.6517)
+  fkl_fused_cpu_mt: median 12.0929 ms (min 11.9972, max 12.2789)
+all numerical checks passed
