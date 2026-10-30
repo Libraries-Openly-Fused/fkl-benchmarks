@@ -1,0 +1,55 @@
+--- hand_params
++++ fkl
+@@ -6,28 +6,23 @@
+ IMAD R1, R1, c[0x0][0x4], R2
+-ISETP.GE.AND P0, PT, R1, c[0x0][0x184], PT
++ISETP.GE.U32.AND P0, PT, R1, c[0x0][0x174], PT
+ IMAD R3, R3, c[0x0][0x0], R4
+-ISETP.GE.OR P0, PT, R3, c[0x0][0x180], P0
++ISETP.GE.U32.OR P0, PT, R3, c[0x0][0x170], P0
+ @P0 EXIT
+-SHF.R.S32.HI R2, RZ, 0x1f, R1
++IMAD R5, R1, c[0x0][0x178], RZ
++SHF.R.S32.HI R4, RZ, 0x1f, R3
+ ULDC.64 UR0, c[0x0][0x118]
+-SHF.R.S32.HI R4, RZ, 0x1f, R3
+-IMAD R5, R2, c[0x0][0x168], RZ
+-IMAD.WIDE.U32 R6, R1, c[0x0][0x168], R3
+-IMAD R4, R1, c[0x0][0x16c], R5
+-IADD3 R5, P0, R6, c[0x0][0x160], RZ
+-IADD3.X R7, R8, c[0x0][0x164], R4, P0, !PT
+-LDG.E.U8.CONSTANT R5, [R5.64]
+-MOV R6, c[0x0][0x178]
+-IMAD R2, R2, c[0x0][0x178], RZ
+-MOV R4, c[0x0][0x18c]
+-IMAD.WIDE.U32 R6, R1, R6, c[0x0][0x170]
+-IMAD R1, R1, c[0x0][0x17c], R2
+-IADD3 R8, R8, R1, RZ
+-IMAD.WIDE R6, R3, 0x4, R6
+-I2FP.F32.U32 R2, R5
+-FMUL R2, R2, c[0x0][0x188]
+-FFMA R4, R2, R4, c[0x0][0x18c]
+-STG.E [R6.64], R4
++IADD3 R5, P0, P1, R5, c[0x0][0x168], R3
++IADD3.X R6, RZ, c[0x0][0x16c], R4, P0, P1
++LDG.E.U8 R5, [R5.64]
++IMAD R1, R1, c[0x0][0x1a0], RZ
++MOV R7, c[0x0][0x188]
++IADD3 R4, P0, R1, c[0x0][0x190], RZ
++IADD3.X R2, RZ, c[0x0][0x194], RZ, P0, !PT
++IMAD.WIDE R4, R3, 0x4, R4
++I2FP.F32.U32 R1, R5
++FMUL R1, R1, c[0x0][0x184]
++FFMA R3, R1, R7, c[0x0][0x18c]
++STG.E [R4.64], R3
+ EXIT
+-BRA 0x1f0
++BRA 0x1a0
+ NOP
+@@ -40 +35,6 @@
+ NOP
++NOP
++NOP
++NOP
++NOP
++NOP

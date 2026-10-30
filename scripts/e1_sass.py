@@ -93,6 +93,7 @@ def classify_kernels(funcs):
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("binary"); ap.add_argument("out_dir"); ap.add_argument("--arch", default="sm_89")
+    ap.add_argument("--keep-sass-up-to", type=int, default=10**9, help="write the .sass and .diff files only for kernels of at most this many operations (the report always covers all)")
     args = ap.parse_args()
     os.makedirs(args.out_dir, exist_ok=True)
     sass = subprocess.run(["cuobjdump", "-arch", args.arch, "-sass", args.binary], capture_output=True, text=True).stdout
@@ -105,6 +106,11 @@ def main():
         by_n[pairs][variant] = lines
         names[(pairs, variant)] = name
 
+    # kernels whose pair count does not match any hand-written kernel (e.g. the scalar-tail variant of a very small chain, whose tail loop
+    # the compiler unrolled so that its FFMA count is not a multiple of the pairs) cannot be paired: leave them out of the report
+    for pairs in [p for p in by_n if "hand_params" not in by_n[p]]:
+        del by_n[pairs]
+
     smi = subprocess.run(["nvidia-smi", "--query-gpu=name,driver_version", "--format=csv,noheader"], capture_output=True, text=True).stdout.strip().replace("\n", " | ")
     md = ["# E1-SASS: hand-written kernels against FKL, vertical-fusion chain", "",
           f"binary `{args.binary}`, arch {args.arch}, registers renamed by first appearance.", "",
@@ -113,8 +119,10 @@ def main():
     for pairs in sorted(by_n):
         group = by_n[pairs]
         ops = pairs * 2
+        keep = ops <= args.keep_sass_up_to
         d = os.path.join(args.out_dir, f"ops{ops}")
-        os.makedirs(d, exist_ok=True)
+        if keep:
+            os.makedirs(d, exist_ok=True)
         md += [f"## {ops} operations ({pairs} Mul+Add pairs per element)", "",
                "| kernel | instructions | FFMA | FMUL | FADD | LDG | STG | LDL | STL | const-bank operands | IMAD | ISETP | BRA etc. | barriers | regs | stack | local | cmem[0] B |",
                "|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|"]
@@ -122,8 +130,9 @@ def main():
             if v not in group:
                 continue
             lines = group[v]
-            with open(os.path.join(d, f"{v}.sass"), "w") as f:
-                f.write("\n".join(lines) + "\n")
+            if keep:
+                with open(os.path.join(d, f"{v}.sass"), "w") as f:
+                    f.write("\n".join(lines) + "\n")
             n, h = st.classify(lines)
             u = usage.get(names[(pairs, v)], {})
             md.append("| {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} | {} |".format(
@@ -148,16 +157,22 @@ def main():
                     extra_a = collections.Counter(relax(sa)) - collections.Counter(relax(sb))
                     extra_b = collections.Counter(relax(sb)) - collections.Counter(relax(sa))
                     verdict = f"**DIFFERENT**: only in `{a}`: {dict(extra_a)}; only in `{b}`: {dict(extra_b)}"
+                    brA = st.classify(group[a])[1].get("BRA/BSSY/BSYNC/CALL/RET/EXIT", 0)
+                    brB = st.classify(group[b])[1].get("BRA/BSSY/BSYNC/CALL/RET/EXIT", 0)
+                    if brA > brB and not extra_a:
+                        verdict += (f" (`{a}` has {brA} control instructions against {brB}: nvcc did not fully unroll the hand-written loop "
+                                    f"despite `#pragma unroll`, it compiled a loop with a partially unrolled body, while FKL's kernel is straight-line code)")
                 md.append(f"- `{a}` vs `{b}`, the {len(sa)} arithmetic and memory instructions (FFMA, FMUL, FADD, LDG, STG, I2FP...; register numbers "
                           f"and constant-bank offsets ignored): {verdict}. Other instructions (thread index, bounds, address arithmetic): "
                           f"{len(group[a]) - len(sa)} in `{a}`, {len(group[b]) - len(sb)} in `{b}`.")
                 diff = list(difflib.unified_diff(group[a], group[b], a, b, n=1, lineterm=""))
-                with open(os.path.join(d, f"{a}-vs-{b}.diff"), "w") as f:
-                    f.write("\n".join(diff) + "\n")
+                if keep:
+                    with open(os.path.join(d, f"{a}-vs-{b}.diff"), "w") as f:
+                        f.write("\n".join(diff) + "\n")
                 changed = [l for l in diff if l[:1] in "+-" and l[:3] not in ("+++", "---")]
                 same = not changed
                 md.append(f"- `{a}` vs `{b}`: " + ("**identical instruction streams**" if same else
-                          f"differ: {len(group[a])} vs {len(group[b])} lines, {len(changed)} changed lines in the diff (`ops{ops}/{a}-vs-{b}.diff`)"))
+                          f"differ: {len(group[a])} vs {len(group[b])} lines, {len(changed)} changed lines in the diff" + (f" (`ops{ops}/{a}-vs-{b}.diff`)" if keep else "")))
         md.append("")
     with open(os.path.join(args.out_dir, "report.md"), "w") as f:
         f.write("\n".join(md) + "\n")
