@@ -12,11 +12,11 @@
    See the License for the specific language governing permissions and
    limitations under the License. */
 
-#include "tests/testsCommon.cuh"
+#include <opencv-cuda/testsCommon.cuh>
 #include <cvGPUSpeedup.cuh>
 #include <opencv2/cudaimgproc.hpp>
  
-#include "tests/main.h"
+#include <common/main.h>
 
 #ifdef ENABLE_BENCHMARK
 constexpr char VARIABLE_DIMENSION[]{ "Batch size" };

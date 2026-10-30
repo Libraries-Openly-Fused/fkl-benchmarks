@@ -12,7 +12,7 @@
    See the License for the specific language governing permissions and
    limitations under the License. */
 
-#include <tests/main.h>
+#include <common/main.h>
 
 #include <fused_kernel/algorithms/basic_ops/memory_operations.h>
 #include <fused_kernel/core/utils/utils.h>
