@@ -1,0 +1,5 @@
+#include <cuda_runtime.h>
+struct Blob { float v[2048]; };
+__device__ __forceinline__ float readAll(const Blob& X) { return X.v[0] + X.v[51] + X.v[102] + X.v[153] + X.v[204] + X.v[255] + X.v[306] + X.v[357] + X.v[408] + X.v[459] + X.v[510] + X.v[561] + X.v[612] + X.v[663] + X.v[714] + X.v[765] + X.v[816] + X.v[867] + X.v[918] + X.v[969] + X.v[1020] + X.v[1071] + X.v[1122] + X.v[1173] + X.v[1224] + X.v[1275] + X.v[1326] + X.v[1377] + X.v[1428] + X.v[1479] + X.v[1530] + X.v[1581] + X.v[1632] + X.v[1683] + X.v[1734] + X.v[1785] + X.v[1836] + X.v[1887] + X.v[1938] + X.v[1989] + X.v[2040] + X.v[2047]; }
+__global__ void k_gcref(const __grid_constant__ Blob b, float* out) { out[threadIdx.x] = readAll(b); }
+struct Half { float v[1024]; };

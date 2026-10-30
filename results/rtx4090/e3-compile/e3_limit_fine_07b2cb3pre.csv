@@ -1,0 +1,28 @@
+# experiment: E3 compile-time sweep
+# notes: one core (13), nvcc --threads 1, -O3 -DNDEBUG -std=c++17 sm_89 +PTX -ftemplate-depth=1000 -lineinfo; GNU time for the peak RSS; timeout 600 s per compile; the programs are not executed; fkl include /tmp/claude-1000/-home-oscar-tfkl-bench/d3e03e77-0fda-4126-a580-8c31301e5300/scratchpad/fkl-prefold/include
+# repo: fdd6429c3896c1dd77995b006b5dc0994711ea32
+# fkl: 38c4f32d887b4530c54362eb526c9a5411ee92fe
+# cvGPUSpeedup: 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c
+# FastNPP: 9dfc4f430225e40ded392bfa777b2e724367c5c1
+# python: 3.12.13, torch: 2.14.1+cu130, torch.version.cuda: 13.0
+# triton: 3.8.0; ptxas /home/oscar/tfkl-bench/venv-torch/lib/python3.12/site-packages/triton/backends/nvidia/bin/ptxas (release 12.9); ptxas_blackwell /home/oscar/tfkl-bench/venv-torch/lib/python3.12/site-packages/triton/backends/nvidia/bin/ptxas-blackwell (release 13.3); cuobjdump /home/oscar/tfkl-bench/venv-torch/lib/python3.12/site-packages/triton/backends/nvidia/bin/cuobjdump (release 13.1); nvdisasm /home/oscar/tfkl-bench/venv-torch/lib/python3.12/site-packages/triton/backends/nvidia/bin/nvdisasm (release 13.1)
+# flash_attn: 2.8.3.post2
+# gpu: NVIDIA GeForce RTX 4090, cc 8.9, 128 SMs, 24106 MiB
+# cuda_visible_devices: 1 (device 0, pci 00000000:05:00.0)
+# nvidia-smi driver: 610.43.02
+# clocks (sm, mem, max sm, max mem, MHz): 180 MHz, 405 MHz, 3090 MHz, 10001 MHz
+# power limit, temperature at start: 130.00 W, 32
+tree,variant,n,rep,status,why,cuda_wall_s,cuda_user_s,cuda_sys_s,cuda_peak_rss_mb,phase_cudafe_s,phase_cicc_s,phase_ptxas_s,phase_gcc_s,phase_other_s,registers,spill_stores,spill_loads,stack_bytes,cmem0_bytes,sass_instructions,text_bytes,cubin_bytes,host_status,host_wall_s,host_peak_rss_mb
+07b2cb3^,L,241,0,ok,,21.234,19.880,1.340,1193,0.823,16.935,0.100,3.319,0.039,11,0,0,0,1376,272,,,,,
+07b2cb3^,L,241,1,ok,,21.182,19.870,1.300,1194,0.837,16.815,0.102,3.372,0.040,11,0,0,0,1376,272,,,,,
+07b2cb3^,L,241,2,ok,,21.338,19.990,1.330,1190,0.848,16.999,0.101,3.333,0.039,11,0,0,0,1376,272,,,,,
+07b2cb3^,L,242,0,ok,,21.508,20.120,1.380,1201,0.826,17.185,0.101,3.340,0.040,11,0,0,0,1376,280,,,,,
+07b2cb3^,L,242,1,ok,,21.114,19.880,1.220,1202,0.821,16.829,0.101,3.308,0.038,11,0,0,0,1376,280,,,,,
+07b2cb3^,L,242,2,ok,,20.964,19.670,1.280,1201,0.819,16.700,0.101,3.289,0.039,11,0,0,0,1376,280,,,,,
+07b2cb3^,L,243,0,ok,,21.247,19.970,1.270,1209,0.817,16.979,0.101,3.296,0.039,11,0,0,0,1384,280,,,,,
+07b2cb3^,L,243,1,ok,,21.452,20.190,1.250,1209,0.820,17.153,0.101,3.321,0.039,11,0,0,0,1384,280,,,,,
+07b2cb3^,L,243,2,ok,,21.388,20.080,1.290,1209,0.819,17.101,0.100,3.312,0.039,11,0,0,0,1384,280,,,,,
+07b2cb3^,L,244,0,ok,,21.634,20.380,1.240,1218,0.821,17.313,0.100,3.344,0.038,11,0,0,0,1384,280,,,,,
+07b2cb3^,L,244,1,ok,,21.728,20.430,1.280,1218,0.820,17.425,0.101,3.326,0.039,11,0,0,0,1384,280,,,,,
+07b2cb3^,L,244,2,ok,,21.626,20.380,1.230,1218,0.820,17.317,0.100,3.334,0.039,11,0,0,0,1384,280,,,,,
+07b2cb3^,L,245,0,failed (exit 1),/tmp/claude-1000/-home-oscar-tfkl-bench/d3e03e77-0fda-4126-a580-8c31301e5300/scratchpad/fkl-prefold/include/fused_kernel/core/utils/parameter_pack_utils.h(34): error: cannot deduce the return type of function "fk::get<Index,T,Args...>(const T &, const Args &...) [with Index=0, T=fk::WriteInstantiabl,12.609,11.980,0.610,913,,,,,,,,,,,,,,,,

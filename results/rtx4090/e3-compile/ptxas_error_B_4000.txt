@@ -1,0 +1,7 @@
+ptxas (CUDA 13.4.92) on the PTX of variant B at N = 4,000 (generated with nvcc -ptx from fkl-self/compiletime/gen_chain.py B 4000, then ptxas -arch=sm_89 -O3 -v).
+The kernel has 4,003 parameters; the declared sizes add up to 31,549 B and to 34,056 B (0x8508) with the alignment padding, which is what ptxas reports.
+The sweep of N = 3,848 (e3_limit_B_3848.csv) failed with exit 255 and the same kind of ptxas error (its CSV keeps only the first 300 characters of the error line, which the
+mangled kernel name fills); N = 3,847 compiles (e3_limit_B_3847.csv).
+
+ptxas /tmp/claude-1000/-home-oscar-tfkl-bench/d3e03e77-0fda-4126-a580-8c31301e5300/scratchpad/b4000/B_4000.ptx, line 89615; error   : Entry function '<mangled launchTransformDPP_Kernel instantiation>' uses too much parameter space (0x8508 bytes, 0x7ffc max).
+ptxas fatal   : Ptx assembly aborted due to errors

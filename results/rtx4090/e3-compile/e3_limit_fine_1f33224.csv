@@ -1,0 +1,37 @@
+# experiment: E3 compile-time sweep
+# notes: one core (13), nvcc --threads 1, -O3 -DNDEBUG -std=c++17 sm_89 +PTX -ftemplate-depth=1000 -lineinfo; GNU time for the peak RSS; timeout 600 s per compile; the programs are not executed; fkl include /tmp/claude-1000/-home-oscar-tfkl-bench/d3e03e77-0fda-4126-a580-8c31301e5300/scratchpad/fkl-1f33224/include
+# repo: fdd6429c3896c1dd77995b006b5dc0994711ea32
+# fkl: 38c4f32d887b4530c54362eb526c9a5411ee92fe
+# cvGPUSpeedup: 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c
+# FastNPP: 9dfc4f430225e40ded392bfa777b2e724367c5c1
+# python: 3.12.13, torch: 2.14.1+cu130, torch.version.cuda: 13.0
+# triton: 3.8.0; ptxas /home/oscar/tfkl-bench/venv-torch/lib/python3.12/site-packages/triton/backends/nvidia/bin/ptxas (release 12.9); ptxas_blackwell /home/oscar/tfkl-bench/venv-torch/lib/python3.12/site-packages/triton/backends/nvidia/bin/ptxas-blackwell (release 13.3); cuobjdump /home/oscar/tfkl-bench/venv-torch/lib/python3.12/site-packages/triton/backends/nvidia/bin/cuobjdump (release 13.1); nvdisasm /home/oscar/tfkl-bench/venv-torch/lib/python3.12/site-packages/triton/backends/nvidia/bin/nvdisasm (release 13.1)
+# flash_attn: 2.8.3.post2
+# gpu: NVIDIA GeForce RTX 4090, cc 8.9, 128 SMs, 24106 MiB
+# cuda_visible_devices: 1 (device 0, pci 00000000:05:00.0)
+# nvidia-smi driver: 610.43.02
+# clocks (sm, mem, max sm, max mem, MHz): 180 MHz, 405 MHz, 3090 MHz, 10001 MHz
+# power limit, temperature at start: 130.00 W, 33
+tree,variant,n,rep,status,why,cuda_wall_s,cuda_user_s,cuda_sys_s,cuda_peak_rss_mb,phase_cudafe_s,phase_cicc_s,phase_ptxas_s,phase_gcc_s,phase_other_s,registers,spill_stores,spill_loads,stack_bytes,cmem0_bytes,sass_instructions,text_bytes,cubin_bytes,host_status,host_wall_s,host_peak_rss_mb
+1f33224,L,241,0,ok,,12.300,11.540,0.750,613,0.980,9.824,0.098,1.343,0.038,11,0,0,0,1376,272,,,,,
+1f33224,L,241,1,ok,,12.236,11.480,0.740,613,0.984,9.751,0.098,1.349,0.038,11,0,0,0,1376,272,,,,,
+1f33224,L,241,2,ok,,12.247,11.500,0.730,611,0.981,9.766,0.098,1.346,0.038,11,0,0,0,1376,272,,,,,
+1f33224,L,242,0,ok,,12.386,11.630,0.740,615,0.980,9.905,0.099,1.347,0.038,11,0,0,0,1376,280,,,,,
+1f33224,L,242,1,ok,,12.420,11.680,0.730,613,0.980,9.936,0.099,1.350,0.039,11,0,0,0,1376,280,,,,,
+1f33224,L,242,2,ok,,12.427,11.690,0.720,609,0.976,9.945,0.099,1.352,0.038,11,0,0,0,1376,280,,,,,
+1f33224,L,243,0,ok,,12.741,12.010,0.720,617,0.985,10.238,0.100,1.363,0.039,11,0,0,0,1384,280,,,,,
+1f33224,L,243,1,ok,,12.728,12.020,0.690,617,0.988,10.213,0.100,1.370,0.039,11,0,0,0,1384,280,,,,,
+1f33224,L,243,2,ok,,12.774,12.020,0.740,615,0.990,10.252,0.101,1.374,0.039,11,0,0,0,1384,280,,,,,
+1f33224,L,244,0,ok,,12.839,12.050,0.780,619,0.991,10.306,0.105,1.379,0.040,11,0,0,0,1384,280,,,,,
+1f33224,L,244,1,ok,,13.019,12.280,0.730,619,0.989,10.455,0.106,1.410,0.041,11,0,0,0,1384,280,,,,,
+1f33224,L,244,2,ok,,14.693,13.830,0.850,619,1.040,11.914,0.119,1.555,0.047,11,0,0,0,1384,280,,,,,
+1f33224,L,245,0,ok,,15.066,14.150,0.910,621,1.231,11.961,0.115,1.691,0.046,11,0,0,0,1392,280,,,,,
+1f33224,L,245,1,ok,,15.311,14.400,0.900,621,1.175,12.391,0.116,1.564,0.046,11,0,0,0,1392,280,,,,,
+1f33224,L,245,2,ok,,14.730,13.890,0.830,619,1.130,11.863,0.114,1.559,0.045,11,0,0,0,1392,280,,,,,
+1f33224,L,246,0,ok,,13.924,13.030,0.880,624,1.128,11.172,0.105,1.454,0.042,11,0,0,0,1392,280,,,,,
+1f33224,L,246,1,ok,,13.357,12.520,0.830,624,1.027,10.763,0.105,1.403,0.040,11,0,0,0,1392,280,,,,,
+1f33224,L,246,2,ok,,13.425,12.580,0.830,624,1.018,10.824,0.108,1.417,0.041,11,0,0,0,1392,280,,,,,
+1f33224,L,247,0,ok,,13.368,12.560,0.800,624,1.014,10.778,0.104,1.412,0.042,11,0,0,0,1400,280,,,,,
+1f33224,L,247,1,ok,,13.512,12.720,0.780,622,1.023,10.925,0.104,1.401,0.042,11,0,0,0,1400,280,,,,,
+1f33224,L,247,2,ok,,13.558,12.760,0.780,624,1.005,10.996,0.104,1.395,0.040,11,0,0,0,1400,280,,,,,
+1f33224,L,248,0,failed (exit 1),/tmp/claude-1000/-home-oscar-tfkl-bench/d3e03e77-0fda-4126-a580-8c31301e5300/scratchpad/fkl-1f33224/include/fused_kernel/core/utils/parameter_pack_utils.cuh(33): error: cannot deduce the return type of function "fk::get<Index,T,Args...>(const T &, const Args &...) [with Index=0, T=fk::WriteInstantia,10.695,10.230,0.450,447,,,,,,,,,,,,,,,,
