@@ -67,6 +67,7 @@ Every file below was taken verbatim (first commit of this repository) from the s
 |---|---|---|---|---|
 | copied (benchmark mode of a test) | cvGPUSpeedup-FastOpenCV | `tests/batchresize/test_batchresize_x_split3D.cu` | 6d26c65 | `opencv-cuda/batched-preprocessing/test_batchresize_x_split3D.cu` (E4a; its `_OCVBatch` baseline is in the same file) |
 | copied (seed of the compile-time generator) | FusedKernelLibrary | `tests/buildAPI/batch_build_compilation_time.h` | 25057d8 | `fkl-self/compiletime/batch_build_compilation_time.h` (E3) |
+| copied (benchmark mode of a test) | cvGPUSpeedup-FastOpenCV | `tests/batchread/test_batchread_x_write3D.cu` | 6d26c65 | `opencv-cuda/data-type/test_batchread_x_write3D.cu` (E0 data-type experiment, 26 type combinations; not in the original list of copies, added because E0 re-runs it) |
 
 `external/fkl` was bumped from 25057d8 to fb9ac3a (the merge of PR #406) after these copies; none of the moved or copied files changed between the two.
 
