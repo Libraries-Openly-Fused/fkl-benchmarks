@@ -372,15 +372,16 @@ private:
 
 // ------------------------------------------------------------------------------------------------------------------
 // A plain scalar implementation of the chain in double precision (common/resize_reference.h for the resize), for the two
-// sampling conventions of a linear resize: FKL maps a destination pixel x to the source position x * (src / dst);
-// cv::resize (INTER_LINEAR) to (x + 0.5) * (src / dst) - 0.5, so that the centres of the pixels are aligned. The two give
-// different images unless the crop is constant (the test of cvGPUSpeedup resizes constant images, so it cannot see it).
+// sampling conventions of a linear resize (ResizeSampling): ASYMMETRIC, as FKL and cv::cuda::resize, maps a destination pixel x
+// to the source position x * (src / dst); HALF_PIXEL, as cv::resize and NPP, to (x + 0.5) * (src / dst) - 0.5, so that the centres
+// of the pixels are aligned. The two give different images unless the crop is constant (the test of cvGPUSpeedup resizes constant
+// images, so it cannot see it).
 void scalarReference(const Source& source, const int batch, const bool pixelCentres, std::vector<float>& out) {
     out.assign(static_cast<size_t>(batch) * 3 * PLANE, 0.f);
     const fk::RawPtr<fk::ND::_2D, U3> raw = source.image.ptr();
     const double alpha = static_cast<double>(0.3f), sub[3] = {1.0, 4.0, static_cast<double>(3.2f)},
                  div[3] = {static_cast<double>(3.2f), static_cast<double>(0.6f), static_cast<double>(11.8f)};
-    const fklb::ResizeSampling sampling = pixelCentres ? fklb::ResizeSampling::PIXEL_CENTRE : fklb::ResizeSampling::FKL;
+    const fklb::ResizeSampling sampling = pixelCentres ? fklb::ResizeSampling::HALF_PIXEL : fklb::ResizeSampling::ASYMMETRIC;
     std::vector<double> resized(static_cast<size_t>(PLANE) * 3);
     for (int i = 0; i < batch; ++i) {
         const fk::RawPtr<fk::ND::_2D, U3> roi = roiOf(raw, i, i);
@@ -504,15 +505,15 @@ void runPoint(const Source& source, const e5::Context& ctx, const int warmup, co
     compare("opencv_default vs opencv_1thread (identical)", ocvDefault.data(), ocv.tensor(), true);
     compare("opencv_percrop vs opencv_default (<= 1e-4)", ocvPc.tensor(), ocvDefault.data(), false);
     compare("opencv_percrop_parallel vs opencv_percrop (identical)", ocvPar.tensor(), ocvPc.tensor(), true);
-    compare("opencv_default vs scalar reference, pixel-centre sampling (<= 1e-4)", ocvDefault.data(), refCv.data(), false);
-    compare("fkl_fused_cpu vs scalar reference, FKL sampling x*(src/dst) (<= 1e-4)", fused, refFkl.data(), false);
+    compare("opencv_default vs scalar reference, HALF_PIXEL sampling (<= 1e-4)", ocvDefault.data(), refCv.data(), false);
+    compare("fkl_fused_cpu vs scalar reference, ASYMMETRIC sampling x*(src/dst) (<= 1e-4)", fused, refFkl.data(), false);
     compare("fkl_fused_cpu_mt vs fkl_fused_cpu (identical)", tensorData(tFusedMT, BATCH), fused, true);
     compare("fkl_perop_crop_cpu vs fkl_fused_cpu (<= 1e-4)", tensorData(tCropST, BATCH), fused, false);
     compare("fkl_perop_crop_cpu_mt vs fkl_perop_crop_cpu (identical)", tensorData(tCropMT, BATCH), tensorData(tCropST, BATCH), true);
     compare("fkl_perop_batch_cpu vs fkl_fused_cpu (<= 1e-4)", tensorData(tBatchST, BATCH), fused, false);
     compare("fkl_perop_batch_cpu_mt vs fkl_perop_batch_cpu (identical)", tensorData(tBatchMT, BATCH), tensorData(tBatchST, BATCH), true);
     compare("fkl_fused_cpu vs opencv_default (the two sampling conventions)", fused, ocvDefault.data(), false, false);
-    compare("scalar reference FKL sampling vs pixel-centre sampling", refFkl.data(), refCv.data(), false, false);
+    compare("scalar reference ASYMMETRIC sampling vs HALF_PIXEL sampling", refFkl.data(), refCv.data(), false, false);
     if (checkOnly) {
         return;
     }
