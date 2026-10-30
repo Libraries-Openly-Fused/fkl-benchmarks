@@ -51,6 +51,22 @@ inline std::string cpuModel() {
     return firstLineOf("grep -m1 'model name' /proc/cpuinfo | cut -d: -f2- | sed 's/^ *//'");
 }
 
+// hipDriverGetVersion / hipRuntimeGetVersion return major * 10^7 + minor * 10^5 + patch
+inline std::string hipVersionString(const int version) {
+    return std::to_string(version / 10000000) + "." + std::to_string((version / 100000) % 100) + "." +
+           std::to_string(version % 100000);
+}
+
+// Current and maximum clocks of the GPU with the given PCI bus id, from amd-smi (ROCm 7 and later have no rocm-smi):
+// "gfx, mem, max gfx, max mem" in MHz, like the nvidia-smi line of the CUDA header
+inline std::string amdSmiClocks(const std::string& busId) {
+    return firstLineOf("(amd-smi metric -g " + busId + " --clock | awk '/^ +[A-Z]+_[0-9]+:$/ "
+                       "{s = ($1 == \"GFX_0:\") ? 1 : (($1 == \"MEM_0:\") ? 2 : 0)} "
+                       "$1 == \"CLK:\" {if (s == 1) gc = $2; if (s == 2) mc = $2} "
+                       "$1 == \"MAX_CLK:\" {if (s == 1) gm = $2; if (s == 2) mm = $2} "
+                       "END {if (gc == \"\") exit 1; print gc \", \" mc \", \" gm \", \" mm}')");
+}
+
 // notes: free text about the protocol of this run (what was warmed up, which fix applies...), one "# notes:" line
 inline void writeSystemInfoHeader(std::ostream& os, const std::string& experiment, const std::string& notes = "") {
     os << "# experiment: " << experiment << "\n";
@@ -63,6 +79,7 @@ inline void writeSystemInfoHeader(std::ostream& os, const std::string& experimen
     os << "# FastNPP: " << FKLB_COMMIT_FASTNPP << "\n";
     os << "# nvcc: " << FKLB_NVCC_VERSION << " (" << FKLB_NVCC_PATH << "), architectures " << FKLB_CUDA_ARCH
        << ", -fmad " << FKLB_FMAD << ", -lineinfo " << FKLB_LINEINFO << "\n";
+    os << "# hip: " << FKLB_HIP_VERSION << " (" << FKLB_HIP_PATH << "), architectures " << FKLB_HIP_ARCH << "\n";
     os << "# host compiler: " << FKLB_CXX_COMPILER << ", " << FKLB_BUILD_TYPE << ", -march=" << FKLB_CPU_ARCH
        << ", -ftemplate-depth=" << FKLB_TEMPLATE_DEPTH << "\n";
     os << "# opencv: " << FKLB_OPENCV_VERSION << "\n";
@@ -95,10 +112,21 @@ inline void writeSystemInfoHeader(std::ostream& os, const std::string& experimen
         int driver = 0, runtime = 0;
         (void)hipDriverGetVersion(&driver);
         (void)hipRuntimeGetVersion(&runtime);
-        os << "# gpu: " << prop.name << ", " << prop.gcnArchName << ", " << prop.multiProcessorCount << " CUs, "
-           << (prop.totalGlobalMem >> 20) << " MiB\n";
-        os << "# hip driver: " << driver << ", hip runtime: " << runtime << "\n";
-        os << "# clocks: " << firstLineOf("rocm-smi --showclocks | head -20 | tr '\\n' ' '") << "\n";
+        char busId[32] = "";
+        (void)hipDeviceGetPCIBusId(busId, sizeof(busId), device);
+        // On gfx10 and later multiProcessorCount counts workgroup processors (WGPs), which have two CUs each
+        const std::string arch = prop.gcnArchName;
+        const bool wgps = arch.rfind("gfx10", 0) == 0 || arch.rfind("gfx11", 0) == 0 || arch.rfind("gfx12", 0) == 0;
+        os << "# gpu: " << prop.name << ", " << arch << ", " << prop.multiProcessorCount;
+        if (wgps) {
+            os << " WGPs (" << 2 * prop.multiProcessorCount << " CUs)";
+        } else {
+            os << " CUs";
+        }
+        os << ", wave" << prop.warpSize << ", " << (prop.totalGlobalMem >> 20) << " MiB, PCI " << busId << "\n";
+        os << "# hip driver: " << hipVersionString(driver) << ", hip runtime: " << hipVersionString(runtime) << "\n";
+        os << "# clocks (gfx, mem, max gfx, max mem, MHz): " << amdSmiClocks(busId) << "\n";
+        os << "# amd-smi: " << firstLineOf("amd-smi version | head -1") << "\n";
     }
 #else
     os << "# gpu: none (CPU back-end)\n";
