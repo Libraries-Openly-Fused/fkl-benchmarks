@@ -19,6 +19,7 @@
 #include <fstream>
 
 #include <fkl-self/fkBenchmarksCommon.h>
+#include <common/system_info.h>
 
 template <size_t ITERATIONS>
 float computeVariance(const float& mean, const std::array<float, ITERATIONS>& times) {
@@ -40,6 +41,7 @@ inline void processExecution(const BenchmarkResultsNumbersOne& resF,
     if constexpr (VARIABLE_DIMENSION == variableDimensionValues[0]) {
         if (currentFile.find(fileName) == currentFile.end()) {
             currentFile[fileName].open(path + fileName);
+            fklb::writeSystemInfoHeader(currentFile[fileName], functionName);
         }
         currentFile[fileName] << variableDimension;
         currentFile[fileName] << ", MeanTime";

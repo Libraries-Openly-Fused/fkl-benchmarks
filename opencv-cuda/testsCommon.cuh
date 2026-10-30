@@ -12,7 +12,8 @@
    See the License for the specific language governing permissions and
    limitations under the License. */
 
-#include "tests/testUtils.cuh"
+#include "tests/testUtils.cuh"   // cvGPUSpeedup, tests/
+#include <common/system_info.h>
 #include <cv2cuda_types.cuh>
 #include <fused_kernel/core/utils/vlimits.h>
 
@@ -25,7 +26,7 @@
 #include <opencv2/core/cuda_stream_accessor.hpp>
 #include <opencv2/cudaarithm.hpp>
 
-// Root directory of the cvGPUSpeedup sources, found from the location of this file (tests/testsCommon.cuh)
+// Root directory of this repository, found from the location of this file (opencv-cuda/testsCommon.cuh)
 inline std::string getSourceDir() {
     const std::string filePath = __FILE__;
     const std::string testsDir = filePath.substr(0, filePath.find_last_of("/\\"));
@@ -153,11 +154,17 @@ inline void processExecution(const BenchmarkResultsNumbers& resF,
                              const std::array<float, ITERS>& cvGSelapsedTime,
                              const std::string& variableDimension) {
 
+    // The warm-up sweep runs one iteration per point: nothing of it goes to the CSV (it used to write a first, junk block)
+    if (warmup) {
+        return;
+    }
+
     // Create 2D Table for changing types and changing batch
     const std::string fileName = functionName + std::string(".csv");
     if constexpr (BATCH == batchValues[0]) {
         if (currentFile.find(fileName) == currentFile.end()) {
             currentFile[fileName].open(path + fileName);
+            fklb::writeSystemInfoHeader(currentFile[fileName], functionName);
         }
         currentFile[fileName]
             << variableDimension << " ("

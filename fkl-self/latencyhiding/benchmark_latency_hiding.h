@@ -25,7 +25,7 @@
 
 constexpr char VARIABLE_DIMENSION_NAME[]{ "Number of Operations" };
 
-constexpr size_t NUM_EXPERIMENTS = 5; // used 30 in the paper
+constexpr size_t NUM_EXPERIMENTS = 60; // 1, 21, ... 1181 operations (the paper showed 30 points, up to 581)
 constexpr size_t FIRST_VALUE = 1;
 constexpr size_t INCREMENT = 20;
 
@@ -39,11 +39,33 @@ struct VerticalFusion {
                                const fk::Ptr1D<OutputType>& output, const IOp& dFunc) {
         const fk::ActiveThreads activeThreads{ output.ptr().dims.width };
         fk::Read<fk::PerThreadRead<fk::ND::_1D, InputType>> readDF{ {input.ptr()} };
-        using Loop = fk::Binary<fk::StaticLoop<fk::StaticLoop<typename IOp::Operation, INCREMENT>, NumOps/INCREMENT>>;
-        Loop loop;
-        loop.params = dFunc.params;
+        const fk::Write<fk::PerThreadWrite<fk::ND::_1D, OutputType>> writeDF{ {output.ptr()} };
 
-        fk::executeOperations<fk::TransformDPP<>>(stream, readDF, loop, fk::Write<fk::PerThreadWrite<fk::ND::_1D, OutputType>>{ {output.ptr()} });
+        // StaticLoop<X, 0> executes X once (not zero times), so NumOps operations are built as
+        // NumOps / INCREMENT repetitions of a loop of INCREMENT operations plus a loop for the NumOps % INCREMENT left
+        // over. The first version of this benchmark ran INCREMENT operations for the point labelled 1 and
+        // INCREMENT * (NumOps / INCREMENT) for the others.
+        if constexpr (NumOps < INCREMENT) {
+            using Loop = fk::Binary<fk::StaticLoop<typename IOp::Operation, NumOps>>;
+            Loop loop;
+            loop.params = dFunc.params;
+
+            fk::executeOperations<fk::TransformDPP<>>(stream, readDF, loop, writeDF);
+        } else {
+            using Loop = fk::Binary<fk::StaticLoop<fk::StaticLoop<typename IOp::Operation, INCREMENT>, NumOps/INCREMENT>>;
+            Loop loop;
+            loop.params = dFunc.params;
+
+            if constexpr (NumOps % INCREMENT == 0) {
+                fk::executeOperations<fk::TransformDPP<>>(stream, readDF, loop, writeDF);
+            } else {
+                using RemainderLoop = fk::Binary<fk::StaticLoop<typename IOp::Operation, NumOps % INCREMENT>>;
+                RemainderLoop remainderLoop;
+                remainderLoop.params = dFunc.params;
+
+                fk::executeOperations<fk::TransformDPP<>>(stream, readDF, loop, remainderLoop, writeDF);
+            }
+        }
     }
 };
 

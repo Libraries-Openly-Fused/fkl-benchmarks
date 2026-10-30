@@ -24,9 +24,9 @@
 
 constexpr char VARIABLE_DIMENSION_NAME[]{ "Batch size" };
 
-constexpr size_t NUM_EXPERIMENTS = 10; // Used 120 in the paper
+constexpr size_t NUM_EXPERIMENTS = 120; // as in the paper: batch sizes 1, 11, ... 1191
 constexpr size_t FIRST_VALUE = 1;
-constexpr size_t INCREMENT = 5;
+constexpr size_t INCREMENT = 10;
 
 constexpr std::array<size_t, NUM_EXPERIMENTS> variableDimensionValues = arrayIndexSecuence<FIRST_VALUE, INCREMENT, NUM_EXPERIMENTS>;
 

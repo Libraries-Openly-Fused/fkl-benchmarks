@@ -117,22 +117,47 @@ bool test_cvGS_VS_fk_CPU_and_GPU(cv::cuda::Stream& cv_stream, bool enabled) {
             std::array<float, ITERS> fkCPUTime;
             std::array<float, ITERS> cvGSCPUTime;
 
+            // The two versions, each one builds its Operations and launches the kernel
+            auto launchFk = [&]() {
+                // The same construction cvGS::resize does (BatchRead of PerThreadRead built with build_batch, one size and
+                // one background value per plane), so that the two versions run the same kernel and only the host side
+                // differs
+                const auto fkReadOp = PixelReadOp::build_batch(fk_crops);
+                const auto fkSizeArr = fk::make_set_std_array<BATCH>(fk_size);
+                const auto fkBackgroundArr = fk::make_set_std_array<BATCH>(backgroundValue);
+                const auto resizeOp = fk::Resize<IType, AR>::build(BATCH, backgroundValue, fkReadOp, fkSizeArr, fkBackgroundArr);
+
+                fk::Stream_<fk::ParArch::GPU_NVIDIA> fk_stream(cv::cuda::StreamAccessor::getStream(cv_stream));
+                fk::executeOperations<fk::TransformDPP<fk::ParArch::GPU_NVIDIA>>(fk_stream,
+                    resizeOp,
+                    fk::Unary<fk::ColorConversion<fk::ColorConversionCodes::COLOR_RGB2BGR, float3, float3>>{},
+                    fk::Binary<fk::Mul<float3>>{fk_val_alpha},
+                    fk::Binary<fk::Sub<float3>>{fk_val_sub},
+                    fk::Binary<fk::Div<float3>>{fk_val_div},
+                    fk::Write<fk::TensorSplit<float3>>{{ fk_output }});
+            };
+            auto launchCvGS = [&]() {
+                cvGS::executeOperations(cv_stream,
+                    cvGS::resize<CV_8UC3, cv::INTER_LINEAR, BATCH, cvGS::PRESERVE_AR>(crops, up, BATCH, val_init_output),
+                    cvGS::cvtColor<cv::COLOR_RGB2BGR, CV_32FC3>(),
+                    cvGS::multiply<CV_32FC3>(val_alpha),
+                    cvGS::subtract<CV_32FC3>(val_sub),
+                    cvGS::divide<CV_32FC3>(val_div),
+                    cvGS::split<CV_32FC3>(d_tensor_output, up));
+            };
+
+            // Warm-up, outside the timed loop: the first launch of each version loads its module and initializes the
+            // context state, which used to be counted in the first measured iteration of the version that ran first
+            launchFk();
+            launchCvGS();
+            cv_stream.waitForCompletion();
+
             START_OCV_BENCHMARK
 
             // fk version
             const auto cpu_start1 = std::chrono::steady_clock::now();
             PUSH_RANGE("Launching fk")
-
-            const auto resizeOp = PixelReadOp::build(fk_crops).then(fk::Resize<IType, AR>::build(fk_size, backgroundValue));
-
-            fk::Stream_<fk::ParArch::GPU_NVIDIA> fk_stream(cv::cuda::StreamAccessor::getStream(cv_stream));
-            fk::executeOperations<fk::TransformDPP<fk::ParArch::GPU_NVIDIA>>(fk_stream,
-                resizeOp,
-                fk::Unary<fk::ColorConversion<fk::ColorConversionCodes::COLOR_RGB2BGR, float3, float3>>{},
-                fk::Binary<fk::Mul<float3>>{fk_val_alpha},
-                fk::Binary<fk::Sub<float3>>{fk_val_sub},
-                fk::Binary<fk::Div<float3>>{fk_val_div},
-                fk::Write<fk::TensorSplit<float3>>{{ fk_output }});
+            launchFk();
             POP_RANGE
             const auto cpu_end1 = std::chrono::steady_clock::now();
             std::chrono::duration<float, std::milli> cpu_elapsed1 = cpu_end1 - cpu_start1;
@@ -143,13 +168,7 @@ bool test_cvGS_VS_fk_CPU_and_GPU(cv::cuda::Stream& cv_stream, bool enabled) {
             // cvGPUSpeedup
             const auto cpu_start = std::chrono::steady_clock::now();
             PUSH_RANGE("Launching cvGS")
-            cvGS::executeOperations(cv_stream,
-                cvGS::resize<CV_8UC3, cv::INTER_LINEAR, BATCH, cvGS::PRESERVE_AR>(crops, up, BATCH, val_init_output),
-                cvGS::cvtColor<cv::COLOR_RGB2BGR, CV_32FC3>(),
-                cvGS::multiply<CV_32FC3>(val_alpha),
-                cvGS::subtract<CV_32FC3>(val_sub),
-                cvGS::divide<CV_32FC3>(val_div),
-                cvGS::split<CV_32FC3>(d_tensor_output, up));
+            launchCvGS();
             POP_RANGE
             const auto cpu_end = std::chrono::steady_clock::now();
             std::chrono::duration<float, std::milli> cpu_elapsed = cpu_end - cpu_start;
@@ -173,8 +192,10 @@ bool test_cvGS_VS_fk_CPU_and_GPU(cv::cuda::Stream& cv_stream, bool enabled) {
                 resF.cvGSelapsedTimeMin = resF.cvGSelapsedTimeMin > cvGSelapsedTime[i] ? cvGSelapsedTime[i] : resF.cvGSelapsedTimeMin;
                 resF.cvGSelapsedTimeAcum += cvGSelapsedTime[i];
             }
+            // The CPU enqueue times of the two versions: a file of their own (the GPU times, written by
+            // STOP_CVGS_BENCHMARK, are in <function>.csv), so that each CSV has a single block
             processExecution<CV_TYPE_I, CV_TYPE_O, BATCH, ITERS, batchValues.size(), batchValues>(resF,
-                                                                                                  __func__,
+                                                                                                  std::string(__func__) + "_CPU_enqueue",
                                                                                                   OCVelapsedTime,
                                                                                                   cvGSelapsedTime,
                                                                                                   VARIABLE_DIMENSION);
@@ -184,8 +205,10 @@ bool test_cvGS_VS_fk_CPU_and_GPU(cv::cuda::Stream& cv_stream, bool enabled) {
 
             cv_stream.waitForCompletion();
 
+            // Bit-exact: both versions must write the same bytes. (This used to declare a new local "passed" that shadowed
+            // the one that is returned, so the result was never reported.)
             cv::Mat diff0 = h_tensor_output != h_fk_output;
-            bool passed = cv::sum(diff0) == cv::Scalar(0, 0, 0, 0);
+            passed &= cv::sum(diff0) == cv::Scalar(0, 0, 0, 0);
 
         } catch (const cv::Exception& e) {
             if (e.code != -210) {
@@ -202,11 +225,11 @@ bool test_cvGS_VS_fk_CPU_and_GPU(cv::cuda::Stream& cv_stream, bool enabled) {
         if (!passed) {
             if (!exception) {
                 std::stringstream ss;
-                ss << "test_batchresize_aspectratio_x_split3D<" << cvTypeToString<CV_8UC3>() << ", " << cvTypeToString<CV_32FC3>();
+                ss << "test_cvGS_VS_fk_CPU_and_GPU<" << cvTypeToString<CV_8UC3>() << ", " << cvTypeToString<CV_32FC3>();
                 std::cout << ss.str() << "> failed!! RESULT ERROR: Some results do not match baseline." << std::endl;
             } else {
                 std::stringstream ss;
-                ss << "test_batchresize_aspectratio_x_split3D<" << cvTypeToString<CV_8UC3>() << ", " << cvTypeToString<CV_32FC3>();
+                ss << "test_cvGS_VS_fk_CPU_and_GPU<" << cvTypeToString<CV_8UC3>() << ", " << cvTypeToString<CV_32FC3>();
                 std::cout << ss.str() << "> failed!! EXCEPTION: " << error_s.str() << std::endl;
             }
         }

@@ -19,6 +19,7 @@
 #include <fstream>
 
 #include <fkl-self/fkBenchmarksCommon.h>
+#include <common/system_info.h>
 
 bool warmup{false};
 
@@ -36,11 +37,16 @@ inline void processExecution(const BenchmarkResultsNumbersTwo& resF, const std::
                              const std::string& firstLabel, const std::string& secondLabel,
                              const std::array<float, ITERS> &firstElapsedTime,
                              const std::array<float, ITERS> &secondElapsedTime, const std::string &variableDimension) {
+  // The warm-up sweep runs one iteration per point: nothing of it goes to the CSV
+  if (warmup) {
+    return;
+  }
   // Create 2D Table for changing types and changing batch
   const std::string fileName = functionName + std::string("_") + std::string(fk::toStrView(fk::defaultParArch)) + std::string(".csv");
   if constexpr (BATCH == batchValues[0]) {
     if (currentFile.find(fileName) == currentFile.end()) {
       currentFile[fileName].open(path + fileName);
+      fklb::writeSystemInfoHeader(currentFile[fileName], functionName);
     }
     currentFile[fileName] << variableDimension;
     currentFile[fileName] << ", " + firstLabel + " MeanTime";
