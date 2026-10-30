@@ -1,0 +1,23 @@
+# experiment: E4a/E4c pre-processing: FKL against OpenCV-CUDA and NPP
+# notes: thread fusion: off (fk::TF::DISABLED); source: seeded 8UC3 noise (LCG seed 12345, as the CPU rows); timing: CUDA events around one launch (including the host calls that enqueue it), 100 launches after one warm-up; sampling: ASYMMETRIC = FKL default and cv::cuda::resize, HALF_PIXEL = NPP and fkl_fused_half_pixel; ok_own = max |output - scalar double reference of the version's own convention| <= 1e-4
+# repo: fkl-benchmarks 8891e5931a8e7c884b874eac72a84b2d38ed196a-dirty
+# fkl: 38c4f32d887b4530c54362eb526c9a5411ee92fe
+# cvGPUSpeedup: 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c
+# FastNPP: 9dfc4f430225e40ded392bfa777b2e724367c5c1
+# nvcc: 13.4.92 (/home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/nvcc), architectures 89, -fmad on, -lineinfo on
+# hip: none (none), architectures none
+# host compiler: GNU 15.2.0, Release, -march=native, -ftemplate-depth=1000
+# opencv: 4.14.0
+# cpu: AMD Ryzen 9 5950X 16-Core Processor
+# gpu: NVIDIA GeForce RTX 4090, cc 8.9, 128 SMs, 24106 MiB, PCI 0000:09:00.0
+# cuda driver api: 13.3, cuda runtime: 13.4
+# nvidia-smi driver: 610.43.02
+# clocks (sm, mem, max sm, max mem, MHz): 2670 MHz, 10251 MHz, 3105 MHz, 10501 MHz
+# power limit, temperature at start: 450.00 W, 55
+experiment,batch,src_w,src_h,crop_w,crop_h,out_w,out_h,version,convention,gpu_mean_ms,gpu_min_ms,intermediate_bytes,meminfo_delta_bytes,output_bytes
+E4c,1,720,480,720,480,768,512,npp,HALF_PIXEL,0.0364716806,0.035840001,13584464,16777216,4718592
+E4c,1,720,480,720,480,768,512,npp_ctx_as_tests,HALF_PIXEL,0.0364835208,0.035840001,13584464,16777216,4718592
+E4c,1,1920,1080,1920,1080,2048,1152,npp,HALF_PIXEL,0.154747843,0.152575999,81506384,85983232,28311552
+E4c,1,1920,1080,1920,1080,2048,1152,npp_ctx_as_tests,HALF_PIXEL,0.154634562,0.152383998,81506384,85983232,28311552
+E4c,1,3840,2160,3840,2160,4096,2304,npp,HALF_PIXEL,1.84642751,1.83910406,326025296,329252864,113246208
+E4c,1,3840,2160,3840,2160,4096,2304,npp_ctx_as_tests,HALF_PIXEL,1.84752798,1.83808005,326025296,329252864,113246208
