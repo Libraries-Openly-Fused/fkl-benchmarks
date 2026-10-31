@@ -38,6 +38,8 @@
 // max |output - reference| <= TOLERANCE (1e-4, as the CPU rows), and a version that exceeds it is reported (ok_own = 0), never hidden.
 // Timing: CUDA events around one launch of the whole implementation (including the host calls that enqueue it), 100 launches after one warm-up, mean and min;
 // intermediate bytes: what the implementation allocates besides the source and the output tensor (tallied) and the change of free device memory (cudaMemGetInfo).
+// Host time of one call: host_enqueue_us (the launch function returns, stream idle before each of 100 calls) and host_launch_us (100 calls back to back without synchronisation, wall
+// time per call: when the GPU is slower than the host this is the GPU's pace, because the launch queue fills up).
 //
 //   E4_BATCHES_ONLY=100,300 / E4_FRAMES_ONLY=3840 (frame widths): only these points of the sweeps (for the profiler)
 //   E4_NPP_TESTS_FIRST=1 measures npp_ctx_as_tests before npp (order check of the NPP stream-context diagnostic; both run only when named in E4_ONLY)
@@ -67,6 +69,7 @@
 
 #include <algorithm>
 #include <array>
+#include <chrono>
 #include <cmath>
 #include <cstdint>
 #include <cstdlib>
@@ -219,12 +222,32 @@ bool measure(const Geometry& g, const char* version, const char* convention, cud
     allOk = allOk && ok;
     Timing t;
     if (!profileMode() && !e1::timeIt(cs, launch, t)) return false;
-    w.timing.row(g.experiment, g.batch, g.srcW, g.srcH, g.cropW, g.cropH, g.outW, g.outH, version, convention, t.mean, t.min, intermediateBytes, meminfoDelta, outBytes);
+    // Host time of one call, in two ways (microseconds):
+    //   host_enqueue_us  the time the launch function takes to return, with the stream idle before each call (mean of 100 calls, synchronised between them): what it costs the host to enqueue the call
+    //   host_launch_us   100 calls back to back with no synchronisation between them, the wall time per call (as the host_launch_us of the E2 script): when the GPU is slower than the host, the
+    //                    launch queue fills up and this is the time the GPU needs, not what the host spends
+    double hostEnqueueUs = 0, hostLaunchUs = 0;
+    if (!profileMode()) {
+        using Clock = std::chrono::steady_clock;
+        const auto us = [](const Clock::time_point a, const Clock::time_point b) { return std::chrono::duration<double, std::micro>(b - a).count(); };
+        for (int i = 0; i < e1::ITERATIONS; ++i) {
+            E4_CHECK(cudaStreamSynchronize(cs));
+            const auto t0 = Clock::now();
+            launch();
+            hostEnqueueUs += us(t0, Clock::now()) / e1::ITERATIONS;
+        }
+        E4_CHECK(cudaStreamSynchronize(cs));
+        const auto t0 = Clock::now();
+        for (int i = 0; i < e1::ITERATIONS; ++i) launch();
+        hostLaunchUs = us(t0, Clock::now()) / e1::ITERATIONS;
+        E4_CHECK(cudaStreamSynchronize(cs));
+    }
+    w.timing.row(g.experiment, g.batch, g.srcW, g.srcH, g.cropW, g.cropH, g.outW, g.outH, version, convention, t.mean, t.min, intermediateBytes, meminfoDelta, outBytes, hostEnqueueUs, hostLaunchUs);
     w.timing.flush();
     w.agreement.row(g.experiment, g.batch, version, convention, eOwn, int(ok), eAsym, eHalf);
     w.agreement.flush();
     std::cout << g.experiment << " batch " << g.batch << " " << g.srcW << "x" << g.srcH << " -> " << g.outW << "x" << g.outH << "  " << version << " (" << convention << "): "
-              << t.mean << " ms (min " << t.min << "), intermediates " << intermediateBytes << " B, max |err| vs own reference " << eOwn << (ok ? "" : "  EXCEEDS " + std::to_string(TOLERANCE))
+              << t.mean << " ms (min " << t.min << "), host enqueue " << hostEnqueueUs << " us, back to back " << hostLaunchUs << " us, intermediates " << intermediateBytes << " B, max |err| vs own reference " << eOwn << (ok ? "" : "  EXCEEDS " + std::to_string(TOLERANCE))
               << ", vs ASYMMETRIC " << eAsym << ", vs HALF_PIXEL " << eHalf << std::endl;
     return true;
 }
@@ -454,7 +477,7 @@ int launch() {
                               "(including the host calls that enqueue it), 100 launches after one warm-up; sampling: ASYMMETRIC = FKL default and cv::cuda::resize, HALF_PIXEL = NPP and fkl_fused_half_pixel; " +
                               "ok_own = max |output - scalar double reference of the version's own convention| <= 1e-4" + (profileMode() ? "; PROFILE MODE: nothing was timed, the times are zero" : "");
     fklb::CsvWriter timing("e4_preprocessing.csv", "E4a/E4c pre-processing: FKL against OpenCV-CUDA and NPP",
-                           {"experiment", "batch", "src_w", "src_h", "crop_w", "crop_h", "out_w", "out_h", "version", "convention", "gpu_mean_ms", "gpu_min_ms", "intermediate_bytes", "meminfo_delta_bytes", "output_bytes"}, notes);
+                           {"experiment", "batch", "src_w", "src_h", "crop_w", "crop_h", "out_w", "out_h", "version", "convention", "gpu_mean_ms", "gpu_min_ms", "intermediate_bytes", "meminfo_delta_bytes", "output_bytes", "host_enqueue_us", "host_launch_us"}, notes);
     fklb::CsvWriter agreement("e4_preprocessing_agreement.csv", "E4a/E4c pre-processing: agreement with the scalar references",
                               {"experiment", "batch", "version", "convention", "max_abs_err_own_reference", "ok_own", "max_abs_err_vs_asymmetric", "max_abs_err_vs_half_pixel"},
                               "informational where the conventions differ: the columns vs_asymmetric and vs_half_pixel compare the output with both references; ok_own is the strict check");
