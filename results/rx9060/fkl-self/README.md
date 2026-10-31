@@ -93,7 +93,7 @@ levels and make the absolute times of this benchmark repeatable. Until then, cit
 The benchmark now has two HIP graph variants (`benchmark_horizontal_fusion.h`): `..._HIPGraphs`, unchanged (ONE CHILD GRAPH NODE PER CROP, each captured from one launch, no dependencies between them: the structure of the CUDA Graphs
 variant), and `..._HIPGraphs_OneCapturedGraph`, new (ONE GRAPH FROM ONE STREAM CAPTURE of all the launches, a chain of kernel nodes). Both time one `hipGraphLaunch` against the fused kernel, the CSV notes say how each graph
 is built, and the output of the new graph is compared bit by bit with the output of the plain launches for every crop before its timing (all 120 batches of the three runs passed; a negative control with the launch removed reports
-every value). Three full runs of the same binary, nothing else running, with a sampler at 5 Hz next to each (`clocks5hz.txt`: time, graphics clock, memory clock, GPU busy percent, power, temperature), 887 to 892 s each
+every value). Three full runs of the same binary, nothing else running, with a sampler at 5 Hz next to each (`clocks5hz.txt`: time, graphics clock, memory clock, GPU busy percent, power, temperature), 886 to 892 s each
 (`horizontal_fusion_with_flat_graph/run1` to `run3`). Mean ms of the iterated batch (the "without CPU overhead" file) and of the fused kernel; median of the three runs and, in brackets, the smallest and the largest; the ratios
 are computed in each run and then summarised the same way:
 
@@ -107,8 +107,8 @@ are computed in each run and then summarised the same way:
 | 601 | 2.3102 (2.3081 to 2.3147) | 4.4052 (4.3963 to 4.6965) | 1.9402 (1.9036 to 2.0391) | 0.1439 (0.1419 to 0.1442) | 1.91 (1.90 to 2.03) | 0.84 (0.82 to 0.88) | 16.04 (16.02 to 16.31) | 13.46 (13.23 to 14.37) |
 | 1191 | 4.5010 (4.4979 to 4.5201) | 8.5238 (8.4516 to 8.5378) | 3.7912 (3.7154 to 4.1456) | 0.2734 (0.2726 to 0.2747) | 1.90 (1.87 to 1.90) | 0.84 (0.82 to 0.92) | 16.46 (16.46 to 16.50) | 13.91 (13.53 to 15.16) |
 
-The ratios are the numbers to cite: the graph of child nodes is 1.83 to 1.91 times slower than plain launches (1.87 to 1.90 at 1191 crops), the graph of one capture is 0.82 to 0.94 times the time of plain launches (0.82 to
-0.92 at 1191 crops, i.e. faster), and the fused kernel is 16.5 times faster than plain launches and 13.5 to 15.2 times faster than the graph of one capture at 1191 crops. The graph of one capture is the series with the larger
+The ratios are the numbers to cite: the graph of child nodes is 1.83 to 1.91 times slower than plain launches (medians of the three runs for 11 to 1191 crops; the largest single value is 2.03; 1.87 to 1.90 at 1191 crops), the graph of one capture is 0.82 to
+0.94 times the time of plain launches (medians; 0.82 to 0.92 at 1191 crops, i.e. faster; the largest single value is 1.02, at 11 crops), and the fused kernel is 16.5 times faster than plain launches and 13.5 to 15.2 times faster than the graph of one capture at 1191 crops. The graph of one capture is the series with the larger
 spread between runs (3.72, 4.15 and 3.79 ms at 1191 crops); the other series stay within 1 percent. In the probe of `../hip-graphs/` (a busy GPU, five structures including a fork and join over one stream per crop) the graph
 of one capture takes 2.89 ms against 3.64 ms for the plain launches at 1191 crops; here the plain launches take 4.50 ms because the clocks are low for this benchmark: in the first 75 s of each run the graphics clock is 1.85 GHz
 on average (maximum 2.07 GHz), the memory clock mostly 772 to 875 MHz, the power 25 W of 132 W and the GPU busy 66 to 68 percent. Over the whole run the graphics clock averages 1.6 GHz and the memory clock is 96 or 456 MHz most of the
