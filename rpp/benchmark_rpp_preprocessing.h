@@ -49,6 +49,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <exception>
+#include <functional>
 #include <iostream>
 #include <stdexcept>
 #include <string>
@@ -279,13 +280,32 @@ struct Output {
     fklb::CsvWriter* agreement;
     bool allPass{true};
     int warmup, iters;
+    double warmupSeconds{2.0}; // minimum warm-up of a variant, see nv12::measure (steady state rule)
+    int rotateOffset{0};       // E5_ROTATE_OFFSET: added to the index of the point that selects the first variant of the rotated order
 };
 
 template <typename Work>
 void timeVariant(Output& out, const int batch, const std::string& variant, const int calls, Work work) {
-    const nv12::Stats s = nv12::measure(work, out.warmup, out.iters, 0.5);
-    out.timing->row(batch, variant, calls, s.median, s.min, s.max, s.mean, s.iters);
+    const nv12::Stats s = nv12::measure(work, out.warmup, out.iters, out.warmupSeconds, true);
+    out.timing->row(batch, variant, calls, s.median, s.min, s.max, s.mean, s.iters, s.warmupSeconds, s.warmupSteady ? 1 : 0, s.gpuClockStartMHz, s.gpuClockTimedMHz, s.gpuClockEndMHz);
     std::cout << "  " << variant << ": median " << s.median << " ms (min " << s.min << ", max " << s.max << ")" << std::endl;
+}
+
+struct Variant {
+    std::string name;
+    int calls;
+    std::function<void()> work;
+};
+
+// The variants of one point in a rotated order: the first one is variant (pointIndex mod the number of variants). A GPU that was at rest ramps its
+// clock during the first second of work; the warm-up rule of nv12::measure covers that, and the rotation makes sure that a ramp that is not covered
+// would not always hit the same variant
+inline void timeRotated(Output& out, const int batch, const int pointIndex, const std::vector<Variant>& variants) {
+    const size_t first = static_cast<size_t>(pointIndex + out.rotateOffset) % variants.size();
+    for (size_t k = 0; k < variants.size(); ++k) {
+        const Variant& v = variants[(first + k) % variants.size()];
+        timeVariant(out, batch, v.name, v.calls, v.work);
+    }
 }
 
 inline void agreementRows(Output& out, const int batch, const std::string& what, const float* a, const float* b, const int n, const bool required,
@@ -335,10 +355,11 @@ void runA(fk::Stream_<fk::ParArch::GPU_AMD>& stream, fk::Ptr2D<U3>& source, Outp
                   "both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ");
 
     // Timing
-    timeVariant(out, N, "fkl_fused", 1, [&] { fkl.fused(); fkl.sync(); });
-    timeVariant(out, N, "fkl_fused_halfpixel", 1, [&] { fklHalf.fused(); fklHalf.sync(); });
-    timeVariant(out, N, "fkl_perop_batch", 6, [&] { fkl.perOpBatch(); fkl.sync(); });
-    timeVariant(out, N, "rpp_fused_api", 2, [&] { rpp.run(); RPPB_CHECK_HIP(hipStreamSynchronize(stream.getHIPStream())); });
+    timeRotated(out, N, N / 10 - 1,
+                {{"fkl_fused", 1, [&] { fkl.fused(); fkl.sync(); }},
+                 {"fkl_fused_halfpixel", 1, [&] { fklHalf.fused(); fklHalf.sync(); }},
+                 {"fkl_perop_batch", 6, [&] { fkl.perOpBatch(); fkl.sync(); }},
+                 {"rpp_fused_api", 2, [&] { rpp.run(); RPPB_CHECK_HIP(hipStreamSynchronize(stream.getHIPStream())); }}});
     out.timing->flush();
     out.agreement->flush();
 }
@@ -418,17 +439,23 @@ void runB(fk::Stream_<fk::ParArch::GPU_AMD>& stream, nv12::Frame& frame, fk::Ptr
                   "both HALF_PIXEL; the RGB frames differ by at most 1 level; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ");
 
     // Timing
-    timeVariant(out, N, "rpp_convert", 1, [&] { convertRpp(); RPPB_CHECK_HIP(hipStreamSynchronize(stream.getHIPStream())); });
-    timeVariant(out, N, "fkl_convert", 1, [&] { fkl.convert(); fkl.sync(); });
-    timeVariant(out, N, "fkl_chain_fused", 1, [&] { fkl.fused(); fkl.sync(); });
-    timeVariant(out, N, "fkl_chain_fused_halfpixel", 1, [&] { fklHalf.fused(); fklHalf.sync(); });
-    timeVariant(out, N, "fkl_chain_perop_batch", 5, [&] { fkl.perOpBatch(); fkl.sync(); });
-    timeVariant(out, N, "rpp_chain_fused_api", 1, [&] { rpp.run(); RPPB_CHECK_HIP(hipStreamSynchronize(stream.getHIPStream())); });
-    timeVariant(out, N, "fkl_pipeline_fused", 2, [&] { fkl.convert(); fkl.fused(); fkl.sync(); });
-    timeVariant(out, N, "fkl_pipeline_fused_halfpixel", 2, [&] { fklHalf.convert(); fklHalf.fused(); fklHalf.sync(); });
-    timeVariant(out, N, "fkl_pipeline_perop_batch", 6, [&] { fkl.convert(); fkl.perOpBatch(); fkl.sync(); });
-    timeVariant(out, N, "rpp_pipeline_fused_api", 2, [&] { convertRpp(); rpp.run(); RPPB_CHECK_HIP(hipStreamSynchronize(stream.getHIPStream())); });
-    timeVariant(out, N, "mixed_fkl_convert_rpp_chain", 2, [&] { fkl.convert(); fkl.sync(); rpp.run(); RPPB_CHECK_HIP(hipStreamSynchronize(stream.getHIPStream())); });
+    // pointIndex: log2 of the number of crops (0, 3, 4, 5, 6)
+    int pointIndex = 0;
+    for (int n = N; n > 1; n >>= 1) {
+        ++pointIndex;
+    }
+    timeRotated(out, N, pointIndex,
+                {{"rpp_convert", 1, [&] { convertRpp(); RPPB_CHECK_HIP(hipStreamSynchronize(stream.getHIPStream())); }},
+                 {"fkl_convert", 1, [&] { fkl.convert(); fkl.sync(); }},
+                 {"fkl_chain_fused", 1, [&] { fkl.fused(); fkl.sync(); }},
+                 {"fkl_chain_fused_halfpixel", 1, [&] { fklHalf.fused(); fklHalf.sync(); }},
+                 {"fkl_chain_perop_batch", 5, [&] { fkl.perOpBatch(); fkl.sync(); }},
+                 {"rpp_chain_fused_api", 1, [&] { rpp.run(); RPPB_CHECK_HIP(hipStreamSynchronize(stream.getHIPStream())); }},
+                 {"fkl_pipeline_fused", 2, [&] { fkl.convert(); fkl.fused(); fkl.sync(); }},
+                 {"fkl_pipeline_fused_halfpixel", 2, [&] { fklHalf.convert(); fklHalf.fused(); fklHalf.sync(); }},
+                 {"fkl_pipeline_perop_batch", 6, [&] { fkl.convert(); fkl.perOpBatch(); fkl.sync(); }},
+                 {"rpp_pipeline_fused_api", 2, [&] { convertRpp(); rpp.run(); RPPB_CHECK_HIP(hipStreamSynchronize(stream.getHIPStream())); }},
+                 {"mixed_fkl_convert_rpp_chain", 2, [&] { fkl.convert(); fkl.sync(); rpp.run(); RPPB_CHECK_HIP(hipStreamSynchronize(stream.getHIPStream())); }}});
     out.timing->flush();
     out.agreement->flush();
 }
@@ -440,6 +467,9 @@ int launch() {
     const char* imagePath = std::getenv("E5_IMAGE");
     const char* imageInfo = std::getenv("E5_IMAGE_INFO");
     const int warmup = envInt("E5_WARMUP", 3), iters = envInt("E5_ITERS", 30);
+    const char* warmupText = std::getenv("E5_WARMUP_SECONDS");
+    const double warmupSeconds = warmupText ? std::atof(warmupText) : 2.0;
+    const int rotateOffset = envInt("E5_ROTATE_OFFSET", 0);
     try {
         fk::Stream_<fk::ParArch::GPU_AMD> stream;
         std::string sourceText;
@@ -473,14 +503,14 @@ int launch() {
                                     "(batch stride 0, one ROI per crop), destination F32 NCHW, mirror off; rppt_channel_permute F32 NCHW; rppt_yuv_to_rgb: "
                                     "RpptColorStandard_BT601, RpptColorRange_STUDIO, default chroma upsampling; output widths are multiples of 8";
         const std::string notes = "FKL HIP vs RPP; source: " + sourceText + "; " + rppText +
-                                  "; wall clock including the stream synchronisation, 3 warm-up runs and at least 0.5 s of warm-up";
+                                  "; wall clock including the stream synchronisation; warm-up: 3 runs, at least " + std::to_string(warmupSeconds).substr(0, std::to_string(warmupSeconds).find('.') + 2) + " s and until the mean time of two consecutive windows of 0.25 s differs by at most 2 percent (cap 10 s; the columns warmup_s, warmup_steady and sclk_start_mhz, sclk_timed_start_mhz and sclk_end_mhz, the graphics clock at the start of the warm-up, at the start of the timed runs and after them, record it); the variants of a point are timed in a rotated order: the first one is variant ((index of the point + E5_ROTATE_OFFSET = " + std::to_string(rotateOffset) + ") mod the number of variants)";
 
         fklb::CsvWriter timingA("benchmark_rpp_preprocessing_a_GPU_AMD.csv", "benchmark_rpp_preprocessing_a",
-                                {"batch", "variant", "calls", "median_ms", "min_ms", "max_ms", "mean_ms", "iters"}, notes);
+                                {"batch", "variant", "calls", "median_ms", "min_ms", "max_ms", "mean_ms", "iters", "warmup_s", "warmup_steady", "sclk_start_mhz", "sclk_timed_start_mhz", "sclk_end_mhz"}, notes);
         fklb::CsvWriter agreeA("benchmark_rpp_preprocessing_a_agreement_GPU_AMD.csv", "benchmark_rpp_preprocessing_a",
                                {"batch", "comparison", "region", "max_abs_diff", "mean_abs_diff", "fraction_over_1e-4", "pass", "note"},
                                notes + "; pass -1 = informational; tolerance 1e-4 absolute");
-        Output outA{&timingA, &agreeA, true, warmup, iters};
+        Output outA{&timingA, &agreeA, true, warmup, iters, warmupSeconds, rotateOffset};
         runAll(stream, source, outA, std::make_integer_sequence<int, 30>{});
 
         // Pipeline (b)
@@ -502,11 +532,11 @@ int launch() {
         rppHandle_t convertHandle{};
         RPPB_CHECK_RPP(rppCreate(&convertHandle, 1, 0, stream.getHIPStream(), RppBackend::RPP_HIP_BACKEND));
         fklb::CsvWriter timingB("benchmark_rpp_preprocessing_b_GPU_AMD.csv", "benchmark_rpp_preprocessing_b",
-                                {"crops", "variant", "calls", "median_ms", "min_ms", "max_ms", "mean_ms", "iters"}, notes);
+                                {"crops", "variant", "calls", "median_ms", "min_ms", "max_ms", "mean_ms", "iters", "warmup_s", "warmup_steady", "sclk_start_mhz", "sclk_timed_start_mhz", "sclk_end_mhz"}, notes);
         fklb::CsvWriter agreeB("benchmark_rpp_preprocessing_b_agreement_GPU_AMD.csv", "benchmark_rpp_preprocessing_b",
                                {"crops", "comparison", "region", "max_abs_diff", "mean_abs_diff", "fraction_over_1e-4", "pass", "note"},
                                notes + "; pass -1 = informational; tolerance 1e-4 absolute");
-        Output outB{&timingB, &agreeB, true, warmup, iters};
+        Output outB{&timingB, &agreeB, true, warmup, iters, warmupSeconds, rotateOffset};
         runB<1>(stream, frame, rgbFkl, rgbRpp, convertHandle, outB);
         runB<8>(stream, frame, rgbFkl, rgbRpp, convertHandle, outB);
         runB<16>(stream, frame, rgbFkl, rgbRpp, convertHandle, outB);

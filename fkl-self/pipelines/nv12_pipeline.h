@@ -36,12 +36,14 @@
 #include <array>
 #include <chrono>
 #include <cmath>
+#include <filesystem>
 #include <functional>
 #include <cstdint>
 #include <cstring>
 #include <fstream>
 #include <stdexcept>
 #include <string>
+#include <system_error>
 #include <tuple>
 #include <utility>
 #include <vector>
@@ -335,19 +337,75 @@ inline double maxAbsDiff(const float* a, const float* b, const size_t n) {
 struct Stats {
     double median{0}, min{0}, max{0}, mean{0};
     size_t iters{0};
+    double warmupSeconds{0};  // the warm-up that was run, in seconds
+    bool warmupSteady{true};  // false: the cap of the warm-up was reached before the time of the runs stopped changing
+    // The graphics clock of an AMD GPU (sysfs) at the start of the warm-up, at the start of the timed runs and after them; -1 when it can not be read
+    double gpuClockStartMHz{-1}, gpuClockTimedMHz{-1}, gpuClockEndMHz{-1};
 };
 
-// minWarmupSeconds: the warm-up also lasts at least that long (a GPU at rest runs at a low clock until it has work for a while)
-inline Stats measure(const std::function<void()>& fn, const int warmup, const int iters, const double minWarmupSeconds = 0.0) {
-    const auto begin = std::chrono::steady_clock::now();
-    for (int i = 0; i < warmup || std::chrono::duration<double>(std::chrono::steady_clock::now() - begin).count() < minWarmupSeconds; ++i) {
-        fn();
+// The graphics clock of the first AMD GPU in MHz (sysfs hwmon freq1_input of the device with the vendor 0x1002), -1 when it can not be read
+inline double amdGpuClockMHz() {
+    static const std::string path = [] {
+        std::error_code ec;
+        for (const auto& card : std::filesystem::directory_iterator("/sys/class/drm", ec)) {
+            const std::filesystem::path device = card.path() / "device";
+            std::ifstream vendor(device / "vendor");
+            std::string v;
+            if (!(vendor >> v) || v != "0x1002") {
+                continue;
+            }
+            for (const auto& hw : std::filesystem::directory_iterator(device / "hwmon", ec)) {
+                if (std::filesystem::exists(hw.path() / "freq1_input", ec)) {
+                    return (hw.path() / "freq1_input").string();
+                }
+            }
+        }
+        return std::string();
+    }();
+    if (path.empty()) {
+        return -1.0;
     }
+    std::ifstream f(path);
+    double hz = 0;
+    return (f >> hz) ? hz / 1e6 : -1.0;
+}
+
+// Warm-up: at least `warmup` runs and, when minWarmupSeconds > 0, at least that long. With steady = true the warm-up goes on, in windows of 0.25 s,
+// until the mean time of two consecutive windows differs by at most 2 percent (up to maxWarmupSeconds): a GPU that was at rest raises its clock
+// during about a second of continuous work (an RX 9060 runs at 2.0 GHz for the first 0.7 s and at 3.0 GHz after 1 s), and a fused kernel that is
+// bound by the core clock is 20 percent slower until then.
+inline Stats measure(const std::function<void()>& fn, const int warmup, const int iters, const double minWarmupSeconds = 0.0, const bool steady = false,
+                     const double maxWarmupSeconds = 10.0) {
+    using Clock = std::chrono::steady_clock;
+    const double clockAtStart = amdGpuClockMHz();
+    const auto begin = Clock::now();
+    const auto elapsed = [&] { return std::chrono::duration<double>(Clock::now() - begin).count(); };
+    constexpr double WINDOW = 0.25, TOLERANCE_STEADY = 0.02;
+    int runs = 0, inWindow = 0;
+    double windowStart = 0, windowSum = 0, previousMean = -1;
+    bool isSteady = !steady;
+    while (!(runs >= warmup && elapsed() >= minWarmupSeconds && (isSteady || elapsed() >= maxWarmupSeconds))) {
+        const auto start = Clock::now();
+        fn();
+        windowSum += std::chrono::duration<double, std::milli>(Clock::now() - start).count();
+        ++runs;
+        ++inWindow;
+        if (elapsed() - windowStart >= WINDOW) {
+            const double mean = windowSum / inWindow;
+            isSteady = !steady || (previousMean > 0 && std::abs(mean - previousMean) <= TOLERANCE_STEADY * previousMean);
+            previousMean = mean;
+            windowSum = 0;
+            inWindow = 0;
+            windowStart = elapsed();
+        }
+    }
+    const double warmupSeconds = elapsed();
+    const double clockAtTimedStart = amdGpuClockMHz();
     std::vector<double> ms(static_cast<size_t>(iters));
     for (auto& t : ms) {
-        const auto start = std::chrono::steady_clock::now();
+        const auto start = Clock::now();
         fn();
-        const auto stop = std::chrono::steady_clock::now();
+        const auto stop = Clock::now();
         t = std::chrono::duration<double, std::milli>(stop - start).count();
     }
     std::sort(ms.begin(), ms.end());
@@ -361,6 +419,11 @@ inline Stats measure(const std::function<void()>& fn, const int warmup, const in
         sum += t;
     }
     s.mean = sum / static_cast<double>(ms.size());
+    s.warmupSeconds = warmupSeconds;
+    s.warmupSteady = isSteady;
+    s.gpuClockStartMHz = clockAtStart;
+    s.gpuClockTimedMHz = clockAtTimedStart;
+    s.gpuClockEndMHz = amdGpuClockMHz();
     return s;
 }
 
