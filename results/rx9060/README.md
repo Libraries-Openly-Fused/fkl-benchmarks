@@ -16,7 +16,7 @@ that the first results of this folder used ended on the ramp. What it did to the
   sampling had been timed second, after the ramp, and looked unchanged. In the first RPP run after the 0.5 s warm-up the default chain read 0.1146 / 0.1577 ms
   at batch 200 / 300 against 0.0924 / 0.1241 ms in an earlier run of the same binary: the ramp had been faster in that run by chance.
 - In the other direction, a warm-up that ends right after the ramp can be measured in the overshoot: the NV12 to RGB kernel of E4b at one crop read 0.2602 ms
-  with a warm-up of 0.5 s and 0.2819 ms at the steady clock (8 percent too fast), and it varied with the number of crops (0.2602 to 0.2827 ms) although the kernel
+  with a warm-up of 0.5 s and 0.2819 ms at the steady clock (7 percent too fast), and it varied with the number of crops (0.2602 to 0.2827 ms) although the kernel
   does not depend on it; with the steady warm-up it is 0.2808 to 0.2840 ms for 1 to 64 crops.
 - The latency hiding series of `fkl-self` (the buffers are allocated and filled between two points, which leaves the GPU idle) was up to 52 percent slower
   without keeping the GPU busy before the timed runs of each point (301 operations: 6.10 ms against 4.01 ms).
