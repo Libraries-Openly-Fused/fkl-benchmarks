@@ -1,0 +1,23 @@
+# experiment: E4a/E4c pre-processing: agreement with the scalar references
+# notes: informational where the conventions differ: the columns vs_asymmetric and vs_half_pixel compare the output with both references; ok_own is the strict check
+# repo: fkl-benchmarks e9e599d988b98ddba9bfe4ff7cf2a6c088a28ed3
+# fkl: d77671312cbfc36540c078388bf4423d56337874
+# cvGPUSpeedup: 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c
+# FastNPP: 9dfc4f430225e40ded392bfa777b2e724367c5c1
+# nvcc: 13.4.92 (/home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/nvcc), architectures 89, -fmad on, -lineinfo on
+# hip: none (none), architectures none
+# host compiler: GNU 15.2.0, Release, -march=native, -ftemplate-depth=1000
+# opencv: 4.14.0
+# cpu: AMD Ryzen 9 5950X 16-Core Processor
+# gpu: NVIDIA GeForce RTX 4090, cc 8.9, 128 SMs, 24106 MiB, PCI 0000:09:00.0
+# cuda driver api: 13.3, cuda runtime: 13.4
+# nvidia-smi driver: 610.43.02
+# clocks (sm, mem, max sm, max mem, MHz): 2550 MHz, 10251 MHz, 3105 MHz, 10501 MHz
+# power limit, temperature at start: 450.00 W, 43
+experiment,batch,version,convention,max_abs_err_own_reference,ok_own,max_abs_err_vs_asymmetric,max_abs_err_vs_half_pixel
+E4a,100,fkl_fused,ASYMMETRIC,5.35117255e-06,1,5.35117255e-06,7.04687728
+E4a,100,fkl_fused_half_pixel,HALF_PIXEL,5.35117255e-06,1,7.04688035,5.35117255e-06
+E4a,200,fkl_fused,ASYMMETRIC,5.35117255e-06,1,5.35117255e-06,7.12158214
+E4a,200,fkl_fused_half_pixel,HALF_PIXEL,5.35117255e-06,1,7.12158193,5.35117255e-06
+E4a,300,fkl_fused,ASYMMETRIC,5.35117255e-06,1,5.35117255e-06,7.20166026
+E4a,300,fkl_fused_half_pixel,HALF_PIXEL,5.35117255e-06,1,7.20166017,5.35117255e-06

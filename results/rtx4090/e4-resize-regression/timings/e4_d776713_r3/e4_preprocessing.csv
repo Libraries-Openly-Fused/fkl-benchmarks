@@ -1,0 +1,23 @@
+# experiment: E4a/E4c pre-processing: FKL against OpenCV-CUDA and NPP
+# notes: thread fusion: off (fk::TF::DISABLED); source: seeded 8UC3 noise (LCG seed 12345, as the CPU rows); timing: CUDA events around one launch (including the host calls that enqueue it), 100 launches after one warm-up; sampling: ASYMMETRIC = FKL default and cv::cuda::resize, HALF_PIXEL = NPP and fkl_fused_half_pixel; ok_own = max |output - scalar double reference of the version's own convention| <= 1e-4
+# repo: fkl-benchmarks e9e599d988b98ddba9bfe4ff7cf2a6c088a28ed3
+# fkl: d77671312cbfc36540c078388bf4423d56337874
+# cvGPUSpeedup: 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c
+# FastNPP: 9dfc4f430225e40ded392bfa777b2e724367c5c1
+# nvcc: 13.4.92 (/home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/nvcc), architectures 89, -fmad on, -lineinfo on
+# hip: none (none), architectures none
+# host compiler: GNU 15.2.0, Release, -march=native, -ftemplate-depth=1000
+# opencv: 4.14.0
+# cpu: AMD Ryzen 9 5950X 16-Core Processor
+# gpu: NVIDIA GeForce RTX 4090, cc 8.9, 128 SMs, 24106 MiB, PCI 0000:09:00.0
+# cuda driver api: 13.3, cuda runtime: 13.4
+# nvidia-smi driver: 610.43.02
+# clocks (sm, mem, max sm, max mem, MHz): 2550 MHz, 10251 MHz, 3105 MHz, 10501 MHz
+# power limit, temperature at start: 450.00 W, 43
+experiment,batch,src_w,src_h,crop_w,crop_h,out_w,out_h,version,convention,gpu_mean_ms,gpu_min_ms,intermediate_bytes,meminfo_delta_bytes,output_bytes
+E4a,100,3840,2160,60,120,64,128,fkl_fused,ASYMMETRIC,0.00854304003,0.00806399994,0,0,9830400
+E4a,100,3840,2160,60,120,64,128,fkl_fused_half_pixel,HALF_PIXEL,0.00876416009,0.00812800042,0,0,9830400
+E4a,200,3840,2160,60,120,64,128,fkl_fused,ASYMMETRIC,0.0142006401,0.0133119998,0,0,19660800
+E4a,200,3840,2160,60,120,64,128,fkl_fused_half_pixel,HALF_PIXEL,0.0140544001,0.0133119998,0,0,19660800
+E4a,300,3840,2160,60,120,64,128,fkl_fused,ASYMMETRIC,0.0194294398,0.0184320007,0,0,29491200
+E4a,300,3840,2160,60,120,64,128,fkl_fused_half_pixel,HALF_PIXEL,0.0197830395,0.0184320007,0,0,29491200

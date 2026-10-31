@@ -1,0 +1,22 @@
+# experiment: E1c hand-written batched pre-processing vs FKL (60x120 uchar3 crops -> 64x128 float planar tensor)
+# notes: thread fusion: off (fk::TF::DISABLED, the default); resize sampling: ASYMMETRIC (x * scale), the library default, in the hand-written kernels and in FKL (fk::Resize<INTER_LINEAR>); source: seeded uint8 noise 3840x2160x3 (std::mt19937_64 seed 20261030), crop i at (i, i), 60x120 -> 64x128 bilinear, RGB to BGR, *0.3, -(1, 4, 3.2), /(3.2, 0.6, 11.8), planar float output; the block is the one fk::getDefaultBlockSize picks; 100 timed iterations after one warm-up; *_bitexact = same bytes as hand_batch
+# repo: fkl-benchmarks e9e599d988b98ddba9bfe4ff7cf2a6c088a28ed3
+# fkl: 38c4f32d887b4530c54362eb526c9a5411ee92fe
+# cvGPUSpeedup: 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c
+# FastNPP: 9dfc4f430225e40ded392bfa777b2e724367c5c1
+# nvcc: 13.4.92 (/home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/nvcc), architectures 89, -fmad on, -lineinfo on
+# hip: none (none), architectures none
+# host compiler: GNU 15.2.0, Release, -march=native, -ftemplate-depth=1000
+# opencv: 4.14.0
+# cpu: AMD Ryzen 9 5950X 16-Core Processor
+# gpu: NVIDIA GeForce RTX 4090, cc 8.9, 128 SMs, 24106 MiB, PCI 0000:09:00.0
+# cuda driver api: 13.3, cuda runtime: 13.4
+# nvidia-smi driver: 610.43.02
+# clocks (sm, mem, max sm, max mem, MHz): 2550 MHz, 10251 MHz, 3105 MHz, 10501 MHz
+# power limit, temperature at start: 450.00 W, 42
+batch,hand_mean_ms,hand_min_ms,hand_generic_mean_ms,hand_generic_min_ms,fkl_mean_ms,fkl_min_ms,fkl_over_hand,fkl_over_hand_generic,fkl_bitexact,hand_generic_bitexact,hand_param_bytes,hand_generic_param_bytes,hand_padded_mean_ms,hand_padded_min_ms,fkl_over_hand_padded,hand_padded_bitexact,fkl_read_iop_bytes
+10,0.00359744005,0.0030400001,0.00375584002,0.00307200011,0.00358624004,0.00307200011,0.996886674,0.954843664,1,1,80,240,0.00380864001,0.00307200011,0.941606462,1,496
+50,0.00579392007,0.00511999987,0.00579072007,0.00511999987,0.00612480014,0.00511999987,1.05710815,1.05769232,1,1,400,1200,0.00590944009,0.00511999987,1.03644339,1,2416
+100,0.00798240001,0.0071680001,0.00814911999,0.0071680001,0.00864320003,0.00815999974,1.08278212,1.06062986,1,1,800,2400,0.00846527998,0.00800000038,1.02101762,1,4816
+200,0.01306144,0.0122880004,0.0133523199,0.01296,0.01396736,0.0133119998,1.06935836,1.04606242,1,1,1600,4800,0.0138451201,0.0133119998,1.0088291,1,9616
+300,0.0176208001,0.0170559995,0.0181568004,0.0174080003,0.0194972797,0.0184320007,1.1064923,1.07382795,1,1,2400,7200,0.0190544,0.0184320007,1.02324291,1,14416
