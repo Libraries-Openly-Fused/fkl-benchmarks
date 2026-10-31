@@ -64,3 +64,38 @@ binaries: /home/oscar/tfkl-bench/fkl-benchmarks/build/e0-frozen-a266bc9/bin, bui
 2026-10-30T10:45:45+01:00 e0-graph-instantiate: exit 0 after 6 s; csv: 1
 2026-10-30T10:45:47+01:00 e0-vf-mul-add1: VF mul_add1 (batch 1) + CUDA Graphs (200 points to 19,902 ops)
 # 2026-10-30T10:52:14+01:00 MY MISTAKE: at 10:51:42 to 10:51:44 I ran a test binary of E3 (a 1920x1080 kernel, 21 launches, one CUDA context) on the 4090 while e0-vf-mul-add1 was measuring, outside a paused window. The row of that experiment measured at that moment is 5402 operations: its OpenCV TimeVariance is 0.50 (neighbours 0.05 to 0.08), OpenCV MaxTime 108.3 ms against MinTime 101.3 ms; its cvGS columns are normal (variance 2.5e-6, max 0.5746 ms). Effect on the mean about 0.07 percent of the OpenCV time. Plan: re-run e0-vf-mul-add1 after the runner ends and keep both; nothing from this row is to be used until then. Lesson: compile-only E3 steps must not execute the binaries; the E3 runs happen in paused windows.
+2026-10-30T12:53:50+01:00 e0-vf-mul-add1: exit 0 after 7683 s; csv: 2
+2026-10-30T12:53:52+01:00 paused before e0-vf-mul1 (remove /home/oscar/tfkl-bench/fkl-benchmarks/results/rtx4090/.pause to continue)
+# 2026-10-30T12:53:58+01:00 GPU window 7 starts (runner held by .pause/hold-window7): E1c with hand_padded, Triton smoke test of E2a
+# 2026-10-30T12:54:06+01:00 GPU window 7 ended: hold and pause removed, the runner continues
+# 2026-10-30T12:54:08+01:00 GPU window 8 starts (runner held by .pause/hold-window8): FKL PR 416 ctest, wrapper suites, saturate_cast limit values
+# 2026-10-30T12:59:07+01:00 GPU window 8 ended: hold and pause removed, the runner continues
+# 2026-10-30T12:59:08+01:00 GPU window 9 starts (runner held by .pause/hold-window9): get_arg PR ctest, E3 kernel times, near-limit launches
+# 2026-10-30T13:00:42+01:00 GPU window 9 ended: hold and pause removed, the runner continues
+# 2026-10-30T13:00:44+01:00 GPU window 10 starts (runner held by .pause/hold-window10): E2a smoke test
+# 2026-10-30T13:00:54+01:00 GPU window 10 ended: hold and pause removed, the runner continues
+2026-10-30T13:00:57+01:00 e0-vf-mul1: VF mul1 (batch 1) + CUDA Graphs
+2026-10-30T15:10:00+01:00 e0-vf-mul1: exit 0 after 7743 s; csv: 2
+2026-10-30T15:10:02+01:00 paused before e0-vf-mul-add (remove /home/oscar/tfkl-bench/fkl-benchmarks/results/rtx4090/.pause to continue)
+# 2026-10-30T15:10:08+01:00 GPU window 11 starts (runner held by .pause/hold-window11): E2a driver validation
+# 2026-10-30T15:11:46+01:00 GPU window 11 ended: hold and pause removed, the runner continues
+2026-10-30T15:11:47+01:00 e0-vf-mul-add: VF + HF mul_add (batch 50) + CUDA Graphs (hours)
+2026-10-30T21:39:24+01:00 e0-vf-mul-add: exit 0 after 23257 s; csv: 2
+runner exit=0
+# 2026-10-30T21:42:04+01:00 GPU window 13 starts: NPP stream context (swapped as in FastNPP's tests, or corrected)
+# 2026-10-30T21:44:12+01:00 GPU window 13 ended
+# 2026-10-30T21:44:33+01:00 GPU window parity starts (no E0 experiment running): OpenCV-CUDA parity probe + ncu
+# 2026-10-30T21:49:55+01:00 GPU window parity ended
+# 2026-10-30T21:49:55+01:00 GPU window E6 saturate starts (no E0 experiment running)
+# 2026-10-30T21:51:26+01:00 GPU window E6 saturate ended
+# 2026-10-30T21:51:27+01:00 GPU window E2a starts (no E0 experiment running)
+# 2026-10-30T21:56:46+01:00 GPU window E2a ended
+# 2026-10-30T21:56:46+01:00 GPU window E16 step 1 starts (no E0 experiment running)
+# 2026-10-30T21:56:46+01:00 GPU window E16 step 1 ended
+# 2026-10-30T21:56:47+01:00 e0-vf-mul-add1 is run a second time with the same frozen binaries (build/e0-frozen-a266bc9, built from fkl-benchmarks a266bc9): sha256 of benchmark_vertical_fusionCompareMulAdd1_cu = 1612c8b6c2b98639b804812a236e086c59c6558548a582f8723aad5ed3c8d553; the sha256 of every binary of the frozen build is in results/rtx4090/e0-frozen-a266bc9-sha256.txt. The first run is e0-vf-mul-add1-run1 (its 5,402-operations row was disturbed, see the entry of 10:52); the second run, e0-vf-mul-add1, is the one for the paper. FKLB_ALLOW_DIRTY=1 is used for this single run only, because commits after a266bc9 changed the sources of OTHER benchmarks (the binary is the frozen one)
+binaries: /home/oscar/tfkl-bench/fkl-benchmarks/build/e0-frozen-a266bc9/bin, built from fkl-benchmarks a266bc941b057b3de0c3d0b88535c985169f2735
+2026-10-30T21:56:49+01:00 e0-vf-mul-add1: VF mul_add1 (batch 1) + CUDA Graphs (200 points to 19,902 ops)
+2026-10-31T00:04:32+01:00 e0-vf-mul-add1: exit 0 after 7663 s; csv: 2
+# 2026-10-31T00:05:09+01:00 GPU window mul4 starts (no E0 experiment running)
+# 2026-10-31T00:07:46+01:00 GPU window mul4 ended
+# 2026-10-31T00:07:47+01:00 GPU window final checks starts (no E0 experiment running)

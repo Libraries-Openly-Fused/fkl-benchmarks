@@ -31,3 +31,8 @@ endif()
 fklb_add_benchmark(nan_saturate
     BACKENDS cu LIBS fkl
     SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/numerics/nan_saturate.cu")
+
+# E6: fk::SaturateCast<float, T> over all 2^32 float bit patterns against cv::cuda::device::saturate_cast, the PTX conversion and the host functions
+fklb_add_benchmark(e6_saturate_exhaustive
+    BACKENDS cu LIBS fkl opencv
+    SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/numerics/saturate_exhaustive.cu")

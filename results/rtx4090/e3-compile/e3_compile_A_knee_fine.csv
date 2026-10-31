@@ -1,0 +1,42 @@
+# experiment: E3 compile-time sweep
+# notes: one core (12), nvcc --threads 1, -O3 -DNDEBUG -std=c++17 sm_89 +PTX -ftemplate-depth=1000 -lineinfo; GNU time for the peak RSS; timeout 3600 s per compile; the programs are not executed; fkl include /home/oscar/tfkl-bench/fkl-benchmarks/external/fkl/include
+# repo: fdd6429c3896c1dd77995b006b5dc0994711ea32
+# fkl: 38c4f32d887b4530c54362eb526c9a5411ee92fe
+# cvGPUSpeedup: 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c
+# FastNPP: 9dfc4f430225e40ded392bfa777b2e724367c5c1
+# python: 3.12.13, torch: 2.14.1+cu130, torch.version.cuda: 13.0
+# triton: 3.8.0; ptxas /home/oscar/tfkl-bench/venv-torch/lib/python3.12/site-packages/triton/backends/nvidia/bin/ptxas (release 12.9); ptxas_blackwell /home/oscar/tfkl-bench/venv-torch/lib/python3.12/site-packages/triton/backends/nvidia/bin/ptxas-blackwell (release 13.3); cuobjdump /home/oscar/tfkl-bench/venv-torch/lib/python3.12/site-packages/triton/backends/nvidia/bin/cuobjdump (release 13.1); nvdisasm /home/oscar/tfkl-bench/venv-torch/lib/python3.12/site-packages/triton/backends/nvidia/bin/nvdisasm (release 13.1)
+# flash_attn: 2.8.3.post2
+# gpu: NVIDIA GeForce RTX 4090, cc 8.9, 128 SMs, 24106 MiB
+# cuda_visible_devices: 1 (device 0, pci 00000000:05:00.0)
+# nvidia-smi driver: 610.43.02
+# clocks (sm, mem, max sm, max mem, MHz): 195 MHz, 405 MHz, 3090 MHz, 10001 MHz
+# power limit, temperature at start: 130.00 W, 33
+tree,variant,n,rep,status,why,cuda_wall_s,cuda_user_s,cuda_sys_s,cuda_peak_rss_mb,phase_cudafe_s,phase_cicc_s,phase_ptxas_s,phase_gcc_s,phase_other_s,registers,spill_stores,spill_loads,stack_bytes,cmem0_bytes,sass_instructions,text_bytes,cubin_bytes,host_status,host_wall_s,host_peak_rss_mb
+current,A,1021,0,ok,,27.176,25.210,1.940,1551,1.100,17.430,0.485,7.988,0.137,17,0,0,0,4496,3712,,,,,
+current,A,1021,1,ok,,25.162,23.230,1.920,1550,0.942,15.783,0.484,7.784,0.138,17,0,0,0,4496,3712,,,,,
+current,A,1021,2,ok,,24.811,22.840,1.960,1551,0.956,15.504,0.481,7.702,0.136,17,0,0,0,4496,3712,,,,,
+current,A,1022,0,ok,,24.605,22.690,1.900,1553,0.923,15.311,0.519,7.684,0.137,17,0,0,0,4496,3712,,,,,
+current,A,1022,1,ok,,24.414,22.600,1.800,1553,0.923,15.195,0.515,7.617,0.135,17,0,0,0,4496,3712,,,,,
+current,A,1022,2,ok,,24.319,22.380,1.930,1553,0.922,15.096,0.516,7.621,0.135,17,0,0,0,4496,3712,,,,,
+current,A,1023,0,ok,,24.429,22.550,1.870,1555,0.909,15.286,0.528,7.537,0.142,17,0,0,0,4504,3712,,,,,
+current,A,1023,1,ok,,24.215,22.260,1.940,1555,0.895,15.165,0.526,7.459,0.141,17,0,0,0,4504,3712,,,,,
+current,A,1023,2,ok,,24.317,22.470,1.840,1555,0.891,15.276,0.523,7.459,0.140,17,0,0,0,4504,3712,,,,,
+current,A,1024,0,ok,,25.873,24.060,1.800,1556,0.889,15.914,1.375,7.516,0.150,255,6980,7452,15656,4504,8800,,,,,
+current,A,1024,1,ok,,25.723,23.920,1.790,1557,0.895,15.756,1.374,7.520,0.150,255,6980,7452,15656,4504,8800,,,,,
+current,A,1024,2,ok,,25.900,24.100,1.790,1557,0.892,15.798,1.393,7.637,0.152,255,6980,7452,15656,4504,8800,,,,,
+current,A,1025,0,ok,,26.030,24.230,1.790,1559,0.914,16.066,1.363,7.508,0.151,255,6988,7460,15672,4512,8800,,,,,
+current,A,1025,1,ok,,25.684,23.900,1.770,1555,0.890,15.770,1.365,7.481,0.149,255,6988,7460,15672,4512,8800,,,,,
+current,A,1025,2,ok,,25.764,23.970,1.790,1559,0.888,15.734,1.384,7.578,0.152,255,6988,7460,15672,4512,8800,,,,,
+current,A,1026,0,ok,,25.983,24.200,1.770,1561,0.909,16.023,1.387,7.486,0.149,255,6996,7468,15688,4512,8808,,,,,
+current,A,1026,1,ok,,25.621,23.880,1.730,1561,0.889,15.705,1.370,7.479,0.149,255,6996,7468,15688,4512,8808,,,,,
+current,A,1026,2,ok,,25.616,23.900,1.710,1561,0.888,15.689,1.369,7.492,0.149,255,6996,7468,15688,4512,8808,,,,,
+current,A,1027,0,ok,,25.653,23.850,1.790,1562,0.888,15.722,1.373,7.491,0.151,255,7004,7476,15704,4520,8816,,,,,
+current,A,1027,1,ok,,26.122,24.300,1.810,1563,0.890,15.961,1.403,7.685,0.153,255,7004,7476,15704,4520,8816,,,,,
+current,A,1027,2,ok,,26.255,24.420,1.820,1562,0.911,16.095,1.402,7.665,0.153,255,7004,7476,15704,4520,8816,,,,,
+current,A,1028,0,ok,,26.485,24.610,1.860,1561,0.917,16.326,1.385,7.671,0.156,255,7012,7484,15720,4520,8824,,,,,
+current,A,1028,1,ok,,26.963,24.880,2.070,1564,0.917,16.517,1.433,7.904,0.160,255,7012,7484,15720,4520,8824,,,,,
+current,A,1028,2,ok,,27.449,25.490,1.950,1564,0.957,17.230,1.382,7.696,0.154,255,7012,7484,15720,4520,8824,,,,,
+current,A,1029,0,ok,,27.498,25.580,1.900,1566,0.917,17.090,1.446,7.859,0.156,255,7016,7492,15736,4528,8832,,,,,
+current,A,1029,1,ok,,26.552,24.570,1.970,1563,0.924,16.284,1.413,7.745,0.155,255,7016,7492,15736,4528,8832,,,,,
+current,A,1029,2,ok,,27.387,25.530,1.850,1566,0.932,16.975,1.427,7.865,0.157,255,7016,7492,15736,4528,8832,,,,,

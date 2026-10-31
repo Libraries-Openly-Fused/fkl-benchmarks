@@ -1,0 +1,22 @@
+vf_a_r2.pdf: drawn by scripts/plot_vf.py
+size: 2.30 x 1.95 in (the printed width)
+csv: results/rtx4090/e0-vf-mul-add1/benchmark_vertical_fusion_loopMulAdd1.csv
+  results commit that last changed it: be0312948def74839022a8e0102f0a35e5668614
+  produced by repo: fkl-benchmarks a266bc941b057b3de0c3d0b88535c985169f2735
+  produced by fkl: fb9ac3ad4a64aad40ae3122e14143f03814f2cc0
+  produced by nvcc: 13.4.92 (/home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/nvcc), architectures 89, -fmad on, -lineinfo on
+  produced by gpu: NVIDIA GeForce RTX 4090, cc 8.9, 128 SMs, 24106 MiB, PCI 0000:09:00.0
+csv: results/rtx4090/e0-vf-mul1/benchmark_vertical_fusion_loopMul1.csv
+  results commit that last changed it: 288f59d8c2e2b871b9e05c16f390537c3d49491a
+  produced by repo: fkl-benchmarks a266bc941b057b3de0c3d0b88535c985169f2735
+  produced by fkl: fb9ac3ad4a64aad40ae3122e14143f03814f2cc0
+  produced by nvcc: 13.4.92 (/home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/nvcc), architectures 89, -fmad on, -lineinfo on
+  produced by gpu: NVIDIA GeForce RTX 4090, cc 8.9, 128 SMs, 24106 MiB, PCI 0000:09:00.0
+(a) Mul+Add chain: 200 points, 2 to 19902 operations; maximum 185.25x at 16702; last 178.76x
+(a) Mul+Mul chain: 200 points, 2 to 19902 operations; maximum 92.77x at 8502; last 73.84x
+(b) Mul+Add chain: 200 points, 2 to 19902 operations; maximum 177.86x at 17702; last 171.90x
+(b) Mul+Mul chain: 200 points, 2 to 19902 operations; maximum 89.18x at 8702; last 71.36x
+(c) vs OpenCV-CUDA: 200 points, 2 to 19902 operations; maximum 19767.00x at 12702; last 19191.90x
+(c) vs OpenCV-CUDA
++ CUDA Graphs: 200 points, 2 to 19902 operations; maximum 2554.36x at 17702; last 2542.25x
+e0-vf-mul-add1 run read: the SECOND run (the first, in e0-vf-mul-add1-run1, has one row disturbed by another process, at 5,402 operations)

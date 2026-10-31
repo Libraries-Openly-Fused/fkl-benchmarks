@@ -1,0 +1,16 @@
+hf_r2.pdf: drawn by scripts/plot_hf.py
+size: 3.40 x 2.10 in (the printed width)
+csv: results/rtx4090/e0-hf/benchmark_Horizontal_Fusion_NO_CPU_OVERHEAD_GPU_NVIDIA.csv
+  results commit that last changed it: 645c631ab9e5892a6681eca6f564a124035a69e8
+  produced by repo: fkl-benchmarks 1a70cab091da75c6d691a08a56117aab783e50df
+  produced by fkl: fb9ac3ad4a64aad40ae3122e14143f03814f2cc0
+  produced by nvcc: 13.4.92 (/home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/nvcc), architectures 89, -fmad on, -lineinfo on
+  produced by gpu: NVIDIA GeForce RTX 4090, cc 8.9, 128 SMs, 24106 MiB, PCI 0000:09:00.0
+csv: results/rtx4090/e0-hf/benchmark_Horizontal_Fusion_NO_CPU_OVERHEAD_CUDAGraphs_GPU_NVIDIA.csv
+  results commit that last changed it: 645c631ab9e5892a6681eca6f564a124035a69e8
+  produced by repo: fkl-benchmarks 1a70cab091da75c6d691a08a56117aab783e50df
+  produced by fkl: fb9ac3ad4a64aad40ae3122e14143f03814f2cc0
+  produced by nvcc: 13.4.92 (/home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/nvcc), architectures 89, -fmad on, -lineinfo on
+  produced by gpu: NVIDIA GeForce RTX 4090, cc 8.9, 128 SMs, 24106 MiB, PCI 0000:09:00.0
+vs kernel per element: 120 points, batch 1 to 1191; maximum 59.94x at batch 781; at the last batch 51.43x
+vs kernel per element + CUDA Graphs: 120 points, batch 1 to 1191; maximum 36.92x at batch 661; at the last batch 31.05x

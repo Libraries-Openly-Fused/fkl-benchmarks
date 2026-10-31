@@ -1,0 +1,46 @@
+# experiment: test_npp_batchresize_x_split3D_No_CPU_Overhead agreement
+# notes: source: seeded uniform noise (std::mt19937_64 seed 20261030); references in double precision for the whole pipeline; each implementation must match one convention within 1e-3, the difference between them is informational
+# repo: fkl-benchmarks b0abcfeaa03c90727e5b996acb1d82886912d666-dirty
+# fkl: 38c4f32d887b4530c54362eb526c9a5411ee92fe
+# cvGPUSpeedup: 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c
+# FastNPP: 9dfc4f430225e40ded392bfa777b2e724367c5c1
+# nvcc: 13.4.92 (/home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/nvcc), architectures 89, -fmad on, -lineinfo on
+# host compiler: GNU 15.2.0, Release, -march=native, -ftemplate-depth=1000
+# opencv: 4.14.0
+# cpu: AMD Ryzen 9 5950X 16-Core Processor
+# gpu: NVIDIA GeForce RTX 4090, cc 8.9, 128 SMs, 24106 MiB, PCI 0000:09:00.0
+# cuda driver api: 13.3, cuda runtime: 13.4
+# nvidia-smi driver: 610.43.02
+# clocks (sm, mem, max sm, max mem, MHz): 2550 MHz, 10251 MHz, 3105 MHz, 10501 MHz
+# power limit, temperature at start: 450.00 W, 44
+batch,FastNPP_follows,NPP_follows,FastNPP_vs_ref_FKL_max,FastNPP_vs_ref_pixel_centre_max,NPP_vs_ref_FKL_max,NPP_vs_ref_pixel_centre_max,FastNPP_vs_NPP_max,FastNPP_vs_NPP_mean
+10,FKL,pixel-centre,3.5204e-06,4.13643,4.13643,3.56033e-06,4.13643,0.480032
+20,FKL,pixel-centre,3.5204e-06,4.13643,4.13643,3.56033e-06,4.13643,0.48106
+30,FKL,pixel-centre,3.5204e-06,4.13643,4.13643,3.56033e-06,4.13643,0.481627
+40,FKL,pixel-centre,3.5204e-06,4.13643,4.13643,3.56033e-06,4.13643,0.481893
+50,FKL,pixel-centre,3.5204e-06,4.13643,4.13643,3.56033e-06,4.13643,0.481842
+60,FKL,pixel-centre,3.5204e-06,4.13643,4.13643,3.56033e-06,4.13643,0.481543
+70,FKL,pixel-centre,3.5204e-06,4.13643,4.13643,3.56033e-06,4.13643,0.481282
+80,FKL,pixel-centre,3.5204e-06,4.13643,4.13643,3.56033e-06,4.13643,0.481295
+90,FKL,pixel-centre,3.5204e-06,4.13643,4.13643,3.56033e-06,4.13643,0.481305
+100,FKL,pixel-centre,3.5204e-06,4.14551,4.1455,3.56033e-06,4.14551,0.48105
+110,FKL,pixel-centre,3.5204e-06,4.14551,4.1455,3.56033e-06,4.14551,0.48066
+120,FKL,pixel-centre,3.5204e-06,4.14551,4.1455,3.56033e-06,4.14551,0.480286
+130,FKL,pixel-centre,3.5204e-06,4.14551,4.1455,3.56033e-06,4.14551,0.480156
+140,FKL,pixel-centre,3.5204e-06,4.14551,4.1455,3.56033e-06,4.14551,0.480143
+150,FKL,pixel-centre,3.5204e-06,4.26534,4.26533,3.56033e-06,4.26534,0.480104
+10,FKL,pixel-centre,3.5204e-06,4.13643,4.13643,3.56033e-06,4.13643,0.480032
+20,FKL,pixel-centre,3.5204e-06,4.13643,4.13643,3.56033e-06,4.13643,0.48106
+30,FKL,pixel-centre,3.5204e-06,4.13643,4.13643,3.56033e-06,4.13643,0.481627
+40,FKL,pixel-centre,3.5204e-06,4.13643,4.13643,3.56033e-06,4.13643,0.481893
+50,FKL,pixel-centre,3.5204e-06,4.13643,4.13643,3.56033e-06,4.13643,0.481842
+60,FKL,pixel-centre,3.5204e-06,4.13643,4.13643,3.56033e-06,4.13643,0.481543
+70,FKL,pixel-centre,3.5204e-06,4.13643,4.13643,3.56033e-06,4.13643,0.481282
+80,FKL,pixel-centre,3.5204e-06,4.13643,4.13643,3.56033e-06,4.13643,0.481295
+90,FKL,pixel-centre,3.5204e-06,4.13643,4.13643,3.56033e-06,4.13643,0.481305
+100,FKL,pixel-centre,3.5204e-06,4.14551,4.1455,3.56033e-06,4.14551,0.48105
+110,FKL,pixel-centre,3.5204e-06,4.14551,4.1455,3.56033e-06,4.14551,0.48066
+120,FKL,pixel-centre,3.5204e-06,4.14551,4.1455,3.56033e-06,4.14551,0.480286
+130,FKL,pixel-centre,3.5204e-06,4.14551,4.1455,3.56033e-06,4.14551,0.480156
+140,FKL,pixel-centre,3.5204e-06,4.14551,4.1455,3.56033e-06,4.14551,0.480143
+150,FKL,pixel-centre,3.5204e-06,4.26534,4.26533,3.56033e-06,4.26534,0.480104

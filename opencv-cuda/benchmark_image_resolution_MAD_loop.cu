@@ -24,7 +24,11 @@ constexpr char VARIABLE_DIMENSION[]{ "Number of elements" };  // the data is a r
 
 constexpr size_t NUM_EXPERIMENTS = 60;
 constexpr size_t FIRST_VALUE = 100;
+#ifdef FKLB_DATASIZE_INCREMENT
+constexpr size_t INCREMENT = FKLB_DATASIZE_INCREMENT;   // the _mul4 variant: every size a multiple of 4 (OpenCV-CUDA's vectorised kernels need it), see results/rtx4090/e0-data-size-parity
+#else
 constexpr size_t INCREMENT = 282270;
+#endif
 
 constexpr std::array<size_t, NUM_EXPERIMENTS> batchValues = arrayIndexSecuence<FIRST_VALUE, INCREMENT, NUM_EXPERIMENTS>;
 
@@ -184,18 +188,34 @@ int launch() {
     warmup = true;
     LAUNCH_TESTS(CV_8UC1, CV_32FC1)
     LAUNCH_TESTS(CV_32FC1, CV_32FC1)
+#ifndef FKLB_DATASIZE_ONE_CHANNEL_ONLY
     LAUNCH_TESTS(CV_8UC3, CV_32FC3)
+#endif
+#ifndef FKLB_DATASIZE_ONE_CHANNEL_ONLY
     LAUNCH_TESTS(CV_16UC4, CV_32FC4)
+#endif
+#ifndef FKLB_DATASIZE_ONE_CHANNEL_ONLY
     LAUNCH_TESTS(CV_32SC4, CV_32FC4)
+#endif
+#ifndef FKLB_DATASIZE_ONE_CHANNEL_ONLY
     LAUNCH_TESTS(CV_32FC4, CV_64FC4)
+#endif
     warmup = false;
 
     LAUNCH_TESTS(CV_8UC1, CV_32FC1)
     LAUNCH_TESTS(CV_32FC1, CV_32FC1)
+#ifndef FKLB_DATASIZE_ONE_CHANNEL_ONLY
     LAUNCH_TESTS(CV_8UC3, CV_32FC3)
+#endif
+#ifndef FKLB_DATASIZE_ONE_CHANNEL_ONLY
     LAUNCH_TESTS(CV_16UC4, CV_32FC4)
+#endif
+#ifndef FKLB_DATASIZE_ONE_CHANNEL_ONLY
     LAUNCH_TESTS(CV_32SC4, CV_32FC4)
+#endif
+#ifndef FKLB_DATASIZE_ONE_CHANNEL_ONLY
     LAUNCH_TESTS(CV_32FC4, CV_64FC4)
+#endif
 
     CLOSE_BENCHMARK
 

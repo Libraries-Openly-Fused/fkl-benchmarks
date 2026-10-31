@@ -1,0 +1,26 @@
+# experiment: E4a/E4c pre-processing: agreement with the scalar references
+# notes: informational where the conventions differ: the columns vs_asymmetric and vs_half_pixel compare the output with both references; ok_own is the strict check
+# repo: fkl-benchmarks 8891e5931a8e7c884b874eac72a84b2d38ed196a-dirty
+# fkl: 38c4f32d887b4530c54362eb526c9a5411ee92fe
+# cvGPUSpeedup: 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c
+# FastNPP: 9dfc4f430225e40ded392bfa777b2e724367c5c1
+# nvcc: 13.4.92 (/home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/nvcc), architectures 89, -fmad on, -lineinfo on
+# hip: none (none), architectures none
+# host compiler: GNU 15.2.0, Release, -march=native, -ftemplate-depth=1000
+# opencv: 4.14.0
+# cpu: AMD Ryzen 9 5950X 16-Core Processor
+# gpu: NVIDIA GeForce RTX 4090, cc 8.9, 128 SMs, 24106 MiB, PCI 0000:09:00.0
+# cuda driver api: 13.3, cuda runtime: 13.4
+# nvidia-smi driver: 610.43.02
+# clocks (sm, mem, max sm, max mem, MHz): 2670 MHz, 10251 MHz, 3105 MHz, 10501 MHz
+# power limit, temperature at start: 450.00 W, 54
+experiment,batch,version,convention,max_abs_err_own_reference,ok_own,max_abs_err_vs_asymmetric,max_abs_err_vs_half_pixel
+E4c,1,npp_ctx_as_tests,HALF_PIXEL,5.35117255e-06,1,7.01367153,5.35117255e-06
+E4c,1,npp,HALF_PIXEL,5.35117255e-06,1,7.01367153,5.35117255e-06
+E4c,1,npp_ctx_as_tests_vs_npp,HALF_PIXEL,0,1,,
+E4c,1,npp_ctx_as_tests,HALF_PIXEL,5.35117255e-06,1,7.63183595,5.35117255e-06
+E4c,1,npp,HALF_PIXEL,5.35117255e-06,1,7.63183595,5.35117255e-06
+E4c,1,npp_ctx_as_tests_vs_npp,HALF_PIXEL,0,1,,
+E4c,1,npp_ctx_as_tests,HALF_PIXEL,5.35117255e-06,1,7.51220693,5.35117255e-06
+E4c,1,npp,HALF_PIXEL,5.35117255e-06,1,7.51220693,5.35117255e-06
+E4c,1,npp_ctx_as_tests_vs_npp,HALF_PIXEL,0,1,,

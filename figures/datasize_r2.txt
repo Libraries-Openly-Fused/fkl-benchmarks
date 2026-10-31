@@ -1,0 +1,12 @@
+datasize_r2.pdf: drawn by scripts/plot_datasize.py
+size: 3.40 x 2.10 in (the printed width)
+csv: results/rtx4090/e0-data-size/benchmark_image_resolution_MAD_loop.csv
+  results commit that last changed it: 645c631ab9e5892a6681eca6f564a124035a69e8
+  produced by repo: fkl-benchmarks 1a70cab091da75c6d691a08a56117aab783e50df
+  produced by fkl: fb9ac3ad4a64aad40ae3122e14143f03814f2cc0
+  produced by nvcc: 13.4.92 (/home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/nvcc), architectures 89, -fmad on, -lineinfo on
+  produced by gpu: NVIDIA GeForce RTX 4090, cc 8.9, 128 SMs, 24106 MiB, PCI 0000:09:00.0
+x axis: log
+type pair CV_32FC1XCV_32FC1; 60 points, 100 to 16654030 elements
+at the last point: OpenCV-CUDA 53.56 ms, FKL (cvGS) 0.131 ms (speedup 409x)
+OpenCV-CUDA is bimodal in this run: its time at every point with N mod 4 = 2 is about 3x that of the neighbouring N mod 4 = 0 points (30 of 60 points have N mod 4 = 2); the curve is drawn as measured

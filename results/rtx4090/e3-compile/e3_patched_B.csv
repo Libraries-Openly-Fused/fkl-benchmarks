@@ -1,0 +1,27 @@
+# experiment: E3 compile-time sweep
+# notes: one core (15), nvcc --threads 1, -O3 -DNDEBUG -std=c++17 sm_89 +PTX -ftemplate-depth=1000 -lineinfo; GNU time for the peak RSS; timeout 5400 s per compile; the programs are not executed; fkl include /tmp/claude-1000/-home-oscar-tfkl-bench/d3e03e77-0fda-4126-a580-8c31301e5300/scratchpad/fkl-patched/include
+# repo: fdd6429c3896c1dd77995b006b5dc0994711ea32
+# fkl: 38c4f32d887b4530c54362eb526c9a5411ee92fe
+# cvGPUSpeedup: 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c
+# FastNPP: 9dfc4f430225e40ded392bfa777b2e724367c5c1
+# python: 3.12.13, torch: 2.14.1+cu130, torch.version.cuda: 13.0
+# triton: 3.8.0; ptxas /home/oscar/tfkl-bench/venv-torch/lib/python3.12/site-packages/triton/backends/nvidia/bin/ptxas (release 12.9); ptxas_blackwell /home/oscar/tfkl-bench/venv-torch/lib/python3.12/site-packages/triton/backends/nvidia/bin/ptxas-blackwell (release 13.3); cuobjdump /home/oscar/tfkl-bench/venv-torch/lib/python3.12/site-packages/triton/backends/nvidia/bin/cuobjdump (release 13.1); nvdisasm /home/oscar/tfkl-bench/venv-torch/lib/python3.12/site-packages/triton/backends/nvidia/bin/nvdisasm (release 13.1)
+# flash_attn: 2.8.3.post2
+# gpu: NVIDIA GeForce RTX 4090, cc 8.9, 128 SMs, 24106 MiB
+# cuda_visible_devices: 1 (device 0, pci 00000000:05:00.0)
+# nvidia-smi driver: 610.43.02
+# clocks (sm, mem, max sm, max mem, MHz): 180 MHz, 405 MHz, 3090 MHz, 10001 MHz
+# power limit, temperature at start: 130.00 W, 32
+tree,variant,n,rep,status,why,cuda_wall_s,cuda_user_s,cuda_sys_s,cuda_peak_rss_mb,phase_cudafe_s,phase_cicc_s,phase_ptxas_s,phase_gcc_s,phase_other_s,registers,spill_stores,spill_loads,stack_bytes,cmem0_bytes,sass_instructions,text_bytes,cubin_bytes,host_status,host_wall_s,host_peak_rss_mb
+patched,B,1000,0,ok,,26.377,24.390,1.980,1492,0.955,14.571,0.658,10.043,0.119,19,0,0,0,15344,8144,,,,,
+patched,B,1000,1,ok,,25.416,23.510,1.890,1489,0.930,14.163,0.620,9.557,0.115,19,0,0,0,15344,8144,,,,,
+patched,B,1000,2,ok,,25.029,23.160,1.850,1490,0.897,13.939,0.610,9.437,0.115,19,0,0,0,15344,8144,,,,,
+patched,B,1024,0,ok,,26.812,24.800,1.990,1536,0.912,14.997,0.617,10.135,0.120,19,0,0,0,15544,8336,,,,,
+patched,B,1024,1,ok,,26.660,24.690,1.960,1538,0.927,14.940,0.608,10.037,0.118,19,0,0,0,15544,8336,,,,,
+patched,B,1024,2,ok,,26.637,24.590,2.030,1537,0.916,14.902,0.605,10.067,0.117,19,0,0,0,15544,8336,,,,,
+patched,B,1500,0,ok,,55.437,52.260,3.160,2613,0.926,35.002,1.174,18.059,0.228,19,0,0,0,19584,12120,,,,,
+patched,B,2000,0,ok,,115.247,110.120,5.120,4100,0.943,72.712,2.038,39.074,0.402,19,0,0,0,23840,16144,,,,,
+patched,B,2500,0,ok,,192.791,185.260,7.520,5908,1.166,139.185,3.324,48.424,0.593,19,0,0,0,28088,20120,,,,,
+patched,B,2700,0,ok,,239.959,231.380,8.570,6782,0.991,176.286,4.648,57.211,0.711,19,0,0,0,29784,21720,,,,,
+patched,B,3000,0,ok,,319.088,309.270,9.800,8093,0.994,230.111,5.860,81.124,0.867,19,0,0,0,32344,24144,,,,,
+patched,B,3500,0,ok,,493.244,478.060,15.170,10631,1.033,352.373,12.359,126.100,1.200,19,0,0,0,36584,28120,,,,,

@@ -1,0 +1,29 @@
+# experiment: E3 compile-time sweep
+# notes: one core (13), nvcc --threads 1, -O3 -DNDEBUG -std=c++17 sm_89 +PTX -ftemplate-depth=1000 -lineinfo; GNU time for the peak RSS; timeout 5400 s per compile; the programs are not executed; fkl include /home/oscar/tfkl-bench/worktrees/fkl-getarg/include
+# repo: 35ecb77ef745ff891e3172561a9b2c19792895e0-dirty
+# fkl: 38c4f32d887b4530c54362eb526c9a5411ee92fe
+# cvGPUSpeedup: 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c
+# FastNPP: 9dfc4f430225e40ded392bfa777b2e724367c5c1
+# python: 3.12.13, torch: 2.14.1+cu130, torch.version.cuda: 13.0
+# triton: 3.8.0; ptxas /home/oscar/tfkl-bench/venv-torch/lib/python3.12/site-packages/triton/backends/nvidia/bin/ptxas (release 12.9); ptxas_blackwell /home/oscar/tfkl-bench/venv-torch/lib/python3.12/site-packages/triton/backends/nvidia/bin/ptxas-blackwell (release 13.3); cuobjdump /home/oscar/tfkl-bench/venv-torch/lib/python3.12/site-packages/triton/backends/nvidia/bin/cuobjdump (release 13.1); nvdisasm /home/oscar/tfkl-bench/venv-torch/lib/python3.12/site-packages/triton/backends/nvidia/bin/nvdisasm (release 13.1)
+# flash_attn: 2.8.3.post2
+# gpu: NVIDIA GeForce RTX 4090, cc 8.9, 128 SMs, 24106 MiB
+# cuda_visible_devices: 1 (device 0, pci 00000000:05:00.0)
+# nvidia-smi driver: 610.43.02
+# clocks (sm, mem, max sm, max mem, MHz): 180 MHz, 405 MHz, 3090 MHz, 10001 MHz
+# power limit, temperature at start: 130.00 W, 33
+tree,variant,n,rep,status,why,cuda_wall_s,cuda_user_s,cuda_sys_s,cuda_peak_rss_mb,phase_cudafe_s,phase_cicc_s,phase_ptxas_s,phase_gcc_s,phase_other_s,registers,spill_stores,spill_loads,stack_bytes,cmem0_bytes,sass_instructions,text_bytes,cubin_bytes,host_status,host_wall_s,host_peak_rss_mb
+getarg-pr,A,1000,0,ok,,25.621,23.800,1.810,1466,0.947,14.481,0.495,9.536,0.134,17,0,0,0,4408,3640,,,,,
+getarg-pr,A,1000,1,ok,,24.875,23.090,1.770,1466,0.958,13.976,0.486,9.296,0.131,17,0,0,0,4408,3640,,,,,
+getarg-pr,A,1000,2,ok,,24.531,22.850,1.660,1466,0.957,13.730,0.483,9.203,0.130,17,0,0,0,4408,3640,,,,,
+getarg-pr,A,1023,0,ok,,23.573,21.820,1.740,1509,0.925,14.339,0.484,7.663,0.134,17,0,0,0,4504,3712,,,,,
+getarg-pr,A,1023,1,ok,,23.659,21.960,1.690,1509,0.927,14.376,0.485,7.710,0.133,17,0,0,0,4504,3712,,,,,
+getarg-pr,A,1023,2,ok,,23.589,21.790,1.780,1509,0.925,14.311,0.486,7.706,0.134,17,0,0,0,4504,3712,,,,,
+getarg-pr,A,1024,0,ok,,23.902,22.150,1.740,1509,0.936,14.555,0.482,7.763,0.137,17,0,0,0,4504,3728,,,,,
+getarg-pr,A,1024,1,ok,,24.203,22.400,1.790,1509,0.931,14.840,0.484,7.782,0.136,17,0,0,0,4504,3728,,,,,
+getarg-pr,A,1024,2,ok,,24.165,22.320,1.840,1511,0.967,14.695,0.489,7.848,0.137,17,0,0,0,4504,3728,,,,,
+getarg-pr,A,1030,0,ok,,24.789,23.050,1.730,1522,0.959,15.386,0.494,7.785,0.136,17,0,0,0,4528,3744,,,,,
+getarg-pr,A,1030,1,ok,,24.308,22.540,1.750,1522,0.939,14.915,0.489,7.798,0.137,17,0,0,0,4528,3744,,,,,
+getarg-pr,A,1030,2,ok,,24.884,22.990,1.880,1522,0.937,15.326,0.506,7.943,0.143,17,0,0,0,4528,3744,,,,,
+getarg-pr,A,1500,0,ok,,59.693,56.130,3.550,2589,0.962,38.369,1.217,18.796,0.302,17,0,0,0,12840,5384,,,,,
+getarg-pr,A,3000,0,ok,,332.104,321.520,10.570,8048,1.004,229.173,7.096,93.647,1.049,17,0,0,0,18840,10640,,,,,

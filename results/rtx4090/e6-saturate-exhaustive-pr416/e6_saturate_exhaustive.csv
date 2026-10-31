@@ -1,0 +1,196 @@
+# experiment: E6 fk::SaturateCast<float, T> over all 2^32 float bit patterns
+# notes: comparisons: fkl_dev = fk::SaturateCast on the device; opencv_dev = cv::cuda::device::saturate_cast; hw = PTX cvt.rni.sat (round to nearest even, saturating); fkl_host = fk::SaturateCast on the host (cxp::saturate_cast); opencv_host = cv::saturate_cast (cvRound); classes by IEEE-754 binary32 bit pattern; examples: the first 4 disagreeing patterns, as bits: value of the first against the second; host half included
+# repo: fkl-benchmarks 404da832ae9bdf1f2eab439643b140c5185b4a84-dirty
+# fkl: 38c4f32d887b4530c54362eb526c9a5411ee92fe
+# cvGPUSpeedup: 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c
+# FastNPP: 9dfc4f430225e40ded392bfa777b2e724367c5c1
+# nvcc: 13.4.92 (/home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/nvcc), architectures 89, -fmad on, -lineinfo on
+# host compiler: GNU 15.2.0, Release, -march=native, -ftemplate-depth=1000
+# opencv: 4.14.0
+# cpu: AMD Ryzen 9 5950X 16-Core Processor
+# gpu: NVIDIA GeForce RTX 4090, cc 8.9, 128 SMs, 24106 MiB, PCI 0000:09:00.0
+# cuda driver api: 13.3, cuda runtime: 13.4
+# nvidia-smi driver: 610.43.02
+# clocks (sm, mem, max sm, max mem, MHz): 2670 MHz, 10501 MHz, 3105 MHz, 10501 MHz
+# power limit, temperature at start: 450.00 W, 51
+type,comparison,class,patterns_in_class,disagreeing,examples
+uchar,fkl_dev_vs_opencv_dev,NaN,16777214,0,
+uchar,fkl_dev_vs_opencv_dev,+Inf,1,0,
+uchar,fkl_dev_vs_opencv_dev,-Inf,1,0,
+uchar,fkl_dev_vs_opencv_dev,denormal,16777214,0,
+uchar,fkl_dev_vs_opencv_dev,zero,2,0,
+uchar,fkl_dev_vs_opencv_dev,normal,4261412864,0,
+uchar,fkl_dev_vs_hw,NaN,16777214,0,
+uchar,fkl_dev_vs_hw,+Inf,1,0,
+uchar,fkl_dev_vs_hw,-Inf,1,0,
+uchar,fkl_dev_vs_hw,denormal,16777214,0,
+uchar,fkl_dev_vs_hw,zero,2,0,
+uchar,fkl_dev_vs_hw,normal,4261412864,0,
+uchar,opencv_dev_vs_hw,NaN,16777214,0,
+uchar,opencv_dev_vs_hw,+Inf,1,0,
+uchar,opencv_dev_vs_hw,-Inf,1,0,
+uchar,opencv_dev_vs_hw,denormal,16777214,0,
+uchar,opencv_dev_vs_hw,zero,2,0,
+uchar,opencv_dev_vs_hw,normal,4261412864,0,
+uchar,fkl_host_vs_fkl_dev,NaN,16777214,0,
+uchar,fkl_host_vs_fkl_dev,+Inf,1,0,
+uchar,fkl_host_vs_fkl_dev,-Inf,1,0,
+uchar,fkl_host_vs_fkl_dev,denormal,16777214,0,
+uchar,fkl_host_vs_fkl_dev,zero,2,0,
+uchar,fkl_host_vs_fkl_dev,normal,4261412864,0,
+uchar,opencv_host_vs_opencv_dev,NaN,16777214,0,
+uchar,opencv_host_vs_opencv_dev,+Inf,1,1,0x7f800000: 0 vs 255
+uchar,opencv_host_vs_opencv_dev,-Inf,1,0,
+uchar,opencv_host_vs_opencv_dev,denormal,16777214,0,
+uchar,opencv_host_vs_opencv_dev,zero,2,0,
+uchar,opencv_host_vs_opencv_dev,normal,4261412864,822083583,0x4f000000: 0 vs 255; 0x4f000001: 0 vs 255; 0x4f000002: 0 vs 255; 0x4f000003: 0 vs 255
+uchar,fkl_host_vs_opencv_host,NaN,16777214,0,
+uchar,fkl_host_vs_opencv_host,+Inf,1,1,0x7f800000: 255 vs 0
+uchar,fkl_host_vs_opencv_host,-Inf,1,0,
+uchar,fkl_host_vs_opencv_host,denormal,16777214,0,
+uchar,fkl_host_vs_opencv_host,zero,2,0,
+uchar,fkl_host_vs_opencv_host,normal,4261412864,822083583,0x4f000000: 255 vs 0; 0x4f000001: 255 vs 0; 0x4f000002: 255 vs 0; 0x4f000003: 255 vs 0
+schar,fkl_dev_vs_opencv_dev,NaN,16777214,0,
+schar,fkl_dev_vs_opencv_dev,+Inf,1,0,
+schar,fkl_dev_vs_opencv_dev,-Inf,1,0,
+schar,fkl_dev_vs_opencv_dev,denormal,16777214,0,
+schar,fkl_dev_vs_opencv_dev,zero,2,0,
+schar,fkl_dev_vs_opencv_dev,normal,4261412864,0,
+schar,fkl_dev_vs_hw,NaN,16777214,0,
+schar,fkl_dev_vs_hw,+Inf,1,0,
+schar,fkl_dev_vs_hw,-Inf,1,0,
+schar,fkl_dev_vs_hw,denormal,16777214,0,
+schar,fkl_dev_vs_hw,zero,2,0,
+schar,fkl_dev_vs_hw,normal,4261412864,0,
+schar,opencv_dev_vs_hw,NaN,16777214,0,
+schar,opencv_dev_vs_hw,+Inf,1,0,
+schar,opencv_dev_vs_hw,-Inf,1,0,
+schar,opencv_dev_vs_hw,denormal,16777214,0,
+schar,opencv_dev_vs_hw,zero,2,0,
+schar,opencv_dev_vs_hw,normal,4261412864,0,
+schar,fkl_host_vs_fkl_dev,NaN,16777214,0,
+schar,fkl_host_vs_fkl_dev,+Inf,1,0,
+schar,fkl_host_vs_fkl_dev,-Inf,1,0,
+schar,fkl_host_vs_fkl_dev,denormal,16777214,0,
+schar,fkl_host_vs_fkl_dev,zero,2,0,
+schar,fkl_host_vs_fkl_dev,normal,4261412864,0,
+schar,opencv_host_vs_opencv_dev,NaN,16777214,0,
+schar,opencv_host_vs_opencv_dev,+Inf,1,1,0x7f800000: 0 vs 127
+schar,opencv_host_vs_opencv_dev,-Inf,1,1,0xff800000: 0 vs -128
+schar,opencv_host_vs_opencv_dev,denormal,16777214,0,
+schar,opencv_host_vs_opencv_dev,zero,2,0,
+schar,opencv_host_vs_opencv_dev,normal,4261412864,1442840574,0x4f000000: -128 vs 127; 0x4f000001: -128 vs 127; 0x4f000002: -128 vs 127; 0x4f000003: -128 vs 127
+schar,fkl_host_vs_opencv_host,NaN,16777214,0,
+schar,fkl_host_vs_opencv_host,+Inf,1,1,0x7f800000: 127 vs 0
+schar,fkl_host_vs_opencv_host,-Inf,1,1,0xff800000: -128 vs 0
+schar,fkl_host_vs_opencv_host,denormal,16777214,0,
+schar,fkl_host_vs_opencv_host,zero,2,0,
+schar,fkl_host_vs_opencv_host,normal,4261412864,1442840574,0x4f000000: 127 vs -128; 0x4f000001: 127 vs -128; 0x4f000002: 127 vs -128; 0x4f000003: 127 vs -128
+short,fkl_dev_vs_opencv_dev,NaN,16777214,0,
+short,fkl_dev_vs_opencv_dev,+Inf,1,0,
+short,fkl_dev_vs_opencv_dev,-Inf,1,0,
+short,fkl_dev_vs_opencv_dev,denormal,16777214,0,
+short,fkl_dev_vs_opencv_dev,zero,2,0,
+short,fkl_dev_vs_opencv_dev,normal,4261412864,0,
+short,fkl_dev_vs_hw,NaN,16777214,0,
+short,fkl_dev_vs_hw,+Inf,1,0,
+short,fkl_dev_vs_hw,-Inf,1,0,
+short,fkl_dev_vs_hw,denormal,16777214,0,
+short,fkl_dev_vs_hw,zero,2,0,
+short,fkl_dev_vs_hw,normal,4261412864,0,
+short,opencv_dev_vs_hw,NaN,16777214,0,
+short,opencv_dev_vs_hw,+Inf,1,0,
+short,opencv_dev_vs_hw,-Inf,1,0,
+short,opencv_dev_vs_hw,denormal,16777214,0,
+short,opencv_dev_vs_hw,zero,2,0,
+short,opencv_dev_vs_hw,normal,4261412864,0,
+short,fkl_host_vs_fkl_dev,NaN,16777214,0,
+short,fkl_host_vs_fkl_dev,+Inf,1,0,
+short,fkl_host_vs_fkl_dev,-Inf,1,0,
+short,fkl_host_vs_fkl_dev,denormal,16777214,0,
+short,fkl_host_vs_fkl_dev,zero,2,0,
+short,fkl_host_vs_fkl_dev,normal,4261412864,0,
+short,opencv_host_vs_opencv_dev,NaN,16777214,0,
+short,opencv_host_vs_opencv_dev,+Inf,1,1,0x7f800000: 0 vs 32767
+short,opencv_host_vs_opencv_dev,-Inf,1,1,0xff800000: 0 vs -32768
+short,opencv_host_vs_opencv_dev,denormal,16777214,0,
+short,opencv_host_vs_opencv_dev,zero,2,0,
+short,opencv_host_vs_opencv_dev,normal,4261412864,1442841216,0x4f000000: -32768 vs 32767; 0x4f000001: -32768 vs 32767; 0x4f000002: -32768 vs 32767; 0x4f000003: -32768 vs 32767
+short,fkl_host_vs_opencv_host,NaN,16777214,0,
+short,fkl_host_vs_opencv_host,+Inf,1,1,0x7f800000: 32767 vs 0
+short,fkl_host_vs_opencv_host,-Inf,1,1,0xff800000: -32768 vs 0
+short,fkl_host_vs_opencv_host,denormal,16777214,0,
+short,fkl_host_vs_opencv_host,zero,2,0,
+short,fkl_host_vs_opencv_host,normal,4261412864,1442841216,0x4f000000: 32767 vs -32768; 0x4f000001: 32767 vs -32768; 0x4f000002: 32767 vs -32768; 0x4f000003: 32767 vs -32768
+ushort,fkl_dev_vs_opencv_dev,NaN,16777214,0,
+ushort,fkl_dev_vs_opencv_dev,+Inf,1,0,
+ushort,fkl_dev_vs_opencv_dev,-Inf,1,0,
+ushort,fkl_dev_vs_opencv_dev,denormal,16777214,0,
+ushort,fkl_dev_vs_opencv_dev,zero,2,0,
+ushort,fkl_dev_vs_opencv_dev,normal,4261412864,0,
+ushort,fkl_dev_vs_hw,NaN,16777214,0,
+ushort,fkl_dev_vs_hw,+Inf,1,0,
+ushort,fkl_dev_vs_hw,-Inf,1,0,
+ushort,fkl_dev_vs_hw,denormal,16777214,0,
+ushort,fkl_dev_vs_hw,zero,2,0,
+ushort,fkl_dev_vs_hw,normal,4261412864,0,
+ushort,opencv_dev_vs_hw,NaN,16777214,0,
+ushort,opencv_dev_vs_hw,+Inf,1,0,
+ushort,opencv_dev_vs_hw,-Inf,1,0,
+ushort,opencv_dev_vs_hw,denormal,16777214,0,
+ushort,opencv_dev_vs_hw,zero,2,0,
+ushort,opencv_dev_vs_hw,normal,4261412864,0,
+ushort,fkl_host_vs_fkl_dev,NaN,16777214,0,
+ushort,fkl_host_vs_fkl_dev,+Inf,1,0,
+ushort,fkl_host_vs_fkl_dev,-Inf,1,0,
+ushort,fkl_host_vs_fkl_dev,denormal,16777214,0,
+ushort,fkl_host_vs_fkl_dev,zero,2,0,
+ushort,fkl_host_vs_fkl_dev,normal,4261412864,0,
+ushort,opencv_host_vs_opencv_dev,NaN,16777214,0,
+ushort,opencv_host_vs_opencv_dev,+Inf,1,1,0x7f800000: 0 vs 65535
+ushort,opencv_host_vs_opencv_dev,-Inf,1,0,
+ushort,opencv_host_vs_opencv_dev,denormal,16777214,0,
+ushort,opencv_host_vs_opencv_dev,zero,2,0,
+ushort,opencv_host_vs_opencv_dev,normal,4261412864,822084352,0x4f000000: 0 vs 65535; 0x4f000001: 0 vs 65535; 0x4f000002: 0 vs 65535; 0x4f000003: 0 vs 65535
+ushort,fkl_host_vs_opencv_host,NaN,16777214,0,
+ushort,fkl_host_vs_opencv_host,+Inf,1,1,0x7f800000: 65535 vs 0
+ushort,fkl_host_vs_opencv_host,-Inf,1,0,
+ushort,fkl_host_vs_opencv_host,denormal,16777214,0,
+ushort,fkl_host_vs_opencv_host,zero,2,0,
+ushort,fkl_host_vs_opencv_host,normal,4261412864,822084352,0x4f000000: 65535 vs 0; 0x4f000001: 65535 vs 0; 0x4f000002: 65535 vs 0; 0x4f000003: 65535 vs 0
+int,fkl_dev_vs_opencv_dev,NaN,16777214,0,
+int,fkl_dev_vs_opencv_dev,+Inf,1,0,
+int,fkl_dev_vs_opencv_dev,-Inf,1,0,
+int,fkl_dev_vs_opencv_dev,denormal,16777214,0,
+int,fkl_dev_vs_opencv_dev,zero,2,0,
+int,fkl_dev_vs_opencv_dev,normal,4261412864,0,
+int,fkl_dev_vs_hw,NaN,16777214,0,
+int,fkl_dev_vs_hw,+Inf,1,0,
+int,fkl_dev_vs_hw,-Inf,1,0,
+int,fkl_dev_vs_hw,denormal,16777214,0,
+int,fkl_dev_vs_hw,zero,2,0,
+int,fkl_dev_vs_hw,normal,4261412864,0,
+int,opencv_dev_vs_hw,NaN,16777214,0,
+int,opencv_dev_vs_hw,+Inf,1,0,
+int,opencv_dev_vs_hw,-Inf,1,0,
+int,opencv_dev_vs_hw,denormal,16777214,0,
+int,opencv_dev_vs_hw,zero,2,0,
+int,opencv_dev_vs_hw,normal,4261412864,0,
+int,fkl_host_vs_fkl_dev,NaN,16777214,0,
+int,fkl_host_vs_fkl_dev,+Inf,1,0,
+int,fkl_host_vs_fkl_dev,-Inf,1,0,
+int,fkl_host_vs_fkl_dev,denormal,16777214,0,
+int,fkl_host_vs_fkl_dev,zero,2,0,
+int,fkl_host_vs_fkl_dev,normal,4261412864,0,
+int,opencv_host_vs_opencv_dev,NaN,16777214,0,
+int,opencv_host_vs_opencv_dev,+Inf,1,1,0x7f800000: 0 vs 2147483647
+int,opencv_host_vs_opencv_dev,-Inf,1,1,0xff800000: 0 vs -2147483648
+int,opencv_host_vs_opencv_dev,denormal,16777214,0,
+int,opencv_host_vs_opencv_dev,zero,2,0,
+int,opencv_host_vs_opencv_dev,normal,4261412864,1619001344,0x4f000000: -2147483648 vs 2147483647; 0x4f000001: -2147483392 vs 2147483647; 0x4f000002: -2147483136 vs 2147483647; 0x4f000003: -2147482880 vs 2147483647
+int,fkl_host_vs_opencv_host,NaN,16777214,0,
+int,fkl_host_vs_opencv_host,+Inf,1,1,0x7f800000: 2147483647 vs 0
+int,fkl_host_vs_opencv_host,-Inf,1,1,0xff800000: -2147483648 vs 0
+int,fkl_host_vs_opencv_host,denormal,16777214,0,
+int,fkl_host_vs_opencv_host,zero,2,0,
+int,fkl_host_vs_opencv_host,normal,4261412864,1619001344,0x4f000000: 2147483647 vs -2147483648; 0x4f000001: 2147483647 vs -2147483392; 0x4f000002: 2147483647 vs -2147483136; 0x4f000003: 2147483647 vs -2147482880

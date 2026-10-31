@@ -1,0 +1,12 @@
+compiletime_single_r2.pdf: drawn by scripts/plot_compiletime.py
+size: 3.40 x 2.10 in (the printed width)
+csv: results/rtx4090/e3-compile/e3_table_chains.csv
+  results commit that last changed it: f5600afa30317a585f49ae3472d6fce51a66d16b
+csv: results/rtx4090/e3-compile/e3_table_staticloop.csv
+  results commit that last changed it: 9afddfbe353ee6141a1ce477b13ce81fdde4547a
+distinct operations (variant A) compiled with the library as it is now: the get_arg change of PR #417 (LTS-C++17-get-arg-no-tuple, head a8a74eaaaee4, on LTS-C++17 d776713)
+  N = 1, 100, 500, 1000, 1023, 1024, 1030, 1500, 2000, 3000, 4000: compiled from the branch worktree (include path recorded in e3_getarg_pr_A.csv, compile-times-1-100-500-2000/with_fix.csv and cubin-sizes/e3_cubin_A.csv; the get_arg header is identical in every commit of the branch: 4f71c94, 3c0eb19 and a8a74ea)
+  N = 1020, 6000: compiled from a copy of the pinned tree 38c4f32 with the same one-function change (the code of Nth/Skip is identical, only comments and one static_assert message differ); 6000 is the time-out
+StaticLoop: N 2..19902 (14 points), nvcc 4.0 s to 35.1 s
+toolchain: CUDA 13.4.3, nvcc 13.4.92, g++ 15.2, one core, --threads 1, -O3 -DNDEBUG -std=c++17, sm_89 + PTX; fkl-benchmarks pins external/fkl at 38c4f32
+tables: results/rtx4090/e3-compile/e3_table_chains.csv, e3_table_staticloop.csv (derived by scripts/e3_table.py from the sweeps listed in its docstring)
