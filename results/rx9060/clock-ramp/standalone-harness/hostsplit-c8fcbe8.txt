@@ -1,0 +1,31 @@
+-- allocation order: asymmetric first, half-pixel second
+asymmetric   N=100  host(launch) 0.0035 ms  total(launch+sync) 0.0650 ms  device(events) 0.0438 ms  burst launch 0.0016 ms  | sclk mean 2996 min 2959 max 3011 MHz
+half-pixel   N=100  host(launch) 0.0034 ms  total(launch+sync) 0.0660 ms  device(events) 0.0450 ms  burst launch 0.0016 ms  | sclk mean 3022 min 2976 max 3039 MHz
+asymmetric   N=100  host(launch) 0.0034 ms  total(launch+sync) 0.0647 ms  device(events) 0.0434 ms  burst launch 0.0015 ms  | sclk mean 3069 min 3029 max 3083 MHz
+half-pixel   N=100  host(launch) 0.0034 ms  total(launch+sync) 0.0660 ms  device(events) 0.0447 ms  burst launch 0.0016 ms  | sclk mean 3098 min 3074 max 3109 MHz
+-- allocation order: asymmetric first, half-pixel second
+asymmetric   N=200  host(launch) 0.0039 ms  total(launch+sync) 0.0953 ms  device(events) 0.0739 ms  burst launch 0.0018 ms  | sclk mean 3071 min 3051 max 3084 MHz
+half-pixel   N=200  host(launch) 0.0038 ms  total(launch+sync) 0.0975 ms  device(events) 0.0762 ms  burst launch 0.0017 ms  | sclk mean 3078 min 2927 max 3109 MHz
+asymmetric   N=200  host(launch) 0.0038 ms  total(launch+sync) 0.0952 ms  device(events) 0.0737 ms  burst launch 0.0018 ms  | sclk mean 3054 min 2854 max 3125 MHz
+half-pixel   N=200  host(launch) 0.0038 ms  total(launch+sync) 0.0974 ms  device(events) 0.0762 ms  burst launch 0.0017 ms  | sclk mean 3051 min 2848 max 3118 MHz
+-- allocation order: asymmetric first, half-pixel second
+asymmetric   N=300  host(launch) 0.0042 ms  total(launch+sync) 0.1277 ms  device(events) 0.1064 ms  burst launch 0.0022 ms  | sclk mean 3000 min 2927 max 3041 MHz
+half-pixel   N=300  host(launch) 0.0042 ms  total(launch+sync) 0.1307 ms  device(events) 0.1092 ms  burst launch 0.0022 ms  | sclk mean 2959 min 2777 max 3057 MHz
+asymmetric   N=300  host(launch) 0.0042 ms  total(launch+sync) 0.1271 ms  device(events) 0.1056 ms  burst launch 0.0021 ms  | sclk mean 2967 min 2788 max 3048 MHz
+half-pixel   N=300  host(launch) 0.0042 ms  total(launch+sync) 0.1310 ms  device(events) 0.1096 ms  burst launch 0.0021 ms  | sclk mean 2961 min 2777 max 3045 MHz
+-- after 3 s without GPU work, asymmetric with a warm-up of 0.5 s, then half-pixel with 0.5 s
+   warm-up trace (every 0.25 s: mean ms per iteration | mean sclk MHz): [0.15 1971] [0.15 2021]
+asymmetric   N=300  host(launch) 0.0041 ms  total(launch+sync) 0.1548 ms  device(events) 0.1328 ms  burst launch 0.0021 ms  | sclk mean 2025 min 2013 max 2039 MHz
+half-pixel   N=300  host(launch) 0.0042 ms  total(launch+sync) 0.1317 ms  device(events) 0.1103 ms  burst launch 0.0022 ms  | sclk mean 2984 min 2967 max 2998 MHz
+-- after 3 s without GPU work, asymmetric with a warm-up of 2.0 s, then half-pixel with 0.5 s
+   warm-up trace (every 0.25 s: mean ms per iteration | mean sclk MHz): [0.15 2015] [0.15 2025] [0.15 2094] [0.13 2594] [0.12 2978] [0.12 3001] [0.12 3022] [0.12 3046]
+asymmetric   N=300  host(launch) 0.0042 ms  total(launch+sync) 0.1264 ms  device(events) 0.1050 ms  burst launch 0.0021 ms  | sclk mean 2974 min 2795 max 3071 MHz
+half-pixel   N=300  host(launch) 0.0041 ms  total(launch+sync) 0.1304 ms  device(events) 0.1090 ms  burst launch 0.0020 ms  | sclk mean 2966 min 2785 max 3056 MHz
+-- after 3 s without GPU work, asymmetric with a warm-up of 5.0 s, then half-pixel with 0.5 s
+   warm-up trace (every 0.25 s: mean ms per iteration | mean sclk MHz): [0.15 1978] [0.15 2026] [0.15 2097] [0.13 2599] [0.12 2980] [0.12 3003] [0.12 3025] [0.12 3045] [0.12 3031] [0.12 3034] [0.12 3028] [0.12 3035] [0.12 3034] [0.12 3030] [0.12 3026] [0.12 3030] [0.12 3019] [0.12 3021] [0.12 3017] [0.12 3018]
+asymmetric   N=300  host(launch) 0.0041 ms  total(launch+sync) 0.1265 ms  device(events) 0.1053 ms  burst launch 0.0020 ms  | sclk mean 2970 min 2784 max 3054 MHz
+half-pixel   N=300  host(launch) 0.0042 ms  total(launch+sync) 0.1305 ms  device(events) 0.1090 ms  burst launch 0.0020 ms  | sclk mean 2949 min 2768 max 3048 MHz
+-- after 3 s without GPU work, asymmetric with a warm-up of 0.5 s, then half-pixel with 0.5 s
+   warm-up trace (every 0.25 s: mean ms per iteration | mean sclk MHz): [0.15 1973] [0.15 2024]
+asymmetric   N=300  host(launch) 0.0042 ms  total(launch+sync) 0.1550 ms  device(events) 0.1327 ms  burst launch 0.0020 ms  | sclk mean 2023 min 2001 max 2042 MHz
+half-pixel   N=300  host(launch) 0.0042 ms  total(launch+sync) 0.1314 ms  device(events) 0.1101 ms  burst launch 0.0022 ms  | sclk mean 2989 min 2971 max 3003 MHz
