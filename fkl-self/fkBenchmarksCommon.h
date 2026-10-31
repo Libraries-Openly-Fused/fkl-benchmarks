@@ -17,6 +17,7 @@
 
 #include <array>
 #include <chrono>
+#include <cstdlib>
 #include <unordered_map>
 #include <sstream>
 #include <fstream>
@@ -35,6 +36,30 @@ std::unordered_map<std::string, std::ofstream> currentFile;
 const std::string path{ "" };
 // Free text for the "# notes:" line of the CSV header: set it at the start of launch() to state the protocol
 std::string benchmarkNotes;
+
+// FKLB_GPU_SPIN_SECONDS (default 0: nothing happens). A GPU that was at rest ramps its clock during the first second of continuous work (an
+// RX 9060: 2.0 GHz for the first 0.7 s, 3.0 GHz after 1 s) and a kernel that is bound by the core clock is up to 50 percent slower until then. With
+// the variable set, spinGpu() runs `work` (it must end with the synchronisation of its stream) over and over for that many seconds, so that the
+// timed runs that follow are measured at the steady clock. For the benchmarks whose GPU work is not continuous from one point to the next.
+inline double gpuSpinSeconds() {
+    static const double seconds = [] {
+        const char* value = std::getenv("FKLB_GPU_SPIN_SECONDS");
+        return value ? std::atof(value) : 0.0;
+    }();
+    return seconds;
+}
+
+template <typename Work>
+inline void spinGpu(Work&& work) {
+    const double seconds = gpuSpinSeconds();
+    if (seconds <= 0.0) {
+        return;
+    }
+    const auto begin = std::chrono::steady_clock::now();
+    while (std::chrono::duration<double>(std::chrono::steady_clock::now() - begin).count() < seconds) {
+        work();
+    }
+}
 
 template <size_t START_VALUE, size_t INCREMENT, std::size_t... Is>
 constexpr std::array<size_t, sizeof...(Is)> generate_sequence(std::index_sequence<Is...>) {
