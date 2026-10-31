@@ -35,7 +35,7 @@
 namespace nv12bench {
 
 constexpr double TOLERANCE = 1e-4;
-constexpr double GPU_WARMUP_SECONDS = 0.5; // the GPU runs at a low clock until it has work for a while
+constexpr double GPU_WARMUP_SECONDS = 2.0; // minimum warm-up on a GPU: it runs at a low clock until it has had work for about a second (see nv12::measure)
 constexpr int BATCHES[] = {1, 8, 16, 32, 64};
 
 inline int envInt(const char* name, const int fallback) {
@@ -50,6 +50,7 @@ struct Output {
     fklb::CsvWriter agreement;
     bool allPass{true};
     int warmup, iters;
+    int rotateOffset{0}; // E5_ROTATE_OFFSET, see runPoint
 };
 
 // One back-end PA and N crops. `cpuFused` keeps the fused output of the single threaded CPU run for the byte comparison
@@ -106,17 +107,34 @@ void runPoint(nv12::Frame& frame, fk::Ptr2D<nv12::U3>& rgb, Output& out, std::ve
         threads = 1;
     }
     const auto time = [&](const std::string& variant, const int kernels, const std::function<void()>& fn) {
-        const nv12::Stats s = nv12::measure(fn, out.warmup, out.iters, cpu ? 0.0 : GPU_WARMUP_SECONDS);
-        out.timing.row(N, backEnd, variant, kernels, threads, s.median, s.min, s.max, s.mean, s.iters);
+        const nv12::Stats s = nv12::measure(fn, out.warmup, out.iters, cpu ? 0.0 : GPU_WARMUP_SECONDS, !cpu);
+        out.timing.row(N, backEnd, variant, kernels, threads, s.median, s.min, s.max, s.mean, s.iters, s.warmupSeconds, s.warmupSteady ? 1 : 0, s.gpuClockStartMHz, s.gpuClockTimedMHz, s.gpuClockEndMHz);
         std::cout << "  " << variant << ": median " << s.median << " ms (min " << s.min << ", max " << s.max << ")" << std::endl;
     };
-    time("convert", 1, [&] { pipe.convert(); pipe.sync(); });
-    time("chain_fused", 1, [&] { pipe.fused(); pipe.sync(); });
-    time("chain_perop_batch", 5, [&] { pipe.perOpBatch(); pipe.sync(); });
-    time("pipeline_fused", 2, [&] { pipe.convert(); pipe.fused(); pipe.sync(); });
-    time("pipeline_perop_batch", 6, [&] { pipe.convert(); pipe.perOpBatch(); pipe.sync(); });
+    struct Variant {
+        std::string name;
+        int kernels;
+        std::function<void()> fn;
+    };
+    std::vector<Variant> variants = {{"convert", 1, [&] { pipe.convert(); pipe.sync(); }},
+                                     {"chain_fused", 1, [&] { pipe.fused(); pipe.sync(); }},
+                                     {"chain_perop_batch", 5, [&] { pipe.perOpBatch(); pipe.sync(); }},
+                                     {"pipeline_fused", 2, [&] { pipe.convert(); pipe.fused(); pipe.sync(); }},
+                                     {"pipeline_perop_batch", 6, [&] { pipe.convert(); pipe.perOpBatch(); pipe.sync(); }}};
     if constexpr (cpu) {
-        time("pipeline_perop_crop", 1 + 5 * N, [&] { pipe.convert(); pipe.perOpCrop(); pipe.sync(); });
+        variants.push_back({"pipeline_perop_crop", 1 + 5 * N, [&] { pipe.convert(); pipe.perOpCrop(); pipe.sync(); }});
+    }
+    // On a GPU the variants are timed in a rotated order: the first one is variant ((log2 of the number of crops + E5_ROTATE_OFFSET) mod the number of
+    // variants); on the CPU the order is fixed. The rotation makes sure that a state of the GPU that the warm-up does not cover (the clock ramp after the
+    // host work between two points) would not always hit the same variant
+    int pointIndex = 0;
+    for (int n = N; n > 1; n >>= 1) {
+        ++pointIndex;
+    }
+    const size_t first = cpu ? 0 : static_cast<size_t>(pointIndex + out.rotateOffset) % variants.size();
+    for (size_t k = 0; k < variants.size(); ++k) {
+        const Variant& v = variants[(first + k) % variants.size()];
+        time(v.name, v.kernels, v.fn);
     }
     out.timing.flush();
     out.agreement.flush();
@@ -159,13 +177,13 @@ int launch() {
 
     const std::string arch(fk::toStrView(fk::defaultParArch));
     const std::string notes = "E4b NV12 pipeline: NV12 4K frame -> RGB kernel -> fused crops, resize 64x128, normalise, NCHW split; source: " +
-                              source + "; the frame is already in device memory, wall clock includes the stream synchronisation, 3 warm-up runs (a GPU: and at least 0.5 s of them)";
+                              source + "; the frame is already in device memory, wall clock includes the stream synchronisation; warm-up: 3 runs, and on a GPU at least 2 s and until the mean time of two consecutive windows of 0.25 s differs by at most 2 percent (cap 10 s; the columns warmup_s, warmup_steady and sclk_start_mhz, sclk_timed_start_mhz and sclk_end_mhz, the graphics clock of an AMD GPU at the start of the warm-up, at the start of the timed runs and after them, record it); on a GPU the variants of a point are timed in a rotated order (convert, chain_fused, chain_perop_batch, pipeline_fused, pipeline_perop_batch; the first one is variant ((log2 of the crops + E5_ROTATE_OFFSET = " + std::to_string(nv12bench::envInt("E5_ROTATE_OFFSET", 0)) + ") mod 5)), on the CPU in a fixed order (perop_crop last)";
     nv12bench::Output out{
         fklb::CsvWriter("benchmark_nv12_pipeline_" + arch + ".csv", "benchmark_nv12_pipeline",
-                        {"crops", "back_end", "variant", "kernels", "threads", "median_ms", "min_ms", "max_ms", "mean_ms", "iters"}, notes),
+                        {"crops", "back_end", "variant", "kernels", "threads", "median_ms", "min_ms", "max_ms", "mean_ms", "iters", "warmup_s", "warmup_steady", "sclk_start_mhz", "sclk_timed_start_mhz", "sclk_end_mhz"}, notes),
         fklb::CsvWriter("benchmark_nv12_pipeline_agreement_" + arch + ".csv", "benchmark_nv12_pipeline",
                         {"crops", "back_end", "comparison", "max_abs_diff", "pass"}, notes + "; tolerance 1e-4 absolute, identical = byte for byte"),
-        true, nv12bench::envInt("E5_WARMUP", 3), nv12bench::envInt("E5_ITERS", 30)};
+        true, nv12bench::envInt("E5_WARMUP", 3), nv12bench::envInt("E5_ITERS", 30), nv12bench::envInt("E5_ROTATE_OFFSET", 0)};
 
     nv12bench::runBatch<1>(frame, rgb, out);
     nv12bench::runBatch<8>(frame, rgb, out);

@@ -17,6 +17,7 @@ option(FKLB_ENABLE_HIP  "Build the hip back-end targets (needs amdclang++)" ON)
 option(FKLB_BUILD_FKL_SELF    "Build fkl-self/ (FKL against itself)" ON)
 option(FKLB_BUILD_OPENCV_CUDA "Build opencv-cuda/ (needs OpenCV with CUDA, -DOPENCV_DIR=<install prefix>)" ON)
 option(FKLB_BUILD_NPP         "Build npp/ (FastNPP against NPP)" ON)
+option(FKLB_BUILD_RPP         "Build rpp/ (FKL against AMD RPP on the HIP back-end; needs the rpp package of ROCm and an AMD GPU)" OFF)
 option(FKLB_BUILD_HANDWRITTEN "Build handwritten-cuda/ (E1: hand-written fused kernels against FKL; CUDA only)" ON)
 option(FKLB_BUILD_OPENCV_CPU  "Build opencv-cpu/ (FKL CPU back-end against OpenCV on the CPU; any OpenCV 4.x with core, imgproc, imgcodecs)" OFF)
 

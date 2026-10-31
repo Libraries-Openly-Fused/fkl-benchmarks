@@ -1,0 +1,26 @@
+# experiment: benchmark_nv12_pipeline
+# notes: E4b NV12 pipeline: NV12 4K frame -> RGB kernel -> fused crops, resize 64x128, normalise, NCHW split; source: seeded noise (LCG, seed 424242), luma 16..235, chroma 16..240; the frame is already in device memory, wall clock includes the stream synchronisation; warm-up: 3 runs, and on a GPU at least 2 s and until the mean time of two consecutive windows of 0.25 s differs by at most 2 percent (cap 10 s; the columns warmup_s, warmup_steady and sclk_start_mhz, sclk_timed_start_mhz and sclk_end_mhz, the graphics clock of an AMD GPU at the start of the warm-up, at the start of the timed runs and after them, record it); on a GPU the variants of a point are timed in a rotated order (convert, chain_fused, chain_perop_batch, pipeline_fused, pipeline_perop_batch; the first one is variant ((log2 of the crops + E5_ROTATE_OFFSET = 0) mod 5)), on the CPU in a fixed order (perop_crop last); tolerance 1e-4 absolute, identical = byte for byte
+# repo: fkl-benchmarks 534fca724e017b6d1eb9b043de5649405a1644ed
+# fkl: c8fcbe816d629377886cbdd19c83527f37ccfc04
+# cvGPUSpeedup: 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c
+# FastNPP: 9dfc4f430225e40ded392bfa777b2e724367c5c1
+# nvcc: none (none), architectures native, -fmad on, -lineinfo on
+# hip: 24.0.0 (/opt/rocm/core-10.1/bin/amdclang++), architectures gfx1200
+# host compiler: Clang 24.0.0, Release, -march=native, -ftemplate-depth=1000
+# opencv: none
+# cpu: AMD Ryzen 7 5800X3D 8-Core Processor
+# gpu: AMD Radeon RX 9060, gfx1200, 14 WGPs (28 CUs), wave32, 8144 MiB, PCI 0000:0d:00.0
+# hip driver: 7.16.26385, hip runtime: 7.16.26385
+# clocks (gfx, mem, max gfx, max mem, MHz): 60, 456, 2400, 1124
+# amd-smi: AMDSMI Tool: 27.1.0+7da43026 | AMDSMI Library version: 27.1.0 | ROCm version: 10.1.0 | amdgpu version: 7.1.9.31600000 | ionic version: N/A
+crops,back_end,comparison,max_abs_diff,pass
+1,GPU_AMD,chain_fused vs scalar reference (ASYMMETRIC sampling),2.38418579e-07,1
+1,GPU_AMD,chain_perop_batch vs chain_fused,4.76837158e-07,1
+8,GPU_AMD,chain_fused vs scalar reference (ASYMMETRIC sampling),2.38418579e-07,1
+8,GPU_AMD,chain_perop_batch vs chain_fused,4.76837158e-07,1
+16,GPU_AMD,chain_fused vs scalar reference (ASYMMETRIC sampling),2.38418579e-07,1
+16,GPU_AMD,chain_perop_batch vs chain_fused,4.76837158e-07,1
+32,GPU_AMD,chain_fused vs scalar reference (ASYMMETRIC sampling),2.38418579e-07,1
+32,GPU_AMD,chain_perop_batch vs chain_fused,4.76837158e-07,1
+64,GPU_AMD,chain_fused vs scalar reference (ASYMMETRIC sampling),2.38418579e-07,1
+64,GPU_AMD,chain_perop_batch vs chain_fused,4.76837158e-07,1

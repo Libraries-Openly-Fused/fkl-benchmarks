@@ -1,0 +1,376 @@
+# experiment: benchmark_rpp_preprocessing_a
+# notes: FKL HIP vs RPP; source: seeded noise (LCG, seed 12345); RPP 3.2.0 (ROCm package amdrocm-rpp), rppt tensor API, HIP back-end; rppt_resize_mirror_normalize: BILINEAR, ROI XYWH, source U8 NHWC (batch stride 0, one ROI per crop), destination F32 NCHW, mirror off; rppt_channel_permute F32 NCHW; rppt_yuv_to_rgb: RpptColorStandard_BT601, RpptColorRange_STUDIO, default chroma upsampling; output widths are multiples of 8; wall clock including the stream synchronisation; warm-up: 3 runs, at least 2.0 s and until the mean time of two consecutive windows of 0.25 s differs by at most 2 percent (cap 10 s; the columns warmup_s, warmup_steady and sclk_start_mhz, sclk_timed_start_mhz and sclk_end_mhz, the graphics clock at the start of the warm-up, at the start of the timed runs and after them, record it); the variants of a point are timed in a rotated order: the first one is variant ((index of the point + E5_ROTATE_OFFSET = 1) mod the number of variants); pass -1 = informational; tolerance 1e-4 absolute
+# repo: fkl-benchmarks 534fca724e017b6d1eb9b043de5649405a1644ed
+# fkl: c8fcbe816d629377886cbdd19c83527f37ccfc04
+# cvGPUSpeedup: 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c
+# FastNPP: 9dfc4f430225e40ded392bfa777b2e724367c5c1
+# nvcc: none (none), architectures native, -fmad on, -lineinfo on
+# hip: 24.0.0 (/opt/rocm/core-10.1/bin/amdclang++), architectures gfx1200
+# host compiler: Clang 24.0.0, Release, -march=native, -ftemplate-depth=1000
+# opencv: none
+# cpu: AMD Ryzen 7 5800X3D 8-Core Processor
+# gpu: AMD Radeon RX 9060, gfx1200, 14 WGPs (28 CUs), wave32, 8144 MiB, PCI 0000:0d:00.0
+# hip driver: 7.16.26385, hip runtime: 7.16.26385
+# clocks (gfx, mem, max gfx, max mem, MHz): 65, 456, 2400, 1124
+# amd-smi: AMDSMI Tool: 27.1.0+7da43026 | AMDSMI Library version: 27.1.0 | ROCm version: 10.1.0 | amdgpu version: 7.1.9.31600000 | ionic version: N/A
+batch,comparison,region,max_abs_diff,mean_abs_diff,fraction_over_1e-4,pass,note
+10,fkl_fused vs scalar reference ASYMMETRIC,interior,7.62939453e-06,6.31322828e-07,0,1,
+10,fkl_fused vs scalar reference ASYMMETRIC,last 2 columns and rows,7.62939453e-06,6.39530961e-07,0,1,
+10,fkl_perop_batch vs fkl_fused,interior,7.62939453e-06,1.20446698e-07,0,1,
+10,fkl_perop_batch vs fkl_fused,last 2 columns and rows,7.62939453e-06,1.22985026e-07,0,1,
+10,rpp_fused_api vs scalar reference HALF_PIXEL,interior,1.90734863e-06,4.34017363e-07,0,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference
+10,rpp_fused_api vs scalar reference HALF_PIXEL,last 2 columns and rows,120.000002,7.80881327,0.999824561,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference
+10,rpp_fused_api vs fkl_fused,interior,6.76660156,0.634009135,0.999432497,-1,FKL samples ASYMMETRIC, RPP HALF_PIXEL
+10,rpp_fused_api vs fkl_fused,last 2 columns and rows,120.921877,8.06517382,0.999298246,-1,FKL samples ASYMMETRIC, RPP HALF_PIXEL
+10,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,interior,7.62939453e-06,6.31589681e-07,0,1,
+10,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,last 2 columns and rows,7.62939453e-06,5.99715695e-07,0,1,
+10,rpp_fused_api vs fkl_fused_halfpixel,interior,7.62939453e-06,8.84010282e-07,0,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+10,rpp_fused_api vs fkl_fused_halfpixel,last 2 columns and rows,119.999995,7.80881326,0.999824561,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+20,fkl_fused vs scalar reference ASYMMETRIC,interior,7.62939453e-06,6.32742193e-07,0,1,
+20,fkl_fused vs scalar reference ASYMMETRIC,last 2 columns and rows,7.62939453e-06,6.36782334e-07,0,1,
+20,fkl_perop_batch vs fkl_fused,interior,7.62939453e-06,1.21258741e-07,0,1,
+20,fkl_perop_batch vs fkl_fused,last 2 columns and rows,7.62939453e-06,1.2592677e-07,0,1,
+20,rpp_fused_api vs scalar reference HALF_PIXEL,interior,1.90734863e-06,4.34622538e-07,0,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference
+20,rpp_fused_api vs scalar reference HALF_PIXEL,last 2 columns and rows,120.000002,7.83717143,0.999736842,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference
+20,rpp_fused_api vs fkl_fused,interior,6.77392578,0.633411162,0.999464499,-1,FKL samples ASYMMETRIC, RPP HALF_PIXEL
+20,rpp_fused_api vs fkl_fused,last 2 columns and rows,120.921877,8.10056357,0.999429825,-1,FKL samples ASYMMETRIC, RPP HALF_PIXEL
+20,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,interior,7.62939453e-06,6.33644566e-07,0,1,
+20,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,last 2 columns and rows,7.62939453e-06,6.08410357e-07,0,1,
+20,rpp_fused_api vs fkl_fused_halfpixel,interior,7.62939453e-06,8.86929241e-07,0,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+20,rpp_fused_api vs fkl_fused_halfpixel,last 2 columns and rows,119.999995,7.83717143,0.999736842,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+30,fkl_fused vs scalar reference ASYMMETRIC,interior,7.62939453e-06,6.34057307e-07,0,1,
+30,fkl_fused vs scalar reference ASYMMETRIC,last 2 columns and rows,7.62939453e-06,6.29773342e-07,0,1,
+30,fkl_perop_batch vs fkl_fused,interior,7.62939453e-06,1.21342728e-07,0,1,
+30,fkl_perop_batch vs fkl_fused,last 2 columns and rows,7.62939453e-06,1.28037166e-07,0,1,
+30,rpp_fused_api vs scalar reference HALF_PIXEL,interior,1.90734863e-06,4.34693337e-07,0,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference
+30,rpp_fused_api vs scalar reference HALF_PIXEL,last 2 columns and rows,120.000002,7.86063782,0.999824561,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference
+30,rpp_fused_api vs fkl_fused,interior,6.77392578,0.633614571,0.99948939,-1,FKL samples ASYMMETRIC, RPP HALF_PIXEL
+30,rpp_fused_api vs fkl_fused,last 2 columns and rows,120.921877,8.12321736,0.999473684,-1,FKL samples ASYMMETRIC, RPP HALF_PIXEL
+30,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,interior,7.62939453e-06,6.340907e-07,0,1,
+30,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,last 2 columns and rows,7.62939453e-06,6.12162787e-07,0,1,
+30,rpp_fused_api vs fkl_fused_halfpixel,interior,7.62939453e-06,8.88368653e-07,0,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+30,rpp_fused_api vs fkl_fused_halfpixel,last 2 columns and rows,119.999995,7.86063782,0.999824561,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+40,fkl_fused vs scalar reference ASYMMETRIC,interior,7.62939453e-06,6.3372186e-07,0,1,
+40,fkl_fused vs scalar reference ASYMMETRIC,last 2 columns and rows,7.62939453e-06,6.2863706e-07,0,1,
+40,fkl_perop_batch vs fkl_fused,interior,7.62939453e-06,1.21880167e-07,0,1,
+40,fkl_perop_batch vs fkl_fused,last 2 columns and rows,7.62939453e-06,1.28767835e-07,0,1,
+40,rpp_fused_api vs scalar reference HALF_PIXEL,interior,1.90734863e-06,4.35066791e-07,0,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference
+40,rpp_fused_api vs scalar reference HALF_PIXEL,last 2 columns and rows,120.000002,7.91749986,0.999736842,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference
+40,rpp_fused_api vs fkl_fused,interior,6.98144531,0.633051763,0.999481567,-1,FKL samples ASYMMETRIC, RPP HALF_PIXEL
+40,rpp_fused_api vs fkl_fused,last 2 columns and rows,120.921877,8.18112413,0.999473684,-1,FKL samples ASYMMETRIC, RPP HALF_PIXEL
+40,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,interior,7.62939453e-06,6.33047534e-07,0,1,
+40,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,last 2 columns and rows,7.62939453e-06,6.1544675e-07,0,1,
+40,rpp_fused_api vs fkl_fused_halfpixel,interior,7.62939453e-06,8.88090174e-07,0,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+40,rpp_fused_api vs fkl_fused_halfpixel,last 2 columns and rows,119.999995,7.91749985,0.999736842,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+50,fkl_fused vs scalar reference ASYMMETRIC,interior,7.62939453e-06,6.33646629e-07,0,1,
+50,fkl_fused vs scalar reference ASYMMETRIC,last 2 columns and rows,7.62939453e-06,6.25738286e-07,0,1,
+50,fkl_perop_batch vs fkl_fused,interior,7.62939453e-06,1.22007412e-07,0,1,
+50,fkl_perop_batch vs fkl_fused,last 2 columns and rows,7.62939453e-06,1.26833872e-07,0,1,
+50,rpp_fused_api vs scalar reference HALF_PIXEL,interior,1.90734863e-06,4.34963106e-07,0,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference
+50,rpp_fused_api vs scalar reference HALF_PIXEL,last 2 columns and rows,120.000002,7.87728212,0.999719298,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference
+50,rpp_fused_api vs fkl_fused,interior,7.046875,0.633134595,0.999471753,-1,FKL samples ASYMMETRIC, RPP HALF_PIXEL
+50,rpp_fused_api vs fkl_fused,last 2 columns and rows,121.171877,8.14125354,0.999491228,-1,FKL samples ASYMMETRIC, RPP HALF_PIXEL
+50,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,interior,7.62939453e-06,6.32947494e-07,0,1,
+50,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,last 2 columns and rows,7.62939453e-06,6.10125247e-07,0,1,
+50,rpp_fused_api vs fkl_fused_halfpixel,interior,7.62939453e-06,8.88162512e-07,0,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+50,rpp_fused_api vs fkl_fused_halfpixel,last 2 columns and rows,119.999995,7.87728211,0.999719298,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+60,fkl_fused vs scalar reference ASYMMETRIC,interior,7.62939453e-06,6.34246793e-07,0,1,
+60,fkl_fused vs scalar reference ASYMMETRIC,last 2 columns and rows,7.62939453e-06,6.27320056e-07,0,1,
+60,fkl_perop_batch vs fkl_fused,interior,7.62939453e-06,1.2218182e-07,0,1,
+60,fkl_perop_batch vs fkl_fused,last 2 columns and rows,7.62939453e-06,1.28011913e-07,0,1,
+60,rpp_fused_api vs scalar reference HALF_PIXEL,interior,1.90734863e-06,4.34893811e-07,0,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference
+60,rpp_fused_api vs scalar reference HALF_PIXEL,last 2 columns and rows,120.000002,7.86090024,0.999707602,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference
+60,rpp_fused_api vs fkl_fused,interior,7.046875,0.633886749,0.999476589,-1,FKL samples ASYMMETRIC, RPP HALF_PIXEL
+60,rpp_fused_api vs fkl_fused,last 2 columns and rows,121.171877,8.12531727,0.999546784,-1,FKL samples ASYMMETRIC, RPP HALF_PIXEL
+60,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,interior,7.62939453e-06,6.32863867e-07,0,1,
+60,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,last 2 columns and rows,7.62939453e-06,6.12978678e-07,0,1,
+60,rpp_fused_api vs fkl_fused_halfpixel,interior,7.62939453e-06,8.88155555e-07,0,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+60,rpp_fused_api vs fkl_fused_halfpixel,last 2 columns and rows,119.999995,7.86090024,0.999707602,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+70,fkl_fused vs scalar reference ASYMMETRIC,interior,7.62939453e-06,6.34064129e-07,0,1,
+70,fkl_fused vs scalar reference ASYMMETRIC,last 2 columns and rows,7.62939453e-06,6.2709812e-07,0,1,
+70,fkl_perop_batch vs fkl_fused,interior,7.62939453e-06,1.22568346e-07,0,1,
+70,fkl_perop_batch vs fkl_fused,last 2 columns and rows,7.62939453e-06,1.29605696e-07,0,1,
+70,rpp_fused_api vs scalar reference HALF_PIXEL,interior,1.90734863e-06,4.34409378e-07,0,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference
+70,rpp_fused_api vs scalar reference HALF_PIXEL,last 2 columns and rows,120.000002,7.84399126,0.999736842,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference
+70,rpp_fused_api vs fkl_fused,interior,7.046875,0.634430017,0.999474557,-1,FKL samples ASYMMETRIC, RPP HALF_PIXEL
+70,rpp_fused_api vs fkl_fused,last 2 columns and rows,121.171877,8.10865968,0.999598997,-1,FKL samples ASYMMETRIC, RPP HALF_PIXEL
+70,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,interior,7.62939453e-06,6.32715129e-07,0,1,
+70,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,last 2 columns and rows,7.62939453e-06,6.15137332e-07,0,1,
+70,rpp_fused_api vs fkl_fused_halfpixel,interior,7.62939453e-06,8.88093023e-07,0,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+70,rpp_fused_api vs fkl_fused_halfpixel,last 2 columns and rows,119.999995,7.84399124,0.999736842,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+80,fkl_fused vs scalar reference ASYMMETRIC,interior,7.62939453e-06,6.34504489e-07,0,1,
+80,fkl_fused vs scalar reference ASYMMETRIC,last 2 columns and rows,7.62939453e-06,6.27467842e-07,0,1,
+80,fkl_perop_batch vs fkl_fused,interior,7.62939453e-06,1.22486462e-07,0,1,
+80,fkl_perop_batch vs fkl_fused,last 2 columns and rows,7.62939453e-06,1.29911037e-07,0,1,
+80,rpp_fused_api vs scalar reference HALF_PIXEL,interior,1.90734863e-06,4.34140506e-07,0,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference
+80,rpp_fused_api vs scalar reference HALF_PIXEL,last 2 columns and rows,120.000002,7.83768874,0.999769737,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference
+80,rpp_fused_api vs fkl_fused,interior,7.046875,0.634860986,0.999476233,-1,FKL samples ASYMMETRIC, RPP HALF_PIXEL
+80,rpp_fused_api vs fkl_fused,last 2 columns and rows,121.171877,8.09994892,0.999583333,-1,FKL samples ASYMMETRIC, RPP HALF_PIXEL
+80,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,interior,7.62939453e-06,6.33271519e-07,0,1,
+80,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,last 2 columns and rows,7.62939453e-06,6.13711939e-07,0,1,
+80,rpp_fused_api vs fkl_fused_halfpixel,interior,7.62939453e-06,8.88360659e-07,0,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+80,rpp_fused_api vs fkl_fused_halfpixel,last 2 columns and rows,119.999995,7.83768873,0.999769737,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+90,fkl_fused vs scalar reference ASYMMETRIC,interior,7.62939453e-06,6.34435687e-07,0,1,
+90,fkl_fused vs scalar reference ASYMMETRIC,last 2 columns and rows,7.62939453e-06,6.26635946e-07,0,1,
+90,fkl_perop_batch vs fkl_fused,interior,7.62939453e-06,1.22405967e-07,0,1,
+90,fkl_perop_batch vs fkl_fused,last 2 columns and rows,7.62939453e-06,1.29882036e-07,0,1,
+90,rpp_fused_api vs scalar reference HALF_PIXEL,interior,1.90734863e-06,4.34004463e-07,0,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference
+90,rpp_fused_api vs scalar reference HALF_PIXEL,last 2 columns and rows,120.000002,7.8341421,0.999785575,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference
+90,rpp_fused_api vs fkl_fused,interior,7.046875,0.635061108,0.999470425,-1,FKL samples ASYMMETRIC, RPP HALF_PIXEL
+90,rpp_fused_api vs fkl_fused,last 2 columns and rows,121.171877,8.09623261,0.999561404,-1,FKL samples ASYMMETRIC, RPP HALF_PIXEL
+90,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,interior,7.62939453e-06,6.33159837e-07,0,1,
+90,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,last 2 columns and rows,7.62939453e-06,6.15787416e-07,0,1,
+90,rpp_fused_api vs fkl_fused_halfpixel,interior,7.62939453e-06,8.88102946e-07,0,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+90,rpp_fused_api vs fkl_fused_halfpixel,last 2 columns and rows,119.999995,7.83414209,0.999785575,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+100,fkl_fused vs scalar reference ASYMMETRIC,interior,7.62939453e-06,6.34526767e-07,0,1,
+100,fkl_fused vs scalar reference ASYMMETRIC,last 2 columns and rows,7.62939453e-06,6.26166041e-07,0,1,
+100,fkl_perop_batch vs fkl_fused,interior,7.62939453e-06,1.2220034e-07,0,1,
+100,fkl_perop_batch vs fkl_fused,last 2 columns and rows,7.62939453e-06,1.28864835e-07,0,1,
+100,rpp_fused_api vs scalar reference HALF_PIXEL,interior,1.90734863e-06,4.33863025e-07,0,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference
+100,rpp_fused_api vs scalar reference HALF_PIXEL,last 2 columns and rows,120.000002,7.84157329,0.999798246,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference
+100,rpp_fused_api vs fkl_fused,interior,7.046875,0.635234148,0.999463219,-1,FKL samples ASYMMETRIC, RPP HALF_PIXEL
+100,rpp_fused_api vs fkl_fused,last 2 columns and rows,121.171877,8.10331709,0.999587719,-1,FKL samples ASYMMETRIC, RPP HALF_PIXEL
+100,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,interior,7.62939453e-06,6.33401697e-07,0,1,
+100,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,last 2 columns and rows,7.62939453e-06,6.18608846e-07,0,1,
+100,rpp_fused_api vs fkl_fused_halfpixel,interior,7.62939453e-06,8.88576404e-07,0,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+100,rpp_fused_api vs fkl_fused_halfpixel,last 2 columns and rows,119.999995,7.84157328,0.999798246,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+110,fkl_fused vs scalar reference ASYMMETRIC,interior,7.62939453e-06,6.34245962e-07,0,1,
+110,fkl_fused vs scalar reference ASYMMETRIC,last 2 columns and rows,7.62939453e-06,6.25050447e-07,0,1,
+110,fkl_perop_batch vs fkl_fused,interior,7.62939453e-06,1.22067934e-07,0,1,
+110,fkl_perop_batch vs fkl_fused,last 2 columns and rows,7.62939453e-06,1.28094575e-07,0,1,
+110,rpp_fused_api vs scalar reference HALF_PIXEL,interior,1.90734863e-06,4.33558448e-07,0,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference
+110,rpp_fused_api vs scalar reference HALF_PIXEL,last 2 columns and rows,120.000002,7.82792093,0.999792663,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference
+110,rpp_fused_api vs fkl_fused,interior,7.046875,0.635077867,0.999463917,-1,FKL samples ASYMMETRIC, RPP HALF_PIXEL
+110,rpp_fused_api vs fkl_fused,last 2 columns and rows,121.171877,8.08880101,0.999569378,-1,FKL samples ASYMMETRIC, RPP HALF_PIXEL
+110,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,interior,7.62939453e-06,6.33258039e-07,0,1,
+110,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,last 2 columns and rows,7.62939453e-06,6.15132294e-07,0,1,
+110,rpp_fused_api vs fkl_fused_halfpixel,interior,7.62939453e-06,8.88238591e-07,0,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+110,rpp_fused_api vs fkl_fused_halfpixel,last 2 columns and rows,119.999995,7.82792092,0.999792663,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+120,fkl_fused vs scalar reference ASYMMETRIC,interior,7.62939453e-06,6.34163075e-07,0,1,
+120,fkl_fused vs scalar reference ASYMMETRIC,last 2 columns and rows,7.62939453e-06,6.2229299e-07,0,1,
+120,fkl_perop_batch vs fkl_fused,interior,7.62939453e-06,1.21913899e-07,0,1,
+120,fkl_perop_batch vs fkl_fused,last 2 columns and rows,7.62939453e-06,1.27747487e-07,0,1,
+120,rpp_fused_api vs scalar reference HALF_PIXEL,interior,1.90734863e-06,4.3314318e-07,0,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference
+120,rpp_fused_api vs scalar reference HALF_PIXEL,last 2 columns and rows,120.000002,7.82765727,0.999802632,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference
+120,rpp_fused_api vs fkl_fused,interior,7.046875,0.635073155,0.999460232,-1,FKL samples ASYMMETRIC, RPP HALF_PIXEL
+120,rpp_fused_api vs fkl_fused,last 2 columns and rows,121.171877,8.08929113,0.999576023,-1,FKL samples ASYMMETRIC, RPP HALF_PIXEL
+120,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,interior,7.62939453e-06,6.32955458e-07,0,1,
+120,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,last 2 columns and rows,7.62939453e-06,6.15909096e-07,0,1,
+120,rpp_fused_api vs fkl_fused_halfpixel,interior,7.62939453e-06,8.8782738e-07,0,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+120,rpp_fused_api vs fkl_fused_halfpixel,last 2 columns and rows,119.999995,7.82765727,0.999802632,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+130,fkl_fused vs scalar reference ASYMMETRIC,interior,7.62939453e-06,6.34224903e-07,0,1,
+130,fkl_fused vs scalar reference ASYMMETRIC,last 2 columns and rows,7.62939453e-06,6.20575973e-07,0,1,
+130,fkl_perop_batch vs fkl_fused,interior,7.62939453e-06,1.21727279e-07,0,1,
+130,fkl_perop_batch vs fkl_fused,last 2 columns and rows,7.62939453e-06,1.27144904e-07,0,1,
+130,rpp_fused_api vs scalar reference HALF_PIXEL,interior,1.90734863e-06,4.32993988e-07,0,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference
+130,rpp_fused_api vs scalar reference HALF_PIXEL,last 2 columns and rows,120.000002,7.83732699,0.999811066,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference
+130,rpp_fused_api vs fkl_fused,interior,7.046875,0.635024137,0.999463022,-1,FKL samples ASYMMETRIC, RPP HALF_PIXEL
+130,rpp_fused_api vs fkl_fused,last 2 columns and rows,121.171877,8.09984406,0.999588394,-1,FKL samples ASYMMETRIC, RPP HALF_PIXEL
+130,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,interior,7.62939453e-06,6.32701607e-07,0,1,
+130,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,last 2 columns and rows,7.62939453e-06,6.15896058e-07,0,1,
+130,rpp_fused_api vs fkl_fused_halfpixel,interior,7.62939453e-06,8.87504143e-07,0,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+130,rpp_fused_api vs fkl_fused_halfpixel,last 2 columns and rows,119.999995,7.83732698,0.999811066,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+140,fkl_fused vs scalar reference ASYMMETRIC,interior,7.62939453e-06,6.34237209e-07,0,1,
+140,fkl_fused vs scalar reference ASYMMETRIC,last 2 columns and rows,7.62939453e-06,6.21541278e-07,0,1,
+140,fkl_perop_batch vs fkl_fused,interior,7.62939453e-06,1.21463729e-07,0,1,
+140,fkl_perop_batch vs fkl_fused,last 2 columns and rows,7.62939453e-06,1.27142503e-07,0,1,
+140,rpp_fused_api vs scalar reference HALF_PIXEL,interior,1.90734863e-06,4.32772608e-07,0,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference
+140,rpp_fused_api vs scalar reference HALF_PIXEL,last 2 columns and rows,120.000002,7.85468173,0.999818296,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference
+140,rpp_fused_api vs fkl_fused,interior,7.046875,0.635106434,0.99946328,-1,FKL samples ASYMMETRIC, RPP HALF_PIXEL
+140,rpp_fused_api vs fkl_fused,last 2 columns and rows,121.171877,8.11759954,0.999592732,-1,FKL samples ASYMMETRIC, RPP HALF_PIXEL
+140,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,interior,7.62939453e-06,6.32873655e-07,0,1,
+140,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,last 2 columns and rows,7.62939453e-06,6.15250074e-07,0,1,
+140,rpp_fused_api vs fkl_fused_halfpixel,interior,7.62939453e-06,8.87485683e-07,0,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+140,rpp_fused_api vs fkl_fused_halfpixel,last 2 columns and rows,119.999995,7.85468172,0.999818296,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+150,fkl_fused vs scalar reference ASYMMETRIC,interior,7.62939453e-06,6.3390651e-07,0,1,
+150,fkl_fused vs scalar reference ASYMMETRIC,last 2 columns and rows,7.62939453e-06,6.22649751e-07,0,1,
+150,fkl_perop_batch vs fkl_fused,interior,7.62939453e-06,1.21207335e-07,0,1,
+150,fkl_perop_batch vs fkl_fused,last 2 columns and rows,7.62939453e-06,1.28334449e-07,0,1,
+150,rpp_fused_api vs scalar reference HALF_PIXEL,interior,1.90734863e-06,4.32739344e-07,0,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference
+150,rpp_fused_api vs scalar reference HALF_PIXEL,last 2 columns and rows,120.343752,7.83981462,0.999824561,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference
+150,rpp_fused_api vs fkl_fused,interior,7.046875,0.635098414,0.999459237,-1,FKL samples ASYMMETRIC, RPP HALF_PIXEL
+150,rpp_fused_api vs fkl_fused,last 2 columns and rows,121.781252,8.10197567,0.999573099,-1,FKL samples ASYMMETRIC, RPP HALF_PIXEL
+150,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,interior,7.62939453e-06,6.3251323e-07,0,1,
+150,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,last 2 columns and rows,7.62939453e-06,6.17386882e-07,0,1,
+150,rpp_fused_api vs fkl_fused_halfpixel,interior,7.62939453e-06,8.87097253e-07,0,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+150,rpp_fused_api vs fkl_fused_halfpixel,last 2 columns and rows,120.343752,7.83981461,0.999824561,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+160,fkl_fused vs scalar reference ASYMMETRIC,interior,7.62939453e-06,6.33812482e-07,0,1,
+160,fkl_fused vs scalar reference ASYMMETRIC,last 2 columns and rows,7.62939453e-06,6.21848012e-07,0,1,
+160,fkl_perop_batch vs fkl_fused,interior,7.62939453e-06,1.21234541e-07,0,1,
+160,fkl_perop_batch vs fkl_fused,last 2 columns and rows,7.62939453e-06,1.28228846e-07,0,1,
+160,rpp_fused_api vs scalar reference HALF_PIXEL,interior,1.90734863e-06,4.32750354e-07,0,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference
+160,rpp_fused_api vs scalar reference HALF_PIXEL,last 2 columns and rows,120.343752,7.83644935,0.999819079,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference
+160,rpp_fused_api vs fkl_fused,interior,7.046875,0.634969134,0.999463166,-1,FKL samples ASYMMETRIC, RPP HALF_PIXEL
+160,rpp_fused_api vs fkl_fused,last 2 columns and rows,121.781252,8.09893152,0.999566886,-1,FKL samples ASYMMETRIC, RPP HALF_PIXEL
+160,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,interior,7.62939453e-06,6.32463876e-07,0,1,
+160,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,last 2 columns and rows,7.62939453e-06,6.16584271e-07,0,1,
+160,rpp_fused_api vs fkl_fused_halfpixel,interior,7.62939453e-06,8.86970119e-07,0,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+160,rpp_fused_api vs fkl_fused_halfpixel,last 2 columns and rows,120.343752,7.83644934,0.999819079,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+170,fkl_fused vs scalar reference ASYMMETRIC,interior,7.62939453e-06,6.33819923e-07,0,1,
+170,fkl_fused vs scalar reference ASYMMETRIC,last 2 columns and rows,7.62939453e-06,6.22671788e-07,0,1,
+170,fkl_perop_batch vs fkl_fused,interior,7.62939453e-06,1.21247772e-07,0,1,
+170,fkl_perop_batch vs fkl_fused,last 2 columns and rows,7.62939453e-06,1.28468455e-07,0,1,
+170,rpp_fused_api vs scalar reference HALF_PIXEL,interior,1.90734863e-06,4.32865892e-07,0,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference
+170,rpp_fused_api vs scalar reference HALF_PIXEL,last 2 columns and rows,120.343752,7.83969984,0.999824561,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference
+170,rpp_fused_api vs fkl_fused,interior,7.046875,0.634946315,0.999463119,-1,FKL samples ASYMMETRIC, RPP HALF_PIXEL
+170,rpp_fused_api vs fkl_fused,last 2 columns and rows,121.781252,8.10199108,0.999551084,-1,FKL samples ASYMMETRIC, RPP HALF_PIXEL
+170,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,interior,7.62939453e-06,6.32574382e-07,0,1,
+170,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,last 2 columns and rows,7.62939453e-06,6.17748898e-07,0,1,
+170,rpp_fused_api vs fkl_fused_halfpixel,interior,7.62939453e-06,8.87051763e-07,0,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+170,rpp_fused_api vs fkl_fused_halfpixel,last 2 columns and rows,120.343752,7.83969984,0.999824561,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+180,fkl_fused vs scalar reference ASYMMETRIC,interior,7.62939453e-06,6.33937182e-07,0,1,
+180,fkl_fused vs scalar reference ASYMMETRIC,last 2 columns and rows,7.62939453e-06,6.23261747e-07,0,1,
+180,fkl_perop_batch vs fkl_fused,interior,7.62939453e-06,1.21286269e-07,0,1,
+180,fkl_perop_batch vs fkl_fused,last 2 columns and rows,7.62939453e-06,1.27791527e-07,0,1,
+180,rpp_fused_api vs scalar reference HALF_PIXEL,interior,1.90734863e-06,4.32940521e-07,0,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference
+180,rpp_fused_api vs scalar reference HALF_PIXEL,last 2 columns and rows,120.343752,7.83318133,0.999814815,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference
+180,rpp_fused_api vs fkl_fused,interior,7.046875,0.634756587,0.999464025,-1,FKL samples ASYMMETRIC, RPP HALF_PIXEL
+180,rpp_fused_api vs fkl_fused,last 2 columns and rows,121.781252,8.09587393,0.999546784,-1,FKL samples ASYMMETRIC, RPP HALF_PIXEL
+180,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,interior,7.62939453e-06,6.3257836e-07,0,1,
+180,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,last 2 columns and rows,7.62939453e-06,6.1804635e-07,0,1,
+180,rpp_fused_api vs fkl_fused_halfpixel,interior,7.62939453e-06,8.86857645e-07,0,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+180,rpp_fused_api vs fkl_fused_halfpixel,last 2 columns and rows,120.343752,7.83318133,0.999814815,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+190,fkl_fused vs scalar reference ASYMMETRIC,interior,7.62939453e-06,6.33980541e-07,0,1,
+190,fkl_fused vs scalar reference ASYMMETRIC,last 2 columns and rows,7.62939453e-06,6.23425132e-07,0,1,
+190,fkl_perop_batch vs fkl_fused,interior,7.62939453e-06,1.21372429e-07,0,1,
+190,fkl_perop_batch vs fkl_fused,last 2 columns and rows,7.62939453e-06,1.28036962e-07,0,1,
+190,rpp_fused_api vs scalar reference HALF_PIXEL,interior,1.90734863e-06,4.32957847e-07,0,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference
+190,rpp_fused_api vs scalar reference HALF_PIXEL,last 2 columns and rows,120.875002,7.8376103,0.999810711,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference
+190,rpp_fused_api vs fkl_fused,interior,7.046875,0.634665216,0.999468205,-1,FKL samples ASYMMETRIC, RPP HALF_PIXEL
+190,rpp_fused_api vs fkl_fused,last 2 columns and rows,121.781252,8.10080991,0.99955217,-1,FKL samples ASYMMETRIC, RPP HALF_PIXEL
+190,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,interior,7.62939453e-06,6.32657356e-07,0,1,
+190,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,last 2 columns and rows,7.62939453e-06,6.18078681e-07,0,1,
+190,rpp_fused_api vs fkl_fused_halfpixel,interior,7.62939453e-06,8.86905896e-07,0,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+190,rpp_fused_api vs fkl_fused_halfpixel,last 2 columns and rows,120.875002,7.8376103,0.999810711,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+200,fkl_fused vs scalar reference ASYMMETRIC,interior,7.62939453e-06,6.33913346e-07,0,1,
+200,fkl_fused vs scalar reference ASYMMETRIC,last 2 columns and rows,7.62939453e-06,6.23461617e-07,0,1,
+200,fkl_perop_batch vs fkl_fused,interior,7.62939453e-06,1.21504313e-07,0,1,
+200,fkl_perop_batch vs fkl_fused,last 2 columns and rows,7.62939453e-06,1.2840404e-07,0,1,
+200,rpp_fused_api vs scalar reference HALF_PIXEL,interior,1.90734863e-06,4.32963611e-07,0,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference
+200,rpp_fused_api vs scalar reference HALF_PIXEL,last 2 columns and rows,126.406252,7.85358784,0.999802632,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference
+200,rpp_fused_api vs fkl_fused,interior,7.12158203,0.63459486,0.999469833,-1,FKL samples ASYMMETRIC, RPP HALF_PIXEL
+200,rpp_fused_api vs fkl_fused,last 2 columns and rows,126.156252,8.11706321,0.999557018,-1,FKL samples ASYMMETRIC, RPP HALF_PIXEL
+200,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,interior,7.62939453e-06,6.32539423e-07,0,1,
+200,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,last 2 columns and rows,7.62939453e-06,6.1753601e-07,0,1,
+200,rpp_fused_api vs fkl_fused_halfpixel,interior,7.62939453e-06,8.86742306e-07,0,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+200,rpp_fused_api vs fkl_fused_halfpixel,last 2 columns and rows,126.406252,7.85358783,0.999802632,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+210,fkl_fused vs scalar reference ASYMMETRIC,interior,7.62939453e-06,6.33860262e-07,0,1,
+210,fkl_fused vs scalar reference ASYMMETRIC,last 2 columns and rows,7.62939453e-06,6.2279679e-07,0,1,
+210,fkl_perop_batch vs fkl_fused,interior,7.62939453e-06,1.21553815e-07,0,1,
+210,fkl_perop_batch vs fkl_fused,last 2 columns and rows,7.62939453e-06,1.28544039e-07,0,1,
+210,rpp_fused_api vs scalar reference HALF_PIXEL,interior,1.90734863e-06,4.33122346e-07,0,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference
+210,rpp_fused_api vs scalar reference HALF_PIXEL,last 2 columns and rows,126.406252,7.85369425,0.999807853,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference
+210,rpp_fused_api vs fkl_fused,interior,7.12158203,0.634804466,0.999470493,-1,FKL samples ASYMMETRIC, RPP HALF_PIXEL
+210,rpp_fused_api vs fkl_fused,last 2 columns and rows,126.156252,8.11714335,0.999561404,-1,FKL samples ASYMMETRIC, RPP HALF_PIXEL
+210,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,interior,7.62939453e-06,6.3238394e-07,0,1,
+210,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,last 2 columns and rows,7.62939453e-06,6.16819209e-07,0,1,
+210,rpp_fused_api vs fkl_fused_halfpixel,interior,7.62939453e-06,8.86641848e-07,0,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+210,rpp_fused_api vs fkl_fused_halfpixel,last 2 columns and rows,126.406252,7.85369424,0.999807853,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+220,fkl_fused vs scalar reference ASYMMETRIC,interior,7.62939453e-06,6.33764546e-07,0,1,
+220,fkl_fused vs scalar reference ASYMMETRIC,last 2 columns and rows,7.62939453e-06,6.23036818e-07,0,1,
+220,fkl_perop_batch vs fkl_fused,interior,7.62939453e-06,1.21543983e-07,0,1,
+220,fkl_perop_batch vs fkl_fused,last 2 columns and rows,7.62939453e-06,1.28715298e-07,0,1,
+220,rpp_fused_api vs scalar reference HALF_PIXEL,interior,1.90734863e-06,4.33222692e-07,0,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference
+220,rpp_fused_api vs scalar reference HALF_PIXEL,last 2 columns and rows,126.406252,7.85478691,0.999816587,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference
+220,rpp_fused_api vs fkl_fused,interior,7.12158203,0.634885931,0.999473421,-1,FKL samples ASYMMETRIC, RPP HALF_PIXEL
+220,rpp_fused_api vs fkl_fused,last 2 columns and rows,126.156252,8.11811796,0.999573365,-1,FKL samples ASYMMETRIC, RPP HALF_PIXEL
+220,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,interior,7.62939453e-06,6.32282235e-07,0,1,
+220,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,last 2 columns and rows,7.62939453e-06,6.19074617e-07,0,1,
+220,rpp_fused_api vs fkl_fused_halfpixel,interior,7.62939453e-06,8.86700505e-07,0,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+220,rpp_fused_api vs fkl_fused_halfpixel,last 2 columns and rows,126.406252,7.85478691,0.999816587,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+230,fkl_fused vs scalar reference ASYMMETRIC,interior,7.62939453e-06,6.33813925e-07,0,1,
+230,fkl_fused vs scalar reference ASYMMETRIC,last 2 columns and rows,7.62939453e-06,6.2221528e-07,0,1,
+230,fkl_perop_batch vs fkl_fused,interior,7.62939453e-06,1.21640371e-07,0,1,
+230,fkl_perop_batch vs fkl_fused,last 2 columns and rows,7.62939453e-06,1.28789023e-07,0,1,
+230,rpp_fused_api vs scalar reference HALF_PIXEL,interior,1.90734863e-06,4.33365688e-07,0,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference
+230,rpp_fused_api vs scalar reference HALF_PIXEL,last 2 columns and rows,126.406252,7.84513379,0.999824561,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference
+230,rpp_fused_api vs fkl_fused,interior,7.12158203,0.634831178,0.999474053,-1,FKL samples ASYMMETRIC, RPP HALF_PIXEL
+230,rpp_fused_api vs fkl_fused,last 2 columns and rows,126.156252,8.10781965,0.999584287,-1,FKL samples ASYMMETRIC, RPP HALF_PIXEL
+230,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,interior,7.62939453e-06,6.32091494e-07,0,1,
+230,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,last 2 columns and rows,7.62939453e-06,6.18851284e-07,0,1,
+230,rpp_fused_api vs fkl_fused_halfpixel,interior,7.62939453e-06,8.86647603e-07,0,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+230,rpp_fused_api vs fkl_fused_halfpixel,last 2 columns and rows,126.406252,7.84513378,0.999824561,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+240,fkl_fused vs scalar reference ASYMMETRIC,interior,7.62939453e-06,6.33618607e-07,0,1,
+240,fkl_fused vs scalar reference ASYMMETRIC,last 2 columns and rows,7.62939453e-06,6.21874838e-07,0,1,
+240,fkl_perop_batch vs fkl_fused,interior,7.62939453e-06,1.21665134e-07,0,1,
+240,fkl_perop_batch vs fkl_fused,last 2 columns and rows,7.62939453e-06,1.28582013e-07,0,1,
+240,rpp_fused_api vs scalar reference HALF_PIXEL,interior,1.90734863e-06,4.335335e-07,0,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference
+240,rpp_fused_api vs scalar reference HALF_PIXEL,last 2 columns and rows,126.406252,7.8341414,0.999831871,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference
+240,rpp_fused_api vs fkl_fused,interior,7.12158203,0.634685379,0.9994757,-1,FKL samples ASYMMETRIC, RPP HALF_PIXEL
+240,rpp_fused_api vs fkl_fused,last 2 columns and rows,126.156252,8.09712127,0.999590643,-1,FKL samples ASYMMETRIC, RPP HALF_PIXEL
+240,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,interior,7.62939453e-06,6.32023974e-07,0,1,
+240,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,last 2 columns and rows,7.62939453e-06,6.18757409e-07,0,1,
+240,rpp_fused_api vs fkl_fused_halfpixel,interior,7.62939453e-06,8.86702623e-07,0,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+240,rpp_fused_api vs fkl_fused_halfpixel,last 2 columns and rows,126.406252,7.83414139,0.999831871,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+250,fkl_fused vs scalar reference ASYMMETRIC,interior,7.62939453e-06,6.33413784e-07,0,1,
+250,fkl_fused vs scalar reference ASYMMETRIC,last 2 columns and rows,7.62939453e-06,6.2258057e-07,0,1,
+250,fkl_perop_batch vs fkl_fused,interior,7.62939453e-06,1.2170199e-07,0,1,
+250,fkl_perop_batch vs fkl_fused,last 2 columns and rows,7.62939453e-06,1.28554449e-07,0,1,
+250,rpp_fused_api vs scalar reference HALF_PIXEL,interior,1.90734863e-06,4.33722655e-07,0,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference
+250,rpp_fused_api vs scalar reference HALF_PIXEL,last 2 columns and rows,126.406252,7.82803249,0.999838596,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference
+250,rpp_fused_api vs fkl_fused,interior,7.12158203,0.634553816,0.999475678,-1,FKL samples ASYMMETRIC, RPP HALF_PIXEL
+250,rpp_fused_api vs fkl_fused,last 2 columns and rows,126.156252,8.09082584,0.999568421,-1,FKL samples ASYMMETRIC, RPP HALF_PIXEL
+250,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,interior,7.62939453e-06,6.3182846e-07,0,1,
+250,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,last 2 columns and rows,7.62939453e-06,6.18241299e-07,0,1,
+250,rpp_fused_api vs fkl_fused_halfpixel,interior,7.62939453e-06,8.86674986e-07,0,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+250,rpp_fused_api vs fkl_fused_halfpixel,last 2 columns and rows,126.406252,7.82803248,0.999838596,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+260,fkl_fused vs scalar reference ASYMMETRIC,interior,7.62939453e-06,6.33363445e-07,0,1,
+260,fkl_fused vs scalar reference ASYMMETRIC,last 2 columns and rows,7.62939453e-06,6.22476477e-07,0,1,
+260,fkl_perop_batch vs fkl_fused,interior,7.62939453e-06,1.21771851e-07,0,1,
+260,fkl_perop_batch vs fkl_fused,last 2 columns and rows,7.62939453e-06,1.2854373e-07,0,1,
+260,rpp_fused_api vs scalar reference HALF_PIXEL,interior,1.90734863e-06,4.3373029e-07,0,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference
+260,rpp_fused_api vs scalar reference HALF_PIXEL,last 2 columns and rows,126.406252,7.82722345,0.999844804,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference
+260,rpp_fused_api vs fkl_fused,interior,7.20166016,0.63451884,0.999474018,-1,FKL samples ASYMMETRIC, RPP HALF_PIXEL
+260,rpp_fused_api vs fkl_fused,last 2 columns and rows,126.156252,8.09014646,0.999574899,-1,FKL samples ASYMMETRIC, RPP HALF_PIXEL
+260,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,interior,7.62939453e-06,6.31854493e-07,0,1,
+260,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,last 2 columns and rows,7.62939453e-06,6.18232695e-07,0,1,
+260,rpp_fused_api vs fkl_fused_halfpixel,interior,7.62939453e-06,8.8671014e-07,0,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+260,rpp_fused_api vs fkl_fused_halfpixel,last 2 columns and rows,126.406252,7.82722344,0.999844804,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+270,fkl_fused vs scalar reference ASYMMETRIC,interior,7.62939453e-06,6.33052955e-07,0,1,
+270,fkl_fused vs scalar reference ASYMMETRIC,last 2 columns and rows,7.62939453e-06,6.21502745e-07,0,1,
+270,fkl_perop_batch vs fkl_fused,interior,7.62939453e-06,1.21786784e-07,0,1,
+270,fkl_perop_batch vs fkl_fused,last 2 columns and rows,7.62939453e-06,1.28396219e-07,0,1,
+270,rpp_fused_api vs scalar reference HALF_PIXEL,interior,1.90734863e-06,4.33659088e-07,0,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference
+270,rpp_fused_api vs scalar reference HALF_PIXEL,last 2 columns and rows,126.406252,7.82039844,0.999847303,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference
+270,rpp_fused_api vs fkl_fused,interior,7.20166016,0.634349944,0.999472954,-1,FKL samples ASYMMETRIC, RPP HALF_PIXEL
+270,rpp_fused_api vs fkl_fused,last 2 columns and rows,126.156252,8.08349038,0.999577648,-1,FKL samples ASYMMETRIC, RPP HALF_PIXEL
+270,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,interior,7.62939453e-06,6.31744321e-07,0,1,
+270,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,last 2 columns and rows,7.62939453e-06,6.18283752e-07,0,1,
+270,rpp_fused_api vs fkl_fused_halfpixel,interior,7.62939453e-06,8.86600008e-07,0,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+270,rpp_fused_api vs fkl_fused_halfpixel,last 2 columns and rows,126.406252,7.82039843,0.999847303,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+280,fkl_fused vs scalar reference ASYMMETRIC,interior,7.62939453e-06,6.32686489e-07,0,1,
+280,fkl_fused vs scalar reference ASYMMETRIC,last 2 columns and rows,7.62939453e-06,6.21918634e-07,0,1,
+280,fkl_perop_batch vs fkl_fused,interior,7.62939453e-06,1.21779574e-07,0,1,
+280,fkl_perop_batch vs fkl_fused,last 2 columns and rows,7.62939453e-06,1.28369352e-07,0,1,
+280,rpp_fused_api vs scalar reference HALF_PIXEL,interior,1.90734863e-06,4.33619329e-07,0,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference
+280,rpp_fused_api vs scalar reference HALF_PIXEL,last 2 columns and rows,126.406252,7.83154475,0.999843358,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference
+280,rpp_fused_api vs fkl_fused,interior,7.20166016,0.634120079,0.999472423,-1,FKL samples ASYMMETRIC, RPP HALF_PIXEL
+280,rpp_fused_api vs fkl_fused,last 2 columns and rows,126.156252,8.09490078,0.999589599,-1,FKL samples ASYMMETRIC, RPP HALF_PIXEL
+280,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,interior,7.62939453e-06,6.31493293e-07,0,1,
+280,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,last 2 columns and rows,7.62939453e-06,6.18095021e-07,0,1,
+280,rpp_fused_api vs fkl_fused_halfpixel,interior,7.62939453e-06,8.86366769e-07,0,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+280,rpp_fused_api vs fkl_fused_halfpixel,last 2 columns and rows,126.406252,7.83154474,0.999843358,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+290,fkl_fused vs scalar reference ASYMMETRIC,interior,7.62939453e-06,6.32576019e-07,0,1,
+290,fkl_fused vs scalar reference ASYMMETRIC,last 2 columns and rows,7.62939453e-06,6.21588244e-07,0,1,
+290,fkl_perop_batch vs fkl_fused,interior,7.62939453e-06,1.21753944e-07,0,1,
+290,fkl_perop_batch vs fkl_fused,last 2 columns and rows,7.62939453e-06,1.28332842e-07,0,1,
+290,rpp_fused_api vs scalar reference HALF_PIXEL,interior,1.90734863e-06,4.33639001e-07,0,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference
+290,rpp_fused_api vs scalar reference HALF_PIXEL,last 2 columns and rows,126.406252,7.8370046,0.999830611,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference
+290,rpp_fused_api vs fkl_fused,interior,7.20166016,0.634114778,0.999470164,-1,FKL samples ASYMMETRIC, RPP HALF_PIXEL
+290,rpp_fused_api vs fkl_fused,last 2 columns and rows,126.156252,8.100859,0.999579552,-1,FKL samples ASYMMETRIC, RPP HALF_PIXEL
+290,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,interior,7.62939453e-06,6.31519858e-07,0,1,
+290,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,last 2 columns and rows,7.62939453e-06,6.17423925e-07,0,1,
+290,rpp_fused_api vs fkl_fused_halfpixel,interior,7.62939453e-06,8.86478248e-07,0,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+290,rpp_fused_api vs fkl_fused_halfpixel,last 2 columns and rows,126.406252,7.83700459,0.999830611,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+300,fkl_fused vs scalar reference ASYMMETRIC,interior,7.62939453e-06,6.32309509e-07,0,1,
+300,fkl_fused vs scalar reference ASYMMETRIC,last 2 columns and rows,7.62939453e-06,6.21339212e-07,0,1,
+300,fkl_perop_batch vs fkl_fused,interior,7.62939453e-06,1.21773699e-07,0,1,
+300,fkl_perop_batch vs fkl_fused,last 2 columns and rows,7.62939453e-06,1.28433088e-07,0,1,
+300,rpp_fused_api vs scalar reference HALF_PIXEL,interior,1.90734863e-06,4.33647381e-07,0,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference
+300,rpp_fused_api vs scalar reference HALF_PIXEL,last 2 columns and rows,126.406252,7.84034325,0.999836257,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference
+300,rpp_fused_api vs fkl_fused,interior,7.20166016,0.634182508,0.999468055,-1,FKL samples ASYMMETRIC, RPP HALF_PIXEL
+300,rpp_fused_api vs fkl_fused,last 2 columns and rows,126.156252,8.10427414,0.999573099,-1,FKL samples ASYMMETRIC, RPP HALF_PIXEL
+300,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,interior,7.62939453e-06,6.31420772e-07,0,1,
+300,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,last 2 columns and rows,7.62939453e-06,6.16806988e-07,0,1,
+300,rpp_fused_api vs fkl_fused_halfpixel,interior,7.62939453e-06,8.86474521e-07,0,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+300,rpp_fused_api vs fkl_fused_halfpixel,last 2 columns and rows,126.406252,7.84034324,0.999836257,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ

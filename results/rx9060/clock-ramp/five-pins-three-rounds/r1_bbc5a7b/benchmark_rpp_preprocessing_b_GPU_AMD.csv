@@ -1,0 +1,71 @@
+# experiment: benchmark_rpp_preprocessing_b
+# notes: FKL HIP vs RPP; source: seeded noise (LCG, seed 12345); RPP 3.2.0 (ROCm package amdrocm-rpp), rppt tensor API, HIP back-end; rppt_resize_mirror_normalize: BILINEAR, ROI XYWH, source U8 NHWC (batch stride 0, one ROI per crop), destination F32 NCHW, mirror off; rppt_channel_permute F32 NCHW; rppt_yuv_to_rgb: RpptColorStandard_BT601, RpptColorRange_STUDIO, default chroma upsampling; output widths are multiples of 8; wall clock including the stream synchronisation, 3 warm-up runs and at least 0.5 s of warm-up
+# repo: fkl-benchmarks e7f28e2305a64f19728cbf48105f3e01717dff36-dirty
+# fkl: bbc5a7bb30efe4e605209c68a56916152ff3712b
+# cvGPUSpeedup: not checked out (pinned 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c)
+# FastNPP: not checked out (pinned 9dfc4f430225e40ded392bfa777b2e724367c5c1)
+# nvcc: none (none), architectures native, -fmad on, -lineinfo on
+# hip: 24.0.0 (/opt/rocm/core-10.1/bin/amdclang++), architectures gfx1200
+# host compiler: Clang 24.0.0, Release, -march=native, -ftemplate-depth=1000
+# opencv: none
+# cpu: AMD Ryzen 7 5800X3D 8-Core Processor
+# gpu: AMD Radeon RX 9060, gfx1200, 14 WGPs (28 CUs), wave32, 8144 MiB, PCI 0000:0d:00.0
+# hip driver: 7.16.26385, hip runtime: 7.16.26385
+# clocks (gfx, mem, max gfx, max mem, MHz): 2674, 875, 2674, 1124
+# amd-smi: AMDSMI Tool: 27.1.0+7da43026 | AMDSMI Library version: 27.1.0 | ROCm version: 10.1.0 | amdgpu version: 7.1.9.31600000 | ionic version: N/A
+crops,variant,calls,median_ms,min_ms,max_ms,mean_ms,iters
+1,rpp_convert,1,0.3355365,0.334562,0.352312,0.336963933,30
+1,fkl_convert,1,0.285131,0.282971,0.292192,0.2851553,30
+1,fkl_chain_fused,1,0.0249255,0.02462,0.02626,0.0251748,30
+1,fkl_chain_fused_halfpixel,1,0.024895,0.02465,0.02627,0.0251705,30
+1,fkl_chain_perop_batch,5,0.0388655,0.03795,0.040351,0.0387972333,30
+1,rpp_chain_fused_api,1,0.057285,0.05627,0.058651,0.057294,30
+1,fkl_pipeline_fused,2,0.286482,0.285231,0.291632,0.286633,30
+1,fkl_pipeline_fused_halfpixel,2,0.2861665,0.284762,0.288312,0.286422967,30
+1,fkl_pipeline_perop_batch,6,0.302107,0.300972,0.303722,0.302057067,30
+1,rpp_pipeline_fused_api,2,0.3720475,0.359472,0.409853,0.373245433,30
+1,mixed_fkl_convert_rpp_chain,2,0.335117,0.332802,0.340242,0.335232267,30
+8,rpp_convert,1,0.303402,0.299331,0.309422,0.3039161,30
+8,fkl_convert,1,0.2833865,0.280771,0.284481,0.2832003,30
+8,fkl_chain_fused,1,0.029835,0.02863,0.03115,0.0298728333,30
+8,fkl_chain_fused_halfpixel,1,0.03023,0.02908,0.03099,0.0302171667,30
+8,fkl_chain_perop_batch,5,0.04671,0.04609,0.04763,0.0467356,30
+8,rpp_chain_fused_api,1,0.0623105,0.06145,0.06317,0.0622983667,30
+8,fkl_pipeline_fused,2,0.292777,0.291421,0.294352,0.292726333,30
+8,fkl_pipeline_fused_halfpixel,2,0.2913315,0.290362,0.293582,0.291453333,30
+8,fkl_pipeline_perop_batch,6,0.312552,0.311402,0.314082,0.312474467,30
+8,rpp_pipeline_fused_api,2,0.371892,0.369312,0.381702,0.372845167,30
+8,mixed_fkl_convert_rpp_chain,2,0.336527,0.335032,0.339532,0.336708267,30
+16,rpp_convert,1,0.3043365,0.299272,0.319552,0.305468767,30
+16,fkl_convert,1,0.2838265,0.282832,0.285822,0.284010967,30
+16,fkl_chain_fused,1,0.033925,0.03303,0.03545,0.0339835333,30
+16,fkl_chain_fused_halfpixel,1,0.0340755,0.03374,0.035471,0.0342432,30
+16,fkl_chain_perop_batch,5,0.0550055,0.05448,0.057851,0.0552593,30
+16,rpp_chain_fused_api,1,0.067965,0.06671,0.069581,0.0679613667,30
+16,fkl_pipeline_fused,2,0.296182,0.294471,0.297872,0.2961837,30
+16,fkl_pipeline_fused_halfpixel,2,0.296112,0.294872,0.298951,0.2961837,30
+16,fkl_pipeline_perop_batch,6,0.3233365,0.321872,0.324571,0.323136533,30
+16,rpp_pipeline_fused_api,2,0.3732525,0.368592,0.380192,0.373778833,30
+16,mixed_fkl_convert_rpp_chain,2,0.343072,0.340822,0.370502,0.344461,30
+32,rpp_convert,1,0.3063515,0.303012,0.314082,0.307133433,30
+32,fkl_convert,1,0.283307,0.280671,0.287232,0.283444967,30
+32,fkl_chain_fused,1,0.03776,0.03695,0.039101,0.0378259,30
+32,fkl_chain_fused_halfpixel,1,0.038855,0.037931,0.04016,0.0387158667,30
+32,fkl_chain_perop_batch,5,0.0797955,0.078031,0.08274,0.0800161333,30
+32,rpp_chain_fused_api,1,0.0749605,0.0739,0.07672,0.0749284333,30
+32,fkl_pipeline_fused,2,0.3023015,0.301272,0.304282,0.302585067,30
+32,fkl_pipeline_fused_halfpixel,2,0.303712,0.301391,0.304252,0.303354067,30
+32,fkl_pipeline_perop_batch,6,0.345432,0.343832,0.351122,0.345486333,30
+32,rpp_pipeline_fused_api,2,0.384452,0.378942,0.424293,0.385700567,30
+32,mixed_fkl_convert_rpp_chain,2,0.353047,0.351332,0.354842,0.353023367,30
+64,rpp_convert,1,0.312947,0.308921,0.319772,0.313885133,30
+64,fkl_convert,1,0.283482,0.281902,0.285471,0.283429967,30
+64,fkl_chain_fused,1,0.04825,0.04723,0.054081,0.0485312667,30
+64,fkl_chain_fused_halfpixel,1,0.0494155,0.048221,0.05052,0.0495019667,30
+64,fkl_chain_perop_batch,5,0.1246905,0.123011,0.1295,0.1249457,30
+64,rpp_chain_fused_api,1,0.0856705,0.083511,0.08697,0.0854664667,30
+64,fkl_pipeline_fused,2,0.3149815,0.313382,0.331232,0.3156188,30
+64,fkl_pipeline_fused_halfpixel,2,0.3159565,0.314622,0.323392,0.316075133,30
+64,fkl_pipeline_perop_batch,6,0.398287,0.396582,0.402262,0.3985886,30
+64,rpp_pipeline_fused_api,2,0.3906525,0.384993,0.454733,0.393590933,30
+64,mixed_fkl_convert_rpp_chain,2,0.375287,0.373452,0.379082,0.3752438,30
