@@ -1,6 +1,6 @@
 # experiment: E2a element-wise chain: Triton and TorchInductor
-# notes: k values: 5002; 4096x2160 uint8 noise (the file /home/oscar/tfkl-bench/e2-work/e2_input.u8 (written by e2_fkl_chain: std::mt19937_64 seed 20261030, as E1a)) -> float32, alpha 1.0, c 0.54, k operations alternating mul and add; each (version, k) in its own process with fresh Triton and Inductor caches (compile_s = the first call, cold); 100 timed calls after warm-up; kernels counted with torch.profiler; ULP error against an exact float64 evaluation (max_ulp_vs_exact) and against the FKL output (max_ulp_vs_fkl, in ULPs of the FKL value; bitexact_fraction_vs_fkl); FKL row: time from /home/oscar/tfkl-bench/fkl-benchmarks/results/rtx4090/e2-chain/e2_fkl_chain.csv, cold compile time from /home/oscar/tfkl-bench/fkl-benchmarks/results/rtx4090/e2-chain/e2_fkl_compile.csv; timeout 900 s per point
-# repo: 404da832ae9bdf1f2eab439643b140c5185b4a84-dirty
+# notes: k values: 5002; 4096x2160 uint8 noise (the file /home/oscar/tfkl-bench/e2-work/e2_input.u8 (written by e2_fkl_chain: std::mt19937_64 seed 20261030, as E1a)) -> float32, alpha 1.0, c 0.54, k operations alternating mul and add; each (version, k) in its own process with fresh Triton and Inductor caches (compile_s = the first call, cold); 100 timed calls after warm-up; kernels counted with torch.profiler; gpu_flushed_*: the same timing with the L2 flushed before every call (a kernel that reads 256 MB, outside the timed interval); ULP error against an exact float64 evaluation (max_ulp_vs_exact) and against the FKL output (max_ulp_vs_fkl, in ULPs of the FKL value; bitexact_fraction_vs_fkl); FKL row: time from /home/oscar/tfkl-bench/fkl-benchmarks/results/rtx4090/e2-chain/e2_fkl_chain.csv, cold compile time from /home/oscar/tfkl-bench/fkl-benchmarks/results/rtx4090/e2-chain/e2_fkl_compile.csv; timeout 900 s per point
+# repo: 000572767f545a7b844c6334eeb71140ff8d9a0a-dirty
 # fkl: 38c4f32d887b4530c54362eb526c9a5411ee92fe
 # cvGPUSpeedup: 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c
 # FastNPP: 9dfc4f430225e40ded392bfa777b2e724367c5c1
@@ -12,11 +12,11 @@
 # nvidia-smi driver: 610.43.02
 # clocks (sm, mem, max sm, max mem, MHz): 180 MHz, 405 MHz, 3090 MHz, 10001 MHz
 # power limit, temperature at start: 130.00 W, 31
-ops,version,status,why,gpu_mean_ms,gpu_min_ms,host_launch_us,kernels,compile_s,max_ulp_vs_exact,bitexact_fraction_vs_triton_hand,bitexact_fraction_vs_fkl,max_ulp_vs_fkl,sass_ffma,sass_fmul,sass_fadd
-5002,triton_hand,ok,,0.7953311985731125,0.7822080254554749,9.110700339078903,1,4.978855655062944,1.6521739102900028,1.0,1.0,0.0,20008,8,0
-5002,fkl,ok,,0.545284791,0.544767976,,1,5.234,1.6521739102900028,1.0,1.0,0.0,,,
-5002,eager,ok,,140.91037536621093,140.75596618652344,140634.36713069677,5004,0.17440955014899373,1.6521739102900028,0.992124080657959,0.992124080657959,1.0,,,
-5002,inductor_default,ok,,0.5681308817863464,0.5642880201339722,25.22412920370698,1,25.65302716405131,1.6521739102900028,1.0,1.0,0.0,25010,0,0
-5002,inductor_wide,ok,,0.5679523229599,0.5642240047454834,25.224629789590836,1,25.592516240198165,1.6521739102900028,1.0,1.0,0.0,25010,0,0
-5002,inductor_graphs,ok,,0.5794915157556534,0.5754879713058472,38.671179208904505,1,25.996687868144363,1.6521739102900028,1.0,1.0,0.0,25010,0,0
-5002,eager_graphs,ok,,129.95885192871094,129.71212768554688,5.336839240044355,5004,0.21547005395404994,1.6521739102900028,0.992124080657959,0.992124080657959,1.0,,,
+ops,version,status,why,gpu_mean_ms,gpu_min_ms,host_launch_us,kernels,compile_s,max_ulp_vs_exact,bitexact_fraction_vs_triton_hand,bitexact_fraction_vs_fkl,max_ulp_vs_fkl,sass_ffma,sass_fmul,sass_fadd,gpu_flushed_mean_ms,gpu_flushed_min_ms
+5002,triton_hand,ok,,0.8011926400661469,0.78438401222229,11.19338907301426,1,5.778070711065084,1.6521739102900028,1.0,1.0,0.0,20008,8,0,0.7608022427558899,0.7229440212249756
+5002,fkl,ok,,0.527474564,0.519967973,,1,5.234,1.6521739102900028,1.0,1.0,0.0,,,,0.546188159,0.523263991
+5002,eager,ok,,141.93204696655275,140.90853881835938,141361.02398158982,5004,0.17939334292896092,1.6521739102900028,0.992124080657959,0.992124080657959,1.0,,,,141.7010369873047,140.93516540527344
+5002,inductor_default,ok,,0.5549827253818512,0.5405759811401367,25.074551813304424,1,26.461867603007704,1.6521739102900028,1.0,1.0,0.0,25010,0,0,0.5169920009374619,0.5160959959030151
+5002,inductor_wide,ok,,0.5691894388198853,0.5651519894599915,25.241649709641933,1,26.031462950864807,1.6521739102900028,1.0,1.0,0.0,25010,0,0,0.5186768025159836,0.5160959959030151
+5002,inductor_graphs,ok,,0.5807945615053177,0.5400000214576721,41.18059063330293,1,28.7839711769484,1.6521739102900028,1.0,1.0,0.0,25010,0,0,0.5171705549955368,0.5150719881057739
+5002,eager_graphs,ok,,130.82797119140625,130.01727294921875,5.925239529460669,5004,0.22116929711773992,1.6521739102900028,0.992124080657959,0.992124080657959,1.0,,,,130.85906311035157,130.0684814453125

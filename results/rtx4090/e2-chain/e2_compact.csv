@@ -1,25 +1,45 @@
 k,impl,kernels,compile_s,bitwise,ulp_fkl,ulp_exact,host_us,status,timing,gpu_ms
 10,FKL,1,3.65,1.0000,0,4.6,,ok,warm,0.0213
-10,Triton (hand-written),1,0.69,1.0000,0,4.6,9.3,ok,warm,0.0288
-10,TorchInductor,1,1.21,1.0000,0,4.6,25.2,ok,warm,0.0448
-10,TorchInductor (wide fusion window),1,1.22,1.0000,0,4.6,25.5,ok,warm,0.0462
-10,TorchInductor + CUDA Graphs,1,1.23,1.0000,0,4.6,39.7,ok,warm,0.0569
-10,PyTorch eager,12,0.03,0.3709,4,4.76,56.7,ok,warm,0.3628
-100,FKL,1,3.67,1.0000,0,1.65,,ok,warm,0.0266
-100,Triton (hand-written),1,0.72,1.0000,0,1.65,8.8,ok,warm,0.0290
-100,TorchInductor,1,1.72,1.0000,0,1.65,24.0,ok,warm,0.0463
-100,TorchInductor (wide fusion window),1,1.72,1.0000,0,1.65,24.2,ok,warm,0.0469
-100,TorchInductor + CUDA Graphs,1,1.79,1.0000,0,1.65,40.3,ok,warm,0.0590
-100,PyTorch eager,102,0.04,0.9921,1,1.65,2596.0,ok,warm,2.9173
-500,FKL,1,3.72,1.0000,0,1.65,,ok,warm,0.0673
-500,Triton (hand-written),1,0.90,1.0000,0,1.65,9.2,ok,warm,0.0708
-500,TorchInductor,1,3.24,1.0000,0,1.65,25.6,ok,warm,0.0884
-500,TorchInductor (wide fusion window),1,3.27,1.0000,0,1.65,24.0,ok,warm,0.0875
-500,TorchInductor + CUDA Graphs,1,3.45,1.0000,0,1.65,39.0,ok,warm,0.0997
-500,PyTorch eager,502,0.05,0.9921,1,1.65,13860.1,ok,warm,14.1686
-5002,FKL,1,5.23,1.0000,0,1.65,,ok,warm,0.5453
-5002,Triton (hand-written),1,4.98,1.0000,0,1.65,9.1,ok,warm,0.7953
-5002,TorchInductor,1,25.65,1.0000,0,1.65,25.2,ok,warm,0.5681
-5002,TorchInductor (wide fusion window),1,25.59,1.0000,0,1.65,25.2,ok,warm,0.5680
-5002,TorchInductor + CUDA Graphs,1,26.00,1.0000,0,1.65,38.7,ok,warm,0.5795
-5002,PyTorch eager,5004,0.17,0.9921,1,1.65,140634.4,ok,warm,140.9104
+10,FKL,1,3.65,1.0000,0,4.6,,ok,L2-flushed,0.0272
+10,Triton (hand-written),1,0.69,1.0000,0,4.6,9.0,ok,warm,0.0288
+10,Triton (hand-written),1,0.69,1.0000,0,4.6,9.0,ok,L2-flushed,0.0197
+10,TorchInductor,1,1.22,1.0000,0,4.6,24.9,ok,warm,0.0447
+10,TorchInductor,1,1.22,1.0000,0,4.6,24.9,ok,L2-flushed,0.0192
+10,TorchInductor (wide fusion window),1,1.23,1.0000,0,4.6,25.0,ok,warm,0.0451
+10,TorchInductor (wide fusion window),1,1.23,1.0000,0,4.6,25.0,ok,L2-flushed,0.0193
+10,TorchInductor + CUDA Graphs,1,1.24,1.0000,0,4.6,40.2,ok,warm,0.0577
+10,TorchInductor + CUDA Graphs,1,1.24,1.0000,0,4.6,40.2,ok,L2-flushed,0.0189
+10,PyTorch eager,12,0.03,0.3709,4,4.76,56.8,ok,warm,0.3629
+100,FKL,1,3.67,1.0000,0,1.65,,ok,warm,0.0255
+100,FKL,1,3.67,1.0000,0,1.65,,ok,L2-flushed,0.0302
+100,Triton (hand-written),1,0.73,1.0000,0,1.65,9.0,ok,warm,0.0297
+100,Triton (hand-written),1,0.73,1.0000,0,1.65,9.0,ok,L2-flushed,0.0201
+100,TorchInductor,1,1.74,1.0000,0,1.65,23.9,ok,warm,0.0513
+100,TorchInductor,1,1.74,1.0000,0,1.65,23.9,ok,L2-flushed,0.0230
+100,TorchInductor (wide fusion window),1,1.74,1.0000,0,1.65,24.5,ok,warm,0.0469
+100,TorchInductor (wide fusion window),1,1.74,1.0000,0,1.65,24.5,ok,L2-flushed,0.0232
+100,TorchInductor + CUDA Graphs,1,1.78,1.0000,0,1.65,40.0,ok,warm,0.0599
+100,TorchInductor + CUDA Graphs,1,1.78,1.0000,0,1.65,40.0,ok,L2-flushed,0.0228
+100,PyTorch eager,102,0.03,0.9921,1,1.65,2598.2,ok,warm,2.9206
+500,FKL,1,3.72,1.0000,0,1.65,,ok,warm,0.0642
+500,FKL,1,3.72,1.0000,0,1.65,,ok,L2-flushed,0.0690
+500,Triton (hand-written),1,0.91,1.0000,0,1.65,9.2,ok,warm,0.0711
+500,Triton (hand-written),1,0.91,1.0000,0,1.65,9.2,ok,L2-flushed,0.0623
+500,TorchInductor,1,3.36,1.0000,0,1.65,23.8,ok,warm,0.0878
+500,TorchInductor,1,3.36,1.0000,0,1.65,23.8,ok,L2-flushed,0.0653
+500,TorchInductor (wide fusion window),1,3.38,1.0000,0,1.65,26.6,ok,warm,0.0906
+500,TorchInductor (wide fusion window),1,3.38,1.0000,0,1.65,26.6,ok,L2-flushed,0.0658
+500,TorchInductor + CUDA Graphs,1,4.14,1.0000,0,1.65,49.0,ok,warm,0.1109
+500,TorchInductor + CUDA Graphs,1,4.14,1.0000,0,1.65,49.0,ok,L2-flushed,0.0661
+500,PyTorch eager,502,0.05,0.9921,1,1.65,14023.5,ok,warm,14.2954
+5002,FKL,1,5.23,1.0000,0,1.65,,ok,warm,0.5275
+5002,FKL,1,5.23,1.0000,0,1.65,,ok,L2-flushed,0.5462
+5002,Triton (hand-written),1,5.78,1.0000,0,1.65,11.2,ok,warm,0.8012
+5002,Triton (hand-written),1,5.78,1.0000,0,1.65,11.2,ok,L2-flushed,0.7608
+5002,TorchInductor,1,26.46,1.0000,0,1.65,25.1,ok,warm,0.5550
+5002,TorchInductor,1,26.46,1.0000,0,1.65,25.1,ok,L2-flushed,0.5170
+5002,TorchInductor (wide fusion window),1,26.03,1.0000,0,1.65,25.2,ok,warm,0.5692
+5002,TorchInductor (wide fusion window),1,26.03,1.0000,0,1.65,25.2,ok,L2-flushed,0.5187
+5002,TorchInductor + CUDA Graphs,1,28.78,1.0000,0,1.65,41.2,ok,warm,0.5808
+5002,TorchInductor + CUDA Graphs,1,28.78,1.0000,0,1.65,41.2,ok,L2-flushed,0.5172
+5002,PyTorch eager,5004,0.18,0.9921,1,1.65,141361.0,ok,warm,141.9320
