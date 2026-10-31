@@ -45,4 +45,11 @@ Response letter and this README only (they compare the library before and after 
 ## Tree check: the PR #417 branch against the copy of the pinned tree
 
 The distinct-operations series of the compile-time figure comes from two include trees with the same one-function get_arg change: N = 1 ... 4,000 (except N = 1,020) from the PR #417 branch (worktree, based on LTS-C++17 d776713; the N = 4,000 compile of 2026-10-30 took 595 s there, against 697 s of the earlier single compile from the copy of the pin) and N = 1,020 and the time-out at N = 6,000 from a copy of the pin 38c4f32 (code of `pp_detail::Nth` / `Skip` identical, only comments and one `static_assert` message differ). Check, 2026-10-30: the generated translation units of N = 1,000 and N = 2,000 (`build/e3/getarg-pr_A_<N>.cu`, `gen_chain.py` variant A) compiled with identical flags (`-O3 -std=c++17 sm_89 + PTX`, nvcc 13.4.92) from both trees give the same kernel, compared with `cuobjdump -sass` after normalisation: 3,640 instructions at N = 1,000 and 7,136 at N = 2,000 in both, identical line by line.
-To repeat after PR #417 is merged (the merge commit may differ from the branch in other files that these TUs include): compile N = 1,000 from the merge commit and compare against the same dump.
+Repeated against the merge commit, 2026-10-31 (`tree-check/`, the `--include` path is the pinned tree of fkl-benchmarks, external/fkl at c8fcbe8, the tip of LTS-C++17 with #417 merged; `scripts/e3_sweep.py`, same TUs, flags and core as above, one compile each):
+
+| N | nvcc wall (s) | cicc (s) | ptxas (s) | host compiler (s) | peak RSS (MB) | cubin (bytes) | SASS instructions | registers |
+|---|---|---|---|---|---|---|---|---|
+| 1,000 | 22.77 | 12.79 | 0.46 | 8.51 | 1,465 | 13,266,080 | 3,640 | 17 |
+| 2,000 | 99.09 | 67.89 | 1.80 | 28.00 | 4,060 | 50,521,760 | 7,136 | 17 |
+
+The normalised SASS of the kernel (cuobjdump, symbol names normalised) is identical to the PR-branch binary (`getarg-pr_A_<N>`) and to the pinned-tree-copy binary (`patched-check_A_<N>`) at both N. Compile times: N = 1,000 22.8 s against 24.5 to 25.6 s (three compiles of the PR branch) and 23.4 to 24.4 s (three of the copy of the pin); N = 2,000 99.1 s against 99.1 to 100.4 s (five compiles of the PR branch, `compile-times-1-100-500-2000/with_fix.csv`) and 104.4 s (copy of the pin). The N = 1,000 compile is 3 % below the fastest earlier one, at the same level as the spread between the earlier trees; nothing in the figure or the tables changes. The file with the compile is `tree-check/e3_c8fcbe8_A.csv`.
