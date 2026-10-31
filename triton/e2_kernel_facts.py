@@ -141,7 +141,7 @@ def main():
                 if op_count(lines, "FFMA") != k // 2 or "launchTransformDPP_Kernel" not in subprocess.run(["c++filt", name], capture_output=True, text=True).stdout:
                     continue
                 body = ptx.get(name, "")
-                rows.append(dict(impl=impl, k=k, kernel=name[:60] + "...", config="thread fusion off: one element per thread, 32 x 8 threads per block", threads_per_block=256, regs=regs.get(name, -1), instr=sum(1 for l in lines if not l.endswith(":")),
+                rows.append(dict(impl=impl, k=k, kernel=name[:60] + "...", config="one element per thread, 32 x 8 threads per block", threads_per_block=256, regs=regs.get(name, -1), instr=sum(1 for l in lines if not l.endswith(":")),
                                  sass_mem=fmt(mem_histogram(lines)), ffma=op_count(lines, "FFMA"), fmul=op_count(lines, "FMUL"), fadd=op_count(lines, "FADD"), ptx_mem=fmt(ptx_mem(body)), source=path))
     for r in rows:
         print(f"{r['impl']:18s} k={r['k']:<4d} {r['config']}\n    regs {r['regs']:3d}  SASS instr {r['instr']:5d}  FFMA {r['ffma']:4d} FMUL {r['fmul']:3d} FADD {r['fadd']:3d}\n    SASS mem: {r['sass_mem']}\n    PTX mem:  {r['ptx_mem']}")

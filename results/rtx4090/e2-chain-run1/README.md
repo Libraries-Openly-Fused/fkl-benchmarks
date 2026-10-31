@@ -1,5 +1,7 @@
 # E2: the element-wise chain through FKL, Triton and TorchInductor (RTX 4090, CUDA 13.4.3, Triton 3.8.0, PyTorch 2.14.1)
 
+Superseded by `../e2-chain/` (runs 2 to 4: the same measurements plus L2-flushed timings and the kernel facts). The `sass_*` columns of Inductor in this folder add up every configuration that Inductor compiled (two), see the README there.
+
 Superseded by `../e2-chain/` (second run: the same measurements plus L2-flushed timings). Kept because its warm timings are the reference for the reproducibility statement in that README.
 
 Workload: a 4,096 x 2,160 uint8 image converted to float32 and scaled by alpha = 1.0, then k operations alternating Mul by c and Add c (c = 0.54, k / 2 pairs), written as float32.

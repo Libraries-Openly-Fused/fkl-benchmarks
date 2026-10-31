@@ -1,0 +1,22 @@
+# experiment: E2 element-wise chain through FKL (4096x2160 uchar -> float)
+# notes: thread fusion: off (fk::TF::DISABLED, the default); input: /home/oscar/tfkl-bench/e2-work/e2_input.u8 (uint8 noise, std::mt19937_64 seed 20261030 as E1a, uniform 0..255, row after row); alpha 1.0, c 0.54, k operations alternating Mul c and Add c; 32x8 threads per block (the block FKL picks); 100 timed iterations after one warm-up; fkl_flushed_*: the same launch with the L2 flushed before it (a kernel that reads 256 MB, outside the timed interval); outputs are raw float32 files, one per k, for the bitwise and ULP comparison of triton/e2_chain.py
+# repo: fkl-benchmarks b73a90e9bd62b04ae964d540965f3035955fe906
+# fkl: 38c4f32d887b4530c54362eb526c9a5411ee92fe
+# cvGPUSpeedup: 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c
+# FastNPP: 9dfc4f430225e40ded392bfa777b2e724367c5c1
+# nvcc: 13.4.92 (/home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/nvcc), architectures 89, -fmad on, -lineinfo on
+# host compiler: GNU 15.2.0, Release, -march=native, -ftemplate-depth=1000
+# opencv: 4.14.0
+# cpu: AMD Ryzen 9 5950X 16-Core Processor
+# gpu: NVIDIA GeForce RTX 4090, cc 8.9, 128 SMs, 24106 MiB, PCI 0000:09:00.0
+# cuda driver api: 13.3, cuda runtime: 13.4
+# nvidia-smi driver: 610.43.02
+# clocks (sm, mem, max sm, max mem, MHz): 2685 MHz, 10251 MHz, 3105 MHz, 10501 MHz
+# power limit, temperature at start: 450.00 W, 47
+ops,pairs,fkl_mean_ms,fkl_min_ms,kernels,output_file,fkl_flushed_mean_ms,fkl_flushed_min_ms
+2,1,0.0202713596,0.0194559991,1,/home/oscar/tfkl-bench/e2-work/fkl_out_k2.f32,0.0258527996,0.0254079998
+10,5,0.0204947196,0.0194559991,1,/home/oscar/tfkl-bench/e2-work/fkl_out_k10.f32,0.0260825596,0.0255999994
+50,25,0.0227785602,0.0222399998,1,/home/oscar/tfkl-bench/e2-work/fkl_out_k50.f32,0.0277020801,0.0266239997
+100,50,0.0253654399,0.0245760009,1,/home/oscar/tfkl-bench/e2-work/fkl_out_k100.f32,0.0303222404,0.0294400007
+500,250,0.0644355192,0.0634879991,1,/home/oscar/tfkl-bench/e2-work/fkl_out_k500.f32,0.0694249611,0.0686080009
+5002,2501,0.52650303,0.521215975,1,/home/oscar/tfkl-bench/e2-work/fkl_out_k5002.f32,0.544522871,0.524287999

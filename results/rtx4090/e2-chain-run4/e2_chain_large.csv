@@ -1,0 +1,22 @@
+# experiment: E2a element-wise chain: Triton and TorchInductor
+# notes: k values: 5002; 4096x2160 uint8 noise (the file /home/oscar/tfkl-bench/e2-work/e2_input.u8 (written by e2_fkl_chain: std::mt19937_64 seed 20261030, as E1a)) -> float32, alpha 1.0, c 0.54, k operations alternating mul and add; each (version, k) in its own process with fresh Triton and Inductor caches (compile_s = the first call, cold); 100 timed calls after warm-up; kernels counted with torch.profiler; gpu_flushed_*: the same timing with the L2 flushed before every call (a kernel that reads 256 MB, outside the timed interval); ULP error against an exact float64 evaluation (max_ulp_vs_exact) and against the FKL output (max_ulp_vs_fkl, in ULPs of the FKL value; bitexact_fraction_vs_fkl); FKL row: time from /home/oscar/tfkl-bench/fkl-benchmarks/results/rtx4090/e2-chain-run4/e2_fkl_chain.csv, cold compile time from /home/oscar/tfkl-bench/fkl-benchmarks/results/rtx4090/e2-chain-run4/e2_fkl_compile.csv; timeout 900 s per point
+# repo: 33043ad32c0431b525464b7236416607295379b8-dirty
+# fkl: c8fcbe816d629377886cbdd19c83527f37ccfc04
+# cvGPUSpeedup: 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c
+# FastNPP: 9dfc4f430225e40ded392bfa777b2e724367c5c1
+# python: 3.12.13, torch: 2.14.1+cu130, torch.version.cuda: 13.0
+# triton: 3.8.0; ptxas /home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/ptxas (release 13.4); ptxas_blackwell /home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/ptxas (release 13.4); cuobjdump /home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/cuobjdump (release 13.4); nvdisasm /home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/nvdisasm (release 13.4)
+# flash_attn: 2.8.3.post2
+# gpu: NVIDIA GeForce RTX 4090, cc 8.9, 128 SMs, 24106 MiB
+# cuda_visible_devices: 1 (device 0, pci 00000000:05:00.0)
+# nvidia-smi driver: 610.43.02
+# clocks (sm, mem, max sm, max mem, MHz): 180 MHz, 405 MHz, 3090 MHz, 10001 MHz
+# power limit, temperature at start: 130.00 W, 31
+ops,version,status,why,gpu_mean_ms,gpu_min_ms,host_launch_us,kernels,compile_s,max_ulp_vs_exact,bitexact_fraction_vs_triton_hand,bitexact_fraction_vs_fkl,max_ulp_vs_fkl,sass_ffma,sass_fmul,sass_fadd,gpu_flushed_mean_ms,gpu_flushed_min_ms
+5002,triton_hand,ok,,0.7954230397939682,0.7802879810333252,9.1283000074327,1,4.885058792075142,1.6521739102900028,1.0,1.0,0.0,20008,8,0,0.7504652786254883,0.7157760262489319
+5002,fkl,ok,,0.52650303,0.521215975,,1,5.234,1.6521739102900028,1.0,1.0,0.0,,,,0.544522871,0.524287999
+5002,eager,ok,,141.2519204711914,140.6841278076172,141205.77819878235,5004,0.17496790597215295,1.6521739102900028,0.992124080657959,0.992124080657959,1.0,,,,141.45657257080077,140.81529235839844
+5002,inductor_default,ok,,0.5658160078525544,0.5386239886283875,24.978709407150745,1,25.719920271076262,1.6521739102900028,1.0,1.0,0.0,5002,0,0,0.5193017601966858,0.5160959959030151
+5002,inductor_wide,ok,,0.5534179198741913,0.5140479803085327,24.318420328199863,1,25.932359613943845,1.6521739102900028,1.0,1.0,0.0,5002,0,0,0.5234118419885635,0.5160959959030151
+5002,inductor_graphs,ok,,0.5665212804079056,0.5150719881057739,38.958650548011065,1,27.053434622008353,1.6521739102900028,1.0,1.0,0.0,5002,0,0,0.5293225622177125,0.5160959959030151
+5002,eager_graphs,ok,,130.71087966918947,129.90121459960938,5.690529942512512,5004,0.21643007593229413,1.6521739102900028,0.992124080657959,0.992124080657959,1.0,,,,130.582520904541,129.81861877441406
