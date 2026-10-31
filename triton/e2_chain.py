@@ -158,7 +158,16 @@ def sass_counts(cache_dir):
     totals = {"sass_ffma": 0, "sass_fmul": 0, "sass_fadd": 0}
     if not cache_dir:
         return totals
-    for cubin in glob.glob(os.path.join(cache_dir, "**", "*.cubin"), recursive=True):
+    cubins = glob.glob(os.path.join(cache_dir, "**", "*.cubin"), recursive=True)
+    # TorchInductor compiles several configurations of a pointwise kernel (here 8 and 2 elements per thread) and keeps the fastest: its *.best_config names the cache entry of the one that
+    # runs. Only that kernel is counted; summing every cubin of the cache would add the configurations that were compiled and not used.
+    best = set()
+    for bc in glob.glob(os.path.join(os.environ.get("TORCHINDUCTOR_CACHE_DIR", "/nonexistent"), "**", "*.best_config"), recursive=True):
+        with open(bc) as f:
+            best.add(json.load(f)["triton_cache_hash"])
+    if best:
+        cubins = [c for c in cubins if os.path.basename(os.path.dirname(c)) in best]
+    for cubin in cubins:
         sass = subprocess.run(["cuobjdump", "-sass", cubin], capture_output=True, text=True).stdout
         for body in st.split_functions(sass).values():
             _, hist = st.classify(st.normalise_sass(body, rename=False))
