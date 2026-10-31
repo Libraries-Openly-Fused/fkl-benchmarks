@@ -3,7 +3,8 @@
 //   plain        BATCH launches in the stream (the "iterated batch" of the benchmark)
 //   children     the graph of the benchmark: BATCH child graph nodes, each captured from one launch (hipStreamBeginCapture, global mode), no dependencies between them
 //   children_seq the same with every child depending on the previous one
-//   flat         ONE stream capture of the BATCH launches: a graph of BATCH kernel nodes in a chain
+//   flat         ONE stream capture of the BATCH launches: a graph of BATCH kernel nodes in a chain (serial)
+//   flat_parallel ONE stream capture with a fork and a join over one stream per crop (events): BATCH kernel nodes with no dependencies between them (they may run side by side)
 // per variant: submit = time until the launch call(s) return (host), total = submit + stream synchronisation, event = hipEvent time around the submission, in the stream (what the
 // benchmark reports); medians of N repetitions after a warm-up of 1.5 s. The graph building (capture, instantiate) is not timed.
 #include <hip/hip_runtime.h>
@@ -18,7 +19,10 @@
 #include <chrono>
 #include <cstdio>
 #include <cstdlib>
+#include <cstdint>
+#include <cstring>
 #include <functional>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -65,6 +69,21 @@ static double warmupSeconds() {
     return v ? std::atof(v) : 1.5;
 }
 
+// the number of nodes of a graph and how many of them are kernel nodes / child graph nodes
+static void describe(const char* name, hipGraph_t g) {
+    size_t n = 0;
+    HC(hipGraphGetNodes(g, nullptr, &n));
+    std::vector<hipGraphNode_t> nodes(n);
+    HC(hipGraphGetNodes(g, nodes.data(), &n));
+    size_t kernels = 0, children = 0, others = 0;
+    for (const auto node : nodes) {
+        hipGraphNodeType t;
+        HC(hipGraphNodeGetType(node, &t));
+        if (t == hipGraphNodeTypeKernel) ++kernels; else if (t == hipGraphNodeTypeGraph) ++children; else ++others;
+    }
+    std::printf("   graph %-12s: %zu nodes (kernel %zu, child graph %zu, other %zu)\n", name, n, kernels, children, others);
+}
+
 template <size_t BATCH>
 void probe(fk::Stream& stream, const int reps) {
     using InputType = uchar;
@@ -89,8 +108,36 @@ void probe(fk::Stream& stream, const int reps) {
 
     const auto launchOne = [&](fk::Stream& s, const int i) { fk::executeOperations<fk::TransformDPP<>>(s, read_array[i], saturate, mul, sub, div, write_array[i]); };
 
+    // hash of the bits of all the outputs; each strategy is run once on cleared outputs and must give the hash of the plain launches
+    const auto clearOutputs = [&] { for (int i = 0; i < static_cast<int>(BATCH); ++i) fk::setTo(static_cast<OutputType>(0), d_output[i], stream); stream.sync(); };
+    const auto hashOutputs = [&] {
+        uint64_t h = 1469598103934665603ull;
+        for (int i = 0; i < static_cast<int>(BATCH); ++i) {
+            d_output[i].download(stream);
+            stream.sync();
+            for (int y = 0; y < cropSize.height; ++y)
+                for (int x = 0; x < cropSize.width; ++x) {
+                    uint32_t bits;
+                    const float v = d_output[i].at(fk::Point{x, y, 0});
+                    std::memcpy(&bits, &v, 4);
+                    h = (h ^ bits) * 1099511628211ull;
+                }
+        }
+        return h;
+    };
+    clearOutputs();
+    for (int i = 0; i < static_cast<int>(BATCH); ++i) launchOne(stream, i);
+    stream.sync();
+    const uint64_t plainHash = hashOutputs();
+    const auto checkStrategy = [&](const char* name, const std::function<void()>& run) {
+        clearOutputs();
+        run();
+        HC(hipStreamSynchronize(stream.getHIPStream()));
+        std::printf("   output of %-12s identical to the plain launches: %s\n", name, hashOutputs() == plainHash ? "yes" : "NO");
+    };
+
     // plain launches
-    Result plain{0, 0, 0}, children{0, 0, 0}, childrenSeq{0, 0, 0}, flat{0, 0, 0};
+    Result plain{0, 0, 0}, children{0, 0, 0}, childrenSeq{0, 0, 0}, flat{0, 0, 0}, flatPar{0, 0, 0};
     if (wanted("plain")) plain = timeIt([&] { for (int i = 0; i < static_cast<int>(BATCH); ++i) launchOne(stream, i); }, hs, reps, warmupSeconds());
 
     // children (the graph of the benchmark) and children_seq
@@ -111,6 +158,7 @@ void probe(fk::Stream& stream, const int reps) {
             }
             HC(hipGraphDestroy(subGraph));
         }
+        if (!sequential) describe("children", mainGraph); else describe("children_seq", mainGraph);
         hipGraphExec_t exec;
         HC(hipGraphInstantiate(&exec, mainGraph, NULL, NULL, 0));
         HC(hipGraphDestroy(mainGraph));
@@ -118,11 +166,13 @@ void probe(fk::Stream& stream, const int reps) {
     };
     if (wanted("children")) {
         hipGraphExec_t childrenExec = buildChildren(false);
+        checkStrategy("children", [&] { HC(hipGraphLaunch(childrenExec, hs)); });
         children = timeIt([&] { HC(hipGraphLaunch(childrenExec, hs)); }, hs, reps, warmupSeconds());
         HC(hipGraphExecDestroy(childrenExec));
     }
     if (wanted("children_seq")) {
         hipGraphExec_t seqExec = buildChildren(true);
+        checkStrategy("children_seq", [&] { HC(hipGraphLaunch(seqExec, hs)); });
         childrenSeq = timeIt([&] { HC(hipGraphLaunch(seqExec, hs)); }, hs, reps, warmupSeconds());
         HC(hipGraphExecDestroy(seqExec));
     }
@@ -136,15 +186,50 @@ void probe(fk::Stream& stream, const int reps) {
         HC(hipStreamBeginCapture(captureStream, hipStreamCaptureModeGlobal));
         for (int i = 0; i < static_cast<int>(BATCH); ++i) launchOne(captureStream, i);
         HC(hipStreamEndCapture(captureStream, &g));
+        describe("flat", g);
         HC(hipGraphInstantiate(&flatExec, g, NULL, NULL, 0));
         HC(hipGraphDestroy(g));
     }
+    checkStrategy("flat", [&] { HC(hipGraphLaunch(flatExec, hs)); });
     flat = timeIt([&] { HC(hipGraphLaunch(flatExec, hs)); }, hs, reps, warmupSeconds());
     HC(hipGraphExecDestroy(flatExec));
     }
 
-    std::printf("batch %4zu | plain: submit %.4f total %.4f event %.4f | children: submit %.4f total %.4f event %.4f | children_seq: submit %.4f total %.4f event %.4f | flat: submit %.4f total %.4f event %.4f   (ms)\n",
-                BATCH, plain.submit, plain.total, plain.event, children.submit, children.total, children.event, childrenSeq.submit, childrenSeq.total, childrenSeq.event, flat.submit, flat.total, flat.event);
+    // flat parallel: ONE capture with a fork and a join over one stream per crop; the crops have no dependencies between them
+    if (wanted("flat_parallel")) {
+        hipGraphExec_t parExec;
+        {
+            fk::Stream origin;
+            std::vector<std::unique_ptr<fk::Stream>> workers;
+            for (int i = 0; i < static_cast<int>(BATCH); ++i) workers.push_back(std::make_unique<fk::Stream>());
+            hipEvent_t fork;
+            HC(hipEventCreateWithFlags(&fork, hipEventDisableTiming));
+            std::vector<hipEvent_t> joins(BATCH);
+            for (auto& e : joins) HC(hipEventCreateWithFlags(&e, hipEventDisableTiming));
+            hipGraph_t g;
+            HC(hipStreamBeginCapture(origin, hipStreamCaptureModeGlobal));
+            HC(hipEventRecord(fork, origin));
+            for (int i = 0; i < static_cast<int>(BATCH); ++i) {
+                HC(hipStreamWaitEvent(*workers[i], fork, 0));
+                launchOne(*workers[i], i);
+                HC(hipEventRecord(joins[i], *workers[i]));
+            }
+            for (int i = 0; i < static_cast<int>(BATCH); ++i) HC(hipStreamWaitEvent(origin, joins[i], 0));
+            HC(hipStreamEndCapture(origin, &g));
+            describe("flat_parallel", g);
+            HC(hipGraphInstantiate(&parExec, g, NULL, NULL, 0));
+            HC(hipGraphDestroy(g));
+            HC(hipEventDestroy(fork));
+            for (auto& e : joins) HC(hipEventDestroy(e));
+        }
+        checkStrategy("flat_parallel", [&] { HC(hipGraphLaunch(parExec, hs)); });
+        flatPar = timeIt([&] { HC(hipGraphLaunch(parExec, hs)); }, hs, reps, warmupSeconds());
+        HC(hipGraphExecDestroy(parExec));
+    }
+
+    std::printf("batch %4zu | plain: submit %.4f total %.4f event %.4f | children: submit %.4f total %.4f event %.4f | children_seq: submit %.4f total %.4f event %.4f | flat: submit %.4f total %.4f event %.4f | flat_parallel: submit %.4f total %.4f event %.4f   (ms)\n",
+                BATCH, plain.submit, plain.total, plain.event, children.submit, children.total, children.event, childrenSeq.submit, childrenSeq.total, childrenSeq.event, flat.submit, flat.total, flat.event,
+                flatPar.submit, flatPar.total, flatPar.event);
     std::fflush(stdout);
 }
 

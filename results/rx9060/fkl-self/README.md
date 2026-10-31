@@ -12,7 +12,7 @@ launches, without it, and `..._HIPGraphs_...` (the iterated batch as one HIP gra
 |---|---|---|---|
 | latency hiding | `latency_hiding/` | FKL `c8fcbe8`, fkl-benchmarks `8390007`, `FKLB_GPU_SPIN_SECONDS=2` | **supersedes** `latency_hiding_without_spin_38c4f32/` (the first run, 15:10, in the afternoon) and `latency_hiding_without_spin_same_day/` |
 | instructions per operation | `numinstructions_x_operation/`, `numinstructions_x_operation_repeat_22-25/` | FKL `38c4f32` (fkl-benchmarks `e0af273` = main `9afddfb` + #1 `7b68ff4`, which repairs the HIP part of the CSV header only); the repeat with FKL `c8fcbe8` | unchanged by the clock fix; the two runs agree within 2 percent |
-| horizontal fusion | `horizontal_fusion/` (run 1), `horizontal_fusion_repeats/` (runs 2 to 4) | the same | unchanged by the clock fix, but the **absolute times depend on the state of the GPU clocks** (below); the speedup does not |
+| horizontal fusion | `horizontal_fusion_with_flat_graph/run1` to `run3` (with the second HIP graph variant), `horizontal_fusion/` (run 1 of the earlier set), `horizontal_fusion_repeats/` (runs 2 to 4) | FKL `c8fcbe8`, fkl-benchmarks `132d2cc` for the three new runs; the earlier four with FKL `38c4f32` / `c8fcbe8` as above | unchanged by the clock fix, but the **absolute times depend on the state of the GPU clocks** (below); the speedup and the graph ratios do not |
 
 The device code of the three binaries is identical function by function at FKL `38c4f32` and `c8fcbe8` (372, 124 and 246 functions, 0 different: `../clock-ramp/`), so the results of the
 older pin hold for the final pin.
@@ -87,6 +87,32 @@ the launches, and the SMU keeps the clocks low: in the first 75 s of a run (`clo
 sampled; its times fit higher clocks (higher memory clock), which the SMU chose at that time and did not choose in the three runs of the evening, whatever the history of the GPU before the run (run 3 started right after
 12 s of heavy work and ran at 1.82 GHz median). Without root the clocks cannot be fixed: `echo high > /sys/class/drm/card1/device/power_dpm_force_performance_level` (as root; `auto` restores it) would fix the highest
 levels and make the absolute times of this benchmark repeatable. Until then, cite the speedup and the graph ratio, and give the absolute times as a range of the four runs.
+
+## Horizontal fusion with the second HIP graph variant (fkl-benchmarks `132d2cc`, FKL `c8fcbe8`)
+
+The benchmark now has two HIP graph variants (`benchmark_horizontal_fusion.h`): `..._HIPGraphs`, unchanged (ONE CHILD GRAPH NODE PER CROP, each captured from one launch, no dependencies between them: the structure of the CUDA Graphs
+variant), and `..._HIPGraphs_OneCapturedGraph`, new (ONE GRAPH FROM ONE STREAM CAPTURE of all the launches, a chain of kernel nodes). Both time one `hipGraphLaunch` against the fused kernel, the CSV notes say how each graph
+is built, and the output of the new graph is compared bit by bit with the output of the plain launches for every crop before its timing (all 120 batches of the three runs passed; a negative control with the launch removed reports
+every value). Three full runs of the same binary, nothing else running, with a sampler at 5 Hz next to each (`clocks5hz.txt`: time, graphics clock, memory clock, GPU busy percent, power, temperature), 887 to 892 s each
+(`horizontal_fusion_with_flat_graph/run1` to `run3`). Mean ms of the iterated batch (the "without CPU overhead" file) and of the fused kernel; median of the three runs and, in brackets, the smallest and the largest; the ratios
+are computed in each run and then summarised the same way:
+
+| batch | iterated, plain launches | iterated, graph of child nodes | iterated, graph of one capture | fused kernel | child graph / plain | one-capture graph / plain | plain / fused | one-capture graph / fused |
+|--:|--:|--:|--:|--:|--:|--:|--:|--:|
+| 11 | 0.0493 (0.0492 to 0.0493) | 0.0900 (0.0898 to 0.0905) | 0.0463 (0.0457 to 0.0501) | 0.0136 (0.0135 to 0.0136) | 1.83 (1.82 to 1.83) | 0.94 (0.93 to 1.02) | 3.63 (3.63 to 3.64) | 3.42 (3.37 to 3.70) |
+| 51 | 0.2031 (0.2029 to 0.2035) | 0.3786 (0.3769 to 0.3886) | 0.1710 (0.1705 to 0.1861) | 0.0231 (0.0231 to 0.0231) | 1.86 (1.85 to 1.92) | 0.84 (0.84 to 0.91) | 8.78 (8.78 to 8.82) | 7.40 (7.38 to 8.06) |
+| 101 | 0.3940 (0.3940 to 0.3951) | 0.7383 (0.7369 to 0.7423) | 0.3274 (0.3263 to 0.3568) | 0.0358 (0.0358 to 0.0359) | 1.87 (1.87 to 1.88) | 0.83 (0.83 to 0.91) | 11.00 (10.99 to 11.01) | 9.12 (9.10 to 9.97) |
+| 201 | 0.7751 (0.7740 to 0.7754) | 1.4520 (1.4511 to 1.4547) | 0.6367 (0.6357 to 0.6918) | 0.0572 (0.0572 to 0.0572) | 1.87 (1.87 to 1.88) | 0.82 (0.82 to 0.89) | 13.54 (13.54 to 13.55) | 11.12 (11.12 to 12.09) |
+| 301 | 1.1563 (1.1560 to 1.1578) | 2.1701 (2.1639 to 2.1735) | 0.9456 (0.9455 to 1.0276) | 0.0784 (0.0783 to 0.0784) | 1.88 (1.87 to 1.88) | 0.82 (0.82 to 0.89) | 14.75 (14.74 to 14.79) | 12.07 (12.05 to 13.13) |
+| 601 | 2.3102 (2.3081 to 2.3147) | 4.4052 (4.3963 to 4.6965) | 1.9402 (1.9036 to 2.0391) | 0.1439 (0.1419 to 0.1442) | 1.91 (1.90 to 2.03) | 0.84 (0.82 to 0.88) | 16.04 (16.02 to 16.31) | 13.46 (13.23 to 14.37) |
+| 1191 | 4.5010 (4.4979 to 4.5201) | 8.5238 (8.4516 to 8.5378) | 3.7912 (3.7154 to 4.1456) | 0.2734 (0.2726 to 0.2747) | 1.90 (1.87 to 1.90) | 0.84 (0.82 to 0.92) | 16.46 (16.46 to 16.50) | 13.91 (13.53 to 15.16) |
+
+The ratios are the numbers to cite: the graph of child nodes is 1.83 to 1.91 times slower than plain launches (1.87 to 1.90 at 1191 crops), the graph of one capture is 0.82 to 0.94 times the time of plain launches (0.82 to
+0.92 at 1191 crops, i.e. faster), and the fused kernel is 16.5 times faster than plain launches and 13.5 to 15.2 times faster than the graph of one capture at 1191 crops. The graph of one capture is the series with the larger
+spread between runs (3.72, 4.15 and 3.79 ms at 1191 crops); the other series stay within 1 percent. In the probe of `../hip-graphs/` (a busy GPU, five structures including a fork and join over one stream per crop) the graph
+of one capture takes 2.89 ms against 3.64 ms for the plain launches at 1191 crops; here the plain launches take 4.50 ms because the clocks are low for this benchmark: in the first 75 s of each run the graphics clock is 1.85 GHz
+on average (maximum 2.07 GHz), the memory clock mostly 772 to 875 MHz, the power 25 W of 132 W and the GPU busy 66 to 68 percent. Over the whole run the graphics clock averages 1.6 GHz and the memory clock is 96 or 456 MHz most of the
+time (the GPU idles between points and sweeps). With the four earlier runs, seven runs of this benchmark agree on the speedup (iterated over fused, 16.3 to 16.9 at 1191 crops, 14.3 to 14.9 at 301) and on the graph ratios.
 
 ## What the latency hiding harness runs (`fkl-self/latencyhiding/benchmark_latency_hiding.h`)
 
