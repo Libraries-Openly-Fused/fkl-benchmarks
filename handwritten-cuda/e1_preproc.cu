@@ -220,7 +220,7 @@ bool runPoint(cudaStream_t cs, fk::Stream_<fk::ParArch::GPU_NVIDIA>& fkStream, f
     }
 
     Timing tHand, tHandGeneric, tHandPadded, tFkl;
-    if (!timeIt(cs, launchHand, tHand) || !timeIt(cs, launchHandGeneric, tHandGeneric) || !timeIt(cs, launchHandPadded, tHandPadded) || !timeIt(cs, launchFkl, tFkl)) return false;
+    if (!e1::timeVariants(cs, {{launchHand, &tHand}, {launchHandGeneric, &tHandGeneric}, {launchHandPadded, &tHandPadded}, {launchFkl, &tFkl}})) return false;
     csv.row(BATCH, tHand.mean, tHand.min, tHandGeneric.mean, tHandGeneric.min, tFkl.mean, tFkl.min, tFkl.mean / tHand.mean,
             tFkl.mean / tHandGeneric.mean, int(exactFkl), int(exactHandGeneric), sizeof(CropPointers<BATCH>), sizeof(CropDescriptors<BATCH>), tHandPadded.mean, tHandPadded.min,
             tFkl.mean / tHandPadded.mean, int(exactHandPadded), sizeof(read));

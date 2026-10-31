@@ -168,6 +168,13 @@ template <size_t... Is>
 bool runAll(std::index_sequence<Is...>, cudaStream_t cs, fk::Stream_<fk::ParArch::GPU_NVIDIA>& fkStream, fklb::CsvWriter& csv, const std::vector<unsigned char>& noise, const std::string& outDir) {
     return (runPoint<KS[Is]>(cs, fkStream, csv, noise, outDir) & ...);
 }
+
+// E2_ORDER=reverse: the chain lengths in the reverse order (the order check of the revision: the first point timed after the host phase might see a lower clock)
+template <size_t... Is>
+bool runAllReversed(std::index_sequence<Is...>, cudaStream_t cs, fk::Stream_<fk::ParArch::GPU_NVIDIA>& fkStream, fklb::CsvWriter& csv, const std::vector<unsigned char>& noise, const std::string& outDir) {
+    constexpr size_t LAST = sizeof...(Is) - 1;
+    return (runPoint<KS[LAST - Is]>(cs, fkStream, csv, noise, outDir) & ...);
+}
 }  // namespace
 
 int launch() {
@@ -205,5 +212,8 @@ int launch() {
                         "alpha 1.0, c 0.54, k operations alternating Mul c and Add c; 32x8 threads per block (the block FKL picks); 100 timed iterations after one warm-up; "
                         "fkl_flushed_*: the same launch with the L2 flushed before it (a kernel that reads 256 MB, outside the timed interval); "
                         "outputs are raw float32 files, one per k, for the bitwise and ULP comparison of triton/e2_chain.py" + (e1::profileMode() ? "; PROFILE MODE: nothing was timed" : ""));
-    return runAll(std::make_index_sequence<sizeof(KS) / sizeof(KS[0])>{}, cs, fkStream, csv, noise, outDir) ? 0 : -1;
+    const char* order = std::getenv("E2_ORDER");
+    const bool reverse = order != nullptr && std::string(order) == "reverse";
+    constexpr auto all = std::make_index_sequence<sizeof(KS) / sizeof(KS[0])>{};
+    return (reverse ? runAllReversed(all, cs, fkStream, csv, noise, outDir) : runAll(all, cs, fkStream, csv, noise, outDir)) ? 0 : -1;
 }

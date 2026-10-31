@@ -18,9 +18,11 @@
 #include <cuda_runtime.h>
 
 #include <algorithm>
+#include <functional>
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
+#include <string>
 #include <vector>
 
 #define E1_CHECK(call)                                                                                           \
@@ -69,6 +71,26 @@ bool timeIt(cudaStream_t stream, const Launch& launch, Timing& t) {
     t.mean = sum / ITERATIONS;
     E1_CHECK(cudaEventDestroy(start));
     E1_CHECK(cudaEventDestroy(stop));
+    return true;
+}
+
+// E1_ORDER=reverse: the variants of a point are timed in the reverse order (the order check of the revision: a variant that is timed first after an idle phase might see a lower clock or a cooler
+// state; the CSV columns are the same). Default: the order of the list.
+inline bool reverseOrder() {
+    static const bool reverse = std::getenv("E1_ORDER") != nullptr && std::string(std::getenv("E1_ORDER")) == "reverse";
+    return reverse;
+}
+
+struct TimedVariant {
+    std::function<void()> launch;
+    Timing* timing;
+};
+
+inline bool timeVariants(cudaStream_t stream, std::vector<TimedVariant> variants) {
+    if (reverseOrder()) std::reverse(variants.begin(), variants.end());
+    for (auto& v : variants) {
+        if (!timeIt(stream, v.launch, *v.timing)) return false;
+    }
     return true;
 }
 

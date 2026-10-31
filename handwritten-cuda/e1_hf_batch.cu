@@ -176,7 +176,7 @@ bool runPoint(cudaStream_t cs, fk::Stream_<fk::ParArch::GPU_NVIDIA>& fkStream, f
     const bool exactHandGeneric = sameWritten(refHand, outHandGeneric);
 
     Timing tHand, tHandGeneric, tFkl, tIterated;
-    if (!timeIt(cs, launchHand, tHand) || !timeIt(cs, launchHandGeneric, tHandGeneric) || !timeIt(cs, launchFkl, tFkl) || !timeIt(cs, launchIterated, tIterated)) return false;
+    if (!e1::timeVariants(cs, {{launchHand, &tHand}, {launchHandGeneric, &tHandGeneric}, {launchFkl, &tFkl}, {launchIterated, &tIterated}})) return false;
     csv.row(BATCH, tHand.mean, tHand.min, tFkl.mean, tFkl.min, tIterated.mean, tIterated.min, tFkl.mean / tHand.mean,
             tIterated.mean / tFkl.mean, int(exactFkl), int(exactIterated), tHandGeneric.mean, tHandGeneric.min,
             tFkl.mean / tHandGeneric.mean, int(exactHandGeneric), sizeof(CropPointers<BATCH>), sizeof(CropDescriptors<BATCH>));

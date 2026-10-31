@@ -107,7 +107,12 @@ for e in "${EXPERIMENTS[@]}"; do
   mkdir -p "$dir"
   echo "$(date -Iseconds) $name: $desc"
   start=$(date +%s)
+  # what else runs on the machine while the experiment is measured: /proc/loadavg, the busy share of the benchmark cores / the other cores of their CCD / the other CCD, and the processes above 3 % of
+  # a core, every 20 s (scripts/load_logger.py, one core of the second CCD, niced), into load.log next to the CSV
+  taskset -c "${LOAD_LOGGER_CORE:-12}" nice -n 19 python3 "$ROOT/scripts/load_logger.py" --log "$dir/load.log" --interval 20 > /dev/null 2>&1 &
+  LOGGER_PID=$!
   (cd "$dir" && "$BUILD/bin/$bin" > stdout.txt 2> stderr.txt; echo $? > exit_code.txt)
+  kill "$LOGGER_PID" 2> /dev/null; wait "$LOGGER_PID" 2> /dev/null
   rc=$(cat "$dir/exit_code.txt")
   printf '%s %s: exit %s after %s s; csv: %s\n' "$(date -Iseconds)" "$name" "$rc" "$(( $(date +%s) - start ))" "$(ls "$dir" | grep -c '\.csv$')"
   # a first block of junk (-nan variances) means the warm-up sweep wrote to the CSV

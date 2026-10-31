@@ -93,6 +93,10 @@ def main():
     first_run_kept = os.path.isdir(dirs["mul-add1"].rstrip("/") + "-run1")
     notes.append("e0-vf-mul-add1 run read: " + ("the SECOND run (the first, in e0-vf-mul-add1-run1, has one row disturbed by another process, at 5,402 operations)" if first_run_kept else
                  "the FIRST run (one row, at 5,402 operations, was disturbed by another process; it changes the mean by at most 0.07 %; the second run is pending)"))
+    corrected = os.path.join(dirs["mul-add"], "CORRECTED.txt")
+    if os.path.exists(corrected):    # the series of scripts/vf_replace_points.py: the irregular points re-measured on a quiet machine
+        lines = open(corrected).read().splitlines()
+        notes.append("e0-vf-mul-add read: " + lines[1].replace("Replaced: ", "series with the points re-measured on a quiet machine: ", 1) + " (" + os.path.relpath(corrected, pc.REPO) + ")")
     if not hf_g:
         notes.append("(c) WARNING: the CUDA Graphs file of e0-vf-mul-add does not exist yet; the panel has only the OpenCV-CUDA series")
     for (name, curves, ylabel, legend) in specs:

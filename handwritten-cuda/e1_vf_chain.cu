@@ -157,7 +157,7 @@ bool runPoint(cudaStream_t cs, fk::Stream_<fk::ParArch::GPU_NVIDIA>& fkStream, f
     const bool exactImm = sameBits(refHand, outImm), exactFkl = sameBits(refHand, outFkl);
 
     Timing tHandParams, tHandImm, tFkl;
-    if (!timeIt(cs, launchHandParams, tHandParams) || !timeIt(cs, launchHandImm, tHandImm) || !timeIt(cs, launchFkl, tFkl)) {
+    if (!e1::timeVariants(cs, {{launchHandParams, &tHandParams}, {launchHandImm, &tHandImm}, {launchFkl, &tFkl}})) {
         return false;
     }
     csv.row(OPS_N, PAIRS, tHandParams.mean, tHandParams.min, tHandImm.mean, tHandImm.min, tFkl.mean, tFkl.min, tFkl.mean / tHandParams.mean,
