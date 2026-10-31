@@ -10,7 +10,7 @@ launches, without it, and `..._HIPGraphs_...` (the iterated batch as one HIP gra
 
 | benchmark | folder | built from | status |
 |---|---|---|---|
-| latency hiding | `latency_hiding/` | FKL `c8fcbe8`, fkl-benchmarks `8390007`, `FKLB_GPU_SPIN_SECONDS=2` | **supersedes** `latency_hiding_without_spin_38c4f32/` (the first run, 15:10) and `latency_hiding_without_spin_same_day/` |
+| latency hiding | `latency_hiding/` | FKL `c8fcbe8`, fkl-benchmarks `8390007`, `FKLB_GPU_SPIN_SECONDS=2` | **supersedes** `latency_hiding_without_spin_38c4f32/` (the first run, 15:10, in the afternoon) and `latency_hiding_without_spin_same_day/` |
 | instructions per operation | `numinstructions_x_operation/`, `numinstructions_x_operation_repeat_22-25/` | FKL `38c4f32` (fkl-benchmarks `e0af273` = main `9afddfb` + #1 `7b68ff4`, which repairs the HIP part of the CSV header only); the repeat with FKL `c8fcbe8` | unchanged by the clock fix; the two runs agree within 2 percent |
 | horizontal fusion | `horizontal_fusion/` (run 1), `horizontal_fusion_repeats/` (runs 2 to 4) | the same | unchanged by the clock fix, but the **absolute times depend on the state of the GPU clocks** (below); the speedup does not |
 
@@ -25,7 +25,7 @@ percent slower than at the steady clock. With `FKLB_GPU_SPIN_SECONDS=2` (`fkBenc
 timed runs of each point: the clock is 3.16 to 3.43 GHz (median 3.17 GHz) at the end of the spin of every one of the 60 points (`latency_hiding/clock-per-point.txt`; the first three points: 3165, 3169,
 3165 MHz). Two runs with the spin agree to 0.2 percent. Time in ms (mean of the 100 executions):
 
-| operations | new: with the spin (c8fcbe8) | earlier run, no spin (38c4f32, 15:10) | same day, no spin (c8fcbe8, 21:00) | no spin / new (same day) |
+| operations | new: with the spin (c8fcbe8) | earlier run, no spin (38c4f32, 15:10) | same day, no spin (c8fcbe8, 21:09) | no spin / new (same day) |
 |--:|--:|--:|--:|--:|
 | 1 | 1.938 | 1.944 | 1.961 | 1.01 |
 | 21 | 1.941 | 1.959 | 2.009 | 1.04 |
@@ -40,7 +40,7 @@ timed runs of each point: the clock is 3.16 to 3.43 GHz (median 3.17 GHz) at the
 | 981 | 11.048 | 11.536 | 14.694 | 1.33 |
 | 1181 | 13.149 | 13.164 | 17.048 | 1.30 |
 
-The run of the morning (15:10) was 0 to 3 percent above the steady values by luck (its ramps were short); the run of the evening without the spin is 52 percent slower at 301 operations.
+The run of the afternoon (15:10) was 0 to 3 percent above the steady values by luck (its ramps were short); the run of the evening without the spin is 52 percent slower at 301 operations.
 
 ## Instructions per operation
 
@@ -82,7 +82,7 @@ iterated over fused, and the last column is the iterated batch captured as a HIP
 
 The speedup agrees within 3 percent in the four runs (10.8 to 11.1 at 101 crops, 14.3 to 14.9 at 301, 15.7 to 16.2 at 601, 16.3 to 16.9 at 1191) and so does the HIP graph against plain launches (1.78 to 2.06 times
 slower). The absolute times of the evening runs are 15 to 38 percent above run 1 (iterated at 1191 crops: 3.55 against 4.56 to 4.77 ms). The GPU does not boost for this benchmark: the kernels are tiny and the work is bound by
-the launches, and the SMU keeps the clocks low: in the first 75 s of a run (`clock-evidence/hf-first-75s-sclk-mclk-busy-power-temp.txt`) the graphics clock is 1.6 to 1.95 GHz (maximum 2.08 GHz in the whole traced run, against
+the launches, and the SMU keeps the clocks low: in the first 75 s of a run (`clock-evidence/hf-first-75s-sclk-mclk-busy-power-temp.txt`) the graphics clock is 1.6 to 1.95 GHz (maximum 2.09 GHz in the horizontal fusion sweeps and 2.7 GHz in the HIP graph sweep of the traced run, against
 3.0 to 3.4 GHz in the other benchmarks), the memory clock mostly 772 to 875 MHz (456 and 1124 MHz also occur; the maximum of the GPU is 1124 MHz), and the power 22 to 29 W of 132 W. The clocks of run 1 were not
 sampled; its times fit higher clocks (higher memory clock), which the SMU chose at that time and did not choose in the three runs of the evening, whatever the history of the GPU before the run (run 3 started right after
 12 s of heavy work and ran at 1.82 GHz median). Without root the clocks cannot be fixed: `echo high > /sys/class/drm/card1/device/power_dpm_force_performance_level` (as root; `auto` restores it) would fix the highest
