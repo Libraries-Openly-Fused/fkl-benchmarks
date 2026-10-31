@@ -30,6 +30,22 @@
 //       ...
 @GENERATED_INCLUDES@
 
+// Experiments selected at configure time (-DVF_POINTS="12;128;200"): the kernels of the other experiments are not generated and their benchmark is skipped at run time.
+// Empty selection (the default, the paper's runs): all of them.
+constexpr bool VF_ALL_EXPERIMENTS = @VF_ALL@;
+constexpr size_t VF_SELECTED_EXPERIMENTS[] = {@VF_SELECTED_LIST@};
+template <size_t EXPERIMENT_NUMBER>
+constexpr bool experimentSelected() {
+    if constexpr (VF_ALL_EXPERIMENTS) {
+        return true;
+    } else {
+        for (const size_t selected : VF_SELECTED_EXPERIMENTS) {
+            if (selected == EXPERIMENT_NUMBER) { return true; }
+        }
+        return false;
+    }
+}
+
 template <size_t EXPERIMENT_NUMBER> // EXPERIMENT_NUMBER is the 1-based experiment number
 void launchPipeline(const std::array<cv::cuda::GpuMat, REAL_BATCH>& crops,
                     const cv::cuda::Stream& cv_stream,

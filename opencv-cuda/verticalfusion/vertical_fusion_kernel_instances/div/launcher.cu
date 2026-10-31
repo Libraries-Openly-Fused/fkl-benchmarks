@@ -32,7 +32,7 @@ bool benchmark_vertical_fusion_loopDiv(size_t NUM_ELEMS_X, size_t NUM_ELEMS_Y, c
     bool passed = true;
     bool exception = false;
 
-    if (enabled) {
+    if (enabled && experimentSelected<EXPERIMENT_NUMBER>()) {
         struct Parameters {
             const cv::Scalar init;
             const cv::Scalar val_Div;

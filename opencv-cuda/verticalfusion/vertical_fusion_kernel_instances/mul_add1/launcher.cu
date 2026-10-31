@@ -32,7 +32,7 @@ bool benchmark_vertical_fusion_loopMulAdd1(size_t NUM_ELEMS_X, size_t NUM_ELEMS_
     bool passed = true;
     bool exception = false;
 
-    if (enabled) {
+    if (enabled && experimentSelected<EXPERIMENT_NUMBER>()) {
         struct Parameters {
             const cv::Scalar init;
             const cv::Scalar val_mul;
@@ -139,7 +139,7 @@ bool benchmark_vertical_fusion_loopMulAdd1_CUDAGraphs(size_t NUM_ELEMS_X, size_t
     bool passed = true;
     bool exception = false;
 
-    if (enabled) {
+    if (enabled && experimentSelected<EXPERIMENT_NUMBER>()) {
         struct Parameters {
             const cv::Scalar init;
             const cv::Scalar val_mul;
