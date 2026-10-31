@@ -1,0 +1,41 @@
+# experiment: benchmark_nv12_pipeline
+# notes: E4b NV12 pipeline: NV12 4K frame -> RGB kernel -> fused crops, resize 64x128, normalise, NCHW split; source: seeded noise (LCG, seed 424242), luma 16..235, chroma 16..240; the frame is already in device memory, wall clock includes the stream synchronisation; warm-up: 3 runs, and on a GPU at least 2 s and until the mean time of two consecutive windows of 0.25 s differs by at most 2 percent (cap 10 s; the columns warmup_s, warmup_steady and sclk_start_mhz, sclk_timed_start_mhz and sclk_end_mhz, the graphics clock of an AMD GPU at the start of the warm-up, at the start of the timed runs and after them, record it); on a GPU the variants of a point are timed in a rotated order (convert, chain_fused, chain_perop_batch, pipeline_fused, pipeline_perop_batch; the first one is variant ((log2 of the crops + E5_ROTATE_OFFSET = 2) mod 5)), on the CPU in a fixed order (perop_crop last)
+# repo: fkl-benchmarks 534fca724e017b6d1eb9b043de5649405a1644ed
+# fkl: c8fcbe816d629377886cbdd19c83527f37ccfc04
+# cvGPUSpeedup: 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c
+# FastNPP: 9dfc4f430225e40ded392bfa777b2e724367c5c1
+# nvcc: none (none), architectures native, -fmad on, -lineinfo on
+# hip: 24.0.0 (/opt/rocm/core-10.1/bin/amdclang++), architectures gfx1200
+# host compiler: Clang 24.0.0, Release, -march=native, -ftemplate-depth=1000
+# opencv: none
+# cpu: AMD Ryzen 7 5800X3D 8-Core Processor
+# gpu: AMD Radeon RX 9060, gfx1200, 14 WGPs (28 CUs), wave32, 8144 MiB, PCI 0000:0d:00.0
+# hip driver: 7.16.26385, hip runtime: 7.16.26385
+# clocks (gfx, mem, max gfx, max mem, MHz): 16, 456, 2400, 1124
+# amd-smi: AMDSMI Tool: 27.1.0+7da43026 | AMDSMI Library version: 27.1.0 | ROCm version: 10.1.0 | amdgpu version: 7.1.9.31600000 | ionic version: N/A
+crops,back_end,variant,kernels,threads,median_ms,min_ms,max_ms,mean_ms,iters,warmup_s,warmup_steady,sclk_start_mhz,sclk_timed_start_mhz,sclk_end_mhz
+1,GPU_AMD,chain_perop_batch,5,0,0.0389,0.037951,0.04025,0.0388532667,30,2.00000397,1,99,3024,3024
+1,GPU_AMD,pipeline_fused,2,0,0.283707,0.282122,0.370612,0.288584633,30,2.00014423,1,3024,3067,3086
+1,GPU_AMD,pipeline_perop_batch,6,0,0.295422,0.293812,0.298082,0.295355,30,2.00002246,1,3086,3095,3099
+1,GPU_AMD,convert,1,0,0.2793215,0.276752,0.364252,0.283978933,30,2.00021784,1,3099,3043,3065
+1,GPU_AMD,chain_fused,1,0,0.025235,0.02439,0.02816,0.0252575,30,2.0000213,1,3065,3199,3199
+8,GPU_AMD,convert,1,0,0.280802,0.279362,0.282942,0.280855233,30,2.00022789,1,3302,3049,3046
+8,GPU_AMD,chain_fused,1,0,0.029665,0.028521,0.031881,0.0296635667,30,2.00001903,1,3046,3082,3082
+8,GPU_AMD,chain_perop_batch,5,0,0.0489,0.047901,0.05095,0.04899,30,2.00002859,1,3082,3229,3277
+8,GPU_AMD,pipeline_fused,2,0,0.289637,0.288692,0.292682,0.289928967,30,2.00010412,1,3277,3042,3036
+8,GPU_AMD,pipeline_perop_batch,6,0,0.307002,0.305202,0.329412,0.307816067,30,2.00014614,1,3036,3059,3088
+16,GPU_AMD,chain_fused,1,0,0.03373,0.03298,0.03553,0.0337588667,30,2.00003215,1,3196,3065,3065
+16,GPU_AMD,chain_perop_batch,5,0,0.056435,0.0555,0.059201,0.0564937333,30,2.00000226,1,3065,3153,3153
+16,GPU_AMD,pipeline_fused,2,0,0.295002,0.294162,0.297852,0.295131667,30,2.00000442,1,3153,3031,3026
+16,GPU_AMD,pipeline_perop_batch,6,0,0.3183725,0.317012,0.320173,0.318421167,30,2.00007212,1,3026,3052,3051
+16,GPU_AMD,convert,1,0,0.2815115,0.279742,0.285132,0.282054267,30,2.00005259,1,3051,3019,3026
+32,GPU_AMD,chain_perop_batch,5,0,0.079585,0.078031,0.081811,0.0795415333,30,2.0000318,1,2979,3033,3106
+32,GPU_AMD,pipeline_fused,2,0,0.3003925,0.299062,0.323462,0.301258033,30,2.00017062,1,3106,3019,3043
+32,GPU_AMD,pipeline_perop_batch,6,0,0.3439625,0.342582,0.347602,0.344061,30,2.00031673,1,3043,3051,3066
+32,GPU_AMD,convert,1,0,0.279657,0.276912,0.302232,0.280469567,30,2.00022927,1,3066,3018,3059
+32,GPU_AMD,chain_fused,1,0,0.0378055,0.03626,0.040591,0.0379519333,30,2.0000172,1,3059,3016,3048
+64,GPU_AMD,pipeline_fused,2,0,0.315547,0.314102,0.319102,0.315650133,30,2.00012043,1,2735,3000,3010
+64,GPU_AMD,pipeline_perop_batch,6,0,0.391503,0.389993,0.413513,0.392569,30,2.000324,1,3010,3063,3094
+64,GPU_AMD,convert,1,0,0.283352,0.281222,0.288392,0.2834466,30,2.00006232,1,3094,3024,3033
+64,GPU_AMD,chain_fused,1,0,0.0481455,0.04672,0.05037,0.0482143,30,2.00000094,1,3033,3017,3017
+64,GPU_AMD,chain_perop_batch,5,0,0.124416,0.12317,0.145021,0.125149833,30,2.00010563,1,3017,3244,3285
