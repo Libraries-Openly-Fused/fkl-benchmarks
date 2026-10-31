@@ -1,0 +1,6 @@
+rocprofv3 1.4.1 --kernel-trace of graph_probe at 301 crops, 30 repetitions of one strategy per run (PROBE_VARIANT=plain|children|flat, PROBE_WARMUP=0.5).
+The profiler slows everything down; the durations of the kernels and the gaps between consecutive kernels of the same queue are the useful numbers (a negative gap: the next kernel starts before the previous one ends).
+
+plain    : 92710 kernels, all on queue(s) ['1']; kernel duration ns: median 1600, p10 1480, p90 1800; gap to the next kernel ns: median 3800, p10 -1182, p90 10241
+children : 65620 kernels, all on queue(s) ['1']; kernel duration ns: median 1000, p10 880, p90 1200; gap to the next kernel ns: median 7212, p10 -520, p90 17120
+flat     : 96623 kernels, all on queue(s) ['1']; kernel duration ns: median 1080, p10 960, p90 1240; gap to the next kernel ns: median -890, p10 -1050, p90 -750
