@@ -86,3 +86,26 @@ The limits of the chains do not move (`compile-time-overhead/e3_limits.csv`):
 
 `python scripts/e11_diagnostics.py --compilers g++-13,clang++-23,/opt/rocm/core-10.1/bin/amdclang++ --label <tree> --include <FKL include dir> --out results/rx9060/e11-diagnostics` and, for nvcc,
 `--compilers nvcc --ccbin /usr/bin/g++-13 --note "..."`; the include directories were a checkout of c8fcbe8 and the two prototype commits (`git apply` the patches of this folder to c8fcbe8 for the same trees).
+`python scripts/e11_diagnostics.py --reanalyse results/rx9060/e11-diagnostics` recomputes the analysis columns of the CSV (lines, errors, notes, static_assert, first_error, the three `names_*` columns and
+`points_to_user_line`) from `logs/` without compiling anything; the other columns (date, versions, exit status, wall times) stay as they are.
+
+## Correction of the analysis columns (after the review of this pull request)
+
+The first version of `scripts/e11_diagnostics.py` read the output of nvcc as if it were that of g++ or clang: it did not match nvcc's numbered notes (`note #3326-D:`), it took no instantiation context for nvcc
+(`detected during:` and then `instantiation of ...`, innermost first), it did not recognise nvcc's locations (`at line 33 of e11_type_mismatch.cu`), and it cut the `static_assert` and `first_error` cells at 300 characters.
+The analysis columns of `e11_diagnostics.csv` were recomputed from `logs/` with the corrected script (`--reanalyse`); 29 cells changed, in 15 of the 36 rows:
+- `notes` of nvcc: 0 -> 2, 3 and 3 (CSV lines 11, 12 and 24).
+- `points_to_user_line` of nvcc: no -> yes (lines 11, 12, 23, 24, 35, 36 and 37): each of the seven nvcc logs with an error ends its `detected during` list at a line of the translation unit.
+- `names_both_in_headline` of nvcc: no -> yes (lines 23, 35 and 37): the innermost context of nvcc, `instantiation of class "fk::ChainLinkReport<PrevIOp, NextIOp> [with PrevIOp=...Mul..., NextIOp=...Add...]"` (the batch
+  chain: `ChainBatchReport`), names the pair, as the instantiation context of g++ does.
+- `static_assert` and `first_error` of 8 rows of clang++ and amdclang++ (lines 17, 20 and 29 to 34) are no longer cut: 325 to 430 characters instead of 300.
+`lines`, `errors`, `names_previous_op_in_error_line`, `names_next_op_in_error_line` and every column of the g++ and clang based rows other than those two text cells are the same in all 36 rows, and the tables of this README
+(lines and errors) do not change. The earlier cells are in `e11_diagnostics.csv` at c860e14 (`git show c860e14:results/rx9060/e11-diagnostics/e11_diagnostics.csv`).
+
+The nvcc rows that the RTX 4090 machine adds must be made with this version of the script: for nvcc's own diagnostics (its `note #...-D` notes, its `detected during` list and its `at line N of ...` locations)
+the first version gives `notes` 0 (only the notes of the host compiler were counted), `points_to_user_line` no and `names_both_in_headline` no, whatever the log says.
+`names_both_in_headline` says something about the compiler only where the context line is the pair of operations (the instantiation context of g++ and of nvcc, the requirement text of clang). For clang++ and amdclang++ on the
+complete Read in the middle (the unchanged library, and the prototype of the type check only, which does not check the Read) the first note prints the template arguments of the whole chain, every operation in it, so the
+cell is `yes` without the compiler having named the offending pair there; the rule that a class context of nvcc keeps its `[with ...]` works because the innermost class of the nvcc contexts is the class of the pair. For what
+a compiler tells the user use the two error-line columns. `notes` counts different things per compiler (nvcc: only the `note #...-D` candidate notes, not the `detected during` list; clang: also every `in instantiation of ...
+requested here`; the 25 of the nvcc rows of the batch chain are notes of the host g++) and is not for comparing compilers; `--reanalyse` does not recompute `outcome`, which comes from the exit status.
