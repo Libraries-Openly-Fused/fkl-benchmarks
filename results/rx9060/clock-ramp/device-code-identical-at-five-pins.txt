@@ -1,0 +1,85 @@
+Device code (gfx1200, amdclang++ 24.0.0, ROCm 10.1, -O3) of the benchmark binaries, function by function, at five pins of FKL (external/fkl).
+Method: llvm-objcopy --dump-section .hip_fatbin, clang-offload-bundler --unbundle, llvm-objdump -d --symbolize-operands; the instruction text of every function
+is hashed (hip_cuid names normalised); kernel resources from the AMDGPU metadata note of the code object.
+
+benchmark_rpp_preprocessing_hip: 238 functions, 111 kernels at 38c4f32
+  b44725e (#411): identical 238, different 0, only at 38c4f32 0, only at this pin 0
+  d776713 (#414): identical 238, different 0, only at 38c4f32 0, only at this pin 0
+  bbc5a7b (#416): identical 238, different 0, only at 38c4f32 0, only at this pin 0
+  c8fcbe8 (#417): identical 238, different 0, only at 38c4f32 0, only at this pin 0
+benchmark_horizontal_fusion_hip: 246 functions, 122 kernels at 38c4f32
+  b44725e (#411): identical 246, different 0, only at 38c4f32 0, only at this pin 0
+  d776713 (#414): identical 246, different 0, only at 38c4f32 0, only at this pin 0
+  bbc5a7b (#416): identical 246, different 0, only at 38c4f32 0, only at this pin 0
+  c8fcbe8 (#417): identical 246, different 0, only at 38c4f32 0, only at this pin 0
+benchmark_nv12_pipeline_hip: 46 functions, 15 kernels at 38c4f32
+  b44725e (#411): identical 46, different 0, only at 38c4f32 0, only at this pin 0
+  d776713 (#414): identical 46, different 0, only at 38c4f32 0, only at this pin 0
+  bbc5a7b (#416): identical 46, different 0, only at 38c4f32 0, only at this pin 0
+  c8fcbe8 (#417): identical 46, different 0, only at 38c4f32 0, only at this pin 0
+
+Chain kernels of pipeline (a) in benchmark_rpp_preprocessing_hip at c8fcbe8 (launchTransformDPP_Kernel with the details and 6 operations; the template argument
+ResizeSampling is 0 = ASYMMETRIC, 1 = HALF_PIXEL); identical at the five pins:
+kernarg_bytes sampling instructions vgpr sgpr scratch_bytes vgpr_spills sgpr_spills classes
+832 0 201 21 22 0 0 0 {'s_other': 44, 's_load': 9, 'v_other': 53, 'wait': 27, 'v_fma': 36, 'branch': 1, 'v_cvt': 20, 'vmem_load': 8, 'vmem_store': 3}
+832 1 211 21 22 0 0 0 {'s_other': 45, 's_load': 9, 'v_other': 62, 'wait': 29, 'v_fma': 34, 'branch': 1, 'v_cvt': 20, 'vmem_load': 8, 'vmem_store': 3}
+1312 0 201 21 22 0 0 0 {'s_other': 44, 's_load': 9, 'v_other': 53, 'wait': 27, 'v_fma': 36, 'branch': 1, 'v_cvt': 20, 'vmem_load': 8, 'vmem_store': 3}
+1312 1 211 21 22 0 0 0 {'s_other': 45, 's_load': 9, 'v_other': 62, 'wait': 29, 'v_fma': 34, 'branch': 1, 'v_cvt': 20, 'vmem_load': 8, 'vmem_store': 3}
+1792 0 201 21 22 0 0 0 {'s_other': 44, 's_load': 9, 'v_other': 53, 'wait': 27, 'v_fma': 36, 'branch': 1, 'v_cvt': 20, 'vmem_load': 8, 'vmem_store': 3}
+1792 1 211 21 22 0 0 0 {'s_other': 45, 's_load': 9, 'v_other': 62, 'wait': 29, 'v_fma': 34, 'branch': 1, 'v_cvt': 20, 'vmem_load': 8, 'vmem_store': 3}
+2272 0 201 21 22 0 0 0 {'s_other': 44, 's_load': 9, 'v_other': 53, 'wait': 27, 'v_fma': 36, 'branch': 1, 'v_cvt': 20, 'vmem_load': 8, 'vmem_store': 3}
+2272 1 211 21 22 0 0 0 {'s_other': 45, 's_load': 9, 'v_other': 62, 'wait': 29, 'v_fma': 34, 'branch': 1, 'v_cvt': 20, 'vmem_load': 8, 'vmem_store': 3}
+2752 0 201 21 22 0 0 0 {'s_other': 44, 's_load': 9, 'v_other': 53, 'wait': 27, 'v_fma': 36, 'branch': 1, 'v_cvt': 20, 'vmem_load': 8, 'vmem_store': 3}
+2752 1 211 21 22 0 0 0 {'s_other': 45, 's_load': 9, 'v_other': 62, 'wait': 29, 'v_fma': 34, 'branch': 1, 'v_cvt': 20, 'vmem_load': 8, 'vmem_store': 3}
+3232 0 201 21 22 0 0 0 {'s_other': 44, 's_load': 9, 'v_other': 53, 'wait': 27, 'v_fma': 36, 'branch': 1, 'v_cvt': 20, 'vmem_load': 8, 'vmem_store': 3}
+3232 1 211 21 22 0 0 0 {'s_other': 45, 's_load': 9, 'v_other': 62, 'wait': 29, 'v_fma': 34, 'branch': 1, 'v_cvt': 20, 'vmem_load': 8, 'vmem_store': 3}
+3712 0 201 21 22 0 0 0 {'s_other': 44, 's_load': 9, 'v_other': 53, 'wait': 27, 'v_fma': 36, 'branch': 1, 'v_cvt': 20, 'vmem_load': 8, 'vmem_store': 3}
+3712 1 211 21 22 0 0 0 {'s_other': 45, 's_load': 9, 'v_other': 62, 'wait': 29, 'v_fma': 34, 'branch': 1, 'v_cvt': 20, 'vmem_load': 8, 'vmem_store': 3}
+4192 0 201 21 22 0 0 0 {'s_other': 44, 's_load': 9, 'v_other': 53, 'wait': 27, 'v_fma': 36, 'branch': 1, 'v_cvt': 20, 'vmem_load': 8, 'vmem_store': 3}
+4192 1 211 21 22 0 0 0 {'s_other': 45, 's_load': 9, 'v_other': 62, 'wait': 29, 'v_fma': 34, 'branch': 1, 'v_cvt': 20, 'vmem_load': 8, 'vmem_store': 3}
+4672 0 201 21 22 0 0 0 {'s_other': 44, 's_load': 9, 'v_other': 53, 'wait': 27, 'v_fma': 36, 'branch': 1, 'v_cvt': 20, 'vmem_load': 8, 'vmem_store': 3}
+4672 1 211 21 22 0 0 0 {'s_other': 45, 's_load': 9, 'v_other': 62, 'wait': 29, 'v_fma': 34, 'branch': 1, 'v_cvt': 20, 'vmem_load': 8, 'vmem_store': 3}
+5152 0 201 21 22 0 0 0 {'s_other': 44, 's_load': 9, 'v_other': 53, 'wait': 27, 'v_fma': 36, 'branch': 1, 'v_cvt': 20, 'vmem_load': 8, 'vmem_store': 3}
+5152 1 211 21 22 0 0 0 {'s_other': 45, 's_load': 9, 'v_other': 62, 'wait': 29, 'v_fma': 34, 'branch': 1, 'v_cvt': 20, 'vmem_load': 8, 'vmem_store': 3}
+5632 0 201 21 22 0 0 0 {'s_other': 44, 's_load': 9, 'v_other': 53, 'wait': 27, 'v_fma': 36, 'branch': 1, 'v_cvt': 20, 'vmem_load': 8, 'vmem_store': 3}
+5632 1 211 21 22 0 0 0 {'s_other': 45, 's_load': 9, 'v_other': 62, 'wait': 29, 'v_fma': 34, 'branch': 1, 'v_cvt': 20, 'vmem_load': 8, 'vmem_store': 3}
+6112 0 201 21 22 0 0 0 {'s_other': 44, 's_load': 9, 'v_other': 53, 'wait': 27, 'v_fma': 36, 'branch': 1, 'v_cvt': 20, 'vmem_load': 8, 'vmem_store': 3}
+6112 1 211 21 22 0 0 0 {'s_other': 45, 's_load': 9, 'v_other': 62, 'wait': 29, 'v_fma': 34, 'branch': 1, 'v_cvt': 20, 'vmem_load': 8, 'vmem_store': 3}
+6592 0 201 21 22 0 0 0 {'s_other': 44, 's_load': 9, 'v_other': 53, 'wait': 27, 'v_fma': 36, 'branch': 1, 'v_cvt': 20, 'vmem_load': 8, 'vmem_store': 3}
+6592 1 211 21 22 0 0 0 {'s_other': 45, 's_load': 9, 'v_other': 62, 'wait': 29, 'v_fma': 34, 'branch': 1, 'v_cvt': 20, 'vmem_load': 8, 'vmem_store': 3}
+7072 0 201 21 22 0 0 0 {'s_other': 44, 's_load': 9, 'v_other': 53, 'wait': 27, 'v_fma': 36, 'branch': 1, 'v_cvt': 20, 'vmem_load': 8, 'vmem_store': 3}
+7072 1 211 21 22 0 0 0 {'s_other': 45, 's_load': 9, 'v_other': 62, 'wait': 29, 'v_fma': 34, 'branch': 1, 'v_cvt': 20, 'vmem_load': 8, 'vmem_store': 3}
+7552 0 201 21 22 0 0 0 {'s_other': 44, 's_load': 9, 'v_other': 53, 'wait': 27, 'v_fma': 36, 'branch': 1, 'v_cvt': 20, 'vmem_load': 8, 'vmem_store': 3}
+7552 1 211 21 22 0 0 0 {'s_other': 45, 's_load': 9, 'v_other': 62, 'wait': 29, 'v_fma': 34, 'branch': 1, 'v_cvt': 20, 'vmem_load': 8, 'vmem_store': 3}
+8032 0 201 21 22 0 0 0 {'s_other': 44, 's_load': 9, 'v_other': 53, 'wait': 27, 'v_fma': 36, 'branch': 1, 'v_cvt': 20, 'vmem_load': 8, 'vmem_store': 3}
+8032 1 211 21 22 0 0 0 {'s_other': 45, 's_load': 9, 'v_other': 62, 'wait': 29, 'v_fma': 34, 'branch': 1, 'v_cvt': 20, 'vmem_load': 8, 'vmem_store': 3}
+8512 0 201 21 22 0 0 0 {'s_other': 44, 's_load': 9, 'v_other': 53, 'wait': 27, 'v_fma': 36, 'branch': 1, 'v_cvt': 20, 'vmem_load': 8, 'vmem_store': 3}
+8512 1 211 21 22 0 0 0 {'s_other': 45, 's_load': 9, 'v_other': 62, 'wait': 29, 'v_fma': 34, 'branch': 1, 'v_cvt': 20, 'vmem_load': 8, 'vmem_store': 3}
+8992 0 201 21 22 0 0 0 {'s_other': 44, 's_load': 9, 'v_other': 53, 'wait': 27, 'v_fma': 36, 'branch': 1, 'v_cvt': 20, 'vmem_load': 8, 'vmem_store': 3}
+8992 1 211 21 22 0 0 0 {'s_other': 45, 's_load': 9, 'v_other': 62, 'wait': 29, 'v_fma': 34, 'branch': 1, 'v_cvt': 20, 'vmem_load': 8, 'vmem_store': 3}
+9472 0 201 21 22 0 0 0 {'s_other': 44, 's_load': 9, 'v_other': 53, 'wait': 27, 'v_fma': 36, 'branch': 1, 'v_cvt': 20, 'vmem_load': 8, 'vmem_store': 3}
+9472 1 211 21 22 0 0 0 {'s_other': 45, 's_load': 9, 'v_other': 62, 'wait': 29, 'v_fma': 34, 'branch': 1, 'v_cvt': 20, 'vmem_load': 8, 'vmem_store': 3}
+9952 0 201 21 22 0 0 0 {'s_other': 44, 's_load': 9, 'v_other': 53, 'wait': 27, 'v_fma': 36, 'branch': 1, 'v_cvt': 20, 'vmem_load': 8, 'vmem_store': 3}
+9952 1 211 21 22 0 0 0 {'s_other': 45, 's_load': 9, 'v_other': 62, 'wait': 29, 'v_fma': 34, 'branch': 1, 'v_cvt': 20, 'vmem_load': 8, 'vmem_store': 3}
+10432 0 201 21 22 0 0 0 {'s_other': 44, 's_load': 9, 'v_other': 53, 'wait': 27, 'v_fma': 36, 'branch': 1, 'v_cvt': 20, 'vmem_load': 8, 'vmem_store': 3}
+10432 1 211 21 22 0 0 0 {'s_other': 45, 's_load': 9, 'v_other': 62, 'wait': 29, 'v_fma': 34, 'branch': 1, 'v_cvt': 20, 'vmem_load': 8, 'vmem_store': 3}
+10912 0 201 21 22 0 0 0 {'s_other': 44, 's_load': 9, 'v_other': 53, 'wait': 27, 'v_fma': 36, 'branch': 1, 'v_cvt': 20, 'vmem_load': 8, 'vmem_store': 3}
+10912 1 211 21 22 0 0 0 {'s_other': 45, 's_load': 9, 'v_other': 62, 'wait': 29, 'v_fma': 34, 'branch': 1, 'v_cvt': 20, 'vmem_load': 8, 'vmem_store': 3}
+11392 0 201 21 22 0 0 0 {'s_other': 44, 's_load': 9, 'v_other': 53, 'wait': 27, 'v_fma': 36, 'branch': 1, 'v_cvt': 20, 'vmem_load': 8, 'vmem_store': 3}
+11392 1 211 21 22 0 0 0 {'s_other': 45, 's_load': 9, 'v_other': 62, 'wait': 29, 'v_fma': 34, 'branch': 1, 'v_cvt': 20, 'vmem_load': 8, 'vmem_store': 3}
+11872 0 201 21 22 0 0 0 {'s_other': 44, 's_load': 9, 'v_other': 53, 'wait': 27, 'v_fma': 36, 'branch': 1, 'v_cvt': 20, 'vmem_load': 8, 'vmem_store': 3}
+11872 1 211 21 22 0 0 0 {'s_other': 45, 's_load': 9, 'v_other': 62, 'wait': 29, 'v_fma': 34, 'branch': 1, 'v_cvt': 20, 'vmem_load': 8, 'vmem_store': 3}
+12352 0 201 21 22 0 0 0 {'s_other': 44, 's_load': 9, 'v_other': 53, 'wait': 27, 'v_fma': 36, 'branch': 1, 'v_cvt': 20, 'vmem_load': 8, 'vmem_store': 3}
+12352 1 211 21 22 0 0 0 {'s_other': 45, 's_load': 9, 'v_other': 62, 'wait': 29, 'v_fma': 34, 'branch': 1, 'v_cvt': 20, 'vmem_load': 8, 'vmem_store': 3}
+12832 0 201 21 22 0 0 0 {'s_other': 44, 's_load': 9, 'v_other': 53, 'wait': 27, 'v_fma': 36, 'branch': 1, 'v_cvt': 20, 'vmem_load': 8, 'vmem_store': 3}
+12832 1 211 21 22 0 0 0 {'s_other': 45, 's_load': 9, 'v_other': 62, 'wait': 29, 'v_fma': 34, 'branch': 1, 'v_cvt': 20, 'vmem_load': 8, 'vmem_store': 3}
+13312 0 201 21 22 0 0 0 {'s_other': 44, 's_load': 9, 'v_other': 53, 'wait': 27, 'v_fma': 36, 'branch': 1, 'v_cvt': 20, 'vmem_load': 8, 'vmem_store': 3}
+13312 1 211 21 22 0 0 0 {'s_other': 45, 's_load': 9, 'v_other': 62, 'wait': 29, 'v_fma': 34, 'branch': 1, 'v_cvt': 20, 'vmem_load': 8, 'vmem_store': 3}
+13792 0 201 21 22 0 0 0 {'s_other': 44, 's_load': 9, 'v_other': 53, 'wait': 27, 'v_fma': 36, 'branch': 1, 'v_cvt': 20, 'vmem_load': 8, 'vmem_store': 3}
+13792 1 211 21 22 0 0 0 {'s_other': 45, 's_load': 9, 'v_other': 62, 'wait': 29, 'v_fma': 34, 'branch': 1, 'v_cvt': 20, 'vmem_load': 8, 'vmem_store': 3}
+14272 0 201 21 22 0 0 0 {'s_other': 44, 's_load': 9, 'v_other': 53, 'wait': 27, 'v_fma': 36, 'branch': 1, 'v_cvt': 20, 'vmem_load': 8, 'vmem_store': 3}
+14272 1 211 21 22 0 0 0 {'s_other': 45, 's_load': 9, 'v_other': 62, 'wait': 29, 'v_fma': 34, 'branch': 1, 'v_cvt': 20, 'vmem_load': 8, 'vmem_store': 3}
+14752 0 201 21 22 0 0 0 {'s_other': 44, 's_load': 9, 'v_other': 53, 'wait': 27, 'v_fma': 36, 'branch': 1, 'v_cvt': 20, 'vmem_load': 8, 'vmem_store': 3}
+14752 1 211 21 22 0 0 0 {'s_other': 45, 's_load': 9, 'v_other': 62, 'wait': 29, 'v_fma': 34, 'branch': 1, 'v_cvt': 20, 'vmem_load': 8, 'vmem_store': 3}
+
+kernarg size = 352 + 48 * batch: 5,152 B at batch 100, 9,952 B at 200, 14,752 B at 300. The arguments are read in place from the kernarg segment (9 s_load instructions), nothing is copied to scratch.
