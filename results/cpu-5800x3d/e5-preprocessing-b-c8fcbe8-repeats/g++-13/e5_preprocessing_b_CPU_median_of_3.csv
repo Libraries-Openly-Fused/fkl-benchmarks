@@ -1,0 +1,104 @@
+# experiment: e5_preprocessing_b_nv12
+# notes: FKL CPU back-end vs OpenCV on the CPU, NV12 video pre-processing (E4b pipeline); source: seeded noise (LCG, seed 424242), luma 16..235, chroma 16..240
+# repo: fkl-benchmarks 1be0f5e3e9658205355834aadbbb808fb1d8f3fd
+# fkl: c8fcbe816d629377886cbdd19c83527f37ccfc04
+# cvGPUSpeedup: not checked out (pinned 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c)
+# FastNPP: not checked out (pinned 9dfc4f430225e40ded392bfa777b2e724367c5c1)
+# nvcc: none (none), architectures native, -fmad on, -lineinfo on
+# hip: none (none), architectures none
+# host compiler: GNU 13.4.0, Release, -march=native, -ftemplate-depth=1000
+# opencv: 4.14.0
+# cpu: AMD Ryzen 7 5800X3D 8-Core Processor
+# gpu: none (CPU back-end)
+# cpu threads: 16 logical, cpufreq max 4552952 kHz, governor powersave, driver amd-pstate-epp, EPP balance_performance, boost 1
+# memory: 60 GiB visible, speed not recorded (dmidecode needs root)
+# opencv default threads: 16 (cv::getNumThreads()), useOptimized 1, useIPP 1
+# fkl cpu_multithread pool size: 16 (default hardware concurrency)
+# opencv build: Version control:               unknown
+# opencv build: Baseline:                    SSE SSE2 SSE3
+# opencv build: Dispatched code generation:  SSE4_1 SSE4_2 AVX FP16 AVX2 AVX512_SKX
+# opencv build: C++ standard:                11
+# opencv build: C++ Compiler:                /usr/bin/g++-13  (ver 13.4.0)
+# opencv build: C++ flags (Release):         -fsigned-char -W -Wall -Wreturn-type -Wnon-virtual-dtor -Waddress -Wsequence-point -Wformat -Wformat-security -Wmissing-declarations -Wundef -Winit-self -Wpointer-arith -Wshadow -Wsign-promo -Wuninitialized -Wsuggest-override -Wno-delete-non-virtual-dtor -Wno-comment -Wimplicit-fallthrough=3 -Wno-strict-overflow -fdiagnostics-show-option -pthread -fomit-frame-pointer -ffunction-sections -fdata-sections  -msse3 -fvisibility=hidden -fvisibility-inlines-hidden -O3 -DNDEBUG  -DNDEBUG
+# opencv build: Parallel framework:            pthreads
+# opencv build: Intel IPP:                   2026.0.0 [2026.0.0]
+# opencv build: Custom HAL:                  YES (ipp (ver 0.0.1))
+# timing: std::chrono::steady_clock wall clock of one run including the synchronisation of the stream, 3 warm-up runs then 30 timed runs per point; times in ms; 'convert' = NV12 to RGB frame, 'chain' = crops, resize, normalise, split (kernel 2), 'pipeline' = both
+# frame: 3840x2160 NV12 (the frame is in host memory), crops of 48..176 x 96..352 pixels (seeded), output 64x128 32FC3 NCHW
+# derived by scripts/e5_cpu_compare_runs.py: the sweeps g++-13/run1 (= the rows of pull request #9), g++-13/run2 and g++-13/run3 of the same binary; for every point and variant median_ms is the median of the three sweep medians, medians_min_ms and medians_max_ms the smallest and the largest of the three medians
+crops, variant, threads, median_ms, medians_min_ms, medians_max_ms
+1, opencv_convert_default, 16, 0.382267, 0.381997, 0.383332
+1, opencv_pipeline_percrop_default, 16, 0.487953, 0.487293, 0.498673
+1, opencv_pipeline_percrop_parallel, 16, 0.487222, 0.486603, 0.487487
+1, opencv_convert_1thread, 1, 3.39825, 3.39817, 3.39873
+1, opencv_pipeline_percrop_1thread, 1, 3.4135, 3.41114, 3.45962
+1, fkl_convert_cpu, 1, 127.439, 127.42, 127.475
+1, fkl_chain_fused_cpu, 1, 0.100925, 0.100735, 0.101266
+1, fkl_pipeline_fused_cpu, 1, 129.15, 129.131, 129.199
+1, fkl_pipeline_perop_batch_cpu, 1, 129.231, 129.224, 129.31
+1, fkl_pipeline_perop_crop_cpu, 1, 129.662, 129.651, 129.793
+1, fkl_convert_cpu_mt, 16, 8.32621, 8.30404, 8.34016
+1, fkl_chain_fused_cpu_mt, 16, 0.126316, 0.125506, 0.126885
+1, fkl_pipeline_fused_cpu_mt, 16, 8.30274, 8.28883, 8.30603
+1, fkl_pipeline_perop_batch_cpu_mt, 16, 8.31456, 8.28925, 8.52514
+1, fkl_pipeline_perop_crop_cpu_mt, 16, 8.33583, 8.32618, 8.79109
+8, opencv_convert_default, 16, 0.385642, 0.385597, 0.385887
+8, opencv_pipeline_percrop_default, 16, 1.20312, 1.18066, 1.21211
+8, opencv_pipeline_percrop_parallel, 16, 0.538713, 0.537583, 0.538854
+8, opencv_convert_1thread, 1, 3.41505, 3.41261, 3.41884
+8, opencv_pipeline_percrop_1thread, 1, 3.89995, 3.87209, 3.92951
+8, fkl_convert_cpu, 1, 127.447, 127.396, 127.625
+8, fkl_chain_fused_cpu, 1, 0.819374, 0.81774, 0.822265
+8, fkl_pipeline_fused_cpu, 1, 129.896, 129.8, 129.925
+8, fkl_pipeline_perop_batch_cpu, 1, 130, 129.965, 130.014
+8, fkl_pipeline_perop_crop_cpu, 1, 130.271, 130.247, 130.301
+8, fkl_convert_cpu_mt, 16, 8.22989, 8.22391, 8.24011
+8, fkl_chain_fused_cpu_mt, 16, 0.205196, 0.202817, 0.211307
+8, fkl_pipeline_fused_cpu_mt, 16, 8.39072, 8.36132, 8.43385
+8, fkl_pipeline_perop_batch_cpu_mt, 16, 8.55766, 8.55293, 8.58053
+8, fkl_pipeline_perop_crop_cpu_mt, 16, 9.02052, 8.97318, 9.07392
+16, opencv_convert_default, 16, 0.389207, 0.386337, 0.393622
+16, opencv_pipeline_percrop_default, 16, 1.74922, 1.74537, 1.96231
+16, opencv_pipeline_percrop_parallel, 16, 0.580113, 0.575068, 0.585619
+16, opencv_convert_1thread, 1, 3.41082, 3.39767, 3.41115
+16, opencv_pipeline_percrop_1thread, 1, 4.3704, 4.30169, 4.37978
+16, fkl_convert_cpu, 1, 127.443, 127.4, 127.47
+16, fkl_chain_fused_cpu, 1, 1.64263, 1.64129, 1.64276
+16, fkl_pipeline_fused_cpu, 1, 128.991, 128.953, 129.044
+16, fkl_pipeline_perop_batch_cpu, 1, 130.906, 130.864, 130.95
+16, fkl_pipeline_perop_crop_cpu, 1, 131.12, 131.025, 131.132
+16, fkl_convert_cpu_mt, 16, 8.25445, 8.21844, 8.69112
+16, fkl_chain_fused_cpu_mt, 16, 0.324272, 0.231501, 0.325517
+16, fkl_pipeline_fused_cpu_mt, 16, 8.50124, 8.49845, 8.77047
+16, fkl_pipeline_perop_batch_cpu_mt, 16, 8.74501, 8.73501, 8.74904
+16, fkl_pipeline_perop_crop_cpu_mt, 16, 9.62956, 9.61336, 10.0487
+32, opencv_convert_default, 16, 0.385347, 0.383912, 0.392477
+32, opencv_pipeline_percrop_default, 16, 3.53157, 2.75111, 3.53368
+32, opencv_pipeline_percrop_parallel, 16, 0.715674, 0.713819, 0.722074
+32, opencv_convert_1thread, 1, 3.43027, 3.41082, 3.43374
+32, opencv_pipeline_percrop_1thread, 1, 5.33399, 5.28921, 5.33823
+32, fkl_convert_cpu, 1, 127.453, 127.44, 127.46
+32, fkl_chain_fused_cpu, 1, 3.29061, 3.28965, 3.30802
+32, fkl_pipeline_fused_cpu, 1, 130.522, 130.461, 130.532
+32, fkl_pipeline_perop_batch_cpu, 1, 132.523, 132.469, 132.541
+32, fkl_pipeline_perop_crop_cpu, 1, 132.715, 132.696, 132.8
+32, fkl_convert_cpu_mt, 16, 8.24834, 8.23156, 8.34417
+32, fkl_chain_fused_cpu_mt, 16, 0.477478, 0.476598, 0.481977
+32, fkl_pipeline_fused_cpu_mt, 16, 8.64514, 8.64196, 8.6651
+32, fkl_pipeline_perop_batch_cpu_mt, 16, 9.09998, 9.0798, 9.11138
+32, fkl_pipeline_perop_crop_cpu_mt, 16, 11.5237, 11.4884, 11.8157
+64, opencv_convert_default, 16, 0.384162, 0.383927, 0.384713
+64, opencv_pipeline_percrop_default, 16, 5.06545, 5.03908, 6.38201
+64, opencv_pipeline_percrop_parallel, 16, 0.977631, 0.974645, 1.00267
+64, opencv_convert_1thread, 1, 3.39591, 3.39461, 3.3964
+64, opencv_pipeline_percrop_1thread, 1, 7.20163, 7.0975, 7.35476
+64, fkl_convert_cpu, 1, 127.48, 127.409, 127.492
+64, fkl_chain_fused_cpu, 1, 6.56527, 6.56523, 6.60048
+64, fkl_pipeline_fused_cpu, 1, 133.627, 133.582, 133.643
+64, fkl_pipeline_perop_batch_cpu, 1, 135.95, 135.947, 136.014
+64, fkl_pipeline_perop_crop_cpu, 1, 135.902, 135.849, 136.033
+64, fkl_convert_cpu_mt, 16, 8.23668, 8.20392, 8.34466
+64, fkl_chain_fused_cpu_mt, 16, 0.964806, 0.934125, 0.96729
+64, fkl_pipeline_fused_cpu_mt, 16, 9.18594, 9.13219, 9.27464
+64, fkl_pipeline_perop_batch_cpu_mt, 16, 9.80113, 9.79882, 9.81586
+64, fkl_pipeline_perop_crop_cpu_mt, 16, 14.5562, 14.505, 15.0903

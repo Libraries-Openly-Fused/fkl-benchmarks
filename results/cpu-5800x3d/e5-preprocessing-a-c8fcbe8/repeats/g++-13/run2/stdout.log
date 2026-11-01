@@ -1,0 +1,721 @@
+batch 10
+  opencv_default vs opencv_1thread (identical): max abs diff 0 ok
+  opencv_percrop vs opencv_default (<= 1e-4): max abs diff 0 ok
+  opencv_percrop_parallel vs opencv_percrop (identical): max abs diff 0 ok
+  opencv_default vs scalar reference, HALF_PIXEL sampling (<= 1e-4): max abs diff 1.52588e-05 ok
+  fkl_fused_cpu vs scalar reference, ASYMMETRIC sampling x*(src/dst) (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_fused_cpu_mt vs fkl_fused_cpu (identical): max abs diff 0 ok
+  fkl_perop_crop_cpu vs fkl_fused_cpu (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_perop_crop_cpu_mt vs fkl_perop_crop_cpu (identical): max abs diff 0 ok
+  fkl_perop_batch_cpu vs fkl_fused_cpu (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_perop_batch_cpu_mt vs fkl_perop_batch_cpu (identical): max abs diff 0 ok
+  fkl_fused_cpu vs opencv_default (the two sampling conventions): max abs diff 6.76661 (informational)
+  scalar reference ASYMMETRIC sampling vs HALF_PIXEL sampling: max abs diff 6.7666 (informational)
+  opencv_default: median 0.515013 ms (min 0.509463, max 0.522533)
+  opencv_percrop_default: median 0.547083 ms (min 0.533363, max 0.577863)
+  opencv_percrop_parallel: median 0.136426 ms (min 0.13097, max 0.190391)
+  opencv_1thread: median 0.513748 ms (min 0.506493, max 0.522573)
+  opencv_percrop_1thread: median 0.547628 ms (min 0.541053, max 0.552144)
+  fkl_perop_crop_cpu: median 1.02179 ms (min 1.021, max 1.04926)
+  fkl_perop_batch_cpu: median 1.14381 ms (min 1.14169, max 1.14974)
+  fkl_fused_cpu: median 0.987191 ms (min 0.986336, max 0.996445)
+  fkl_perop_crop_cpu_mt: median 1.00873 ms (min 0.869885, max 1.27771)
+  fkl_perop_batch_cpu_mt: median 0.434852 ms (min 0.327961, max 0.536983)
+  fkl_fused_cpu_mt: median 0.145346 ms (min 0.136941, max 0.244562)
+batch 20
+  opencv_default vs opencv_1thread (identical): max abs diff 0 ok
+  opencv_percrop vs opencv_default (<= 1e-4): max abs diff 0 ok
+  opencv_percrop_parallel vs opencv_percrop (identical): max abs diff 0 ok
+  opencv_default vs scalar reference, HALF_PIXEL sampling (<= 1e-4): max abs diff 1.52588e-05 ok
+  fkl_fused_cpu vs scalar reference, ASYMMETRIC sampling x*(src/dst) (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_fused_cpu_mt vs fkl_fused_cpu (identical): max abs diff 0 ok
+  fkl_perop_crop_cpu vs fkl_fused_cpu (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_perop_crop_cpu_mt vs fkl_perop_crop_cpu (identical): max abs diff 0 ok
+  fkl_perop_batch_cpu vs fkl_fused_cpu (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_perop_batch_cpu_mt vs fkl_perop_batch_cpu (identical): max abs diff 0 ok
+  fkl_fused_cpu vs opencv_default (the two sampling conventions): max abs diff 6.77392 (informational)
+  scalar reference ASYMMETRIC sampling vs HALF_PIXEL sampling: max abs diff 6.77393 (informational)
+  opencv_default: median 1.07364 ms (min 1.05368, max 1.0792)
+  opencv_percrop_default: median 1.09437 ms (min 1.08426, max 1.10136)
+  opencv_percrop_parallel: median 0.288512 ms (min 0.276191, max 0.306281)
+  opencv_1thread: median 1.45582 ms (min 1.09025, max 2.0426)
+  opencv_percrop_1thread: median 1.09246 ms (min 1.08717, max 1.10272)
+  fkl_perop_crop_cpu: median 2.08998 ms (min 2.04391, max 2.11702)
+  fkl_perop_batch_cpu: median 2.30242 ms (min 2.28911, max 2.31124)
+  fkl_fused_cpu: median 1.97018 ms (min 1.9675, max 1.97381)
+  fkl_perop_crop_cpu_mt: median 2.00958 ms (min 1.75453, max 2.4329)
+  fkl_perop_batch_cpu_mt: median 0.683244 ms (min 0.581623, max 0.785454)
+  fkl_fused_cpu_mt: median 0.274706 ms (min 0.267101, max 0.379312)
+batch 30
+  opencv_default vs opencv_1thread (identical): max abs diff 0 ok
+  opencv_percrop vs opencv_default (<= 1e-4): max abs diff 0 ok
+  opencv_percrop_parallel vs opencv_percrop (identical): max abs diff 0 ok
+  opencv_default vs scalar reference, HALF_PIXEL sampling (<= 1e-4): max abs diff 1.52588e-05 ok
+  fkl_fused_cpu vs scalar reference, ASYMMETRIC sampling x*(src/dst) (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_fused_cpu_mt vs fkl_fused_cpu (identical): max abs diff 0 ok
+  fkl_perop_crop_cpu vs fkl_fused_cpu (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_perop_crop_cpu_mt vs fkl_perop_crop_cpu (identical): max abs diff 0 ok
+  fkl_perop_batch_cpu vs fkl_fused_cpu (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_perop_batch_cpu_mt vs fkl_perop_batch_cpu (identical): max abs diff 0 ok
+  fkl_fused_cpu vs opencv_default (the two sampling conventions): max abs diff 6.77392 (informational)
+  scalar reference ASYMMETRIC sampling vs HALF_PIXEL sampling: max abs diff 6.77393 (informational)
+  opencv_default: median 1.63468 ms (min 1.60816, max 1.66454)
+  opencv_percrop_default: median 1.67531 ms (min 1.66075, max 1.68438)
+  opencv_percrop_parallel: median 0.323152 ms (min 0.304921, max 0.343612)
+  opencv_1thread: median 1.67594 ms (min 1.66006, max 4.60403)
+  opencv_percrop_1thread: median 1.67457 ms (min 1.66666, max 1.69417)
+  fkl_perop_crop_cpu: median 3.08427 ms (min 3.07264, max 3.09639)
+  fkl_perop_batch_cpu: median 3.48212 ms (min 3.46607, max 3.53786)
+  fkl_fused_cpu: median 2.96729 ms (min 2.96043, max 3.00688)
+  fkl_perop_crop_cpu_mt: median 3.10391 ms (min 2.80184, max 4.10031)
+  fkl_perop_batch_cpu_mt: median 0.9232 ms (min 0.827964, max 1.04081)
+  fkl_fused_cpu_mt: median 0.405327 ms (min 0.395682, max 0.504473)
+batch 40
+  opencv_default vs opencv_1thread (identical): max abs diff 0 ok
+  opencv_percrop vs opencv_default (<= 1e-4): max abs diff 0 ok
+  opencv_percrop_parallel vs opencv_percrop (identical): max abs diff 0 ok
+  opencv_default vs scalar reference, HALF_PIXEL sampling (<= 1e-4): max abs diff 1.52588e-05 ok
+  fkl_fused_cpu vs scalar reference, ASYMMETRIC sampling x*(src/dst) (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_fused_cpu_mt vs fkl_fused_cpu (identical): max abs diff 0 ok
+  fkl_perop_crop_cpu vs fkl_fused_cpu (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_perop_crop_cpu_mt vs fkl_perop_crop_cpu (identical): max abs diff 0 ok
+  fkl_perop_batch_cpu vs fkl_fused_cpu (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_perop_batch_cpu_mt vs fkl_perop_batch_cpu (identical): max abs diff 0 ok
+  fkl_fused_cpu vs opencv_default (the two sampling conventions): max abs diff 6.98144 (informational)
+  scalar reference ASYMMETRIC sampling vs HALF_PIXEL sampling: max abs diff 6.98145 (informational)
+  opencv_default: median 2.15201 ms (min 2.14562, max 2.17577)
+  opencv_percrop_default: median 2.19934 ms (min 2.19104, max 2.23596)
+  opencv_percrop_parallel: median 0.448708 ms (min 0.435372, max 0.483843)
+  opencv_1thread: median 2.22059 ms (min 2.19463, max 6.66374)
+  opencv_percrop_1thread: median 2.19694 ms (min 2.16337, max 2.21189)
+  fkl_perop_crop_cpu: median 4.09653 ms (min 4.08811, max 4.19559)
+  fkl_perop_batch_cpu: median 4.61413 ms (min 4.5953, max 4.66134)
+  fkl_fused_cpu: median 3.93401 ms (min 3.92977, max 3.94482)
+  fkl_perop_crop_cpu_mt: median 4.08669 ms (min 3.75985, max 5.31158)
+  fkl_perop_batch_cpu_mt: median 1.1699 ms (min 1.0924, max 1.69051)
+  fkl_fused_cpu_mt: median 0.616003 ms (min 0.533583, max 0.640894)
+batch 50
+  opencv_default vs opencv_1thread (identical): max abs diff 0 ok
+  opencv_percrop vs opencv_default (<= 1e-4): max abs diff 0 ok
+  opencv_percrop_parallel vs opencv_percrop (identical): max abs diff 0 ok
+  opencv_default vs scalar reference, HALF_PIXEL sampling (<= 1e-4): max abs diff 1.52588e-05 ok
+  fkl_fused_cpu vs scalar reference, ASYMMETRIC sampling x*(src/dst) (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_fused_cpu_mt vs fkl_fused_cpu (identical): max abs diff 0 ok
+  fkl_perop_crop_cpu vs fkl_fused_cpu (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_perop_crop_cpu_mt vs fkl_perop_crop_cpu (identical): max abs diff 0 ok
+  fkl_perop_batch_cpu vs fkl_fused_cpu (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_perop_batch_cpu_mt vs fkl_perop_batch_cpu (identical): max abs diff 0 ok
+  fkl_fused_cpu vs opencv_default (the two sampling conventions): max abs diff 7.04689 (informational)
+  scalar reference ASYMMETRIC sampling vs HALF_PIXEL sampling: max abs diff 7.04688 (informational)
+  opencv_default: median 2.69716 ms (min 2.6603, max 2.71853)
+  opencv_percrop_default: median 2.80642 ms (min 2.78999, max 2.81793)
+  opencv_percrop_parallel: median 0.577808 ms (min 0.527912, max 0.590503)
+  opencv_1thread: median 2.76261 ms (min 2.74798, max 7.29753)
+  opencv_percrop_1thread: median 2.75909 ms (min 2.74083, max 2.80746)
+  fkl_perop_crop_cpu: median 5.12054 ms (min 5.11592, max 5.12927)
+  fkl_perop_batch_cpu: median 5.74252 ms (min 5.73721, max 5.76663)
+  fkl_fused_cpu: median 4.91505 ms (min 4.90976, max 5.07884)
+  fkl_perop_crop_cpu_mt: median 5.14412 ms (min 4.7742, max 5.5399)
+  fkl_perop_batch_cpu_mt: median 1.41109 ms (min 1.32462, max 1.55658)
+  fkl_fused_cpu_mt: median 0.748179 ms (min 0.656294, max 0.774755)
+batch 60
+  opencv_default vs opencv_1thread (identical): max abs diff 0 ok
+  opencv_percrop vs opencv_default (<= 1e-4): max abs diff 0 ok
+  opencv_percrop_parallel vs opencv_percrop (identical): max abs diff 0 ok
+  opencv_default vs scalar reference, HALF_PIXEL sampling (<= 1e-4): max abs diff 1.52588e-05 ok
+  fkl_fused_cpu vs scalar reference, ASYMMETRIC sampling x*(src/dst) (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_fused_cpu_mt vs fkl_fused_cpu (identical): max abs diff 0 ok
+  fkl_perop_crop_cpu vs fkl_fused_cpu (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_perop_crop_cpu_mt vs fkl_perop_crop_cpu (identical): max abs diff 0 ok
+  fkl_perop_batch_cpu vs fkl_fused_cpu (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_perop_batch_cpu_mt vs fkl_perop_batch_cpu (identical): max abs diff 0 ok
+  fkl_fused_cpu vs opencv_default (the two sampling conventions): max abs diff 7.04689 (informational)
+  scalar reference ASYMMETRIC sampling vs HALF_PIXEL sampling: max abs diff 7.04688 (informational)
+  opencv_default: median 3.49898 ms (min 3.4797, max 3.51639)
+  opencv_percrop_default: median 3.28621 ms (min 3.27332, max 3.30717)
+  opencv_percrop_parallel: median 0.626154 ms (min 0.605803, max 0.686944)
+  opencv_1thread: median 3.24744 ms (min 3.17913, max 8.51905)
+  opencv_percrop_1thread: median 3.23243 ms (min 3.2094, max 3.38976)
+  fkl_perop_crop_cpu: median 6.14368 ms (min 6.1364, max 6.23912)
+  fkl_perop_batch_cpu: median 6.91745 ms (min 6.88973, max 6.94139)
+  fkl_fused_cpu: median 5.90118 ms (min 5.89343, max 6.04939)
+  fkl_perop_crop_cpu_mt: median 6.21926 ms (min 5.76775, max 7.26402)
+  fkl_perop_batch_cpu_mt: median 1.70592 ms (min 1.59926, max 2.19418)
+  fkl_fused_cpu_mt: median 0.867729 ms (min 0.785354, max 0.899805)
+batch 70
+  opencv_default vs opencv_1thread (identical): max abs diff 0 ok
+  opencv_percrop vs opencv_default (<= 1e-4): max abs diff 0 ok
+  opencv_percrop_parallel vs opencv_percrop (identical): max abs diff 0 ok
+  opencv_default vs scalar reference, HALF_PIXEL sampling (<= 1e-4): max abs diff 1.52588e-05 ok
+  fkl_fused_cpu vs scalar reference, ASYMMETRIC sampling x*(src/dst) (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_fused_cpu_mt vs fkl_fused_cpu (identical): max abs diff 0 ok
+  fkl_perop_crop_cpu vs fkl_fused_cpu (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_perop_crop_cpu_mt vs fkl_perop_crop_cpu (identical): max abs diff 0 ok
+  fkl_perop_batch_cpu vs fkl_fused_cpu (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_perop_batch_cpu_mt vs fkl_perop_batch_cpu (identical): max abs diff 0 ok
+  fkl_fused_cpu vs opencv_default (the two sampling conventions): max abs diff 7.04689 (informational)
+  scalar reference ASYMMETRIC sampling vs HALF_PIXEL sampling: max abs diff 7.04688 (informational)
+  opencv_default: median 4.07534 ms (min 4.04929, max 4.1302)
+  opencv_percrop_default: median 3.87872 ms (min 3.82343, max 3.99514)
+  opencv_percrop_parallel: median 0.754834 ms (min 0.673803, max 0.828135)
+  opencv_1thread: median 3.87474 ms (min 3.81019, max 7.04221)
+  opencv_percrop_1thread: median 3.82653 ms (min 3.81532, max 3.89658)
+  fkl_perop_crop_cpu: median 7.2132 ms (min 7.19687, max 7.25214)
+  fkl_perop_batch_cpu: median 8.10208 ms (min 8.09047, max 8.2515)
+  fkl_fused_cpu: median 6.92316 ms (min 6.90384, max 7.02922)
+  fkl_perop_crop_cpu_mt: median 7.26488 ms (min 6.83257, max 8.58168)
+  fkl_perop_batch_cpu_mt: median 1.88376 ms (min 1.75868, max 2.39259)
+  fkl_fused_cpu_mt: median 0.995576 ms (min 0.925845, max 1.03513)
+batch 80
+  opencv_default vs opencv_1thread (identical): max abs diff 0 ok
+  opencv_percrop vs opencv_default (<= 1e-4): max abs diff 0 ok
+  opencv_percrop_parallel vs opencv_percrop (identical): max abs diff 0 ok
+  opencv_default vs scalar reference, HALF_PIXEL sampling (<= 1e-4): max abs diff 1.52588e-05 ok
+  fkl_fused_cpu vs scalar reference, ASYMMETRIC sampling x*(src/dst) (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_fused_cpu_mt vs fkl_fused_cpu (identical): max abs diff 0 ok
+  fkl_perop_crop_cpu vs fkl_fused_cpu (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_perop_crop_cpu_mt vs fkl_perop_crop_cpu (identical): max abs diff 0 ok
+  fkl_perop_batch_cpu vs fkl_fused_cpu (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_perop_batch_cpu_mt vs fkl_perop_batch_cpu (identical): max abs diff 0 ok
+  fkl_fused_cpu vs opencv_default (the two sampling conventions): max abs diff 7.04689 (informational)
+  scalar reference ASYMMETRIC sampling vs HALF_PIXEL sampling: max abs diff 7.04688 (informational)
+  opencv_default: median 4.53519 ms (min 4.49155, max 4.62143)
+  opencv_percrop_default: median 4.40103 ms (min 4.32048, max 4.42652)
+  opencv_percrop_parallel: median 0.8007 ms (min 0.772664, max 0.905845)
+  opencv_1thread: median 4.31598 ms (min 4.24701, max 7.90104)
+  opencv_percrop_1thread: median 4.33589 ms (min 4.30817, max 4.44991)
+  fkl_perop_crop_cpu: median 8.19835 ms (min 8.19535, max 8.24054)
+  fkl_perop_batch_cpu: median 9.21257 ms (min 9.1933, max 9.39406)
+  fkl_fused_cpu: median 7.8662 ms (min 7.86179, max 7.89289)
+  fkl_perop_crop_cpu_mt: median 8.37107 ms (min 7.55963, max 9.18287)
+  fkl_perop_batch_cpu_mt: median 2.13769 ms (min 1.9845, max 2.88227)
+  fkl_fused_cpu_mt: median 1.15729 ms (min 1.05715, max 1.27617)
+batch 90
+  opencv_default vs opencv_1thread (identical): max abs diff 0 ok
+  opencv_percrop vs opencv_default (<= 1e-4): max abs diff 0 ok
+  opencv_percrop_parallel vs opencv_percrop (identical): max abs diff 0 ok
+  opencv_default vs scalar reference, HALF_PIXEL sampling (<= 1e-4): max abs diff 1.52588e-05 ok
+  fkl_fused_cpu vs scalar reference, ASYMMETRIC sampling x*(src/dst) (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_fused_cpu_mt vs fkl_fused_cpu (identical): max abs diff 0 ok
+  fkl_perop_crop_cpu vs fkl_fused_cpu (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_perop_crop_cpu_mt vs fkl_perop_crop_cpu (identical): max abs diff 0 ok
+  fkl_perop_batch_cpu vs fkl_fused_cpu (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_perop_batch_cpu_mt vs fkl_perop_batch_cpu (identical): max abs diff 0 ok
+  fkl_fused_cpu vs opencv_default (the two sampling conventions): max abs diff 7.04689 (informational)
+  scalar reference ASYMMETRIC sampling vs HALF_PIXEL sampling: max abs diff 7.04688 (informational)
+  opencv_default: median 5.1992 ms (min 5.1198, max 5.23112)
+  opencv_percrop_default: median 5.04564 ms (min 4.94717, max 5.07157)
+  opencv_percrop_parallel: median 0.91248 ms (min 0.894255, max 1.0274)
+  opencv_1thread: median 4.95448 ms (min 4.87337, max 7.6252)
+  opencv_percrop_1thread: median 4.97217 ms (min 4.93433, max 5.04901)
+  fkl_perop_crop_cpu: median 9.21175 ms (min 9.20714, max 9.36242)
+  fkl_perop_batch_cpu: median 10.3544 ms (min 10.3384, max 10.4209)
+  fkl_fused_cpu: median 8.8695 ms (min 8.86477, max 8.99322)
+  fkl_perop_crop_cpu_mt: median 9.17169 ms (min 8.69808, max 10.1605)
+  fkl_perop_batch_cpu_mt: median 2.24194 ms (min 2.00124, max 3.02802)
+  fkl_fused_cpu_mt: median 1.26476 ms (min 1.23692, max 1.44065)
+batch 100
+  opencv_default vs opencv_1thread (identical): max abs diff 0 ok
+  opencv_percrop vs opencv_default (<= 1e-4): max abs diff 0 ok
+  opencv_percrop_parallel vs opencv_percrop (identical): max abs diff 0 ok
+  opencv_default vs scalar reference, HALF_PIXEL sampling (<= 1e-4): max abs diff 1.52588e-05 ok
+  fkl_fused_cpu vs scalar reference, ASYMMETRIC sampling x*(src/dst) (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_fused_cpu_mt vs fkl_fused_cpu (identical): max abs diff 0 ok
+  fkl_perop_crop_cpu vs fkl_fused_cpu (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_perop_crop_cpu_mt vs fkl_perop_crop_cpu (identical): max abs diff 0 ok
+  fkl_perop_batch_cpu vs fkl_fused_cpu (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_perop_batch_cpu_mt vs fkl_perop_batch_cpu (identical): max abs diff 0 ok
+  fkl_fused_cpu vs opencv_default (the two sampling conventions): max abs diff 7.04689 (informational)
+  scalar reference ASYMMETRIC sampling vs HALF_PIXEL sampling: max abs diff 7.04688 (informational)
+  opencv_default: median 5.87754 ms (min 5.8195, max 7.20387)
+  opencv_percrop_default: median 5.69515 ms (min 5.67153, max 5.78609)
+  opencv_percrop_parallel: median 1.0526 ms (min 0.875225, max 1.10411)
+  opencv_1thread: median 5.63515 ms (min 5.59145, max 8.03625)
+  opencv_percrop_1thread: median 5.68382 ms (min 5.66356, max 5.8135)
+  fkl_perop_crop_cpu: median 10.2889 ms (min 10.2668, max 10.3414)
+  fkl_perop_batch_cpu: median 11.5688 ms (min 11.5619, max 11.738)
+  fkl_fused_cpu: median 9.8874 ms (min 9.87306, max 10.1462)
+  fkl_perop_crop_cpu_mt: median 10.4862 ms (min 9.97752, max 12.0593)
+  fkl_perop_batch_cpu_mt: median 2.53786 ms (min 2.24389, max 2.77998)
+  fkl_fused_cpu_mt: median 1.38572 ms (min 1.31828, max 1.57862)
+batch 110
+  opencv_default vs opencv_1thread (identical): max abs diff 0 ok
+  opencv_percrop vs opencv_default (<= 1e-4): max abs diff 0 ok
+  opencv_percrop_parallel vs opencv_percrop (identical): max abs diff 0 ok
+  opencv_default vs scalar reference, HALF_PIXEL sampling (<= 1e-4): max abs diff 1.52588e-05 ok
+  fkl_fused_cpu vs scalar reference, ASYMMETRIC sampling x*(src/dst) (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_fused_cpu_mt vs fkl_fused_cpu (identical): max abs diff 0 ok
+  fkl_perop_crop_cpu vs fkl_fused_cpu (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_perop_crop_cpu_mt vs fkl_perop_crop_cpu (identical): max abs diff 0 ok
+  fkl_perop_batch_cpu vs fkl_fused_cpu (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_perop_batch_cpu_mt vs fkl_perop_batch_cpu (identical): max abs diff 0 ok
+  fkl_fused_cpu vs opencv_default (the two sampling conventions): max abs diff 7.04689 (informational)
+  scalar reference ASYMMETRIC sampling vs HALF_PIXEL sampling: max abs diff 7.04688 (informational)
+  opencv_default: median 6.27961 ms (min 6.24789, max 7.15906)
+  opencv_percrop_default: median 6.12963 ms (min 6.10499, max 6.19831)
+  opencv_percrop_parallel: median 1.08222 ms (min 1.06994, max 1.18256)
+  opencv_1thread: median 6.10718 ms (min 6.03825, max 7.98893)
+  opencv_percrop_1thread: median 6.10577 ms (min 6.08297, max 6.29718)
+  fkl_perop_crop_cpu: median 11.322 ms (min 11.3114, max 11.3838)
+  fkl_perop_batch_cpu: median 12.6897 ms (min 12.6587, max 12.9789)
+  fkl_fused_cpu: median 10.8818 ms (min 10.8715, max 11.0706)
+  fkl_perop_crop_cpu_mt: median 11.3097 ms (min 10.1334, max 12.6421)
+  fkl_perop_batch_cpu_mt: median 2.79983 ms (min 2.71617, max 2.901)
+  fkl_fused_cpu_mt: median 1.50977 ms (min 1.49964, max 1.69484)
+batch 120
+  opencv_default vs opencv_1thread (identical): max abs diff 0 ok
+  opencv_percrop vs opencv_default (<= 1e-4): max abs diff 0 ok
+  opencv_percrop_parallel vs opencv_percrop (identical): max abs diff 0 ok
+  opencv_default vs scalar reference, HALF_PIXEL sampling (<= 1e-4): max abs diff 1.52588e-05 ok
+  fkl_fused_cpu vs scalar reference, ASYMMETRIC sampling x*(src/dst) (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_fused_cpu_mt vs fkl_fused_cpu (identical): max abs diff 0 ok
+  fkl_perop_crop_cpu vs fkl_fused_cpu (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_perop_crop_cpu_mt vs fkl_perop_crop_cpu (identical): max abs diff 0 ok
+  fkl_perop_batch_cpu vs fkl_fused_cpu (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_perop_batch_cpu_mt vs fkl_perop_batch_cpu (identical): max abs diff 0 ok
+  fkl_fused_cpu vs opencv_default (the two sampling conventions): max abs diff 7.04689 (informational)
+  scalar reference ASYMMETRIC sampling vs HALF_PIXEL sampling: max abs diff 7.04688 (informational)
+  opencv_default: median 6.89945 ms (min 6.87127, max 8.30901)
+  opencv_percrop_default: median 6.6171 ms (min 6.57357, max 6.72973)
+  opencv_percrop_parallel: median 1.22377 ms (min 1.1462, max 1.30708)
+  opencv_1thread: median 6.60328 ms (min 6.51242, max 8.43079)
+  opencv_percrop_1thread: median 6.57905 ms (min 6.56108, max 6.63902)
+  fkl_perop_crop_cpu: median 12.2901 ms (min 12.2816, max 12.6287)
+  fkl_perop_batch_cpu: median 13.8414 ms (min 13.8326, max 14.1075)
+  fkl_fused_cpu: median 11.8268 ms (min 11.821, max 11.8431)
+  fkl_perop_crop_cpu_mt: median 12.5047 ms (min 11.2372, max 13.9191)
+  fkl_perop_batch_cpu_mt: median 3.22277 ms (min 3.09436, max 3.75016)
+  fkl_fused_cpu_mt: median 1.62882 ms (min 1.61828, max 1.83658)
+batch 130
+  opencv_default vs opencv_1thread (identical): max abs diff 0 ok
+  opencv_percrop vs opencv_default (<= 1e-4): max abs diff 0 ok
+  opencv_percrop_parallel vs opencv_percrop (identical): max abs diff 0 ok
+  opencv_default vs scalar reference, HALF_PIXEL sampling (<= 1e-4): max abs diff 1.52588e-05 ok
+  fkl_fused_cpu vs scalar reference, ASYMMETRIC sampling x*(src/dst) (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_fused_cpu_mt vs fkl_fused_cpu (identical): max abs diff 0 ok
+  fkl_perop_crop_cpu vs fkl_fused_cpu (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_perop_crop_cpu_mt vs fkl_perop_crop_cpu (identical): max abs diff 0 ok
+  fkl_perop_batch_cpu vs fkl_fused_cpu (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_perop_batch_cpu_mt vs fkl_perop_batch_cpu (identical): max abs diff 0 ok
+  fkl_fused_cpu vs opencv_default (the two sampling conventions): max abs diff 7.04689 (informational)
+  scalar reference ASYMMETRIC sampling vs HALF_PIXEL sampling: max abs diff 7.04688 (informational)
+  opencv_default: median 7.59062 ms (min 7.57506, max 7.63259)
+  opencv_percrop_default: median 7.34796 ms (min 7.31898, max 7.49407)
+  opencv_percrop_parallel: median 1.3597 ms (min 1.31421, max 1.38739)
+  opencv_1thread: median 7.31478 ms (min 7.25071, max 8.59544)
+  opencv_percrop_1thread: median 7.31748 ms (min 7.29712, max 7.34299)
+  fkl_perop_crop_cpu: median 13.2865 ms (min 13.276, max 13.3801)
+  fkl_perop_batch_cpu: median 14.934 ms (min 14.9164, max 15.2491)
+  fkl_fused_cpu: median 12.7813 ms (min 12.7719, max 12.9601)
+  fkl_perop_crop_cpu_mt: median 13.4204 ms (min 12.3112, max 14.4246)
+  fkl_perop_batch_cpu_mt: median 3.42082 ms (min 3.37955, max 3.47229)
+  fkl_fused_cpu_mt: median 1.76101 ms (min 1.68944, max 1.79268)
+batch 140
+  opencv_default vs opencv_1thread (identical): max abs diff 0 ok
+  opencv_percrop vs opencv_default (<= 1e-4): max abs diff 0 ok
+  opencv_percrop_parallel vs opencv_percrop (identical): max abs diff 0 ok
+  opencv_default vs scalar reference, HALF_PIXEL sampling (<= 1e-4): max abs diff 1.52588e-05 ok
+  fkl_fused_cpu vs scalar reference, ASYMMETRIC sampling x*(src/dst) (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_fused_cpu_mt vs fkl_fused_cpu (identical): max abs diff 0 ok
+  fkl_perop_crop_cpu vs fkl_fused_cpu (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_perop_crop_cpu_mt vs fkl_perop_crop_cpu (identical): max abs diff 0 ok
+  fkl_perop_batch_cpu vs fkl_fused_cpu (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_perop_batch_cpu_mt vs fkl_perop_batch_cpu (identical): max abs diff 0 ok
+  fkl_fused_cpu vs opencv_default (the two sampling conventions): max abs diff 7.04689 (informational)
+  scalar reference ASYMMETRIC sampling vs HALF_PIXEL sampling: max abs diff 7.04688 (informational)
+  opencv_default: median 8.13908 ms (min 8.06601, max 8.44626)
+  opencv_percrop_default: median 7.9781 ms (min 7.95098, max 8.08625)
+  opencv_percrop_parallel: median 1.36873 ms (min 1.31025, max 1.40097)
+  opencv_1thread: median 8.00944 ms (min 7.90913, max 8.74194)
+  opencv_percrop_1thread: median 7.9493 ms (min 7.93184, max 7.99682)
+  fkl_perop_crop_cpu: median 14.4067 ms (min 14.3874, max 15.2986)
+  fkl_perop_batch_cpu: median 16.1797 ms (min 16.1649, max 17.6129)
+  fkl_fused_cpu: median 13.8411 ms (min 13.8292, max 14.0863)
+  fkl_perop_crop_cpu_mt: median 14.7071 ms (min 13.1546, max 15.9131)
+  fkl_perop_batch_cpu_mt: median 3.67947 ms (min 3.59987, max 3.80238)
+  fkl_fused_cpu_mt: median 1.88909 ms (min 1.84998, max 2.40765)
+batch 150
+  opencv_default vs opencv_1thread (identical): max abs diff 0 ok
+  opencv_percrop vs opencv_default (<= 1e-4): max abs diff 0 ok
+  opencv_percrop_parallel vs opencv_percrop (identical): max abs diff 0 ok
+  opencv_default vs scalar reference, HALF_PIXEL sampling (<= 1e-4): max abs diff 1.52588e-05 ok
+  fkl_fused_cpu vs scalar reference, ASYMMETRIC sampling x*(src/dst) (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_fused_cpu_mt vs fkl_fused_cpu (identical): max abs diff 0 ok
+  fkl_perop_crop_cpu vs fkl_fused_cpu (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_perop_crop_cpu_mt vs fkl_perop_crop_cpu (identical): max abs diff 0 ok
+  fkl_perop_batch_cpu vs fkl_fused_cpu (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_perop_batch_cpu_mt vs fkl_perop_batch_cpu (identical): max abs diff 0 ok
+  fkl_fused_cpu vs opencv_default (the two sampling conventions): max abs diff 7.04689 (informational)
+  scalar reference ASYMMETRIC sampling vs HALF_PIXEL sampling: max abs diff 7.04688 (informational)
+  opencv_default: median 8.39332 ms (min 8.35607, max 9.17907)
+  opencv_percrop_default: median 8.18808 ms (min 8.15387, max 8.31154)
+  opencv_percrop_parallel: median 1.5281 ms (min 1.50792, max 1.54523)
+  opencv_1thread: median 8.19465 ms (min 8.10584, max 8.94388)
+  opencv_percrop_1thread: median 8.15423 ms (min 8.13326, max 8.18047)
+  fkl_perop_crop_cpu: median 15.4444 ms (min 15.4264, max 15.4633)
+  fkl_perop_batch_cpu: median 17.3991 ms (min 17.3714, max 17.574)
+  fkl_fused_cpu: median 14.835 ms (min 14.8197, max 15.0462)
+  fkl_perop_crop_cpu_mt: median 15.618 ms (min 14.1087, max 16.6474)
+  fkl_perop_batch_cpu_mt: median 3.93189 ms (min 3.82745, max 4.08259)
+  fkl_fused_cpu_mt: median 2.01627 ms (min 1.94632, max 2.06879)
+batch 160
+  opencv_default vs opencv_1thread (identical): max abs diff 0 ok
+  opencv_percrop vs opencv_default (<= 1e-4): max abs diff 0 ok
+  opencv_percrop_parallel vs opencv_percrop (identical): max abs diff 0 ok
+  opencv_default vs scalar reference, HALF_PIXEL sampling (<= 1e-4): max abs diff 1.52588e-05 ok
+  fkl_fused_cpu vs scalar reference, ASYMMETRIC sampling x*(src/dst) (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_fused_cpu_mt vs fkl_fused_cpu (identical): max abs diff 0 ok
+  fkl_perop_crop_cpu vs fkl_fused_cpu (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_perop_crop_cpu_mt vs fkl_perop_crop_cpu (identical): max abs diff 0 ok
+  fkl_perop_batch_cpu vs fkl_fused_cpu (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_perop_batch_cpu_mt vs fkl_perop_batch_cpu (identical): max abs diff 0 ok
+  fkl_fused_cpu vs opencv_default (the two sampling conventions): max abs diff 7.04689 (informational)
+  scalar reference ASYMMETRIC sampling vs HALF_PIXEL sampling: max abs diff 7.04688 (informational)
+  opencv_default: median 9.06784 ms (min 9.00401, max 9.25312)
+  opencv_percrop_default: median 8.7931 ms (min 8.76806, max 8.94228)
+  opencv_percrop_parallel: median 1.62282 ms (min 1.50533, max 2.44793)
+  opencv_1thread: median 8.98632 ms (min 8.87305, max 9.07544)
+  opencv_percrop_1thread: median 8.81545 ms (min 8.77367, max 8.97903)
+  fkl_perop_crop_cpu: median 16.4387 ms (min 16.4117, max 16.6906)
+  fkl_perop_batch_cpu: median 18.5197 ms (min 18.4843, max 18.7865)
+  fkl_fused_cpu: median 15.814 ms (min 15.7986, max 15.9944)
+  fkl_perop_crop_cpu_mt: median 16.8107 ms (min 15.1059, max 19.4186)
+  fkl_perop_batch_cpu_mt: median 4.1925 ms (min 4.12577, max 4.34696)
+  fkl_fused_cpu_mt: median 2.15281 ms (min 2.1052, max 2.26222)
+batch 170
+  opencv_default vs opencv_1thread (identical): max abs diff 0 ok
+  opencv_percrop vs opencv_default (<= 1e-4): max abs diff 0 ok
+  opencv_percrop_parallel vs opencv_percrop (identical): max abs diff 0 ok
+  opencv_default vs scalar reference, HALF_PIXEL sampling (<= 1e-4): max abs diff 1.52588e-05 ok
+  fkl_fused_cpu vs scalar reference, ASYMMETRIC sampling x*(src/dst) (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_fused_cpu_mt vs fkl_fused_cpu (identical): max abs diff 0 ok
+  fkl_perop_crop_cpu vs fkl_fused_cpu (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_perop_crop_cpu_mt vs fkl_perop_crop_cpu (identical): max abs diff 0 ok
+  fkl_perop_batch_cpu vs fkl_fused_cpu (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_perop_batch_cpu_mt vs fkl_perop_batch_cpu (identical): max abs diff 0 ok
+  fkl_fused_cpu vs opencv_default (the two sampling conventions): max abs diff 7.04689 (informational)
+  scalar reference ASYMMETRIC sampling vs HALF_PIXEL sampling: max abs diff 7.04688 (informational)
+  opencv_default: median 9.61429 ms (min 9.53461, max 9.75103)
+  opencv_percrop_default: median 9.43904 ms (min 9.36886, max 9.58717)
+  opencv_percrop_parallel: median 1.68513 ms (min 1.62794, max 1.72497)
+  opencv_1thread: median 9.38449 ms (min 9.32288, max 9.69843)
+  opencv_percrop_1thread: median 9.39065 ms (min 9.35071, max 9.49265)
+  fkl_perop_crop_cpu: median 17.3676 ms (min 17.3607, max 17.6326)
+  fkl_perop_batch_cpu: median 19.6821 ms (min 19.6295, max 19.9949)
+  fkl_fused_cpu: median 16.7093 ms (min 16.7023, max 17.0938)
+  fkl_perop_crop_cpu_mt: median 17.1855 ms (min 16.1289, max 20.2473)
+  fkl_perop_batch_cpu_mt: median 4.46206 ms (min 4.39521, max 4.70091)
+  fkl_fused_cpu_mt: median 2.25827 ms (min 2.16528, max 2.29068)
+batch 180
+  opencv_default vs opencv_1thread (identical): max abs diff 0 ok
+  opencv_percrop vs opencv_default (<= 1e-4): max abs diff 0 ok
+  opencv_percrop_parallel vs opencv_percrop (identical): max abs diff 0 ok
+  opencv_default vs scalar reference, HALF_PIXEL sampling (<= 1e-4): max abs diff 1.52588e-05 ok
+  fkl_fused_cpu vs scalar reference, ASYMMETRIC sampling x*(src/dst) (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_fused_cpu_mt vs fkl_fused_cpu (identical): max abs diff 0 ok
+  fkl_perop_crop_cpu vs fkl_fused_cpu (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_perop_crop_cpu_mt vs fkl_perop_crop_cpu (identical): max abs diff 0 ok
+  fkl_perop_batch_cpu vs fkl_fused_cpu (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_perop_batch_cpu_mt vs fkl_perop_batch_cpu (identical): max abs diff 0 ok
+  fkl_fused_cpu vs opencv_default (the two sampling conventions): max abs diff 7.04689 (informational)
+  scalar reference ASYMMETRIC sampling vs HALF_PIXEL sampling: max abs diff 7.04688 (informational)
+  opencv_default: median 9.95661 ms (min 9.8248, max 10.1294)
+  opencv_percrop_default: median 9.70781 ms (min 9.67325, max 9.8871)
+  opencv_percrop_parallel: median 1.81141 ms (min 1.75207, max 1.83598)
+  opencv_1thread: median 9.7395 ms (min 9.6354, max 10.7718)
+  opencv_percrop_1thread: median 9.70224 ms (min 9.65884, max 9.73001)
+  fkl_perop_crop_cpu: median 18.5374 ms (min 18.4175, max 18.8908)
+  fkl_perop_batch_cpu: median 20.6594 ms (min 20.5983, max 21.5796)
+  fkl_fused_cpu: median 17.6994 ms (min 17.6869, max 17.9146)
+  fkl_perop_crop_cpu_mt: median 18.5091 ms (min 16.8304, max 19.9447)
+  fkl_perop_batch_cpu_mt: median 4.72961 ms (min 4.60158, max 4.9982)
+  fkl_fused_cpu_mt: median 2.44795 ms (min 2.35237, max 2.47123)
+batch 190
+  opencv_default vs opencv_1thread (identical): max abs diff 0 ok
+  opencv_percrop vs opencv_default (<= 1e-4): max abs diff 0 ok
+  opencv_percrop_parallel vs opencv_percrop (identical): max abs diff 0 ok
+  opencv_default vs scalar reference, HALF_PIXEL sampling (<= 1e-4): max abs diff 1.52588e-05 ok
+  fkl_fused_cpu vs scalar reference, ASYMMETRIC sampling x*(src/dst) (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_fused_cpu_mt vs fkl_fused_cpu (identical): max abs diff 0 ok
+  fkl_perop_crop_cpu vs fkl_fused_cpu (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_perop_crop_cpu_mt vs fkl_perop_crop_cpu (identical): max abs diff 0 ok
+  fkl_perop_batch_cpu vs fkl_fused_cpu (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_perop_batch_cpu_mt vs fkl_perop_batch_cpu (identical): max abs diff 0 ok
+  fkl_fused_cpu vs opencv_default (the two sampling conventions): max abs diff 7.04689 (informational)
+  scalar reference ASYMMETRIC sampling vs HALF_PIXEL sampling: max abs diff 7.04688 (informational)
+  opencv_default: median 10.9538 ms (min 10.8263, max 12.0799)
+  opencv_percrop_default: median 10.4847 ms (min 10.455, max 10.6278)
+  opencv_percrop_parallel: median 1.88601 ms (min 1.75863, max 1.91568)
+  opencv_1thread: median 10.7637 ms (min 10.6435, max 11.0287)
+  opencv_percrop_1thread: median 10.4749 ms (min 10.4355, max 10.681)
+  fkl_perop_crop_cpu: median 19.55 ms (min 19.509, max 19.9025)
+  fkl_perop_batch_cpu: median 22.0465 ms (min 21.9962, max 22.2649)
+  fkl_fused_cpu: median 18.7844 ms (min 18.7663, max 19.0681)
+  fkl_perop_crop_cpu_mt: median 19.314 ms (min 17.7711, max 22.3881)
+  fkl_perop_batch_cpu_mt: median 4.92489 ms (min 4.84278, max 5.13075)
+  fkl_fused_cpu_mt: median 2.51739 ms (min 2.48287, max 2.84251)
+batch 200
+  opencv_default vs opencv_1thread (identical): max abs diff 0 ok
+  opencv_percrop vs opencv_default (<= 1e-4): max abs diff 0 ok
+  opencv_percrop_parallel vs opencv_percrop (identical): max abs diff 0 ok
+  opencv_default vs scalar reference, HALF_PIXEL sampling (<= 1e-4): max abs diff 1.52588e-05 ok
+  fkl_fused_cpu vs scalar reference, ASYMMETRIC sampling x*(src/dst) (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_fused_cpu_mt vs fkl_fused_cpu (identical): max abs diff 0 ok
+  fkl_perop_crop_cpu vs fkl_fused_cpu (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_perop_crop_cpu_mt vs fkl_perop_crop_cpu (identical): max abs diff 0 ok
+  fkl_perop_batch_cpu vs fkl_fused_cpu (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_perop_batch_cpu_mt vs fkl_perop_batch_cpu (identical): max abs diff 0 ok
+  fkl_fused_cpu vs opencv_default (the two sampling conventions): max abs diff 7.12158 (informational)
+  scalar reference ASYMMETRIC sampling vs HALF_PIXEL sampling: max abs diff 7.12158 (informational)
+  opencv_default: median 11.1031 ms (min 11.0114, max 11.2006)
+  opencv_percrop_default: median 10.781 ms (min 10.7309, max 10.992)
+  opencv_percrop_parallel: median 1.9633 ms (min 1.89443, max 1.9876)
+  opencv_1thread: median 10.9111 ms (min 10.7999, max 11.2384)
+  opencv_percrop_1thread: median 10.7384 ms (min 10.6976, max 10.95)
+  fkl_perop_crop_cpu: median 20.4373 ms (min 20.4279, max 20.8471)
+  fkl_perop_batch_cpu: median 22.9225 ms (min 22.9051, max 23.4751)
+  fkl_fused_cpu: median 19.6668 ms (min 19.6597, max 19.9673)
+  fkl_perop_crop_cpu_mt: median 20.8926 ms (min 18.7735, max 23.9219)
+  fkl_perop_batch_cpu_mt: median 5.2133 ms (min 5.07256, max 5.33284)
+  fkl_fused_cpu_mt: median 2.65773 ms (min 2.6203, max 3.4362)
+batch 210
+  opencv_default vs opencv_1thread (identical): max abs diff 0 ok
+  opencv_percrop vs opencv_default (<= 1e-4): max abs diff 0 ok
+  opencv_percrop_parallel vs opencv_percrop (identical): max abs diff 0 ok
+  opencv_default vs scalar reference, HALF_PIXEL sampling (<= 1e-4): max abs diff 1.52588e-05 ok
+  fkl_fused_cpu vs scalar reference, ASYMMETRIC sampling x*(src/dst) (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_fused_cpu_mt vs fkl_fused_cpu (identical): max abs diff 0 ok
+  fkl_perop_crop_cpu vs fkl_fused_cpu (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_perop_crop_cpu_mt vs fkl_perop_crop_cpu (identical): max abs diff 0 ok
+  fkl_perop_batch_cpu vs fkl_fused_cpu (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_perop_batch_cpu_mt vs fkl_perop_batch_cpu (identical): max abs diff 0 ok
+  fkl_fused_cpu vs opencv_default (the two sampling conventions): max abs diff 7.12158 (informational)
+  scalar reference ASYMMETRIC sampling vs HALF_PIXEL sampling: max abs diff 7.12158 (informational)
+  opencv_default: median 11.7315 ms (min 11.6696, max 11.8628)
+  opencv_percrop_default: median 11.3791 ms (min 11.3496, max 11.5317)
+  opencv_percrop_parallel: median 2.14623 ms (min 2.10648, max 2.17539)
+  opencv_1thread: median 11.4782 ms (min 11.3923, max 11.9002)
+  opencv_percrop_1thread: median 11.3924 ms (min 11.3562, max 11.5593)
+  fkl_perop_crop_cpu: median 21.4848 ms (min 21.4739, max 21.8887)
+  fkl_perop_batch_cpu: median 24.1534 ms (min 24.1058, max 24.5412)
+  fkl_fused_cpu: median 20.6561 ms (min 20.6434, max 21.0407)
+  fkl_perop_crop_cpu_mt: median 21.5354 ms (min 19.7978, max 23.7959)
+  fkl_perop_batch_cpu_mt: median 5.46935 ms (min 5.3451, max 6.54902)
+  fkl_fused_cpu_mt: median 2.80212 ms (min 2.69969, max 2.96056)
+batch 220
+  opencv_default vs opencv_1thread (identical): max abs diff 0 ok
+  opencv_percrop vs opencv_default (<= 1e-4): max abs diff 0 ok
+  opencv_percrop_parallel vs opencv_percrop (identical): max abs diff 0 ok
+  opencv_default vs scalar reference, HALF_PIXEL sampling (<= 1e-4): max abs diff 1.52588e-05 ok
+  fkl_fused_cpu vs scalar reference, ASYMMETRIC sampling x*(src/dst) (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_fused_cpu_mt vs fkl_fused_cpu (identical): max abs diff 0 ok
+  fkl_perop_crop_cpu vs fkl_fused_cpu (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_perop_crop_cpu_mt vs fkl_perop_crop_cpu (identical): max abs diff 0 ok
+  fkl_perop_batch_cpu vs fkl_fused_cpu (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_perop_batch_cpu_mt vs fkl_perop_batch_cpu (identical): max abs diff 0 ok
+  fkl_fused_cpu vs opencv_default (the two sampling conventions): max abs diff 7.12158 (informational)
+  scalar reference ASYMMETRIC sampling vs HALF_PIXEL sampling: max abs diff 7.12158 (informational)
+  opencv_default: median 12.5133 ms (min 12.4047, max 12.8488)
+  opencv_percrop_default: median 12.0147 ms (min 11.9743, max 12.2627)
+  opencv_percrop_parallel: median 2.14948 ms (min 2.02214, max 2.1686)
+  opencv_1thread: median 12.2545 ms (min 12.1582, max 12.6154)
+  opencv_percrop_1thread: median 12.0024 ms (min 11.9761, max 12.1428)
+  fkl_perop_crop_cpu: median 22.6363 ms (min 22.5992, max 22.9946)
+  fkl_perop_batch_cpu: median 25.5107 ms (min 25.4646, max 25.8082)
+  fkl_fused_cpu: median 21.7526 ms (min 21.7125, max 21.9865)
+  fkl_perop_crop_cpu_mt: median 23.2349 ms (min 20.6069, max 26.9557)
+  fkl_perop_batch_cpu_mt: median 5.70972 ms (min 5.61955, max 5.76545)
+  fkl_fused_cpu_mt: median 2.89685 ms (min 2.80545, max 2.99964)
+batch 230
+  opencv_default vs opencv_1thread (identical): max abs diff 0 ok
+  opencv_percrop vs opencv_default (<= 1e-4): max abs diff 0 ok
+  opencv_percrop_parallel vs opencv_percrop (identical): max abs diff 0 ok
+  opencv_default vs scalar reference, HALF_PIXEL sampling (<= 1e-4): max abs diff 1.52588e-05 ok
+  fkl_fused_cpu vs scalar reference, ASYMMETRIC sampling x*(src/dst) (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_fused_cpu_mt vs fkl_fused_cpu (identical): max abs diff 0 ok
+  fkl_perop_crop_cpu vs fkl_fused_cpu (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_perop_crop_cpu_mt vs fkl_perop_crop_cpu (identical): max abs diff 0 ok
+  fkl_perop_batch_cpu vs fkl_fused_cpu (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_perop_batch_cpu_mt vs fkl_perop_batch_cpu (identical): max abs diff 0 ok
+  fkl_fused_cpu vs opencv_default (the two sampling conventions): max abs diff 7.12158 (informational)
+  scalar reference ASYMMETRIC sampling vs HALF_PIXEL sampling: max abs diff 7.12158 (informational)
+  opencv_default: median 13.3171 ms (min 13.2028, max 14.5129)
+  opencv_percrop_default: median 12.7782 ms (min 12.7242, max 13.0153)
+  opencv_percrop_parallel: median 2.27624 ms (min 2.21114, max 2.31105)
+  opencv_1thread: median 12.9964 ms (min 12.9003, max 13.9548)
+  opencv_percrop_1thread: median 12.7425 ms (min 12.6895, max 13.068)
+  fkl_perop_crop_cpu: median 23.5515 ms (min 23.5381, max 24.0852)
+  fkl_perop_batch_cpu: median 26.548 ms (min 26.4781, max 26.8462)
+  fkl_fused_cpu: median 22.6192 ms (min 22.6105, max 22.8694)
+  fkl_perop_crop_cpu_mt: median 23.8197 ms (min 21.6896, max 27.3616)
+  fkl_perop_batch_cpu_mt: median 6.08824 ms (min 5.87225, max 6.52033)
+  fkl_fused_cpu_mt: median 2.99999 ms (min 2.9432, max 3.05367)
+batch 240
+  opencv_default vs opencv_1thread (identical): max abs diff 0 ok
+  opencv_percrop vs opencv_default (<= 1e-4): max abs diff 0 ok
+  opencv_percrop_parallel vs opencv_percrop (identical): max abs diff 0 ok
+  opencv_default vs scalar reference, HALF_PIXEL sampling (<= 1e-4): max abs diff 1.52588e-05 ok
+  fkl_fused_cpu vs scalar reference, ASYMMETRIC sampling x*(src/dst) (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_fused_cpu_mt vs fkl_fused_cpu (identical): max abs diff 0 ok
+  fkl_perop_crop_cpu vs fkl_fused_cpu (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_perop_crop_cpu_mt vs fkl_perop_crop_cpu (identical): max abs diff 0 ok
+  fkl_perop_batch_cpu vs fkl_fused_cpu (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_perop_batch_cpu_mt vs fkl_perop_batch_cpu (identical): max abs diff 0 ok
+  fkl_fused_cpu vs opencv_default (the two sampling conventions): max abs diff 7.12158 (informational)
+  scalar reference ASYMMETRIC sampling vs HALF_PIXEL sampling: max abs diff 7.12158 (informational)
+  opencv_default: median 13.555 ms (min 13.3874, max 14.0893)
+  opencv_percrop_default: median 12.8817 ms (min 12.8554, max 13.0799)
+  opencv_percrop_parallel: median 2.32717 ms (min 2.2822, max 2.35863)
+  opencv_1thread: median 13.2636 ms (min 13.1495, max 13.6321)
+  opencv_percrop_1thread: median 12.8524 ms (min 12.8096, max 12.9771)
+  fkl_perop_crop_cpu: median 24.5316 ms (min 24.519, max 24.9086)
+  fkl_perop_batch_cpu: median 27.5803 ms (min 27.5405, max 27.7684)
+  fkl_fused_cpu: median 23.6199 ms (min 23.61, max 24.0319)
+  fkl_perop_crop_cpu_mt: median 24.8367 ms (min 22.8136, max 28.9552)
+  fkl_perop_batch_cpu_mt: median 6.22876 ms (min 6.17565, max 6.28376)
+  fkl_fused_cpu_mt: median 3.17262 ms (min 3.12446, max 3.60934)
+batch 250
+  opencv_default vs opencv_1thread (identical): max abs diff 0 ok
+  opencv_percrop vs opencv_default (<= 1e-4): max abs diff 0 ok
+  opencv_percrop_parallel vs opencv_percrop (identical): max abs diff 0 ok
+  opencv_default vs scalar reference, HALF_PIXEL sampling (<= 1e-4): max abs diff 1.52588e-05 ok
+  fkl_fused_cpu vs scalar reference, ASYMMETRIC sampling x*(src/dst) (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_fused_cpu_mt vs fkl_fused_cpu (identical): max abs diff 0 ok
+  fkl_perop_crop_cpu vs fkl_fused_cpu (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_perop_crop_cpu_mt vs fkl_perop_crop_cpu (identical): max abs diff 0 ok
+  fkl_perop_batch_cpu vs fkl_fused_cpu (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_perop_batch_cpu_mt vs fkl_perop_batch_cpu (identical): max abs diff 0 ok
+  fkl_fused_cpu vs opencv_default (the two sampling conventions): max abs diff 7.12158 (informational)
+  scalar reference ASYMMETRIC sampling vs HALF_PIXEL sampling: max abs diff 7.12158 (informational)
+  opencv_default: median 14.4859 ms (min 14.3132, max 14.5697)
+  opencv_percrop_default: median 13.6898 ms (min 13.6533, max 13.9486)
+  opencv_percrop_parallel: median 2.45309 ms (min 2.36377, max 2.69069)
+  opencv_1thread: median 14.1167 ms (min 14.0587, max 14.4496)
+  opencv_percrop_1thread: median 13.6559 ms (min 13.638, max 13.7054)
+  fkl_perop_crop_cpu: median 25.5764 ms (min 25.5623, max 26.1542)
+  fkl_perop_batch_cpu: median 28.9266 ms (min 28.7971, max 29.5123)
+  fkl_fused_cpu: median 24.5884 ms (min 24.5782, max 24.9661)
+  fkl_perop_crop_cpu_mt: median 24.9001 ms (min 23.6045, max 28.0267)
+  fkl_perop_batch_cpu_mt: median 6.50933 ms (min 6.47642, max 6.94784)
+  fkl_fused_cpu_mt: median 3.29367 ms (min 3.19635, max 3.48772)
+batch 260
+  opencv_default vs opencv_1thread (identical): max abs diff 0 ok
+  opencv_percrop vs opencv_default (<= 1e-4): max abs diff 0 ok
+  opencv_percrop_parallel vs opencv_percrop (identical): max abs diff 0 ok
+  opencv_default vs scalar reference, HALF_PIXEL sampling (<= 1e-4): max abs diff 1.52588e-05 ok
+  fkl_fused_cpu vs scalar reference, ASYMMETRIC sampling x*(src/dst) (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_fused_cpu_mt vs fkl_fused_cpu (identical): max abs diff 0 ok
+  fkl_perop_crop_cpu vs fkl_fused_cpu (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_perop_crop_cpu_mt vs fkl_perop_crop_cpu (identical): max abs diff 0 ok
+  fkl_perop_batch_cpu vs fkl_fused_cpu (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_perop_batch_cpu_mt vs fkl_perop_batch_cpu (identical): max abs diff 0 ok
+  fkl_fused_cpu vs opencv_default (the two sampling conventions): max abs diff 7.20166 (informational)
+  scalar reference ASYMMETRIC sampling vs HALF_PIXEL sampling: max abs diff 7.20166 (informational)
+  opencv_default: median 15.356 ms (min 15.1202, max 15.9658)
+  opencv_percrop_default: median 14.4127 ms (min 14.3529, max 14.7517)
+  opencv_percrop_parallel: median 2.57216 ms (min 2.54077, max 2.59697)
+  opencv_1thread: median 14.9662 ms (min 14.8738, max 15.7608)
+  opencv_percrop_1thread: median 14.3689 ms (min 14.3318, max 14.5198)
+  fkl_perop_crop_cpu: median 26.7469 ms (min 26.7174, max 27.2859)
+  fkl_perop_batch_cpu: median 30.2556 ms (min 30.1566, max 30.9402)
+  fkl_fused_cpu: median 25.7023 ms (min 25.681, max 26.0542)
+  fkl_perop_crop_cpu_mt: median 27.1462 ms (min 24.6848, max 31.4475)
+  fkl_perop_batch_cpu_mt: median 6.79517 ms (min 6.7334, max 7.56569)
+  fkl_fused_cpu_mt: median 3.42483 ms (min 3.31929, max 3.46257)
+batch 270
+  opencv_default vs opencv_1thread (identical): max abs diff 0 ok
+  opencv_percrop vs opencv_default (<= 1e-4): max abs diff 0 ok
+  opencv_percrop_parallel vs opencv_percrop (identical): max abs diff 0 ok
+  opencv_default vs scalar reference, HALF_PIXEL sampling (<= 1e-4): max abs diff 1.52588e-05 ok
+  fkl_fused_cpu vs scalar reference, ASYMMETRIC sampling x*(src/dst) (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_fused_cpu_mt vs fkl_fused_cpu (identical): max abs diff 0 ok
+  fkl_perop_crop_cpu vs fkl_fused_cpu (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_perop_crop_cpu_mt vs fkl_perop_crop_cpu (identical): max abs diff 0 ok
+  fkl_perop_batch_cpu vs fkl_fused_cpu (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_perop_batch_cpu_mt vs fkl_perop_batch_cpu (identical): max abs diff 0 ok
+  fkl_fused_cpu vs opencv_default (the two sampling conventions): max abs diff 7.20166 (informational)
+  scalar reference ASYMMETRIC sampling vs HALF_PIXEL sampling: max abs diff 7.20166 (informational)
+  opencv_default: median 15.7844 ms (min 15.5758, max 16.197)
+  opencv_percrop_default: median 14.9613 ms (min 14.9059, max 15.4183)
+  opencv_percrop_parallel: median 2.61434 ms (min 2.52726, max 2.65386)
+  opencv_1thread: median 15.6504 ms (min 15.3586, max 17.3842)
+  opencv_percrop_1thread: median 14.9991 ms (min 14.9456, max 15.7642)
+  fkl_perop_crop_cpu: median 27.7782 ms (min 27.7591, max 28.2061)
+  fkl_perop_batch_cpu: median 31.3372 ms (min 31.304, max 31.6427)
+  fkl_fused_cpu: median 26.6883 ms (min 26.6644, max 26.835)
+  fkl_perop_crop_cpu_mt: median 28.271 ms (min 25.3273, max 31.9465)
+  fkl_perop_batch_cpu_mt: median 7.04495 ms (min 6.93898, max 7.44751)
+  fkl_fused_cpu_mt: median 3.52626 ms (min 3.43849, max 3.70276)
+batch 280
+  opencv_default vs opencv_1thread (identical): max abs diff 0 ok
+  opencv_percrop vs opencv_default (<= 1e-4): max abs diff 0 ok
+  opencv_percrop_parallel vs opencv_percrop (identical): max abs diff 0 ok
+  opencv_default vs scalar reference, HALF_PIXEL sampling (<= 1e-4): max abs diff 1.52588e-05 ok
+  fkl_fused_cpu vs scalar reference, ASYMMETRIC sampling x*(src/dst) (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_fused_cpu_mt vs fkl_fused_cpu (identical): max abs diff 0 ok
+  fkl_perop_crop_cpu vs fkl_fused_cpu (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_perop_crop_cpu_mt vs fkl_perop_crop_cpu (identical): max abs diff 0 ok
+  fkl_perop_batch_cpu vs fkl_fused_cpu (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_perop_batch_cpu_mt vs fkl_perop_batch_cpu (identical): max abs diff 0 ok
+  fkl_fused_cpu vs opencv_default (the two sampling conventions): max abs diff 7.20166 (informational)
+  scalar reference ASYMMETRIC sampling vs HALF_PIXEL sampling: max abs diff 7.20166 (informational)
+  opencv_default: median 16.165 ms (min 16.0202, max 16.5606)
+  opencv_percrop_default: median 15.1301 ms (min 15.0967, max 15.183)
+  opencv_percrop_parallel: median 2.72835 ms (min 2.63793, max 2.76973)
+  opencv_1thread: median 15.9387 ms (min 15.7965, max 16.4447)
+  opencv_percrop_1thread: median 15.1253 ms (min 15.0849, max 15.2859)
+  fkl_perop_crop_cpu: median 28.6552 ms (min 28.646, max 28.9044)
+  fkl_perop_batch_cpu: median 32.3509 ms (min 32.2339, max 32.9405)
+  fkl_fused_cpu: median 27.5292 ms (min 27.5215, max 27.9342)
+  fkl_perop_crop_cpu_mt: median 29.4102 ms (min 26.6127, max 32.0506)
+  fkl_perop_batch_cpu_mt: median 7.33117 ms (min 7.24327, max 7.85422)
+  fkl_fused_cpu_mt: median 3.75839 ms (min 3.59758, max 3.82773)
+batch 290
+  opencv_default vs opencv_1thread (identical): max abs diff 0 ok
+  opencv_percrop vs opencv_default (<= 1e-4): max abs diff 0 ok
+  opencv_percrop_parallel vs opencv_percrop (identical): max abs diff 0 ok
+  opencv_default vs scalar reference, HALF_PIXEL sampling (<= 1e-4): max abs diff 1.52588e-05 ok
+  fkl_fused_cpu vs scalar reference, ASYMMETRIC sampling x*(src/dst) (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_fused_cpu_mt vs fkl_fused_cpu (identical): max abs diff 0 ok
+  fkl_perop_crop_cpu vs fkl_fused_cpu (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_perop_crop_cpu_mt vs fkl_perop_crop_cpu (identical): max abs diff 0 ok
+  fkl_perop_batch_cpu vs fkl_fused_cpu (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_perop_batch_cpu_mt vs fkl_perop_batch_cpu (identical): max abs diff 0 ok
+  fkl_fused_cpu vs opencv_default (the two sampling conventions): max abs diff 7.20166 (informational)
+  scalar reference ASYMMETRIC sampling vs HALF_PIXEL sampling: max abs diff 7.20166 (informational)
+  opencv_default: median 17.0875 ms (min 16.8545, max 17.374)
+  opencv_percrop_default: median 15.8147 ms (min 15.7896, max 16.0774)
+  opencv_percrop_parallel: median 2.87362 ms (min 2.69542, max 2.92095)
+  opencv_1thread: median 16.8878 ms (min 16.7265, max 17.4203)
+  opencv_percrop_1thread: median 15.7703 ms (min 15.7315, max 15.9148)
+  fkl_perop_crop_cpu: median 29.8216 ms (min 29.8001, max 30.0336)
+  fkl_perop_batch_cpu: median 33.8905 ms (min 33.7568, max 34.3663)
+  fkl_fused_cpu: median 28.656 ms (min 28.6181, max 28.9593)
+  fkl_perop_crop_cpu_mt: median 30.3173 ms (min 27.2663, max 33.2339)
+  fkl_perop_batch_cpu_mt: median 7.66149 ms (min 7.53909, max 9.23595)
+  fkl_fused_cpu_mt: median 3.8103 ms (min 3.70224, max 3.95264)
+batch 300
+  opencv_default vs opencv_1thread (identical): max abs diff 0 ok
+  opencv_percrop vs opencv_default (<= 1e-4): max abs diff 0 ok
+  opencv_percrop_parallel vs opencv_percrop (identical): max abs diff 0 ok
+  opencv_default vs scalar reference, HALF_PIXEL sampling (<= 1e-4): max abs diff 1.52588e-05 ok
+  fkl_fused_cpu vs scalar reference, ASYMMETRIC sampling x*(src/dst) (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_fused_cpu_mt vs fkl_fused_cpu (identical): max abs diff 0 ok
+  fkl_perop_crop_cpu vs fkl_fused_cpu (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_perop_crop_cpu_mt vs fkl_perop_crop_cpu (identical): max abs diff 0 ok
+  fkl_perop_batch_cpu vs fkl_fused_cpu (<= 1e-4): max abs diff 7.62939e-06 ok
+  fkl_perop_batch_cpu_mt vs fkl_perop_batch_cpu (identical): max abs diff 0 ok
+  fkl_fused_cpu vs opencv_default (the two sampling conventions): max abs diff 7.20166 (informational)
+  scalar reference ASYMMETRIC sampling vs HALF_PIXEL sampling: max abs diff 7.20166 (informational)
+  opencv_default: median 18.1171 ms (min 17.8625, max 18.5259)
+  opencv_percrop_default: median 17.0023 ms (min 16.9723, max 17.2116)
+  opencv_percrop_parallel: median 2.91467 ms (min 2.80773, max 2.93764)
+  opencv_1thread: median 17.8437 ms (min 17.6704, max 18.384)
+  opencv_percrop_1thread: median 16.97 ms (min 16.9205, max 17.289)
+  fkl_perop_crop_cpu: median 30.6847 ms (min 30.6552, max 31.3467)
+  fkl_perop_batch_cpu: median 35.0759 ms (min 34.8699, max 36.2)
+  fkl_fused_cpu: median 29.5071 ms (min 29.4883, max 30.1811)
+  fkl_perop_crop_cpu_mt: median 31.5978 ms (min 28.4222, max 35.0355)
+  fkl_perop_batch_cpu_mt: median 7.93337 ms (min 7.79763, max 8.03726)
+  fkl_fused_cpu_mt: median 3.98859 ms (min 3.80252, max 4.0353)
+all numerical checks passed
