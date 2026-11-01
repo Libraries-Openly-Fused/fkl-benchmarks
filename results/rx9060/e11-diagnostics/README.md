@@ -4,7 +4,7 @@ Three deliberately wrong chains (`fkl-self/diagnostics/e11_*.cu`; a float3 into 
 `fk::executeOperations<fk::TransformDPP<>>(stream, read, ops..., write)`, compiled with four compilers and `scripts/e11_diagnostics.py`: g++ 13.4.0 and clang++ 23.1.5 (the CPU back-end), amdclang++ 24.0.0 for
 gfx1200 (HIP), and nvcc 13.4.92 (CUDA, `-arch sm_89`, host g++ 13.4.0). **The nvcc column was compiled on this machine** (the pip wheel of nvcc that the compile checks of the CUDA targets use, compile only);
 the RTX 4090 machine repeats it with the same script. Machine: Ryzen 7 5800X3D. `e11_diagnostics.csv` has one row per (FKL tree, compiler, mistake), `logs/` the full output of the wrong chain of every cell. The correct
-version of every chain (no `-DE11_WRONG`) compiles in all 36 cells. Compile only: the programs are never run. The wall times (median of 5) are 0.3 to 2.0 s and the same with and without the
+version of every chain (no `-DE11_WRONG`) compiles in all 36 cells. Compile only: the three programs are never run (the batch of 50 and 60 has a fourth program that is run, last point of section 1). The wall times (median of 5) are 0.26 to 2.71 s and the same with and without the
 limit of one error: all the errors are in the front end, so they say nothing here and are in the CSV only.
 
 ## 1. The library as it is (FKL c8fcbe8, the final pin)
@@ -21,8 +21,10 @@ limit of one error: all the errors are in the front end, so they say nothing her
   the type it got; with clang++ and amdclang++ it is "no matching function for call to 'exec'", which names neither (the candidates are in the notes). **No error line names the previous operation.**
 - The complete Read in the middle: "no match for `operator|` (operand types are `fk::InputFoldType<float>` and `const fk::ReadInstantiableOperation<fk::PerThreadRead<...>>`)" (g++, 88 lines because two knock-on errors
   "invalid use of incomplete type `fk::VectorTraits<...>`" follow), "invalid operands to binary expression" (clang++, amdclang++), "no operator "|" matches these operands" (nvcc): it names the Read that does not belong, and not the rule.
-- **The batch of 50 read and 60 written compiles with all four compilers**, without a word. Run on the CPU back-end (g++, c8fcbe8) it processes the 50 images of the read and leaves the last 10 of the 60 outputs untouched; the opposite, 60 read and 50 written,
-  would index past the 50 outputs (not run).
+- **The batch of 50 read and 60 written compiles with all four compilers**, without a word, and nothing is reported when it runs (exit code 0). **The chain processes the 50 images of the read and leaves the last 10 outputs (50 to 59) untouched, with the CPU back-end
+  (g++ 13, one thread), with the multithreaded CPU back-end (g++ 13) and with the HIP back-end (amdclang++ 24.0.0, RX 9060, gfx1200). The CUDA back-end was not run** (this machine has no NVIDIA GPU): `e11_batch_mismatch_run.cu` compiles with nvcc 13.4.92,
+  and `batch-run/run.sh` builds and runs it on a machine that has one. The program (FKL c8fcbe8, `fkl-self/diagnostics/e11_batch_mismatch_run.cu`) reads 50 images of 8 x 4 floats filled with 1, the 60 output images are filled with -1 and the chain multiplies by 2; it classifies each
+  output image by all of its 32 pixels: 50 images are all 2, 10 are all -1 (the first is output 50), none is mixed, in three runs of each back-end (`batch-run/output.txt`). The opposite, 60 read and 50 written, would index past the 50 outputs (not run: undefined behaviour).
 - The library does have `static_assert`s for two of these mistakes, in `Fuser::fuse` (`iop_fuser.h:28`, "Fusing two batch operations of different BATCH size is not allowed.", and `iop_fuser.h:99`, "Complete Read Operations as continuations are not
   allowed. It has to be an IncompleteReadBackOperation."), but only the composition of operations with `operator&` reaches them, and `executeOperations(stream, ...)` does not use it. Checked for the Read in the middle written as
   `read & mul & read2 & add & write`: g++ stops at `iop_fuser.h:99` with that message. (`BatchWrite` also has no `BATCH` member, so `isBatchOperation` is false for it and the batch size check of the Fuser could not see it.)

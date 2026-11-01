@@ -1,13 +1,14 @@
 # E11: what the compiler says about a wrong chain
 
 Three deliberately wrong chains of operations, one translation unit each. They are **compile only** (never run, not part of the CMake build): each file holds the correct chain,
-which must compile with every compiler, and, with `-DE11_WRONG`, the wrong one.
+which must compile with every compiler, and, with `-DE11_WRONG`, the wrong one. A fourth file, `e11_batch_mismatch_run.cu`, **is run**: it executes the wrong chain of the batch of 50 and 60 and says which outputs were written.
 
 | file | the mistake |
 |---|---|
 | `e11_type_mismatch.cu` | `Mul<float3>` (float3 to float3) followed by `Add<float>`: the Add receives a float3 |
 | `e11_read_in_middle.cu` | Read, Mul, **Read**, Add, Write: a complete Read in the middle of the chain |
 | `e11_batch_mismatch.cu` | a batch of 50 images read (`PerThreadRead` of `std::array<Ptr2D, 50>`) and a batch of 60 written |
+| `e11_batch_mismatch_run.cu` | the same chain executed on real data (50 images of 8 x 4 floats read, 60 written): how many of the 60 outputs are written, CPU, CPU_MULTITHREAD, HIP and CUDA (`-DE11_RUN_CPU_MT` selects the multithreaded CPU back-end); `results/rx9060/e11-diagnostics/batch-run/run.sh` builds and runs it |
 
 The chains are written as a user writes them, `fk::executeOperations<fk::TransformDPP<>>(stream, read, ops..., write)`; `fk::Stream` and `fk::TransformDPP<>` take the parallel
 architecture of the compiler, so the same source is compiled by nvcc (CUDA), amdclang++ `-x hip` (HIP) and g++/clang++ (the CPU back-end).
