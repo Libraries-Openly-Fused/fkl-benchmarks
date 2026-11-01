@@ -36,3 +36,8 @@ fklb_add_benchmark(nan_saturate
 fklb_add_benchmark(e6_saturate_exhaustive
     BACKENDS cu LIBS fkl opencv
     SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/numerics/saturate_exhaustive.cu")
+
+# E6 (AMD): fk::SaturateCast<float, T> over all 2^32 float bit patterns on the device (gfx1200) against the host, the conversion of HIP and an independent reference
+fklb_add_benchmark(e6_saturate_exhaustive_amd
+    BACKENDS hip LIBS fkl
+    LAUNCHER_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/numerics/e6_saturate_exhaustive_amd.h")
