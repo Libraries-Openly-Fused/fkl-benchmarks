@@ -337,6 +337,163 @@ bool launch_benchmark_Horizontal_Fusion_NO_CPU_OVERHEAD_CUDAGraphs(const size_t&
 
     return passed;
 }
+
+// The same graph benchmark as above with a different structure of the graph, to tell apart what a graph costs from how this benchmark builds it: here ONE GRAPH FROM ONE STREAM CAPTURE of all the
+// BATCH launches (a chain of BATCH kernel nodes), while the variant above has ONE CHILD GRAPH NODE PER LAUNCH (each captured from one launch, no dependencies between them). The timed work is one
+// cudaGraphLaunch in both; the second column is the fused kernel as everywhere. Before the timing, the output of this graph is compared with the output of the plain launches, bit by bit, for every
+// crop of the batch. The HIP version of this benchmark is below, with the same structure.
+template <size_t BATCH>
+bool benchmark_Horizontal_Fusion_NO_CPU_OVERHEAD_CUDAGraphs_OneCapturedGraph(const size_t& NUM_ELEMS_X, const size_t& NUM_ELEMS_Y, fk::Stream& stream) {
+    constexpr std::string_view FIRST_LABEL{ "Iterated Batch" };
+    constexpr std::string_view SECOND_LABEL{ "Fused Batch" };
+    std::stringstream error_s;
+    bool passed = true;
+    bool exception = false;
+
+    using InputType = uchar;
+    using OutputType = float;
+
+    const InputType val_init = 10u;
+    const OutputType val_alpha = 1.0f;
+    const OutputType val_sub = 1.f;
+    const OutputType val_div = 3.2f;
+    try {
+        const fk::Size cropSize(60, 120);
+        // width x height = NUM_ELEMS_X x NUM_ELEMS_Y = 3840 x 2160, as the paper states (the arguments used to be swapped: 2160 x 3840)
+        fk::Ptr2D<InputType> d_input((int)NUM_ELEMS_X, (int)NUM_ELEMS_Y);
+        fk::setTo(val_init, d_input, stream);
+        std::array<fk::Ptr2D<OutputType>, BATCH> d_output_cv;
+
+        fk::Tensor<OutputType> d_tensor_output(cropSize.width, cropSize.height, BATCH);
+
+        std::array<fk::Ptr2D<InputType>, BATCH> crops;
+        for (int crop_i = 0; crop_i < BATCH; crop_i++) {
+            crops[crop_i] = d_input.crop(fk::Point{ crop_i, crop_i, 0 }, fk::PtrDims<fk::ND::_2D>{static_cast<uint>(cropSize.width),
+                                                                                                  static_cast<uint>(cropSize.height),
+                                                                                                  static_cast<uint>(d_input.dims().pitch)});
+            d_output_cv[crop_i].Alloc(cropSize);
+        }
+
+        // Read Ops
+        const auto read_array = fk::PerThreadRead<fk::ND::_2D, InputType>::build_batch(crops);
+        const auto read = fk::PerThreadRead<fk::ND::_2D, InputType>::build(crops);
+
+        // Compute Ops
+        const auto saturate = fk::SaturateCast<InputType, OutputType>::build();
+        const auto mul = fk::Mul<OutputType>::build(val_alpha);
+        const auto sub = fk::Sub<OutputType>::build(val_sub);
+        const auto div = fk::Div<OutputType>::build(val_div);
+
+        // Write Ops
+        const auto write_array = fk::PerThreadWrite<fk::ND::_2D, OutputType>::build_batch(d_output_cv);
+        const auto write = fk::TensorWrite<OutputType>::build(d_tensor_output);
+
+        // ONE graph from ONE stream capture of all the launches
+        cudaGraphExec_t graphExec;
+        {
+            fk::Stream captureStream;
+            cudaGraph_t graph;
+            gpuErrchk(cudaStreamBeginCapture(captureStream, cudaStreamCaptureModeGlobal));
+            for (int crop_i = 0; crop_i < BATCH; crop_i++) {
+                fk::executeOperations<fk::TransformDPP<>>(captureStream, read_array[crop_i], saturate,
+                                       mul, sub, div, write_array[crop_i]);
+            }
+            gpuErrchk(cudaStreamEndCapture(captureStream, &graph));
+            gpuErrchk(cudaGraphInstantiate(&graphExec, graph, NULL, NULL, 0));
+            gpuErrchk(cudaGraphDestroy(graph));
+        }
+
+        // The output of the graph against the output of the plain launches, bit by bit, for every crop (the device outputs are cleared before the graph runs)
+        {
+            for (int crop_i = 0; crop_i < BATCH; crop_i++) {
+                fk::executeOperations<fk::TransformDPP<>>(stream, read_array[crop_i], saturate, mul, sub, div, write_array[crop_i]);
+            }
+            for (int crop_i = 0; crop_i < BATCH; crop_i++) {
+                d_output_cv[crop_i].download(stream);
+            }
+            stream.sync();
+            std::vector<OutputType> plainOutput;
+            plainOutput.reserve(static_cast<size_t>(BATCH) * cropSize.width * cropSize.height);
+            for (int crop_i = 0; crop_i < BATCH; crop_i++) {
+                for (int y = 0; y < cropSize.height; ++y) {
+                    for (int x = 0; x < cropSize.width; ++x) {
+                        plainOutput.push_back(d_output_cv[crop_i].at(fk::Point{ x, y, 0 }));
+                    }
+                }
+                fk::setTo(static_cast<OutputType>(0), d_output_cv[crop_i], stream);
+            }
+            stream.sync();
+            gpuErrchk(cudaGraphLaunch(graphExec, stream));
+            for (int crop_i = 0; crop_i < BATCH; crop_i++) {
+                d_output_cv[crop_i].download(stream);
+            }
+            stream.sync();
+            size_t k = 0, different = 0;
+            for (int crop_i = 0; crop_i < BATCH; crop_i++) {
+                for (int y = 0; y < cropSize.height; ++y) {
+                    for (int x = 0; x < cropSize.width; ++x, ++k) {
+                        different += std::memcmp(&plainOutput[k], &d_output_cv[crop_i].at(fk::Point{ x, y, 0 }), sizeof(OutputType)) != 0;
+                    }
+                }
+            }
+            if (different != 0) {
+                std::cout << "The graph of one capture does not give the output of the plain launches: " << different << " values differ (batch " << BATCH << ")" << std::endl;
+                passed = false;
+            }
+        }
+
+        START_FIRST_BENCHMARK(fk::defaultParArch)
+            gpuErrchk(cudaGraphLaunch(graphExec, stream));
+        STOP_FIRST_START_SECOND_BENCHMARK
+            fk::executeOperations<fk::TransformDPP<>>(stream, read, saturate, mul, sub, div, write);
+        STOP_SECOND_BENCHMARK
+
+        d_tensor_output.download(stream);
+
+        // Verify results
+        for (int crop_i = 0; crop_i < BATCH; crop_i++) {
+            d_output_cv[crop_i].download(stream);
+        }
+
+        stream.sync();
+
+        gpuErrchk(cudaGraphExecDestroy(graphExec));
+
+        for (int crop_i = 0; crop_i < BATCH; crop_i++) {
+            fk::Ptr2D<OutputType> cvRes = d_output_cv[crop_i];
+            fk::Ptr2D<OutputType> cvGSRes = d_tensor_output.getPlane(crop_i);
+            bool passedThisTime = compareAndCheck(cvRes, cvGSRes);
+            if (!passedThisTime) { std::cout << "Failed on crop idx=" << crop_i << std::endl; }
+            passed &= passedThisTime;
+        }
+    } catch (const std::exception& e) {
+        error_s << e.what();
+        passed = false;
+        exception = true;
+    }
+
+    if (!passed) {
+        if (!exception) {
+            std::stringstream ss;
+            ss << "benchmark_Horizontal_Fusion_NO_CPU_OVERHEAD_CUDAGraphs_OneCapturedGraph";
+            std::cout << ss.str() << " failed!! RESULT ERROR: Some results do not match baseline." << std::endl;
+        } else {
+            std::stringstream ss;
+            ss << "benchmark_Horizontal_Fusion_NO_CPU_OVERHEAD_CUDAGraphs_OneCapturedGraph";
+            std::cout << ss.str() << "> failed!! EXCEPTION: " << error_s.str() << std::endl;
+        }
+    }
+
+    return passed;
+}
+template <size_t... Is>
+bool launch_benchmark_Horizontal_Fusion_NO_CPU_OVERHEAD_CUDAGraphs_OneCapturedGraph(const size_t& NUM_ELEMS_X, const size_t& NUM_ELEMS_Y, const std::index_sequence<Is...>& seq, fk::Stream& stream) {
+    bool passed = true;
+
+    passed &= (benchmark_Horizontal_Fusion_NO_CPU_OVERHEAD_CUDAGraphs_OneCapturedGraph<variableDimensionValues[Is]>(NUM_ELEMS_X, NUM_ELEMS_Y, stream) && ...);
+
+    return passed;
+}
 #elif defined(FK_HIP_BACKEND)
 // The CUDA graphs version above, with HIP graphs
 template <size_t BATCH>
@@ -643,7 +800,9 @@ int launch() {
     constexpr size_t NUM_ELEMS_Y = 2160;
     benchmarkNotes = "source image 3840 wide x 2160 high (uint8, constant 10), crops of 60x120 at (i, i), batch 1 + 10 k; the earlier versions of this benchmark allocated the source 2160 wide x 3840 high by passing the dimensions swapped, which does not change the crops";
 #if defined(__NVCC__)
-    benchmarkNotes += "; CUDA graphs: benchmark_Horizontal_Fusion_NO_CPU_OVERHEAD_CUDAGraphs builds ONE CHILD GRAPH NODE PER CROP (each captured from one launch, no dependencies between them) and times one cudaGraphLaunch";
+    benchmarkNotes += "; CUDA graphs: benchmark_Horizontal_Fusion_NO_CPU_OVERHEAD_CUDAGraphs builds ONE CHILD GRAPH NODE PER CROP (each captured from one launch, no dependencies between them); "
+                      "benchmark_Horizontal_Fusion_NO_CPU_OVERHEAD_CUDAGraphs_OneCapturedGraph builds ONE GRAPH FROM ONE STREAM CAPTURE of all the launches (a chain of kernel nodes), its output is compared with the one of the plain launches "
+                      "bit by bit for every crop before the timing; both time one cudaGraphLaunch; the second column is the fused kernel";
 #elif defined(FK_HIP_BACKEND)
     benchmarkNotes += "; HIP graphs: benchmark_Horizontal_Fusion_NO_CPU_OVERHEAD_HIPGraphs builds ONE CHILD GRAPH NODE PER CROP (each captured from one launch, no dependencies between them); "
                       "benchmark_Horizontal_Fusion_NO_CPU_OVERHEAD_HIPGraphs_OneCapturedGraph builds ONE GRAPH FROM ONE STREAM CAPTURE of all the launches (a chain of kernel nodes), its output is compared with the one of the plain launches "
@@ -667,6 +826,12 @@ int launch() {
     warmup = false;
 
     passed &= launch_benchmark_Horizontal_Fusion_NO_CPU_OVERHEAD_CUDAGraphs(NUM_ELEMS_X, NUM_ELEMS_Y, std::make_index_sequence<NUM_EXPERIMENTS>{}, stream);
+
+    warmup = true;
+    passed &= launch_benchmark_Horizontal_Fusion_NO_CPU_OVERHEAD_CUDAGraphs_OneCapturedGraph(NUM_ELEMS_X, NUM_ELEMS_Y, std::make_index_sequence<NUM_EXPERIMENTS>{}, stream);
+    warmup = false;
+
+    passed &= launch_benchmark_Horizontal_Fusion_NO_CPU_OVERHEAD_CUDAGraphs_OneCapturedGraph(NUM_ELEMS_X, NUM_ELEMS_Y, std::make_index_sequence<NUM_EXPERIMENTS>{}, stream);
 #elif defined(FK_HIP_BACKEND)
     warmup = true;
     passed &= launch_benchmark_Horizontal_Fusion_NO_CPU_OVERHEAD_HIPGraphs(NUM_ELEMS_X, NUM_ELEMS_Y, std::make_index_sequence<NUM_EXPERIMENTS>{}, stream);
