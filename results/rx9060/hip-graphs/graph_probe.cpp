@@ -1,5 +1,5 @@
 // Where does the time of the HIP graph of the horizontal fusion benchmark go? The same per-crop kernel (crop + saturate + mul + sub + div + write, 60x120 uchar -> float of a
-// 3840x2160 image) launched four ways, for BATCH crops:
+// 3840x2160 image) launched five ways, for BATCH crops:
 //   plain        BATCH launches in the stream (the "iterated batch" of the benchmark)
 //   children     the graph of the benchmark: BATCH child graph nodes, each captured from one launch (hipStreamBeginCapture, global mode), no dependencies between them
 //   children_seq the same with every child depending on the previous one
@@ -7,6 +7,7 @@
 //   flat_parallel ONE stream capture with a fork and a join over one stream per crop (events): BATCH kernel nodes with no dependencies between them (they may run side by side)
 // per variant: submit = time until the launch call(s) return (host), total = submit + stream synchronisation, event = hipEvent time around the submission, in the stream (what the
 // benchmark reports); medians of N repetitions after a warm-up of 1.5 s. The graph building (capture, instantiate) is not timed.
+// usage: graph_probe [repetitions [batch]]   (default 100 repetitions and the batches 11, 51, 101, 201, 301, 601 and 1191; with a batch argument only 101, 301 or 1191 are accepted)
 #include <hip/hip_runtime.h>
 
 #include <fused_kernel/algorithms/algorithms.h>
@@ -241,6 +242,10 @@ int main(int argc, char** argv) {
         if (b == 101) probe<101>(stream, reps);
         else if (b == 301) probe<301>(stream, reps);
         else if (b == 1191) probe<1191>(stream, reps);
+        else {
+            std::fprintf(stderr, "graph_probe: the batch must be 101, 301 or 1191 (got '%s'); without the argument the probe runs 11, 51, 101, 201, 301, 601 and 1191\n", argv[2]);
+            return 1;
+        }
         return 0;
     }
     probe<11>(stream, reps);

@@ -15,7 +15,7 @@ HIP events.
 The same per-crop kernel (crop 60x120 of a 3840x2160 uchar image, saturate, multiply, subtract, divide, write float) launched five ways for BATCH crops: `plain` (BATCH launches in the stream), `children` (the graph of the
 benchmark), `children_seq` (the same with every child depending on the previous one), `flat` (ONE stream capture of the BATCH launches: a graph of BATCH kernel nodes in a chain, serial) and `flat_parallel` (ONE stream
 capture with a fork and a join over one stream per crop, with events: BATCH kernel nodes and no dependencies between them, so that they may run side by side; the NVIDIA session pointed out that the serial chain
-has no concurrency, and its 4090 measurement has the same five structures). The probe checks that every strategy gives the output of the plain launches (a hash of the bits of all the outputs, which are cleared before
+has no concurrency, and its 4090 measurement has the same five structures; that measurement is not on main yet and will be at `results/rtx4090/e0-graph-structure/`). The probe checks that every strategy gives the output of the plain launches (a hash of the bits of all the outputs, which are cleared before
 each strategy runs): 28 of 28 checks passed in each of the two runs. Per strategy and batch, the median of 100 repetitions after a warm-up of 1.5 s of: `submit` (the host time until the launch call returns), `total`
 (submit + stream synchronisation) and `event` (HIP events around the submission, as in the benchmark). The graph building is not timed. Two runs (`probe5_run1.txt`, `probe5_run2.txt`) agree within 2 percent. Total time in ms
 (run 1):
@@ -58,7 +58,21 @@ Least squares fit over 101 to 1191 crops (microseconds per crop, both runs): pla
 - So on ROCm 10.1 a child graph node costs about 3.7 microseconds more than a kernel node, and a graph made of one child per launch is slower than plain launches. A graph of kernel nodes (here from one stream capture of all
   the launches, serial or with a fork and a join) is faster than plain launches by about 20 percent at 1191 crops. The time of the benchmark's graph is therefore a property of how it is built (child graph nodes), not of graphs.
 
+## Build and run the probe
+
+From the root of fkl-benchmarks, with the submodule `external/fkl` at FKL `c8fcbe8` (the pin of these results) and ROCm 10.1 (`amdclang++` of `/opt/rocm/core-10.1/bin`; no environment variable is needed):
+
+```
+/opt/rocm/core-10.1/bin/amdclang++ -x hip --offload-arch=gfx1200 -O3 -DNDEBUG -std=c++17 -D__HIP_PLATFORM_AMD__=1 -ftemplate-depth=1000 -DENABLE_BENCHMARK \
+    -I external/fkl/include results/rx9060/hip-graphs/graph_probe.cpp -o graph_probe
+./graph_probe [repetitions [batch]]
+```
+
+Without arguments it runs 100 repetitions of the batches 11, 51, 101, 201, 301, 601 and 1191 (the output of `probe5_run1.txt` and `probe5_run2.txt`); `batch` can be 101, 301 or 1191 only, any other value prints a message and exits with code 1.
+`PROBE_VARIANT=plain|children|children_seq|flat|flat_parallel` runs one strategy only (what the profiler runs of `trace-summary.txt` used) and `PROBE_WARMUP=<seconds>` changes the warm-up (default 1.5 s). The two runs of this folder were made before the check of the
+batch and the line of usage were added to `main()` and to the header of `graph_probe.cpp`; the measuring code (`probe<BATCH>`) has not changed.
+
 ## Not investigated
 
 The capture mode (global as in the benchmark; the instantiated graph does not depend on it), other ROCm versions, the internal reason for the cost of a child graph node in the runtime, and the CUDA Graphs variant on NVIDIA GPUs
-(see the NVIDIA session's results for the 4090). Absolute times depend on the clocks of the GPU (see `../fkl-self/README.md`, horizontal fusion); the ratios do not (the benchmark: 1.78 to 2.06; this probe: 2.00 to 2.02 at 1191 crops).
+(see the NVIDIA session's results for the 4090, which are not on main yet and will be at `results/rtx4090/e0-graph-structure/`). Absolute times depend on the clocks of the GPU (see `../fkl-self/README.md`, horizontal fusion); the ratios do not (the benchmark: 1.78 to 2.06; this probe: 2.00 to 2.02 at 1191 crops).

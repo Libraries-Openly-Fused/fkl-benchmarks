@@ -14,6 +14,12 @@ launches, without it, and `..._HIPGraphs_...` (the iterated batch as one HIP gra
 | instructions per operation | `numinstructions_x_operation/`, `numinstructions_x_operation_repeat_22-25/` | FKL `38c4f32` (fkl-benchmarks `e0af273` = main `9afddfb` + #1 `7b68ff4`, which repairs the HIP part of the CSV header only); the repeat with FKL `c8fcbe8` | unchanged by the clock fix; the two runs agree within 2 percent |
 | horizontal fusion | `horizontal_fusion_with_flat_graph/run1` to `run3` (with the second HIP graph variant), `horizontal_fusion/` (run 1 of the earlier set), `horizontal_fusion_repeats/` (runs 2 to 4) | FKL `c8fcbe8`, fkl-benchmarks `132d2cc` for the three new runs; the earlier four with FKL `38c4f32` / `c8fcbe8` as above | unchanged by the clock fix, but the **absolute times depend on the state of the GPU clocks** (below); the speedup and the graph ratios do not |
 
+Provenance of the headers: the line `# repo:` of 11 CSVs names fkl-benchmarks `e7f28e2` (`horizontal_fusion_repeats/run2_traced_22-12`, `run3_after_preheat_22-33` and `run4_clean_22-48`, three files each;
+`numinstructions_x_operation_repeat_22-25/`; `latency_hiding_without_spin_same_day/`). `e7f28e2` is the merge of main (with #1 to #5) into the branch `rpp-baseline` of #6; it is not in the history of this pull request, whose base is main at `1be0f5e`. The benchmark headers of the
+three programs are those of the base: `git diff e7f28e2 1be0f5e -- fkl-self common` differs in `fkl-self/pipelines/nv12_pipeline.h` only (the NV12 pipeline, which none of the three includes), and the CMake files differ by the optional build of `rpp/` (`FKLB_BUILD_RPP`, off by default) only. One of the 11,
+`latency_hiding_without_spin_same_day/testLatencyHiding_GPU_AMD.csv`, says `e7f28e2...-dirty`: its binary was built in a tree with a scratch patch of `benchmark_latency_hiding.h`, an optional spin read from the environment variable `LH_SPIN_SECONDS`, which was not set for that run
+(a spin of zero seconds); `FKLB_GPU_SPIN_SECONDS` of this pull request is the version of that patch that is kept.
+
 The device code of the three binaries is identical function by function at FKL `38c4f32` and `c8fcbe8` (372, 124 and 246 functions, 0 different: `../clock-ramp/`), so the results of the
 older pin hold for the final pin.
 
@@ -94,21 +100,40 @@ The benchmark now has two HIP graph variants (`benchmark_horizontal_fusion.h`): 
 variant), and `..._HIPGraphs_OneCapturedGraph`, new (ONE GRAPH FROM ONE STREAM CAPTURE of all the launches, a chain of kernel nodes). Both time one `hipGraphLaunch` against the fused kernel, the CSV notes say how each graph
 is built, and the output of the new graph is compared bit by bit with the output of the plain launches for every crop before its timing (all 120 batches of the three runs passed; a negative control with the launch removed reports
 every value). Three full runs of the same binary, nothing else running, with a sampler at 5 Hz next to each (`clocks5hz.txt`: time, graphics clock, memory clock, GPU busy percent, power, temperature), 886 to 892 s each
-(`horizontal_fusion_with_flat_graph/run1` to `run3`). Mean ms of the iterated batch (the "without CPU overhead" file) and of the fused kernel; median of the three runs and, in brackets, the smallest and the largest; the ratios
-are computed in each run and then summarised the same way:
+(`horizontal_fusion_with_flat_graph/run1` to `run3`). Mean ms of the iterated batch (the "without CPU overhead" files: plain launches, graph of child nodes, graph of one capture) and of the fused kernel timed next to the plain launches; median of the three runs and, in
+brackets, the smallest and the largest:
 
-| batch | iterated, plain launches | iterated, graph of child nodes | iterated, graph of one capture | fused kernel | child graph / plain | one-capture graph / plain | plain / fused | one-capture graph / fused |
-|--:|--:|--:|--:|--:|--:|--:|--:|--:|
-| 11 | 0.0493 (0.0492 to 0.0493) | 0.0900 (0.0898 to 0.0905) | 0.0463 (0.0457 to 0.0501) | 0.0136 (0.0135 to 0.0136) | 1.83 (1.82 to 1.83) | 0.94 (0.93 to 1.02) | 3.63 (3.63 to 3.64) | 3.42 (3.37 to 3.70) |
-| 51 | 0.2031 (0.2029 to 0.2035) | 0.3786 (0.3769 to 0.3886) | 0.1710 (0.1705 to 0.1861) | 0.0231 (0.0231 to 0.0231) | 1.86 (1.85 to 1.92) | 0.84 (0.84 to 0.91) | 8.78 (8.78 to 8.82) | 7.40 (7.38 to 8.06) |
-| 101 | 0.3940 (0.3940 to 0.3951) | 0.7383 (0.7369 to 0.7423) | 0.3274 (0.3263 to 0.3568) | 0.0358 (0.0358 to 0.0359) | 1.87 (1.87 to 1.88) | 0.83 (0.83 to 0.91) | 11.00 (10.99 to 11.01) | 9.12 (9.10 to 9.97) |
-| 201 | 0.7751 (0.7740 to 0.7754) | 1.4520 (1.4511 to 1.4547) | 0.6367 (0.6357 to 0.6918) | 0.0572 (0.0572 to 0.0572) | 1.87 (1.87 to 1.88) | 0.82 (0.82 to 0.89) | 13.54 (13.54 to 13.55) | 11.12 (11.12 to 12.09) |
-| 301 | 1.1563 (1.1560 to 1.1578) | 2.1701 (2.1639 to 2.1735) | 0.9456 (0.9455 to 1.0276) | 0.0784 (0.0783 to 0.0784) | 1.88 (1.87 to 1.88) | 0.82 (0.82 to 0.89) | 14.75 (14.74 to 14.79) | 12.07 (12.05 to 13.13) |
-| 601 | 2.3102 (2.3081 to 2.3147) | 4.4052 (4.3963 to 4.6965) | 1.9402 (1.9036 to 2.0391) | 0.1439 (0.1419 to 0.1442) | 1.91 (1.90 to 2.03) | 0.84 (0.82 to 0.88) | 16.04 (16.02 to 16.31) | 13.46 (13.23 to 14.37) |
-| 1191 | 4.5010 (4.4979 to 4.5201) | 8.5238 (8.4516 to 8.5378) | 3.7912 (3.7154 to 4.1456) | 0.2734 (0.2726 to 0.2747) | 1.90 (1.87 to 1.90) | 0.84 (0.82 to 0.92) | 16.46 (16.46 to 16.50) | 13.91 (13.53 to 15.16) |
+| batch | iterated, plain launches | iterated, graph of child nodes | iterated, graph of one capture | fused kernel (next to the plain launches) |
+|--:|--:|--:|--:|--:|
+| 11 | 0.0493 (0.0492 to 0.0493) | 0.0900 (0.0898 to 0.0905) | 0.0463 (0.0457 to 0.0501) | 0.0136 (0.0135 to 0.0136) |
+| 51 | 0.2031 (0.2029 to 0.2035) | 0.3786 (0.3769 to 0.3886) | 0.1710 (0.1705 to 0.1861) | 0.0231 (0.0231 to 0.0231) |
+| 101 | 0.3940 (0.3940 to 0.3951) | 0.7383 (0.7369 to 0.7423) | 0.3274 (0.3263 to 0.3568) | 0.0358 (0.0358 to 0.0359) |
+| 201 | 0.7751 (0.7740 to 0.7754) | 1.4520 (1.4511 to 1.4547) | 0.6367 (0.6357 to 0.6918) | 0.0572 (0.0572 to 0.0572) |
+| 301 | 1.1563 (1.1560 to 1.1578) | 2.1701 (2.1639 to 2.1735) | 0.9456 (0.9455 to 1.0276) | 0.0784 (0.0783 to 0.0784) |
+| 601 | 2.3102 (2.3081 to 2.3147) | 4.4052 (4.3963 to 4.6965) | 1.9402 (1.9036 to 2.0391) | 0.1439 (0.1419 to 0.1442) |
+| 1191 | 4.5010 (4.4979 to 4.5201) | 8.5238 (8.4516 to 8.5378) | 3.7912 (3.7154 to 4.1456) | 0.2734 (0.2726 to 0.2747) |
 
-The ratios are the numbers to cite: the graph of child nodes is 1.83 to 1.91 times slower than plain launches (medians of the three runs for 11 to 1191 crops; the largest single value is 2.03; 1.87 to 1.90 at 1191 crops), the graph of one capture is 0.82 to
-0.94 times the time of plain launches (medians; 0.82 to 0.92 at 1191 crops, i.e. faster; the largest single value is 1.02, at 11 crops), and the fused kernel is 16.5 times faster than plain launches and 13.5 to 15.2 times faster than the graph of one capture at 1191 crops. The graph of one capture is the series with the larger
+The ratios to the fused kernel use the fused kernel of the SAME loop. Each of the three files times the iterated batch (or the graph) and the fused kernel one after the other in each of its 100 executions and has its own
+fused kernel columns; the column "Mean Speedup" of a file is the mean over the 100 executions of the time of the iterated batch or graph divided by the time of the fused kernel of the same execution, and each ratio to
+the fused kernel below is that column of the file of the variant, taken in each run and then summarised the same way (median of the three runs and, in brackets, the smallest and the largest). The two last columns divide the
+iterated times of two files and involve no fused kernel. The fused kernel is not the same in the three files of a run because the clocks are not fixed: the one timed next to the graph of one capture is 0.98 to 1.08 times the one
+timed next to the plain launches at 1191 crops (0.95 to 1.14 over all batches and runs; 0.91 to 1.11 for the file of the graph of child nodes), which is why the files are not mixed.
+
+| batch | plain launches / fused | graph of child nodes / fused | graph of one capture / fused | graph of child nodes / plain launches | graph of one capture / plain launches |
+|--:|--:|--:|--:|--:|--:|
+| 11 | 3.63 (3.63 to 3.64) | 6.66 (6.65 to 6.67) | 3.40 (3.37 to 3.43) | 1.83 (1.82 to 1.83) | 0.94 (0.93 to 1.02) |
+| 51 | 8.79 (8.78 to 8.82) | 16.35 (16.34 to 16.80) | 7.38 (7.35 to 7.39) | 1.86 (1.85 to 1.92) | 0.84 (0.84 to 0.91) |
+| 101 | 11.01 (11.00 to 11.02) | 20.64 (20.61 to 20.71) | 9.17 (9.16 to 9.29) | 1.87 (1.87 to 1.88) | 0.83 (0.83 to 0.91) |
+| 201 | 13.55 (13.54 to 13.55) | 25.32 (25.19 to 25.33) | 11.13 (11.02 to 11.17) | 1.87 (1.87 to 1.88) | 0.82 (0.82 to 0.89) |
+| 301 | 14.75 (14.74 to 14.80) | 27.59 (27.55 to 27.67) | 12.04 (12.03 to 12.08) | 1.88 (1.87 to 1.88) | 0.82 (0.82 to 0.89) |
+| 601 | 16.08 (16.04 to 16.31) | 31.04 (30.67 to 31.10) | 12.72 (12.65 to 13.09) | 1.91 (1.90 to 2.03) | 0.84 (0.82 to 0.88) |
+| 1191 | 16.48 (16.46 to 16.50) | 31.66 (31.64 to 31.81) | 13.90 (13.84 to 14.03) | 1.90 (1.87 to 1.90) | 0.84 (0.82 to 0.92) |
+
+The ratios of the second table are the numbers to cite: the graph of child nodes is 1.83 to 1.91 times slower than plain launches (medians of the three runs for 11 to 1191 crops; the largest single value is 2.03; 1.87 to 1.90 at 1191 crops), the graph of one capture is 0.82 to
+0.94 times the time of plain launches (medians; 0.82 to 0.92 at 1191 crops, i.e. faster; the largest single value is 1.02, at 11 crops), and at 1191 crops the fused kernel is 16.5 (16.46 to 16.50) times faster than plain launches, 31.7 (31.64 to 31.81) times faster than the graph of
+child nodes and 13.9 (13.84 to 14.03) times faster than the graph of one capture (601 crops: 16.1, 31.0 and 12.7; 301 crops: 14.8, 27.6 and 12.0: the ratios grow with the batch, so give the number of crops when citing one). Dividing each time first by the fused kernel of its own loop, the two
+graph / plain ratios are 1.83 to 1.93 (child nodes) and 0.79 to 0.94 (one capture), medians for 11 to 1191 crops: the conclusion does not depend on how they are formed. An earlier version of this table divided the iterated times of the graphs by the fused kernel of the file of the plain launches; for the graph of one capture
+that gave 13.5 to 15.2 at 1191 crops and 13.2 to 14.4 at 601 crops (medians 13.9 and 13.5, against 13.9 and 12.7 here), because the fused kernel of that file differs from the one next to the graph by up to 14 percent in the same run. The graph of one capture is the series with the larger
 spread between runs (3.72, 4.15 and 3.79 ms at 1191 crops); the other series stay within 1 percent. In the probe of `../hip-graphs/` (a busy GPU, five structures including a fork and join over one stream per crop) the graph
 of one capture takes 2.89 ms against 3.64 ms for the plain launches at 1191 crops; here the plain launches take 4.50 ms because the clocks are low for this benchmark: in the first 75 s of each run the graphics clock is 1.85 GHz
 on average (maximum 2.07 GHz), the memory clock mostly 772 to 875 MHz, the power 25 W of 132 W and the GPU busy 66 to 68 percent. Over the whole run the graphics clock averages 1.6 GHz and the memory clock is 96 or 456 MHz most of the
