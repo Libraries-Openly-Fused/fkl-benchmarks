@@ -5,9 +5,12 @@
 //   children_seq the same with every child depending on the previous one
 //   flat         ONE stream capture of the BATCH launches: a graph of BATCH kernel nodes in a chain (serial)
 //   flat_parallel ONE stream capture with a fork and a join over one stream per crop (events): BATCH kernel nodes with no dependencies between them (they may run side by side)
-// per variant: submit = time until the launch call(s) return (host), total = submit + stream synchronisation, event = hipEvent time around the submission, in the stream (what the
-// benchmark reports); medians of N repetitions after a warm-up of 1.5 s. The graph building (capture, instantiate) is not timed.
-// usage: graph_probe [repetitions [batch]]   (default 100 repetitions and the batches 11, 51, 101, 201, 301, 601 and 1191; with a batch argument only 101, 301 or 1191 are accepted)
+// per variant: submit = host time of the launch call(s) ONLY (probe5_run1 and probe5_run2 took it from before the first hipEventRecord to after the second one, which includes the two event
+// records: that interval is printed as "old definition of submit" on a second line per batch), total = from before the first event record to the end of the stream synchronisation
+// (launch, the two event records and the synchronisation), event = hipEvent time around the submission, in the stream (what the benchmark reports); medians of N repetitions after a
+// warm-up of 1.5 s. The first line printed is the cost of two hipEventRecord calls on an idle stream. The graph building (capture, instantiate) is not timed. A strategy whose output
+// differs from the plain launches stops the program with exit code 1 before it is timed.
+// usage: graph_probe [repetitions [batch]]   (default 100 repetitions, at least 1, and the batches 11, 51, 101, 201, 301, 601 and 1191; with a batch argument only 101, 301 or 1191 are accepted)
 #include <hip/hip_runtime.h>
 
 #include <fused_kernel/algorithms/algorithms.h>
@@ -33,7 +36,7 @@ using Clock = std::chrono::steady_clock;
 static double msSince(const Clock::time_point a, const Clock::time_point b) { return std::chrono::duration<double, std::milli>(b - a).count(); }
 static double med(std::vector<double> v) { std::sort(v.begin(), v.end()); return v[v.size() / 2]; }
 
-struct Result { double submit, total, event; };
+struct Result { double submit, total, event, submitWide; };
 
 static Result timeIt(const std::function<void()>& submit, hipStream_t hs, const int reps, const double warmupSeconds) {
     hipEvent_t e0, e1;
@@ -41,24 +44,27 @@ static Result timeIt(const std::function<void()>& submit, hipStream_t hs, const 
     HC(hipEventCreate(&e1));
     const auto t0 = Clock::now();
     while (msSince(t0, Clock::now()) < warmupSeconds * 1000.0) { submit(); HC(hipStreamSynchronize(hs)); }
-    std::vector<double> sub, tot, ev;
+    std::vector<double> sub, tot, ev, wide;
     for (int i = 0; i < reps; ++i) {
         const auto a = Clock::now();
         HC(hipEventRecord(e0, hs));
+        const auto s0 = Clock::now();
         submit();
+        const auto s1 = Clock::now();
         HC(hipEventRecord(e1, hs));
         const auto b = Clock::now();
         HC(hipStreamSynchronize(hs));
         const auto c = Clock::now();
         float f = 0;
         HC(hipEventElapsedTime(&f, e0, e1));
-        sub.push_back(msSince(a, b));
+        sub.push_back(msSince(s0, s1));
+        wide.push_back(msSince(a, b));
         tot.push_back(msSince(a, c));
         ev.push_back(f);
     }
     HC(hipEventDestroy(e0));
     HC(hipEventDestroy(e1));
-    return {med(sub), med(tot), med(ev)};
+    return {med(sub), med(tot), med(ev), med(wide)};
 }
 
 static bool wanted(const char* name) {
@@ -134,7 +140,12 @@ void probe(fk::Stream& stream, const int reps) {
         clearOutputs();
         run();
         HC(hipStreamSynchronize(stream.getHIPStream()));
-        std::printf("   output of %-12s identical to the plain launches: %s\n", name, hashOutputs() == plainHash ? "yes" : "NO");
+        const bool same = hashOutputs() == plainHash;
+        std::printf("   output of %-12s identical to the plain launches: %s\n", name, same ? "yes" : "NO");
+        if (!same) {
+            std::fprintf(stderr, "graph_probe: the output of %s differs from the plain launches: it is not timed\n", name);
+            std::exit(1);
+        }
     };
 
     // plain launches
@@ -231,21 +242,49 @@ void probe(fk::Stream& stream, const int reps) {
     std::printf("batch %4zu | plain: submit %.4f total %.4f event %.4f | children: submit %.4f total %.4f event %.4f | children_seq: submit %.4f total %.4f event %.4f | flat: submit %.4f total %.4f event %.4f | flat_parallel: submit %.4f total %.4f event %.4f   (ms)\n",
                 BATCH, plain.submit, plain.total, plain.event, children.submit, children.total, children.event, childrenSeq.submit, childrenSeq.total, childrenSeq.event, flat.submit, flat.total, flat.event,
                 flatPar.submit, flatPar.total, flatPar.event);
+    std::printf("batch %4zu | old definition of submit (two hipEventRecord calls included): plain %.4f children %.4f children_seq %.4f flat %.4f flat_parallel %.4f\n",
+                BATCH, plain.submitWide, children.submitWide, childrenSeq.submitWide, flat.submitWide, flatPar.submitWide);
     std::fflush(stdout);
 }
 
 int main(int argc, char** argv) {
     const int reps = argc > 1 ? std::atoi(argv[1]) : 100;
+    if (reps < 1) {
+        std::fprintf(stderr, "graph_probe: the repetitions must be a positive integer (got '%s')\n", argv[1]);
+        return 1;
+    }
+    const int batchArg = argc > 2 ? std::atoi(argv[2]) : 0;
+    if (argc > 2 && batchArg != 101 && batchArg != 301 && batchArg != 1191) {
+        std::fprintf(stderr, "graph_probe: the batch must be 101, 301 or 1191 (got '%s'); without the argument the probe runs 11, 51, 101, 201, 301, 601 and 1191\n", argv[2]);
+        return 1;
+    }
     fk::Stream stream;
-    if (argc > 2) {
-        const int b = std::atoi(argv[2]);
-        if (b == 101) probe<101>(stream, reps);
-        else if (b == 301) probe<301>(stream, reps);
-        else if (b == 1191) probe<1191>(stream, reps);
-        else {
-            std::fprintf(stderr, "graph_probe: the batch must be 101, 301 or 1191 (got '%s'); without the argument the probe runs 11, 51, 101, 201, 301, 601 and 1191\n", argv[2]);
-            return 1;
+    {
+        const hipStream_t hs0 = stream.getHIPStream();
+        hipEvent_t x0, x1;
+        HC(hipEventCreate(&x0));
+        HC(hipEventCreate(&x1));
+        const auto t0 = Clock::now();
+        while (msSince(t0, Clock::now()) < 1500.0) { HC(hipEventRecord(x0, hs0)); HC(hipEventRecord(x1, hs0)); HC(hipStreamSynchronize(hs0)); }
+        std::vector<double> pair;
+        for (int i = 0; i < 1000; ++i) {
+            HC(hipStreamSynchronize(hs0));
+            const auto a = Clock::now();
+            HC(hipEventRecord(x0, hs0));
+            HC(hipEventRecord(x1, hs0));
+            const auto b = Clock::now();
+            pair.push_back(msSince(a, b));
         }
+        HC(hipStreamSynchronize(hs0));
+        std::sort(pair.begin(), pair.end());
+        std::printf("two hipEventRecord calls on an idle stream (host, ms): median %.5f p10 %.5f p90 %.5f min %.5f max %.5f over %zu pairs\n", pair[pair.size() / 2], pair[pair.size() / 10], pair[pair.size() * 9 / 10], pair.front(), pair.back(), pair.size());
+        HC(hipEventDestroy(x0));
+        HC(hipEventDestroy(x1));
+    }
+    if (argc > 2) {
+        if (batchArg == 101) probe<101>(stream, reps);
+        else if (batchArg == 301) probe<301>(stream, reps);
+        else probe<1191>(stream, reps);
         return 0;
     }
     probe<11>(stream, reps);

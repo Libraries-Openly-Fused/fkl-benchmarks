@@ -28,8 +28,8 @@ older pin hold for the final pin.
 One kernel with N multiplications on 253 MiB of float in and out (details below). The buffers are allocated and filled between two points, which leaves the GPU idle, and a point times only 100
 executions: without keeping the GPU busy the timed runs of most points are on the ramp of the GPU clock (2.0 GHz for the first 0.7 s of work, 3.0 GHz and more after 1 s), and the series was up to 52
 percent slower than at the steady clock. With `FKLB_GPU_SPIN_SECONDS=2` (`fkBenchmarksCommon.h`, off by default, so nothing changes for a run that does not set it) the same work runs for 2 s before the
-timed runs of each point: the clock is 3.16 to 3.43 GHz (median 3.17 GHz) at the end of the spin of every one of the 60 points (`latency_hiding/clock-per-point.txt`; the first three points: 3165, 3169,
-3165 MHz). Two runs with the spin agree to 0.2 percent. Time in ms (mean of the 100 executions):
+timed runs of each point: the clock is 3.16 to 3.35 GHz (median 3.17 GHz) at the end of the spin of 59 of the 60 points (points 21 to 1181; the spin of the first point ends before the first "Executing" line and is in no row of the file, it was not traced;
+`latency_hiding/clock-per-point.txt`; the spins of points 21, 41 and 61: 3165, 3169, 3165 MHz). Two runs with the spin agree to 0.2 percent. Time in ms (mean of the 100 executions):
 
 | operations | new: with the spin (c8fcbe8) | earlier run, no spin (38c4f32, 15:10) | same day, no spin (c8fcbe8, 21:09) | no spin / new (same day) |
 |--:|--:|--:|--:|--:|
