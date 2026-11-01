@@ -17,7 +17,7 @@
 One translation unit per compile (variant A of fkl-self/compiletime/gen_chain.py: float, Mul/Add/Sub/Div/Max/Min cycled, each operation with its own parameter,
 all in ONE fused kernel), compiled with amdclang++ (HIP, one gfx target), clang++ (the CPU back-end) or g++ (the CPU back-end, for comparison), with the flags of
 scripts/e3_sweep.py (-O3 -DNDEBUG -std=c++17 -ftemplate-depth=1000). One compile at a time, under a monitor that samples the resident memory of the whole process
-tree at 4 Hz and kills it at a cap (--cap-gb, 40) or a time limit (--timeout, 3600 s) and says so. The programs are never executed here.
+tree at 4 Hz and kills it at a cap (--cap-gb, 40) or a time limit (--timeout, 3600 s) and says so. run and bisect never execute the programs; check does (below).
 
   python scripts/e3_clang_limits.py run    --backend hip   --ns 1100,2046,2047 --out results/rx9060/e3-compile-limits
   python scripts/e3_clang_limits.py run    --backend clang --ns 2100 --bracket-depth auto --stack-kb unlimited --out ...
@@ -27,12 +27,14 @@ tree at 4 Hz and kills it at a cap (--cap-gb, 40) or a time limit (--timeout, 36
 check builds the program of the same translation unit (-DE3_CHECK: 64 x 64 floats of a deterministic pattern through the chain, written to a file) for the GPU with
 amdclang++ and for the CPU back-end with g++, runs both and compares the outputs (scripts/e3_check_compare.py): the question is whether the kernel with N operations
 LAUNCHES (its kernel argument block is larger than 4 KiB from N = 1,000) and computes the same. The check chain is variant A with Mul and Add in place of Max and Min
-(which clamp the values and hide the early part of the chain) and parameters that keep the values finite, without FMA contraction on either side. One row per N is appended to <out>/e3_check.csv.
+(which clamp the values and hide the early part of the chain) and parameters that keep the values finite, without FMA contraction on either side. One row per N is appended to <out>/e3_check.csv
+(a program that does not finish in 600 s gets its row with run exit "timeout"; compare_exit is 0 only when the two outputs are byte for byte identical; check needs --backend hip).
 
 One CSV row per compile is appended to <out>/e3_limits.csv; the log of every compile that did not succeed (the first 400 lines) goes to <out>/logs/.
 The HIP compiles ask for the resource usage remark of the kernel (-Rpass-analysis=kernel-resource-usage) unless --no-remarks is given; it costs time and memory (section 3 of the README).
 The outcome is one of: ok, error (a diagnostic; the first one is in first_error), crash (the compiler died of a signal or printed its crash dump: first_error has
-the declaration it was generating code for, if it said), cut (killed by the monitor).
+the declaration it was generating code for, if it said), cut (killed by the monitor). A cut says nothing about whether the compiler would have succeeded or failed on that N,
+so bisect stops with an error when a compile is cut; the cut row is in e3_limits.csv when --out is given.
 --stack-kb sets the stack limit of the compiler (RLIMIT_STACK; default: whatever the calling shell has, 8192 kB); --no-aslr runs it with the address space
 randomisation off (setarch -R), which makes a stack overflow happen at the same N every time; --bracket-depth N|auto adds -fbracket-depth (auto: N + 2, the
 smallest value that lifts the limit on the fold expression over the N operations and the read and write of the chain).
@@ -287,7 +289,13 @@ def check_once(s, ref, n, series):
             outs = {}
             for tag, exe in (("gpu", g["_path"]), ("cpu", c["_path"])):
                 outs[tag] = exe + ".bin"
-                r = subprocess.run([exe, outs[tag]], capture_output=True, text=True, timeout=600)
+                try:
+                    r = subprocess.run([exe, outs[tag]], capture_output=True, text=True, timeout=600)
+                except subprocess.TimeoutExpired:
+                    row[f"{tag}_run_exit"] = "timeout"
+                    row["compare"] = "; ".join(x for x in (row.get("compare", ""), f"the {tag} program was killed after 600 s") if x)
+                    print(f"  the {tag} program did not finish in 600 s")
+                    continue
                 row[f"{tag}_run_exit"] = r.returncode
                 if r.returncode != 0:
                     print(f"  the {tag} program exited with {r.returncode}: {r.stderr.strip()[:300]}")
@@ -339,6 +347,8 @@ def main():
     ap.add_argument("--work", help="directory for the translation units (default: a temporary one)")
     ap.add_argument("--out", help="directory of e3_limits.csv and logs/")
     a = ap.parse_args()
+    if a.mode == "check" and a.backend != "hip":
+        ap.error("check compares a GPU program with the CPU reference and needs --backend hip")
     s = Setup(a)
     try:
         if a.mode == "run":
@@ -351,12 +361,17 @@ def main():
             for n in [int(x) for x in a.ns.split(",")]:
                 check_once(s, ref, n, a.series)
         else:
+            def compiles(n):
+                row = compile_once(s, n, a.series)
+                if row["outcome"] == "cut":
+                    sys.exit(f"bisect: the compile at N = {n} was cut by the monitor ({row['first_error']}): no boundary is established; raise --cap-gb or --timeout")
+                return row["outcome"] == "ok"
             lo, hi = a.lo, a.hi
-            if compile_once(s, lo, a.series)["outcome"] != "ok" or compile_once(s, hi, a.series)["outcome"] == "ok":
+            if not compiles(lo) or compiles(hi):
                 sys.exit("bisect needs an N that compiles (--lo) and an N that does not (--hi)")
             while hi - lo > 1:
                 mid = (lo + hi) // 2
-                lo, hi = (mid, hi) if compile_once(s, mid, a.series)["outcome"] == "ok" else (lo, mid)
+                lo, hi = (mid, hi) if compiles(mid) else (lo, mid)
             print(f"{a.backend}: largest N that compiles {lo}, first N that does not {hi}")
     finally:
         if not a.work:

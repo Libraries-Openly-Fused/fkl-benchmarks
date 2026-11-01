@@ -93,6 +93,11 @@ for `Mul`/`Div` and `1 + 0.001 ((i mod 13) + 1)` for `Add`/`Sub` (the parameters
 All sizes launch on the RX 9060 (gfx1200, ROCm 10.1) and give exactly the output of the CPU back-end, the kernel with 16,312 B of arguments included: no limit of the kernel argument block was reached up to N = 4,000
 (a larger N was not tried: N = 4,000 already takes 25 to 36 GB of the 40 GB cap). The N = 1,100 and larger programs run the whole chain once on 4,096 elements; this is a correctness check of the launch, not a timing.
 
+Which number proves the equality: the text that `scripts/e3_check_compare.py` prints, which is the column `compare` of `e3_check.csv` and the columns `values` and `bit-identical` above. It counts the values whose 32 bits are equal (4,096 of 4,096 in every row), counts the non-finite values of each
+file (0 in both files in every row: no NaN and no infinity) and prints the largest differences (0). The column `compare_exit` of the five committed rows was written by the first version of the script, whose exit status was 0 whenever the two files had the same number of non-finite values, that is for any
+two outputs without a NaN or an infinity, equal or not, so a 0 there does not by itself mean that the outputs are equal; the script now exits 0 only when the two files are byte for byte identical, and run again at N = 100 and N = 1,100 with the settings of the table it prints the same text and exits 0. The claim
+is limited to what was run: five lengths of the check chain, one deterministic input pattern, one output of 4,096 values per length.
+
 ## What this does not cover
 
 nvcc (RTX 4090, `../../rtx4090/e3-compile/`: N = 4,000 in 675 s and 13.6 GB, the predicted limit of the parameter space for this variant at N = 8,177); variants B and L; the execution time of these kernels; N above 4,000 (the limit of the kernel argument block of gfx1200 was not reached).
