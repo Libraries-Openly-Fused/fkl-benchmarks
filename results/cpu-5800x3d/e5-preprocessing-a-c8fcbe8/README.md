@@ -10,7 +10,7 @@ rows; the memory speed is not recorded (it needs root). The agreement with the n
 
 - `g++-13/`, `clang++-23/`: sweep 1 of each compiler, raw output with the file names of the old rows (`e5_preprocessing_a_CPU.csv`, `e5_preprocessing_a_agreement_CPU.csv`, `stdout.log`).
 - `repeats/<compiler>/run2`, `repeats/<compiler>/run3`: two more sweeps of the same binary, raw output. `repeats/<compiler>/check-nothing-else-running`: one more sweep, see Conditions; it is not part of the median.
-- `g++-13/e5_preprocessing_a_CPU_median_of_3.csv`, `clang++-23/e5_preprocessing_a_CPU_median_of_3.csv`: **the numbers to cite.** For every point and variant, `median_ms` is the median of the medians of sweeps 1, 2 and 3, and
+- `g++-13/e5_preprocessing_a_CPU_median_of_3.csv`, `clang++-23/e5_preprocessing_a_CPU_median_of_3.csv`: **the numbers to cite: the numbers of the paper are the median of the three sweeps.** For every point and variant, `median_ms` is the median of the medians of sweeps 1, 2 and 3, and
   `medians_min_ms` and `medians_max_ms` are the smallest and the largest of the three medians. The 16-thread rows vary between sweeps, so one sweep alone is not a number to cite (last table).
 - `scripts/e5_cpu_compare_runs.py` (in the root of this repository) writes the median files and prints every number of this file from the CSVs (command at the end).
 
@@ -111,6 +111,64 @@ Median ms of 30 runs; old (FKL `fb9ac3a`, one sweep) -> new (FKL `c8fcbe8`, medi
 | 200 | 16.979 -> 16.978 (-0.0 %, S 0.1 %) | 2.301 -> 2.304 (+0.1 %, S 3.3 %) | 11.482 -> 11.027 (-4.0 %, S 0.9 %) | 11.578 -> 11.280 (-2.6 %, S 4.1 %) |
 | 250 | 21.241 -> 21.235 (-0.0 %, S 0.1 %) | 2.908 -> 2.875 (-1.2 %, S 1.2 %) | 14.318 -> 14.254 (-0.4 %, S 2.4 %) | 14.490 -> 14.362 (-0.9 %, S 2.6 %) |
 | 300 | 25.469 -> 25.468 (-0.0 %, S 0.0 %) | 3.419 -> 3.410 (-0.3 %, S 2.5 %) | 17.361 -> 17.596 (+1.4 %, S 5.3 %) | 17.752 -> 17.707 (-0.3 %, S 1.8 %) |
+
+## FKL fused against OpenCV at 300 and 100 images
+
+The values of the median-of-three files that the paper uses, with the variant names as they are in the CSV. `opencv_default` and `opencv_1thread` are the whole-batch loop of OpenCV (the "OCVBatch" loop) with `cv::getNumThreads()` = 16 threads and with 1 thread; `opencv_default` is not faster than
+`opencv_1thread` (0.6 to 4.6 % slower in the first table). `opencv_percrop_parallel` processes the crops in parallel with `cv::parallel_for_`. FKL's `Resize` samples ASYMMETRIC and OpenCV HALF_PIXEL, so the outputs differ (the comparison of the two conventions in the agreement CSV is informational) and the comparison of the times
+is informational too, as for the old rows.
+
+### Time, ms: median of the three sweeps (smallest to largest of the three medians)
+| images | compiler | variant in the CSV | what it is | time |
+|--:|---|---|---|--:|
+| 300 | g++-13 | fkl_fused_cpu | FKL ParArch::CPU, 1 thread, one executeOperations for the batch | 29.511 (29.507 to 30.187) |
+| 300 | g++-13 | fkl_fused_cpu_mt | FKL ParArch::CPU_MULTITHREAD, 16 threads, one executeOperations for the batch | 3.989 (3.921 to 4.267) |
+| 300 | g++-13 | opencv_1thread | OpenCV, whole-batch loop, 1 thread | 17.844 (17.334 to 18.528) |
+| 300 | g++-13 | opencv_default | OpenCV, whole-batch loop, default threads (cv::getNumThreads() = 16) | 18.117 (17.705 to 18.875) |
+| 300 | g++-13 | opencv_percrop_parallel | OpenCV, crops processed in parallel with cv::parallel_for_, 16 threads | 2.915 (2.912 to 2.970) |
+| 300 | clang++-23 | fkl_fused_cpu | FKL ParArch::CPU, 1 thread, one executeOperations for the batch | 25.468 (25.464 to 25.469) |
+| 300 | clang++-23 | fkl_fused_cpu_mt | FKL ParArch::CPU_MULTITHREAD, 16 threads, one executeOperations for the batch | 3.410 (3.406 to 3.490) |
+| 300 | clang++-23 | opencv_1thread | OpenCV, whole-batch loop, 1 thread | 17.596 (17.396 to 18.332) |
+| 300 | clang++-23 | opencv_default | OpenCV, whole-batch loop, default threads (cv::getNumThreads() = 16) | 17.707 (17.674 to 18.000) |
+| 300 | clang++-23 | opencv_percrop_parallel | OpenCV, crops processed in parallel with cv::parallel_for_, 16 threads | 2.890 (2.816 to 2.935) |
+| 100 | g++-13 | fkl_fused_cpu | FKL ParArch::CPU, 1 thread, one executeOperations for the batch | 9.887 (9.886 to 9.888) |
+| 100 | g++-13 | fkl_fused_cpu_mt | FKL ParArch::CPU_MULTITHREAD, 16 threads, one executeOperations for the batch | 1.383 (1.379 to 1.386) |
+| 100 | g++-13 | opencv_1thread | OpenCV, whole-batch loop, 1 thread | 5.635 (5.631 to 5.749) |
+| 100 | g++-13 | opencv_default | OpenCV, whole-batch loop, default threads (cv::getNumThreads() = 16) | 5.878 (5.870 to 5.966) |
+| 100 | g++-13 | opencv_percrop_parallel | OpenCV, crops processed in parallel with cv::parallel_for_, 16 threads | 1.053 (1.044 to 1.054) |
+| 100 | clang++-23 | fkl_fused_cpu | FKL ParArch::CPU, 1 thread, one executeOperations for the batch | 8.490 (8.488 to 8.493) |
+| 100 | clang++-23 | fkl_fused_cpu_mt | FKL ParArch::CPU_MULTITHREAD, 16 threads, one executeOperations for the batch | 1.205 (1.204 to 1.234) |
+| 100 | clang++-23 | opencv_1thread | OpenCV, whole-batch loop, 1 thread | 5.411 (5.397 to 5.451) |
+| 100 | clang++-23 | opencv_default | OpenCV, whole-batch loop, default threads (cv::getNumThreads() = 16) | 5.659 (5.603 to 5.751) |
+| 100 | clang++-23 | opencv_percrop_parallel | OpenCV, crops processed in parallel with cv::parallel_for_, 16 threads | 1.037 (1.036 to 1.047) |
+
+### Speedup = OpenCV time / FKL time, computed in each sweep: median over the three sweeps (smallest to largest); above 1 FKL is faster
+| images | compiler | FKL variant | OpenCV variant | speedup |
+|--:|---|---|---|--:|
+| 300 | g++-13 | fkl_fused_cpu | opencv_1thread | 0.60 (0.59 to 0.61) |
+| 300 | g++-13 | fkl_fused_cpu | opencv_default | 0.61 (0.60 to 0.63) |
+| 300 | g++-13 | fkl_fused_cpu_mt | opencv_percrop_parallel | 0.73 (0.70 to 0.74) |
+| 300 | g++-13 | fkl_fused_cpu_mt | opencv_default | 4.52 (4.42 to 4.54) |
+| 300 | g++-13 | fkl_fused_cpu_mt | opencv_1thread | 4.42 (4.34 to 4.47) |
+| 300 | g++-13 | fkl_fused_cpu | opencv_percrop_parallel | 0.10 (0.10 to 0.10) |
+| 300 | clang++-23 | fkl_fused_cpu | opencv_1thread | 0.69 (0.68 to 0.72) |
+| 300 | clang++-23 | fkl_fused_cpu | opencv_default | 0.70 (0.69 to 0.71) |
+| 300 | clang++-23 | fkl_fused_cpu_mt | opencv_percrop_parallel | 0.85 (0.81 to 0.86) |
+| 300 | clang++-23 | fkl_fused_cpu_mt | opencv_default | 5.18 (5.16 to 5.20) |
+| 300 | clang++-23 | fkl_fused_cpu_mt | opencv_1thread | 5.17 (4.98 to 5.38) |
+| 300 | clang++-23 | fkl_fused_cpu | opencv_percrop_parallel | 0.11 (0.11 to 0.12) |
+| 100 | g++-13 | fkl_fused_cpu | opencv_1thread | 0.57 (0.57 to 0.58) |
+| 100 | g++-13 | fkl_fused_cpu | opencv_default | 0.59 (0.59 to 0.60) |
+| 100 | g++-13 | fkl_fused_cpu_mt | opencv_percrop_parallel | 0.76 (0.76 to 0.76) |
+| 100 | g++-13 | fkl_fused_cpu_mt | opencv_default | 4.26 (4.24 to 4.31) |
+| 100 | g++-13 | fkl_fused_cpu_mt | opencv_1thread | 4.08 (4.07 to 4.16) |
+| 100 | g++-13 | fkl_fused_cpu | opencv_percrop_parallel | 0.11 (0.11 to 0.11) |
+| 100 | clang++-23 | fkl_fused_cpu | opencv_1thread | 0.64 (0.64 to 0.64) |
+| 100 | clang++-23 | fkl_fused_cpu | opencv_default | 0.67 (0.66 to 0.68) |
+| 100 | clang++-23 | fkl_fused_cpu_mt | opencv_percrop_parallel | 0.86 (0.84 to 0.87) |
+| 100 | clang++-23 | fkl_fused_cpu_mt | opencv_default | 4.66 (4.65 to 4.70) |
+| 100 | clang++-23 | fkl_fused_cpu_mt | opencv_1thread | 4.48 (4.42 to 4.49) |
+| 100 | clang++-23 | fkl_fused_cpu | opencv_percrop_parallel | 0.12 (0.12 to 0.12) |
 
 ## Sweep against sweep
 

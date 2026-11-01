@@ -10,7 +10,7 @@ speed is not recorded (it needs root). The files of pull request #9 are not touc
 
 - `<compiler>/run1/`: the three files of pull request #9 for that compiler, byte for byte (compared with the files of the branch `e5-cpu-b-c8fcbe8` when this was committed), copied so that this folder is complete; `run2/` and `run3/`: the two new sweeps, raw output
   (`e5_preprocessing_b_CPU.csv`, `e5_preprocessing_b_agreement_CPU.csv`, `stdout.log`).
-- `g++-13/e5_preprocessing_b_CPU_median_of_3.csv`, `clang++-23/e5_preprocessing_b_CPU_median_of_3.csv`: **the numbers to cite.** For every point and variant `median_ms` is the median of the medians of run1, run2 and run3, and `medians_min_ms` and `medians_max_ms` the
+- `g++-13/e5_preprocessing_b_CPU_median_of_3.csv`, `clang++-23/e5_preprocessing_b_CPU_median_of_3.csv`: **the numbers to cite: the numbers of the paper are the median of the three sweeps.** For every point and variant `median_ms` is the median of the medians of run1, run2 and run3, and `medians_min_ms` and `medians_max_ms` the
   smallest and the largest of the three medians.
 - `scripts/e5_cpu_compare_runs.py` writes the median files and prints every number of this file from the CSVs (command at the end).
 
@@ -54,6 +54,16 @@ The six largest differences per compiler, with the three sweeps in order run1, r
 - clang++-23, 8 crops, opencv_convert_default: 0.4034 0.3865 0.3864, median of three 0.3865, D -4.19 %, S 4.38 %
 - clang++-23, 32 crops, opencv_convert_default: 0.3869 0.4065 0.3998, median of three 0.3998, D +3.34 %, S 4.92 %
 
+The points where |D| is larger than S, that is where the median of three differs from run1 by more than the spread of the three sweeps (a pure OpenCV row; it is not a column of the tables of pull request #9):
+
+- g++-13: none
+- clang++-23, 16 crops, opencv_pipeline_percrop_default: 1.7405 1.9872 1.9707, median of three 1.9707, D +13.22 %, S 12.52 %
+
+The points where the largest of the three sweep medians is more than twice the smallest (the 16-thread chain of the crops with clang++ at one crop is bimodal, the median of three is the value of run1):
+
+- g++-13: none
+- clang++-23, 1 crops, fkl_chain_fused_cpu_mt: 0.0251 0.0229 0.1253, median of three 0.0251
+
 The FKL conversion and whole-pipeline rows (the ones the paper quotes), the median of three against run1 over the five crop counts:
 
 | compiler | variant | max \|D\| over the crop counts | median of three over the crop counts: smallest to largest (ms) | S: median / max |
@@ -68,7 +78,7 @@ The FKL conversion and whole-pipeline rows (the ones the paper quotes), the medi
 | clang++-23 | fkl_pipeline_fused_cpu_mt | 2.25 % | 4.83 to 5.57 | 0.71 % / 2.36 % |
 
 With 16 threads the conversion is 8.23 to 8.33 ms with g++ (8.33 ms at one crop, 8.30 to 8.34 over the three sweeps) and 4.78 to 4.80 ms with clang++ (4.80 ms at one crop, 4.79 to 4.83): the 8.3 and 4.8 ms of pull request #9 (8.30 and 4.83 at one crop) hold. The 16-thread chain of the crops with clang++
-at one crop is bimodal: 0.0251 ms (run1), 0.0229 ms (run2) and 0.1253 ms (run3); the median of three is 0.0251 ms.
+at one crop is bimodal (the list above: 0.0251, 0.0229 and 0.1253 ms in run1, run2 and run3; the median of three is 0.0251 ms, as in pull request #9).
 
 ### Median of the three sweeps, ms
 

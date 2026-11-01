@@ -194,6 +194,32 @@ def run_a(old_dir, new_dir, write):
                 cells.append(f"{p['O']:.3f} -> {p['N']:.3f} ({100 * p['D']:+.1f} %, S {100 * p['S']:.1f} %)")
             print(f"| {b} | " + " | ".join(cells) + " |")
 
+    print("\n## FKL fused pipeline against OpenCV at 300 and 100 images (new rows, sweeps 1 to 3)")
+    names = [("fkl_fused_cpu", "FKL ParArch::CPU, 1 thread, one executeOperations for the batch"),
+             ("fkl_fused_cpu_mt", "FKL ParArch::CPU_MULTITHREAD, 16 threads, one executeOperations for the batch"),
+             ("opencv_1thread", "OpenCV, whole-batch loop, 1 thread"),
+             ("opencv_default", "OpenCV, whole-batch loop, default threads (cv::getNumThreads() = 16)"),
+             ("opencv_percrop_parallel", "OpenCV, crops processed in parallel with cv::parallel_for_, 16 threads")]
+    print("### Time, ms: median of the three sweeps (smallest to largest of the three medians)")
+    print("| images | compiler | variant in the CSV | what it is | time |")
+    print("|--:|---|---|---|--:|")
+    for b in (300, 100):
+        for comp in COMPILERS:
+            new = results[comp][1]
+            for v, what in names:
+                ms = [sw.rows[(b, v)]["median"] for sw in new]
+                print(f"| {b} | {comp} | {v} | {what} | {statistics.median(ms):.3f} ({min(ms):.3f} to {max(ms):.3f}) |")
+    print("\n### Speedup = OpenCV time / FKL time, computed in each sweep: median over the three sweeps (smallest to largest); above 1 FKL is faster")
+    print("| images | compiler | FKL variant | OpenCV variant | speedup |")
+    print("|--:|---|---|---|--:|")
+    for b in (300, 100):
+        for comp in COMPILERS:
+            new = results[comp][1]
+            for f, o in (("fkl_fused_cpu", "opencv_1thread"), ("fkl_fused_cpu", "opencv_default"), ("fkl_fused_cpu_mt", "opencv_percrop_parallel"),
+                         ("fkl_fused_cpu_mt", "opencv_default"), ("fkl_fused_cpu_mt", "opencv_1thread"), ("fkl_fused_cpu", "opencv_percrop_parallel")):
+                r = [sw.rows[(b, o)]["median"] / sw.rows[(b, f)]["median"] for sw in new]
+                print(f"| {b} | {comp} | {f} | {o} | {statistics.median(r):.2f} ({min(r):.2f} to {max(r):.2f}) |")
+
     print("\n## Sweep against sweep: |a / b - 1| of the medians over the points (median / 90th percentile; for the 16-thread FKL rows also the maximum)")
     print("| compiler | sweeps | all rows | FKL, 1 thread | FKL, 16 threads |")
     print("|---|---|--|--|--|")
@@ -267,6 +293,22 @@ def run_b(rep_dir, write):
     for comp in COMPILERS:
         for p in sorted((p for p in pts if p["comp"] == comp), key=lambda q: -abs(q["D"]))[:6]:
             print(f"- {comp}, {p['key'][0]} crops, {p['key'][1]}: {p['ms'][0]:.4f} {p['ms'][1]:.4f} {p['ms'][2]:.4f}, median of three {p['N']:.4f}, D {100 * p['D']:+.2f} %, S {fmt(p['S'])}")
+
+    print("\n## Points where the median of three differs from run1 by more than the spread (|D| > S)")
+    for comp in COMPILERS:
+        bad = [p for p in pts if p["comp"] == comp and abs(p["D"]) > p["S"] + 1e-12]
+        if not bad:
+            print(f"- {comp}: none")
+        for p in bad:
+            print(f"- {comp}, {p['key'][0]} crops, {p['key'][1]}: {p['ms'][0]:.4f} {p['ms'][1]:.4f} {p['ms'][2]:.4f}, median of three {p['N']:.4f}, D {100 * p['D']:+.2f} %, S {fmt(p['S'])}")
+
+    print("\n## Points where the largest of the three sweep medians is more than twice the smallest")
+    for comp in COMPILERS:
+        wide = [p for p in pts if p["comp"] == comp and max(p["ms"]) > 2 * min(p["ms"])]
+        if not wide:
+            print(f"- {comp}: none")
+        for p in wide:
+            print(f"- {comp}, {p['key'][0]} crops, {p['key'][1]}: {p['ms'][0]:.4f} {p['ms'][1]:.4f} {p['ms'][2]:.4f}, median of three {p['N']:.4f}")
 
     print("\n## FKL conversion and whole pipeline (fused): median of three against run1 over the five crop counts")
     print("| compiler | variant | max \\|D\\| over the crop counts | median of three over the crop counts: smallest to largest (ms) | S: median / max |")
