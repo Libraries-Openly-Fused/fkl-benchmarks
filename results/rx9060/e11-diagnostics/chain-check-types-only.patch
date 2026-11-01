@@ -1,0 +1,155 @@
+diff --git a/include/fused_kernel/core/execution_model/executors.h b/include/fused_kernel/core/execution_model/executors.h
+index 643e53a..41a18e7 100644
+--- a/include/fused_kernel/core/execution_model/executors.h
++++ b/include/fused_kernel/core/execution_model/executors.h
+@@ -19,6 +19,7 @@
+ 
+ #include <fused_kernel/core/execution_model/parallel_architectures.h>
+ #include <fused_kernel/core/execution_model/data_parallel_patterns.h>
++#include <fused_kernel/core/execution_model/operation_model/chain_check.h>
+ #include <fused_kernel/algorithms/basic_ops/memory_operations.h>
+ #include <fused_kernel/algorithms/basic_ops/set.h>
+ #include <fused_kernel/core/execution_model/stream.h>
+@@ -238,6 +239,15 @@ FK_HOST_FUSE void executeOperations(const std::array<Ptr2D<I>, Batch>& input, co
+         using Parent = BaseExecutor<Child>;
+         template <typename... IOps>
+         FK_HOST_FUSE void executeOperations_helper(Stream_<ParArch::CPU>& stream, const IOps&... iOps) {
++            if constexpr (chainOutputsConvertToInputs<IOps...>) {
++                executeOperations_checked(stream, iOps...);
++            } else {
++                // A wrong pair of adjacent IOps: static_assert (chain_check.h) naming the two IOps; the chain is not instantiated any further
++                [[maybe_unused]] constexpr bool reported = reportChainLinks<IOps...>;
++            }
++        }
++        template <typename... IOps>
++        FK_HOST_FUSE void executeOperations_checked(Stream_<ParArch::CPU>& stream, const IOps&... iOps) {
+             constexpr ParArch PA = ParArch::CPU;
+             const auto tDetails = TransformDPP<PA, TFEN>::build_details(iOps...);
+             using TDPPDetails = std::decay_t<decltype(tDetails)>;
+@@ -287,6 +297,15 @@ FK_HOST_FUSE void executeOperations(const std::array<Ptr2D<I>, Batch>& input, co
+ 
+         template <typename... IOps>
+         FK_HOST_STATIC void executeOperations_helper(MTStream& stream, const IOps&... iOps) {
++            if constexpr (chainOutputsConvertToInputs<IOps...>) {
++                executeOperations_checked(stream, iOps...);
++            } else {
++                // A wrong pair of adjacent IOps: static_assert (chain_check.h) naming the two IOps; the chain is not instantiated any further
++                [[maybe_unused]] constexpr bool reported = reportChainLinks<IOps...>;
++            }
++        }
++        template <typename... IOps>
++        FK_HOST_STATIC void executeOperations_checked(MTStream& stream, const IOps&... iOps) {
+             constexpr ParArch PA = ParArch::CPU_MULTITHREAD;
+             const auto tDetails = TransformDPP<PA, TFEN>::build_details(iOps...);
+             using TDPPDetails = std::decay_t<decltype(tDetails)>;
+@@ -451,6 +470,15 @@ FK_HOST_FUSE void executeOperations(const std::array<Ptr2D<I>, Batch>& input, co
+         }
+         template <typename... IOps>
+         FK_HOST_FUSE void executeOperations_helper(Stream_<ParArch::GPU_NVIDIA>& stream_, const IOps&... iOps) {
++            if constexpr (chainOutputsConvertToInputs<IOps...>) {
++                executeOperations_checked(stream_, iOps...);
++            } else {
++                // A wrong pair of adjacent IOps: static_assert (chain_check.h) naming the two IOps; the chain is not instantiated any further
++                [[maybe_unused]] constexpr bool reported = reportChainLinks<IOps...>;
++            }
++        }
++        template <typename... IOps>
++        FK_HOST_FUSE void executeOperations_checked(Stream_<ParArch::GPU_NVIDIA>& stream_, const IOps&... iOps) {
+             const cudaStream_t stream = stream_.getCUDAStream();
+             constexpr ParArch PA = ParArch::GPU_NVIDIA;
+             const auto tDetails = TransformDPP<PA, TFEN>::build_details(iOps...);
+@@ -560,6 +588,15 @@ FK_HOST_FUSE void executeOperations(const std::array<Ptr2D<I>, Batch>& input, co
+         }
+         template <typename... IOps>
+         FK_HOST_FUSE void executeOperations_helper(Stream_<ParArch::GPU_AMD>& stream_, const IOps&... iOps) {
++            if constexpr (chainOutputsConvertToInputs<IOps...>) {
++                executeOperations_checked(stream_, iOps...);
++            } else {
++                // A wrong pair of adjacent IOps: static_assert (chain_check.h) naming the two IOps; the chain is not instantiated any further
++                [[maybe_unused]] constexpr bool reported = reportChainLinks<IOps...>;
++            }
++        }
++        template <typename... IOps>
++        FK_HOST_FUSE void executeOperations_checked(Stream_<ParArch::GPU_AMD>& stream_, const IOps&... iOps) {
+             const hipStream_t stream = stream_.getHIPStream();
+             constexpr ParArch PA = ParArch::GPU_AMD;
+             const auto tDetails = TransformDPP<PA, TFEN>::build_details(iOps...);
+diff --git a/include/fused_kernel/core/execution_model/operation_model/chain_check.h b/include/fused_kernel/core/execution_model/operation_model/chain_check.h
+new file mode 100644
+index 0000000..e67a49e
+--- /dev/null
++++ b/include/fused_kernel/core/execution_model/operation_model/chain_check.h
+@@ -0,0 +1,73 @@
++/* Copyright 2023-2026 Oscar Amoros Huguet
++
++   Licensed under the Apache License, Version 2.0 (the "License");
++   you may not use this file except in compliance with the License.
++   You may obtain a copy of the License at
++
++       http://www.apache.org/licenses/LICENSE-2.0
++
++   Unless required by applicable law or agreed to in writing, software
++   distributed under the License is distributed on an "AS IS" BASIS,
++   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++   See the License for the specific language governing permissions and
++   limitations under the License. */
++
++
++#ifndef FK_CHAIN_CHECK
++#define FK_CHAIN_CHECK
++
++#include <type_traits>
++
++#include <fused_kernel/core/utils/template_operations.h>
++#include <fused_kernel/core/utils/utils.h>
++#include <fused_kernel/core/execution_model/operation_model/operation_types.h>
++
++namespace fk {
++    /* Compile time checks of a chain of IOps, [Read, ..., Write], that the executors of TransformDPP make before anything is instantiated.
++    *  chainOutputsConvertToInputs<IOps...> is the check (a plain bool, without errors inside: if constexpr in the executors discards the chain when it is false)
++    *  and reportChainLinks<IOps...> reports the wrong pairs, one static_assert per pair, instantiated only when the check is false. The IOps can be
++    *  references (the argument pack of the executors) or plain types.
++    */
++
++    // The output of an IOp must be convertible to the input of the next one. A pair is compared only when the previous IOp has an OutputType and the next one
++    // an InputType (the next one is not a Read, the previous one is not a Write)
++    template <typename PrevIOp, typename NextIOp, typename = void>
++    struct ChainLinkTypes : std::true_type {};
++
++    template <typename PrevIOp, typename NextIOp>
++    struct ChainLinkTypes<PrevIOp, NextIOp, std::void_t<GetOutputType_t<PrevIOp>, GetInputType_t<NextIOp>>>
++        : std::bool_constant<std::is_convertible_v<GetOutputType_t<PrevIOp>, GetInputType_t<NextIOp>>> {};
++
++    template <typename...> struct ChainPack; // only carries a pack, never defined
++
++    template <typename PrevIOps, typename NextIOps> struct ChainLinks;
++    template <typename... PrevIOps, typename... NextIOps>
++    struct ChainLinks<ChainPack<PrevIOps...>, ChainPack<NextIOps...>> {
++        static constexpr bool valid = and_v<ChainLinkTypes<PrevIOps, NextIOps>::value...>;
++    };
++
++    // The pairs (IOps[i], IOps[i + 1]) of the chain; the last IOp is paired with NullType, which has nothing to compare
++    template <typename FirstIOp, typename... IOps>
++    constexpr bool chainOutputsConvertToInputs =
++        ChainLinks<ChainPack<std::decay_t<FirstIOp>, std::decay_t<IOps>...>, ChainPack<std::decay_t<IOps>..., NullType>>::valid;
++
++    // One instance per pair: the compiler names both IOps in "In instantiation of ChainLinkReport<Previous, Next>"
++    template <typename PrevIOp, typename NextIOp>
++    struct ChainLinkReport {
++        static_assert(ChainLinkTypes<PrevIOp, NextIOp>::value,
++                      "FKL: the OutputType of the previous Op is not convertible to the InputType of the next Op");
++        static constexpr bool reported = true;
++    };
++
++    template <typename PrevIOps, typename NextIOps> struct ChainLinksReport;
++    template <typename... PrevIOps, typename... NextIOps>
++    struct ChainLinksReport<ChainPack<PrevIOps...>, ChainPack<NextIOps...>> {
++        static constexpr bool reported = and_v<ChainLinkReport<PrevIOps, NextIOps>::reported...>;
++    };
++
++    template <typename FirstIOp, typename... IOps>
++    constexpr bool reportChainLinks =
++        ChainLinksReport<ChainPack<std::decay_t<FirstIOp>, std::decay_t<IOps>...>, ChainPack<std::decay_t<IOps>..., NullType>>::reported;
++} // namespace fk
++
++#endif

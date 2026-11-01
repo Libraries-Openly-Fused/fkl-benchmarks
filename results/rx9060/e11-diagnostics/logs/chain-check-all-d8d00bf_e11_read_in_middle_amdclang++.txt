@@ -1,0 +1,34 @@
+In file included from e11_read_in_middle.cu:18:
+In file included from fused_kernel/fused_kernel.h:18:
+In file included from fused_kernel/core/execution_model/executors.h:22:
+fused_kernel/core/execution_model/operation_model/chain_check.h:82:23: error: static assertion failed due to requirement '!isAnyCompleteReadType<fk::ReadInstantiableOperation<fk::PerThreadRead<fk::ND::_2D, float>>>': FKL: Complete Read Operations as continuations are not allowed. It has to be an IncompleteReadBackOperation.
+   82 |         static_assert(!isAnyCompleteReadType<IOp>,
+      |                       ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+fused_kernel/core/execution_model/operation_model/chain_check.h:128:58: note: in instantiation of template class 'fk::ChainReadReport<fk::ReadInstantiableOperation<fk::PerThreadRead<fk::ND::_2D, float>>>' requested here
+  128 |         and_v<reportChainLinks<FirstIOp, IOps...>, and_v<ChainReadReport<std::decay_t<IOps>>::reported...>,
+      |                                                          ^
+fused_kernel/core/execution_model/executors.h:595:60: note: in instantiation of variable template specialization 'fk::reportChain<const fk::ReadInstantiableOperation<fk::PerThreadRead<fk::ND::_2D, float>> &, const fk::BinaryInstantiableOperation<fk::Mul<float>> &, const fk::ReadInstantiableOperation<fk::PerThreadRead<fk::ND::_2D, float>> &, const fk::BinaryInstantiableOperation<fk::Add<float>> &, const fk::WriteInstantiableOperation<fk::PerThreadWrite<fk::ND::_2D, float>> &>' requested here
+  595 |                 [[maybe_unused]] constexpr bool reported = reportChain<IOps...>;
+      |                                                            ^
+fused_kernel/core/execution_model/executors.h:53:35: note: in instantiation of function template specialization 'fk::Executor<fk::TransformDPP<fk::ParArch::GPU_AMD, fk::TF::DISABLED>>::executeOperations_helper<const fk::ReadInstantiableOperation<fk::PerThreadRead<fk::ND::_2D, float>> &, const fk::BinaryInstantiableOperation<fk::Mul<float>> &, const fk::ReadInstantiableOperation<fk::PerThreadRead<fk::ND::_2D, float>> &, const fk::BinaryInstantiableOperation<fk::Add<float>> &, const fk::WriteInstantiableOperation<fk::PerThreadWrite<fk::ND::_2D, float>> &>' requested here
+   53 |             apply(Child::template executeOperations_helper<Args...>, argTuple);
+      |                                   ^
+fused_kernel/core/execution_model/executors.h:60:13: note: in instantiation of function template specialization 'fk::BaseExecutor<fk::Executor<fk::TransformDPP<fk::ParArch::GPU_AMD, fk::TF::DISABLED>>>::applyExecuteOperations_helper<fk::Stream_<ParArch::GPU_AMD> &, const fk::ReadInstantiableOperation<fk::PerThreadRead<fk::ND::_2D, float>> &, const fk::BinaryInstantiableOperation<fk::Mul<float>> &, const fk::ReadInstantiableOperation<fk::PerThreadRead<fk::ND::_2D, float>> &, const fk::BinaryInstantiableOperation<fk::Add<float>> &, const fk::WriteInstantiableOperation<fk::PerThreadWrite<fk::ND::_2D, float>> &>' requested here
+   60 |             applyExecuteOperations_helper(fullArgs);
+      |             ^
+fused_kernel/core/execution_model/executors.h:67:13: note: in instantiation of function template specialization 'fk::BaseExecutor<fk::Executor<fk::TransformDPP<fk::ParArch::GPU_AMD, fk::TF::DISABLED>>>::executeOperationsBase_helper<fk::ParArch::GPU_AMD, fk::ReadInstantiableOperation<fk::PerThreadRead<fk::ND::_2D, float>>, fk::BinaryInstantiableOperation<fk::Mul<float>>, fk::ReadInstantiableOperation<fk::PerThreadRead<fk::ND::_2D, float>>, fk::BinaryInstantiableOperation<fk::Add<float>>, fk::WriteInstantiableOperation<fk::PerThreadWrite<fk::ND::_2D, float>>>' requested here
+   67 |             executeOperationsBase_helper(stream, iOps...);
+      |             ^
+fused_kernel/core/execution_model/executors.h:633:9: note: in instantiation of function template specialization 'fk::BaseExecutor<fk::Executor<fk::TransformDPP<fk::ParArch::GPU_AMD, fk::TF::DISABLED>>>::executeOperations<fk::ParArch::GPU_AMD, fk::ReadInstantiableOperation<fk::PerThreadRead<fk::ND::_2D, float>>, fk::BinaryInstantiableOperation<fk::Mul<float>>, fk::ReadInstantiableOperation<fk::PerThreadRead<fk::ND::_2D, float>>, fk::BinaryInstantiableOperation<fk::Add<float>>, fk::WriteInstantiableOperation<fk::PerThreadWrite<fk::ND::_2D, float>>>' requested here
+  633 |         DECLARE_EXECUTOR_PARENT_IMPL
+      |         ^
+fused_kernel/core/execution_model/executors.h:118:13: note: expanded from macro 'DECLARE_EXECUTOR_PARENT_IMPL'
+  118 |     Parent::executeOperations(stream, iOps...); \
+      |             ^
+fused_kernel/fused_kernel.h:24:28: note: in instantiation of function template specialization 'fk::Executor<fk::TransformDPP<fk::ParArch::GPU_AMD, fk::TF::DISABLED>>::executeOperations<fk::ParArch::GPU_AMD, fk::ReadInstantiableOperation<fk::PerThreadRead<fk::ND::_2D, float>>, fk::BinaryInstantiableOperation<fk::Mul<float>>, fk::ReadInstantiableOperation<fk::PerThreadRead<fk::ND::_2D, float>>, fk::BinaryInstantiableOperation<fk::Add<float>>, fk::WriteInstantiableOperation<fk::PerThreadWrite<fk::ND::_2D, float>>>' requested here
+   24 |         Executor<DPPType>::executeOperations(stream, args...);
+      |                            ^
+e11_read_in_middle.cu:27:9: note: in instantiation of function template specialization 'fk::executeOperations<fk::TransformDPP<fk::ParArch::GPU_AMD, fk::TF::DISABLED>, fk::ReadInstantiableOperation<fk::PerThreadRead<fk::ND::_2D, float>>, fk::BinaryInstantiableOperation<fk::Mul<float>>, fk::ReadInstantiableOperation<fk::PerThreadRead<fk::ND::_2D, float>>, fk::BinaryInstantiableOperation<fk::Add<float>>, fk::WriteInstantiableOperation<fk::PerThreadWrite<fk::ND::_2D, float>>>' requested here
+   27 |     fk::executeOperations<fk::TransformDPP<>>(stream,
+      |         ^
+1 error generated when compiling for gfx1200.

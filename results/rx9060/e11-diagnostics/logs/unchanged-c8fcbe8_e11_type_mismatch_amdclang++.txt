@@ -1,0 +1,46 @@
+In file included from e11_type_mismatch.cu:19:
+In file included from fused_kernel/fused_kernel.h:18:
+In file included from fused_kernel/core/execution_model/executors.h:21:
+In file included from fused_kernel/core/execution_model/data_parallel_patterns.h:25:
+In file included from fused_kernel/core/execution_model/operation_model/operation_model.h:18:
+In file included from fused_kernel/core/execution_model/operation_model/iop_fuser.h:18:
+In file included from fused_kernel/core/execution_model/operation_model/fused_operation.h:18:
+In file included from fused_kernel/core/execution_model/operation_model/batch_operations.h:18:
+In file included from fused_kernel/core/execution_model/operation_model/parent_operations.h:19:
+fused_kernel/core/execution_model/operation_model/instantiable_operations.h:142:57: error: no matching function for call to 'exec'
+  142 |             return InputFoldType<>::build(input.thread, Operation::exec(input.input, opData));
+      |                                                         ^~~~~~~~~~~~~~~
+fused_kernel/core/execution_model/data_parallel_patterns.h:79:62: note: in instantiation of function template specialization 'fk::operator|<fk::Float3>' requested here
+   79 |             return (InputFoldType<>::build(thread, i_data) | ... | iOpInstances).input;
+      |                                                              ^
+fused_kernel/core/execution_model/data_parallel_patterns.h:132:40: note: in instantiation of function template specialization 'fk::TransformDPPBase<fk::TF::DISABLED, fk::TransformDPPDetails_<void, false, fk::ReadInstantiableOperation<fk::PerThreadRead<fk::ND::_2D, fk::Float3>>, fk::BinaryInstantiableOperation<fk::Mul<fk::Float3>>, fk::BinaryInstantiableOperation<fk::Add<float>>, fk::WriteInstantiableOperation<fk::PerThreadWrite<fk::ND::_2D, float>>>>::operate<fk::Float3, fk::BinaryInstantiableOperation<fk::Mul<fk::Float3>>, fk::BinaryInstantiableOperation<fk::Add<float>>, fk::WriteInstantiableOperation<fk::PerThreadWrite<fk::ND::_2D, float>>>' requested here
+  132 |                     const auto tempO = operate(thread, tempI, iOps...);
+      |                                        ^
+fused_kernel/core/execution_model/data_parallel_patterns.h:142:13: note: in instantiation of function template specialization 'fk::TransformDPPBase<fk::TF::DISABLED, fk::TransformDPPDetails_<void, false, fk::ReadInstantiableOperation<fk::PerThreadRead<fk::ND::_2D, fk::Float3>>, fk::BinaryInstantiableOperation<fk::Mul<fk::Float3>>, fk::BinaryInstantiableOperation<fk::Add<float>>, fk::WriteInstantiableOperation<fk::PerThreadWrite<fk::ND::_2D, float>>>>::execute_instantiable_operations_helper<fk::ThreadFusionInfo<fk::Float3, float, false>, fk::ReadInstantiableOperation<fk::PerThreadRead<fk::ND::_2D, fk::Float3>>, fk::BinaryInstantiableOperation<fk::Mul<fk::Float3>>, fk::BinaryInstantiableOperation<fk::Add<float>>, fk::WriteInstantiableOperation<fk::PerThreadWrite<fk::ND::_2D, float>>>' requested here
+  142 |             execute_instantiable_operations_helper<TFI>(thread, iOps...);
+      |             ^
+fused_kernel/core/execution_model/data_parallel_patterns.h:149:17: note: in instantiation of function template specialization 'fk::TransformDPPBase<fk::TF::DISABLED, fk::TransformDPPDetails_<void, false, fk::ReadInstantiableOperation<fk::PerThreadRead<fk::ND::_2D, fk::Float3>>, fk::BinaryInstantiableOperation<fk::Mul<fk::Float3>>, fk::BinaryInstantiableOperation<fk::Add<float>>, fk::WriteInstantiableOperation<fk::PerThreadWrite<fk::ND::_2D, float>>>>::execute_instantiable_operations<fk::ThreadFusionInfo<fk::Float3, float, false>, fk::ReadInstantiableOperation<fk::PerThreadRead<fk::ND::_2D, fk::Float3>>, fk::BinaryInstantiableOperation<fk::Mul<fk::Float3>>, fk::BinaryInstantiableOperation<fk::Add<float>>, fk::WriteInstantiableOperation<fk::PerThreadWrite<fk::ND::_2D, float>>>' requested here
+  149 |                 execute_instantiable_operations<TFI>(thread, iOps...);
+      |                 ^
+fused_kernel/core/execution_model/data_parallel_patterns.h:263:25: note: in instantiation of function template specialization 'fk::TransformDPPBase<fk::TF::DISABLED, fk::TransformDPPDetails_<void, false, fk::ReadInstantiableOperation<fk::PerThreadRead<fk::ND::_2D, fk::Float3>>, fk::BinaryInstantiableOperation<fk::Mul<fk::Float3>>, fk::BinaryInstantiableOperation<fk::Add<float>>, fk::WriteInstantiableOperation<fk::PerThreadWrite<fk::ND::_2D, float>>>>::execute_thread<fk::ReadInstantiableOperation<fk::PerThreadRead<fk::ND::_2D, fk::Float3>>, fk::BinaryInstantiableOperation<fk::Mul<fk::Float3>>, fk::BinaryInstantiableOperation<fk::Add<float>>, fk::WriteInstantiableOperation<fk::PerThreadWrite<fk::ND::_2D, float>>>' requested here
+  263 |                 Parent::execute_thread(thread, activeThreads, iOps...);
+      |                         ^
+fused_kernel/core/execution_model/executor_details/executor_kernels.h:29:60: note: in instantiation of function template specialization 'fk::TransformDPP<fk::ParArch::GPU_AMD, fk::TF::DISABLED, fk::TransformDPPDetails_<void, false, fk::ReadInstantiableOperation<fk::PerThreadRead<fk::ND::_2D, fk::Float3>>, fk::BinaryInstantiableOperation<fk::Mul<fk::Float3>>, fk::BinaryInstantiableOperation<fk::Add<float>>, fk::WriteInstantiableOperation<fk::PerThreadWrite<fk::ND::_2D, float>>>>::exec<fk::ReadInstantiableOperation<fk::PerThreadRead<fk::ND::_2D, fk::Float3>>, fk::BinaryInstantiableOperation<fk::Mul<fk::Float3>>, fk::BinaryInstantiableOperation<fk::Add<float>>, fk::WriteInstantiableOperation<fk::PerThreadWrite<fk::ND::_2D, float>>>' requested here
+   29 |     TransformDPP<PA, TFEN, TDPPDetails, THREAD_DIVISIBLE>::exec(tDPPDetails, operations...);
+      |                                                            ^
+fused_kernel/core/execution_model/executors.h:558:13: note: in instantiation of function template specialization 'fk::launchTransformDPP_Kernel<fk::ParArch::GPU_AMD, fk::TF::DISABLED, true, fk::TransformDPPDetails_<void, false, fk::ReadInstantiableOperation<fk::PerThreadRead<fk::ND::_2D, fk::Float3>>, fk::BinaryInstantiableOperation<fk::Mul<fk::Float3>>, fk::BinaryInstantiableOperation<fk::Add<float>>, fk::WriteInstantiableOperation<fk::PerThreadWrite<fk::ND::_2D, float>>>, fk::ReadInstantiableOperation<fk::PerThreadRead<fk::ND::_2D, fk::Float3>>, fk::BinaryInstantiableOperation<fk::Mul<fk::Float3>>, fk::BinaryInstantiableOperation<fk::Add<float>>, fk::WriteInstantiableOperation<fk::PerThreadWrite<fk::ND::_2D, float>>>' requested here
+  558 |             launchTransformDPP_Kernel<ParArch::GPU_AMD, TFEN_, true><<<grid, block, 0, stream>>>(tDetails, iOps...);
+      |             ^
+e11_type_mismatch.cu:33:9: note: in instantiation of function template specialization 'fk::executeOperations<fk::TransformDPP<fk::ParArch::GPU_AMD, fk::TF::DISABLED>, fk::ReadInstantiableOperation<fk::PerThreadRead<fk::ND::_2D, fk::Float3>>, fk::BinaryInstantiableOperation<fk::Mul<fk::Float3>>, fk::BinaryInstantiableOperation<fk::Add<float>>, fk::WriteInstantiableOperation<fk::PerThreadWrite<fk::ND::_2D, float>>>' requested here
+   33 |     fk::executeOperations<fk::TransformDPP<>>(stream,
+      |         ^
+fused_kernel/algorithms/basic_ops/arithmetic.h:32:9: note: candidate function not viable: no known conversion from 'const fk::Float3' to 'const InputType' (aka 'const float') for 1st argument
+   32 |         DECLARE_BINARY_PARENT
+      |         ^~~~~~~~~~~~~~~~~~~~~
+fused_kernel/core/execution_model/operation_model/parent_operations.h:81:34: note: expanded from macro 'DECLARE_BINARY_PARENT'
+   81 |   FK_HOST_DEVICE_FUSE OutputType exec(const InputType input, const OperationDataType &opData) { \
+      |                                  ^    ~~~~~~~~~~~~~~~~~~~~~
+fused_kernel/algorithms/basic_ops/arithmetic.h:33:40: note: candidate function not viable: no known conversion from 'const fk::Float3' to 'const InputType' (aka 'const float') for 1st argument
+   33 |         FK_HOST_DEVICE_FUSE OutputType exec(const InputType input, const ParamsType& params) {
+      |                                        ^    ~~~~~~~~~~~~~~~~~~~~~
+1 error generated when compiling for gfx1200.
