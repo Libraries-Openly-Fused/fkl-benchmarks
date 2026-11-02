@@ -1,0 +1,45 @@
+compiletime_single_r2_c8fcbe8.pdf: drawn by scripts/plot_compiletime.py
+size: 3.40 x 2.10 in (the printed width)
+csv: results/rtx4090/e3-compile/repeat-c8fcbe8/e3_table_chains.csv
+  results commit that last changed it: f25c9d5c4fa67c96abbb9e4522979519aa1613c3
+csv: results/rtx4090/e3-compile/repeat-c8fcbe8/e3_table_staticloop.csv
+  results commit that last changed it: f25c9d5c4fa67c96abbb9e4522979519aa1613c3
+csv: results/rtx4090/e3-compile/repeat-c8fcbe8/e3_repeat_A.csv
+  results commit that last changed it: f25c9d5c4fa67c96abbb9e4522979519aa1613c3
+  produced by repo: e9744c5923a1efd3b41abcf741f44bd24a3dbf34-dirty
+  produced by fkl: c8fcbe816d629377886cbdd19c83527f37ccfc04
+  produced by gpu: NVIDIA GeForce RTX 4090, cc 8.9, 128 SMs, 24106 MiB
+csv: results/rtx4090/e3-compile/repeat-c8fcbe8/e3_repeat_extra_A.csv
+  results commit that last changed it: f25c9d5c4fa67c96abbb9e4522979519aa1613c3
+  produced by repo: e9744c5923a1efd3b41abcf741f44bd24a3dbf34-dirty
+  produced by fkl: c8fcbe816d629377886cbdd19c83527f37ccfc04
+  produced by gpu: NVIDIA GeForce RTX 4090, cc 8.9, 128 SMs, 24106 MiB
+csv: results/rtx4090/e3-compile/repeat-c8fcbe8/e3_repeat_staticloop.csv
+  results commit that last changed it: f25c9d5c4fa67c96abbb9e4522979519aa1613c3
+  produced by repo: e9744c5923a1efd3b41abcf741f44bd24a3dbf34-dirty
+  produced by fkl: c8fcbe816d629377886cbdd19c83527f37ccfc04
+  produced by gpu: NVIDIA GeForce RTX 4090, cc 8.9, 128 SMs, 24106 MiB
+csv: results/rtx4090/e3-compile/repeat-c8fcbe8/e3_repeat_extra_staticloop.csv
+  results commit that last changed it: f25c9d5c4fa67c96abbb9e4522979519aa1613c3
+  produced by repo: e9744c5923a1efd3b41abcf741f44bd24a3dbf34-dirty
+  produced by fkl: c8fcbe816d629377886cbdd19c83527f37ccfc04
+  produced by gpu: NVIDIA GeForce RTX 4090, cc 8.9, 128 SMs, 24106 MiB
+csv: results/rtx4090/e3-compile/e3_limit_B_3847.csv
+  results commit that last changed it: 9afddfbe353ee6141a1ce477b13ce81fdde4547a
+  produced by repo: 35ecb77ef745ff891e3172561a9b2c19792895e0
+  produced by fkl: 38c4f32d887b4530c54362eb526c9a5411ee92fe
+  produced by gpu: NVIDIA GeForce RTX 4090, cc 8.9, 128 SMs, 24106 MiB
+csv: results/rtx4090/e3-compile/e3_limit_B_3848.csv
+  results commit that last changed it: aa61991c83160d12c81999f685004012c57cbd17
+  produced by repo: 35ecb77ef745ff891e3172561a9b2c19792895e0
+  produced by fkl: 38c4f32d887b4530c54362eb526c9a5411ee92fe
+  produced by gpu: NVIDIA GeForce RTX 4090, cc 8.9, 128 SMs, 24106 MiB
+distinct operations (variant A, tree label c8fcbe8): N = 1, 100, 500, 1000, 1500, 2000, 3000, 4000; StaticLoop (cvGS mul_add1): 14 lengths, 2 to 19902 operations; every point is the median of three compiles (scripts/e3_repeat_table.py; every compile is in the sweep CSVs listed above)
+library: fkl-benchmarks external/fkl at c8fcbe816d629377886cbdd19c83527f37ccfc04
+conditions: one window, 2026-11-02 13:00:00 to 13:58:42, on the RTX 4090 machine (Ryzen 9 5950X, Ubuntu 26.04.1, kernel 7.0.0-38), the machine otherwise idle (load.log: the other cores of the compile CCD 0.0 % busy on average, no other compile or benchmark process; the other agents ran nothing), one compile at a time pinned to core 8, nvcc --threads 1; GNU time for the peak memory, nvcc --time for the phases; load.log, environment-before.txt and window-console.txt are in results/rtx4090/e3-compile/repeat-c8fcbe8
+external/fkl is the pin of fkl-benchmarks, Beta-0.1.14-LTS-202-gc8fcbe8 (commit c8fcbe816d629377886cbdd19c83527f37ccfc04), no local changes; the CSV headers say -dirty for the fkl-benchmarks repository only because results/rtx4090/e0-run.log (the log of the quiet windows) differs from its committed copy
+nvcc wall time: StaticLoop 3.7 s to 31.5 s; distinct operations 2.6 s (N = 1) to 573 s (N = 4000)
+peak compiler memory (not drawn in this layout; MiB = GNU time KiB / 1024; median of the compiles): distinct N = 4000: 13,432 MiB (13.12 GiB); StaticLoop 19,902 operations: 1,073 MiB (1.05 GiB)
+the dotted vertical line at N = 3,848 is the first failing N of variant B (float3 parameters, 12 B per operation): ptxas refuses the kernel parameter space (0x8508 B, limit 0x7ffc B). It comes from the committed sweeps results/rtx4090/e3-compile/e3_limit_B_3847.csv and e3_limit_B_3848.csv, NOT from the repeat. There is no time-out marker: the 6,000-operation time-out is not part of this set
+toolchain: CUDA 13.4.3, nvcc 13.4.92, g++ 15.2, one core, --threads 1, -O3 -DNDEBUG -std=c++17, sm_89 + PTX
+tables: results/rtx4090/e3-compile/repeat-c8fcbe8/e3_table_chains.csv, results/rtx4090/e3-compile/repeat-c8fcbe8/e3_table_staticloop.csv
