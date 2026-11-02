@@ -1,12 +1,27 @@
 # RX 9060 (gfx1200), ROCm 10.1: how the GPU results are measured
 
-Machine: Ryzen 7 5800X3D, 60 GiB, AMD Radeon RX 9060 (gfx1200, 28 CUs, wave32, 8144 MiB), Linux 7.0.0-38-generic, ROCm 10.1.0 (amdclang++ 24.0.0), amdgpu 7.1.9;
+Machine: Ryzen 7 5800X3D, 60 GiB, AMD Radeon RX 9060 (gfx1200, 28 CUs, wave32, 8144 MiB), Ubuntu 26.04.1 LTS, Linux 7.0.0-38-generic, ROCm 10.1.0 (amdclang++ 24.0.0), amdgpu 7.1.9;
 CPU governor `powersave` (amd-pstate-epp, EPP balance_performance, boost on); the machine is also the self-hosted ROCm CI runner, so every run waits for the
 runner to be idle (no `Runner.Worker`, load average below 0.8).
 
+## Machine and software (read on 2026-11-01)
+
+The results of this folder were committed from 2026-10-30 to 2026-11-01. The machine has been in one boot since 2026-10-26 18:39 CET (the boot before ran the same kernel), and the software state read on 2026-11-01 is:
+
+- OS: Ubuntu 26.04.1 LTS (Resolute Raccoon), x86_64; kernel 7.0.0-38-generic (`#38-Ubuntu SMP PREEMPT_DYNAMIC Fri Sep  4 09:10:14 UTC 2026`, package 7.0.0-38.38 installed on 2026-10-12).
+- ROCm 10.1.0 (`amdrocm` 10.1.0-3, installed on 2026-10-12), HIP driver and runtime 7.16.26385, amdgpu 7.1.9.31600000 (DKMS, installed on 2026-10-12, built for 7.0.0-38), amd-smi 27.1.0.
+  No update of the kernel, of the amdgpu driver or of ROCm happened between 2026-10-12 and 2026-11-01.
+- Compilers: g++ 13.4.0 (Ubuntu 13.4.0-10ubuntu1), clang++ 23.1.5 (Ubuntu build `++20261023092600+395ba2c4d274`, upgraded to this build on 2026-10-26 at 18:37; clang-21 21.1.8 was installed next to it on 2026-10-29 at 20:52), amdclang++ 24.0.0git (ROCm/llvm-project `d6f6cb691863`); the builds use the binaries `g++-13` and `clang++-23` (the default `g++` of the machine is 15.2.0).
+- Board and CPU: ASUS PRIME B550M-K (BIOS 4304 of 2026-08-19), Ryzen 7 5800X3D, 60 GiB, governor `powersave`.
+- GPU: AMD Radeon RX 9060 (Navi 44, gfx1200, PCI 1002:7590 revision C7, 28 CUs, 8144 MiB GDDR6 on 128 bits). The PCI-ID database (and so `lspci` and the board field of `amd-smi`) names the device ID 7590 "RX 9060 XT", without looking at the revision;
+  `rocminfo`, `amd-smi` and the HIP runtime say "AMD Radeon RX 9060", which is what libdrm's `amdgpu.ids` has for the revision C7 (the XT is the revision C0).
+  PCIe: 4.0 x16 (16 GT/s) on a root port of the CPU (0000:00:03.1); the card itself supports PCIe 5.0, the platform 4.0. The link was the same idle and under load in 114 samples read on 2026-11-01 (noted by hand, not kept in a file).
+
+The CSVs of this folder have no `# os:` or `# kernel:` line in their headers; this section is the record of the software state.
+
 ## The graphics clock of the GPU decides the result of a short run
 
-A GPU that was at rest does not run at its working clock when work arrives. On this RX 9060 (sysfs `hwmon/freq1_input`, sampled at 200 Hz,
+A GPU that was at rest does not run at its working clock when work arrives. On this RX 9060 (sysfs `hwmon/freq1_input`, sampled at about 180 Hz,
 `scripts/gpu_clock_trace.py`) the clock goes from 31 MHz at rest to about **2.0 GHz, stays there for the first 0.7 s of continuous work, reaches 3.0 GHz
 after about 1 s**, overshoots to 3.3 to 3.5 GHz for a moment, and settles at 3.0 to 3.2 GHz (the value depends on the kernel that is running). The warm-up of 0.5 s
 that the first results of this folder used ended on the ramp. What it did to the numbers, measured:
@@ -22,7 +37,8 @@ that the first results of this folder used ended on the ramp. What it did to the
   without keeping the GPU busy before the timed runs of each point (301 operations: 6.10 ms without and 4.01 ms with the spin of 2 s, both runs with FKL c8fcbe8 and the same device code; the run with the spin
   was made with `FKLB_GPU_SPIN_SECONDS=2`, implemented in fkl-benchmarks #7; the first series, with FKL 38c4f32 and no spin, gave 4.14 ms).
 - Nothing in FKL is involved: the benchmark binaries have identical device code at the pins 38c4f32, #411, #414, #416 and #417 of LTS-C++17 (c8fcbe8), and the
-  times are the same at the five pins within 1 percent (`clock-ramp/`).
+  times of the fused chain of pipeline (a) differ by 0.2 to 2.5 percent between the five pins over the 30 batches (0.16, 1.74 and 0.74 percent at the batches 100, 200 and 300), with no order by pin (`clock-ramp/`, section 1, `five-pins-spread.txt`;
+  an earlier version of this README said "the same at the five pins within 1 percent", which holds only for part of the cells: the per-op batch differs by up to 8.3 percent).
 
 ## The rule
 
