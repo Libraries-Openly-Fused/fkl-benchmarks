@@ -8,8 +8,8 @@ rows; the memory speed is not recorded (it needs root). The agreement with the n
 
 ## What is here
 
-- `g++-13/`, `clang++-23/`: sweep 1 of each compiler, raw output with the file names of the old rows (`e5_preprocessing_a_CPU.csv`, `e5_preprocessing_a_agreement_CPU.csv`, `stdout.log`).
-- `repeats/<compiler>/run2`, `repeats/<compiler>/run3`: two more sweeps of the same binary, raw output. `repeats/<compiler>/check-nothing-else-running`: one more sweep, see Conditions; it is not part of the median.
+- `g++-13/`, `clang++-23/`: sweep 1 of each compiler, raw output with the file names of the old rows (`e5_preprocessing_a_CPU.csv`, `e5_preprocessing_a_agreement_CPU.csv`, `stdout.log`); in the agreement file the 60 comparison names with a comma were quoted afterwards, the only change (`../agreement-csv-quoting.txt` has the sha256 of the files before and after).
+- `repeats/<compiler>/run2`, `repeats/<compiler>/run3`: two more sweeps of the same binary, raw output. `repeats/<compiler>/check-nothing-else-running`: one more sweep, see Conditions; it is not part of the median. The agreement file of each of these folders has the same quoting repair (the 60 comparison names with a comma).
 - `g++-13/e5_preprocessing_a_CPU_median_of_3.csv`, `clang++-23/e5_preprocessing_a_CPU_median_of_3.csv`: **the numbers to cite: the numbers of the paper are the median of the three sweeps.** For every point and variant, `median_ms` is the median of the medians of sweeps 1, 2 and 3, and
   `medians_min_ms` and `medians_max_ms` are the smallest and the largest of the three medians. The 16-thread rows vary between sweeps, so one sweep alone is not a number to cite (last table).
 - `scripts/e5_cpu_compare_runs.py` (in the root of this repository) writes the median files and prints every number of this file from the CSVs (command at the end).
