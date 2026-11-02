@@ -16,7 +16,8 @@
 
   python scripts/e3_check_compare.py a.bin b.bin
 Prints the number of values, the number of bit-identical values, the maximum absolute and relative difference, and the number of values that
-differ by more than 1e-3 relative. Exit code 0 when the files have the same size and no value is NaN or infinite where the other is not.
+differ by more than 1e-3 relative. Exit code 0 only when the two files are byte for byte identical (every value bit-identical, NaN payloads included); 1 when the sizes
+differ, the files are empty or any byte differs: the numbers printed say how large the differences are.
 """
 import array
 import math
@@ -33,6 +34,8 @@ def read(path):
 
 def main():
     a, b = read(sys.argv[1]), read(sys.argv[2])
+    with open(sys.argv[1], "rb") as fa, open(sys.argv[2], "rb") as fb:
+        same_bytes = fa.read() == fb.read()
     if len(a) != len(b) or len(a) == 0:
         print(f"different sizes or empty: {len(a)} and {len(b)}")
         sys.exit(1)
@@ -46,7 +49,7 @@ def main():
     finite_b = [y for y in b if math.isfinite(y)]
     print(f"{len(a)} values; bit-identical {identical}; non-finite in a {nonfinite_a}, in b {nonfinite_b}; max abs diff {maxabs:.6g}; max rel diff {maxrel:.6g}; "
           f"values with rel diff > 1e-3: {over}; range of b [{min(finite_b, default=float('nan')):.6g}, {max(finite_b, default=float('nan')):.6g}]")
-    sys.exit(0 if nonfinite_a == nonfinite_b else 1)
+    sys.exit(0 if same_bytes else 1)
 
 
 if __name__ == "__main__":
