@@ -63,6 +63,12 @@ def system_info_lines(experiment, device_index=None, notes=None):
         lines.append(f"flash_attn: {flash_attn.__version__}")
     except Exception:  # noqa: BLE001
         lines.append("flash_attn: not installed")
+    try:
+        os_name = platform.freedesktop_os_release()["PRETTY_NAME"]
+    except (OSError, KeyError, AttributeError):
+        os_name = "unavailable"
+    lines.append(f"os: {os_name}")   # the system the run was made on, read at run time (as common/system_info.h does for the C++ programs)
+    lines.append(f"kernel: {os.uname().sysname} {os.uname().release}")
     idx = torch.cuda.current_device() if device_index is None else device_index
     p = torch.cuda.get_device_properties(idx)
     lines.append(f"gpu: {p.name}, cc {p.major}.{p.minor}, {p.multi_processor_count} SMs, {p.total_memory >> 20} MiB")
