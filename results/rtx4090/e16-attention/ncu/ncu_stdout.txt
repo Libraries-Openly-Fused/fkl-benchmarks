@@ -1,0 +1,17 @@
+==PROF== Connected to process 2160107 (/home/oscar/tfkl-bench/fkl-benchmarks/build/local-rtx4090/bin/e16_attention_cu)
+==PROF== Profiling "launchFlashAttentionMmaDPP_Kernel": 0%....50%....100% - 45 passes
+mma_raw D=128 S=2048 BH=128 causal=0: 0 ms (0 calls per block), single 0 ms, 0 TFLOP/s, max err 0.00114033, kernels -1 | profile run: one call, not timed
+==PROF== Profiling "launchFlashAttentionMmaDPP_Kernel": 0%....50%....100% - 45 passes
+mma_int8kv_fused D=128 S=2048 BH=128 causal=0: 0 ms (0 calls per block), single 0 ms, 0 TFLOP/s, max err 0.00128269, kernels -1 | profile run: one call, not timed
+==PROF== Profiling "dequantKV": 0%....50%....100% - 45 passes
+==PROF== Profiling "launchFlashAttentionMmaDPP_Kernel": 0%....50%....100% - 45 passes
+mma_int8kv_unfused D=128 S=2048 BH=128 causal=0: 0 ms (0 calls per block), single 0 ms, 0 TFLOP/s, max err 0.00128269, kernels -1 | profile run: one call, not timed
+==PROF== Profiling "launchFlashAttentionMmaDPP_Kernel": 0%....50%....100% - 45 passes
+mma_fp8kv_fused D=128 S=2048 BH=128 causal=0: 0 ms (0 calls per block), single 0 ms, 0 TFLOP/s, max err 0.0014354, kernels -1 | profile run: one call, not timed
+==PROF== Profiling "launchFlashAttentionMmaDPP_Kernel": 0%....50%....100% - 45 passes
+mma_epilogue_fused D=128 S=2048 BH=128 causal=0: 0 ms (0 calls per block), single 0 ms, 0 TFLOP/s, max err 0.00222102, kernels -1 | profile run: one call, not timed
+==PROF== Profiling "launchFlashAttentionMmaDPP_Kernel": 0%....50%....100% - 45 passes
+==PROF== Profiling "affineBf16": 0%....50%....100% - 45 passes
+mma_epilogue_separate D=128 S=2048 BH=128 causal=0: 0 ms (0 calls per block), single 0 ms, 0 TFLOP/s, max err 0.00325198, kernels -1 | profile run: one call, not timed
+==PROF== Disconnected from process 2160107
+==PROF== Report: /home/oscar/tfkl-bench/results/cuda13.4/e16-ncu/e16_d128_s2048.ncu-repz

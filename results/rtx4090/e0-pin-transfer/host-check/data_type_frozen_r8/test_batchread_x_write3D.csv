@@ -1,0 +1,66 @@
+# experiment: test_batchread_x_write3D
+# repo: fkl-benchmarks 269d229c220e00d4c7f04a7dd61d5542cbe318e6
+# fkl: fb9ac3ad4a64aad40ae3122e14143f03814f2cc0
+# cvGPUSpeedup: 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c
+# FastNPP: 9dfc4f430225e40ded392bfa777b2e724367c5c1
+# nvcc: 13.4.92 (/home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/nvcc), architectures 89, -fmad on, -lineinfo on
+# host compiler: GNU 15.2.0, Release, -march=native, -ftemplate-depth=1000
+# opencv: 4.14.0
+# cpu: AMD Ryzen 9 5950X 16-Core Processor
+# gpu: NVIDIA GeForce RTX 4090, cc 8.9, 128 SMs, 24106 MiB, PCI 0000:09:00.0
+# cuda driver api: 13.3, cuda runtime: 13.4
+# nvidia-smi driver: 610.43.02
+# clocks (sm, mem, max sm, max mem, MHz): 2685 MHz, 10251 MHz, 3105 MHz, 10501 MHz
+# power limit, temperature at start: 450.00 W, 44
+Batch size (CV_8UC1XCV_32FC1), OpenCV MeanTime, OpenCV TimeVariance, OpenCV MaxTime, OpenCV MinTime, cvGS MeanTime, cvGS TimeVariance, cvGS MaxTime, cvGS MinTime, Mean Speedup
+50, 0.284757, 0.000134467, 0.386048, 0.277504, 0.00444384, 2.14661e-07, 0.007168, 0.003936, 64.602
+Batch size (CV_8SC1XCV_32FC1), OpenCV MeanTime, OpenCV TimeVariance, OpenCV MaxTime, OpenCV MinTime, cvGS MeanTime, cvGS TimeVariance, cvGS MaxTime, cvGS MinTime, Mean Speedup
+50, 0.28769, 0.000341823, 0.41776, 0.27936, 0.0045632, 5.12724e-07, 0.009216, 0.004, 64.0699
+Batch size (CV_16UC1XCV_32FC1), OpenCV MeanTime, OpenCV TimeVariance, OpenCV MaxTime, OpenCV MinTime, cvGS MeanTime, cvGS TimeVariance, cvGS MaxTime, cvGS MinTime, Mean Speedup
+50, 0.287676, 1.74868e-05, 0.3024, 0.280576, 0.00450272, 4.18233e-07, 0.008928, 0.003968, 64.8139
+Batch size (CV_16SC1XCV_32FC1), OpenCV MeanTime, OpenCV TimeVariance, OpenCV MaxTime, OpenCV MinTime, cvGS MeanTime, cvGS TimeVariance, cvGS MaxTime, cvGS MinTime, Mean Speedup
+50, 0.284229, 2.04826e-05, 0.31008, 0.278528, 0.0045136, 2.05532e-07, 0.006144, 0.004064, 63.5544
+Batch size (CV_32SC1XCV_32FC1), OpenCV MeanTime, OpenCV TimeVariance, OpenCV MaxTime, OpenCV MinTime, cvGS MeanTime, cvGS TimeVariance, cvGS MaxTime, cvGS MinTime, Mean Speedup
+50, 0.288861, 0.000260647, 0.437248, 0.245792, 0.00454304, 3.39667e-07, 0.007904, 0.004064, 64.3678
+Batch size (CV_32FC1XCV_32FC1), OpenCV MeanTime, OpenCV TimeVariance, OpenCV MaxTime, OpenCV MinTime, cvGS MeanTime, cvGS TimeVariance, cvGS MaxTime, cvGS MinTime, Mean Speedup
+50, 0.283387, 1.14272e-05, 0.29696, 0.278528, 0.00453536, 3.07755e-07, 0.0072, 0.004032, 63.2615
+Batch size (CV_32FC1XCV_64FC1), OpenCV MeanTime, OpenCV TimeVariance, OpenCV MaxTime, OpenCV MinTime, cvGS MeanTime, cvGS TimeVariance, cvGS MaxTime, cvGS MinTime, Mean Speedup
+50, 0.294804, 8.35134e-06, 0.308096, 0.290528, 0.0113686, 1.09079e-07, 0.01344, 0.010912, 25.9495
+Batch size (CV_64FC1XCV_64FC1), OpenCV MeanTime, OpenCV TimeVariance, OpenCV MaxTime, OpenCV MinTime, cvGS MeanTime, cvGS TimeVariance, cvGS MaxTime, cvGS MinTime, Mean Speedup
+50, 0.294285, 0.000353469, 0.428832, 0.284512, 0.0106966, 1.95054e-07, 0.012288, 0.010208, 27.565
+Batch size (CV_8UC2XCV_32FC2), OpenCV MeanTime, OpenCV TimeVariance, OpenCV MaxTime, OpenCV MinTime, cvGS MeanTime, cvGS TimeVariance, cvGS MaxTime, cvGS MinTime, Mean Speedup
+50, 0.286727, 1.57826e-05, 0.301856, 0.280576, 0.00475968, 3.91595e-07, 0.009216, 0.004096, 61.0312
+Batch size (CV_8UC3XCV_32FC3), OpenCV MeanTime, OpenCV TimeVariance, OpenCV MaxTime, OpenCV MinTime, cvGS MeanTime, cvGS TimeVariance, cvGS MaxTime, cvGS MinTime, Mean Speedup
+50, 0.283643, 1.21514e-05, 0.293888, 0.279552, 0.00552288, 2.01534e-07, 0.007168, 0.005056, 51.6667
+Batch size (CV_8UC4XCV_32FC4), OpenCV MeanTime, OpenCV TimeVariance, OpenCV MaxTime, OpenCV MinTime, cvGS MeanTime, cvGS TimeVariance, cvGS MaxTime, cvGS MinTime, Mean Speedup
+50, 0.285945, 3.18126e-05, 0.313248, 0.279552, 0.00577696, 2.36005e-07, 0.008192, 0.00512, 49.8315
+Batch size (CV_8SC2XCV_32FC2), OpenCV MeanTime, OpenCV TimeVariance, OpenCV MaxTime, OpenCV MinTime, cvGS MeanTime, cvGS TimeVariance, cvGS MaxTime, cvGS MinTime, Mean Speedup
+50, 0.283974, 1.21027e-05, 0.294624, 0.277504, 0.00477568, 1.86122e-07, 0.006432, 0.004096, 59.9435
+Batch size (CV_8SC3XCV_32FC3), OpenCV MeanTime, OpenCV TimeVariance, OpenCV MaxTime, OpenCV MinTime, cvGS MeanTime, cvGS TimeVariance, cvGS MaxTime, cvGS MinTime, Mean Speedup
+50, 0.287827, 1.41754e-05, 0.305856, 0.2816, 0.0055184, 2.43223e-07, 0.008064, 0.00496, 52.522
+Batch size (CV_8SC4XCV_32FC4), OpenCV MeanTime, OpenCV TimeVariance, OpenCV MaxTime, OpenCV MinTime, cvGS MeanTime, cvGS TimeVariance, cvGS MaxTime, cvGS MinTime, Mean Speedup
+50, 0.288068, 0.000419798, 0.441184, 0.278528, 0.0058112, 2.53166e-07, 0.008416, 0.00512, 49.889
+Batch size (CV_16UC2XCV_32FC2), OpenCV MeanTime, OpenCV TimeVariance, OpenCV MaxTime, OpenCV MinTime, cvGS MeanTime, cvGS TimeVariance, cvGS MaxTime, cvGS MinTime, Mean Speedup
+50, 0.284588, 1.79417e-05, 0.303008, 0.277728, 0.00477056, 3.5167e-07, 0.008128, 0.004096, 60.4276
+Batch size (CV_16UC3XCV_32FC3), OpenCV MeanTime, OpenCV TimeVariance, OpenCV MaxTime, OpenCV MinTime, cvGS MeanTime, cvGS TimeVariance, cvGS MaxTime, cvGS MinTime, Mean Speedup
+50, 0.28428, 1.31342e-05, 0.29744, 0.279552, 0.00546688, 3.15034e-07, 0.008096, 0.004832, 52.4428
+Batch size (CV_16UC4XCV_32FC4), OpenCV MeanTime, OpenCV TimeVariance, OpenCV MaxTime, OpenCV MinTime, cvGS MeanTime, cvGS TimeVariance, cvGS MaxTime, cvGS MinTime, Mean Speedup
+50, 0.286027, 1.47947e-05, 0.303968, 0.279872, 0.00582688, 2.80888e-07, 0.008992, 0.00512, 49.4607
+Batch size (CV_16SC2XCV_32FC2), OpenCV MeanTime, OpenCV TimeVariance, OpenCV MaxTime, OpenCV MinTime, cvGS MeanTime, cvGS TimeVariance, cvGS MaxTime, cvGS MinTime, Mean Speedup
+50, 0.283468, 1.74e-05, 0.293888, 0.277536, 0.00481408, 2.83148e-07, 0.007168, 0.004096, 59.5472
+Batch size (CV_16SC3XCV_32FC3), OpenCV MeanTime, OpenCV TimeVariance, OpenCV MaxTime, OpenCV MinTime, cvGS MeanTime, cvGS TimeVariance, cvGS MaxTime, cvGS MinTime, Mean Speedup
+50, 0.289996, 0.000249753, 0.404544, 0.2816, 0.00569632, 2.02501e-06, 0.018432, 0.004992, 52.2323
+Batch size (CV_16SC4XCV_32FC4), OpenCV MeanTime, OpenCV TimeVariance, OpenCV MaxTime, OpenCV MinTime, cvGS MeanTime, cvGS TimeVariance, cvGS MaxTime, cvGS MinTime, Mean Speedup
+50, 0.286568, 0.000822228, 0.56832, 0.278528, 0.00580736, 2.22476e-07, 0.008256, 0.00512, 49.6241
+Batch size (CV_32SC2XCV_32FC2), OpenCV MeanTime, OpenCV TimeVariance, OpenCV MaxTime, OpenCV MinTime, cvGS MeanTime, cvGS TimeVariance, cvGS MaxTime, cvGS MinTime, Mean Speedup
+50, 0.287867, 1.60634e-05, 0.304128, 0.280576, 0.00479744, 2.79039e-07, 0.008192, 0.004096, 60.6153
+Batch size (CV_32SC3XCV_32FC3), OpenCV MeanTime, OpenCV TimeVariance, OpenCV MaxTime, OpenCV MinTime, cvGS MeanTime, cvGS TimeVariance, cvGS MaxTime, cvGS MinTime, Mean Speedup
+50, 0.285635, 1.06556e-05, 0.293952, 0.28048, 0.00561888, 2.40508e-07, 0.008192, 0.00512, 51.1842
+Batch size (CV_32SC4XCV_32FC4), OpenCV MeanTime, OpenCV TimeVariance, OpenCV MaxTime, OpenCV MinTime, cvGS MeanTime, cvGS TimeVariance, cvGS MaxTime, cvGS MinTime, Mean Speedup
+50, 0.288187, 1.3e-05, 0.30208, 0.282624, 0.0061136, 3.55263e-07, 0.01024, 0.00512, 47.4636
+Batch size (CV_32FC2XCV_64FC2), OpenCV MeanTime, OpenCV TimeVariance, OpenCV MaxTime, OpenCV MinTime, cvGS MeanTime, cvGS TimeVariance, cvGS MaxTime, cvGS MinTime, Mean Speedup
+50, 0.299097, 0.000235539, 0.446688, 0.294912, 0.0192794, 1.69642e-07, 0.020832, 0.018432, 15.5186
+Batch size (CV_32FC3XCV_64FC3), OpenCV MeanTime, OpenCV TimeVariance, OpenCV MaxTime, OpenCV MinTime, cvGS MeanTime, cvGS TimeVariance, cvGS MaxTime, cvGS MinTime, Mean Speedup
+50, 0.31972, 4.78678e-06, 0.340256, 0.318464, 0.0273555, 6.09622e-07, 0.033792, 0.026624, 11.6955
+Batch size (CV_32FC4XCV_64FC4), OpenCV MeanTime, OpenCV TimeVariance, OpenCV MaxTime, OpenCV MinTime, cvGS MeanTime, cvGS TimeVariance, cvGS MaxTime, cvGS MinTime, Mean Speedup
+50, 0.355798, 1.20826e-05, 0.386944, 0.354304, 0.0353152, 2.9365e-07, 0.037888, 0.034816, 10.0769

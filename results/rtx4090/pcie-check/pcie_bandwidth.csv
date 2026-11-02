@@ -1,0 +1,21 @@
+# experiment: link check: host to device and device to host copy bandwidth
+# notes: copies of the same buffer, each timed with CUDA events around the copy; the link state is sampled by nvidia-smi at the same time (see the sampler file of the window)
+# repo: fkl-benchmarks c588536b1b3c8180fb845fa8ef4bc61a161bf851-dirty
+# fkl: c8fcbe816d629377886cbdd19c83527f37ccfc04
+# cvGPUSpeedup: 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c
+# FastNPP: 9dfc4f430225e40ded392bfa777b2e724367c5c1
+# nvcc: 13.4.92 (/home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/nvcc), architectures 89, -fmad on, -lineinfo on
+# hip: none (none), architectures none
+# host compiler: GNU 15.2.0, Release, -march=native, -ftemplate-depth=1000
+# opencv: 4.14.0
+# cpu: AMD Ryzen 9 5950X 16-Core Processor
+# gpu: NVIDIA GeForce RTX 4090, cc 8.9, 128 SMs, 24106 MiB, PCI 0000:09:00.0
+# cuda driver api: 13.3, cuda runtime: 13.4
+# nvidia-smi driver: 610.43.02
+# clocks (sm, mem, max sm, max mem, MHz): 2685 MHz, 10251 MHz, 3105 MHz, 10501 MHz
+# power limit, temperature at start: 450.00 W, 50
+direction,memory,bytes,copies,seconds,gbps_median,gbps_min,gbps_max
+H2D,pinned,268435456,286,3.00732914,25.5860221,24.9212213,25.6527638
+D2H,pinned,268435456,277,3.00273661,24.787345,24.528093,24.8141814
+H2D,pageable,268435456,77,1.50108689,13.8096815,12.9908102,13.9749349
+D2H,pageable,268435456,70,1.51969847,12.6496773,8.61834715,12.7301491

@@ -1,0 +1,27 @@
+# experiment: E0 CUDA Graphs: structure of the OpenCV-CUDA baseline of the VF + HF experiment (50 crops of 60 x 120, NumOps operations each)
+# notes: plain = the calls on one stream; child = one child graph node per crop, independent (the experiment's graph); child_chained = the child nodes one after the other; flat_serial = one stream capture of all the calls; flat_parallel = one capture with a fork and a join over 50 streams. submit = host time of the launch call(s); gpu = events around the launch; total = host time from before the launch to after cudaStreamSynchronize; first_launch_ms = GPU time of the first launch (uploads the graph).
+# repo: fkl-benchmarks c588536b1b3c8180fb845fa8ef4bc61a161bf851-dirty
+# fkl: c8fcbe816d629377886cbdd19c83527f37ccfc04
+# cvGPUSpeedup: 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c
+# FastNPP: 9dfc4f430225e40ded392bfa777b2e724367c5c1
+# nvcc: 13.4.92 (/home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/nvcc), architectures 89, -fmad on, -lineinfo on
+# hip: none (none), architectures none
+# host compiler: GNU 15.2.0, Release, -march=native, -ftemplate-depth=1000
+# opencv: 4.14.0
+# cpu: AMD Ryzen 9 5950X 16-Core Processor
+# gpu: NVIDIA GeForce RTX 4090, cc 8.9, 128 SMs, 24106 MiB, PCI 0000:09:00.0
+# cuda driver api: 13.3, cuda runtime: 13.4
+# nvidia-smi driver: 610.43.02
+# clocks (sm, mem, max sm, max mem, MHz): 2685 MHz, 10501 MHz, 3105 MHz, 10501 MHz
+# power limit, temperature at start: 450.00 W, 48
+ops,structure,kernel_nodes,top_level_nodes,capture_s,instantiate_s,first_launch_ms,warmup_s,warmup_steady,reps,submit_us_median,submit_us_min,submit_us_max,gpu_ms_median,gpu_ms_mean,gpu_ms_min,gpu_ms_max,total_ms_median,total_ms_mean,total_ms_min,total_ms_max,bit_exact_vs_plain
+502,plain,25150,0,0,0,49.4735985,2.07154435,1,100,49303.657,49244.929,49597.884,49.3045769,49.3117235,49.2461777,49.598465,49.308067,49.3152829,49.249879,49.602394,1
+502,child,25150,50,0.0415656,0.085567822,6.63337612,2.01835743,1,100,70.379,65.449,80.13,6.07507181,6.08352738,6.06521606,6.2679038,6.078166,6.09542945,6.068787,6.444553,1
+502,child_chained,25150,50,0.025107329,0.040234806,27.8742714,2.05597527,1,100,22.44,21.89,29.64,25.6481285,25.7370153,25.6450558,26.0546551,25.652301,25.74211,25.648492,26.058547,1
+502,flat_serial,25150,25150,0.021534921,0.035393425,27.4903049,2.05826442,1,100,23.54,23.12,35.899,25.6491528,25.7272213,25.6440315,26.0392952,25.653572,25.7341253,25.648972,26.043077,1
+502,flat_parallel,25150,25150,0.020415615,0.034358597,6.56169605,2.01327302,1,100,70.16,66.669,76.309,6.07782412,6.09146623,6.06329584,6.42476797,6.081127,6.09739332,6.066547,6.427912,1
+2502,plain,125150,0,0,0,245.293732,2.45309144,1,100,245349.541,245168.523,245991.374,245.35466,245.373995,245.168091,245.990402,245.361062,245.37944,245.173413,245.996104,1
+2502,child,125150,50,0.16061621,0.4401355,33.3690872,2.07080831,1,100,122.898,118.179,363.566,32.2549744,32.3602768,32.2129288,32.9134064,32.259123,32.3669796,32.217073,32.917055,1
+2502,child_chained,125150,50,0.131820436,0.230083765,152.443909,2.04859507,1,100,116.408,101.559,253.896,127.934273,127.917895,127.526909,128.293884,127.938902,127.928478,127.581137,128.298978,1
+2502,flat_serial,125150,125150,0.108609024,0.226037514,134.070267,2.04824879,1,100,113.809,103.799,390.385,128.195206,128.188201,127.580162,129.288193,128.199749,128.195832,127.585196,129.292756,1
+2502,flat_parallel,125150,125150,0.111647418,0.222767413,32.8990402,2.06329,1,100,124.068,119.989,141.248,32.1597443,32.2170687,32.1227837,32.5427208,32.163933,32.2207375,32.126994,32.546669,1

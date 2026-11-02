@@ -1,0 +1,26 @@
+# experiment: E16 forward attention baselines (PyTorch SDPA backends, flash-attn, Triton)
+# date: 2026-11-01T18:48:59
+# gpu: NVIDIA GeForce RTX 5050, cc 12.0, 20 SMs, 7746 MiB
+# torch: 2.14.1+cu130, cuda 13.0, cudnn 92400
+# flash-attn: 2.8.3.post2
+# triton: 3.8.0; TRITON_PTXAS_PATH=/home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/ptxas
+# nvidia-smi (driver, sm clock now, max sm clock, power limit): 610.43.02, 2917 MHz, 3090 MHz, 130.00 W
+# probe flash: ok
+# probe cudnn: ok
+# probe efficient: ok
+# probe math: ok
+# probe flash_attn: ok
+# probe triton: ok
+# probe dequant_compiled_flash: ok
+# note: dequant_flash, dequant_compiled_flash and epilogue_flash are compositions of off-the-shelf PyTorch pieces that a user has today (elementwise kernels around the flash kernel); they are not a hand-fused quantised-cache attention kernel such as the ones in serving systems, and not the best that could be written for these two cases
+# input: bf16 normal(0, 1), seeded; layout (BH, S, D) contiguous; time = per call from blocks of back-to-back calls between two CUDA events, single = one synchronised call; warm-up before; fp32 accumulation inside the kernels
+gpu,variant,d,seq,bh,causal,position,blocks,calls_per_block,t_start_ms,t_end_ms,time_ms_median,time_ms_min,time_ms_max,single_ms_median,tflops_median,max_abs_err,mean_abs_err,kernels,schedule,block_q,block_kv,num_warps,split_kv,kernel_facts,note
+NVIDIA GeForce RTX 5050,cudnn,64,512,128,0,1,2,6,1793555339409,1793555339413,0.36046,0.36033,0.36060,0.38886,23.830,0.00117689,0.000122123,1,,,,,,cudnn_generated_fort_native_sdpa_sm80_flash_fprop_wmma_f16_knob_1_128x,
+NVIDIA GeForce RTX 5050,efficient,64,512,128,0,2,2,3,1793555339473,1793555339477,0.65571,0.65562,0.65580,0.68474,13.100,0.00117689,0.000122127,3,,,,,,void at::native::vectorized_elementwise_kernel<2; at::native::FillFunc ; void at::native::vectorized_elementwise_kernel<2; at::native::FillFunc ; fmha_cutlassF_bf16_aligned_64x64_rf_sm80(PyTorchMemEffAttention::Atten,
+NVIDIA GeForce RTX 5050,math,64,512,128,0,3,2,1,1793555339523,1793555339534,5.34283,5.33939,5.34627,5.34218,1.608,0.000973433,8.23645e-05,14,,,,,,void at::native::unrolled_elementwise_kernel<at::native::direct_copy_k ; void at::native::unrolled_elementwise_kernel<at::native::direct_copy_k ; void at::native::unrolled_elementwise_kernel<at::native::direct_copy_k ; void at::native::vectorized_elementwise_kernel<4; at::native::AUnaryFu ; void at::native::vectorized_elementwise_kernel<4; at::native::AUnaryFu ; void magma_sgemmEx_kernel<float; float; float; true; false; 6; 4; 6; 3 ; void (anonymous namespace)::softmax_warp_forward<float; float; float;  ; void at::native::vectorized_elementwise_kernel<4; at::native::(anonymo ; void at::native::reduce_kernel<512; 1; at::native::ReduceOp<bool; at:: ; void at::native::vectorized_elementwise_kernel<4; at::native::FillFunc ; void at::native::elementwise_kernel<128; 2; at::native::gpu_kernel_imp ; void at::native::vectorized_elementwise_kernel<4; at::native::bfloat16 ; void cutlass::Kernel2<cutlass_80_simt_sgemm_64x64_8x5_nn_align1>(cutla ; void at::native::vectorized_elementwise_kernel<4; at::native::bfloat16,
+NVIDIA GeForce RTX 5050,flash_attn,64,512,128,0,4,2,6,1793555339576,1793555339580,0.33610,0.33595,0.33626,0.37434,25.557,0.00104305,0.000122618,1,,,,,,void flash::flash_fwd_kernel<Flash_fwd_kernel_traits<64; 128; 128; 4; ,
+NVIDIA GeForce RTX 5050,triton,64,512,128,0,5,2,6,1793555342365,1793555342369,0.32847,0.32845,0.32850,0.36435,26.151,0.00107256,0.00012163,1,,,,,,_attn_fwd,
+NVIDIA GeForce RTX 5050,dequant_compiled_flash,64,512,128,0,6,2,5,1793555342425,1793555342429,0.38773,0.38753,0.38793,0.42523,22.154,0.00341582,0.000274967,3,,,,,,triton_poi_fused_mul_unsqueeze_0 ; triton_poi_fused_mul_unsqueeze_0 ; void pytorch_flash::flash_fwd_kernel<Flash_fwd_kernel_traits<64; 128; ,
+NVIDIA GeForce RTX 5050,dequant_flash,64,512,128,0,7,2,4,1793555342455,1793555342460,0.52110,0.52084,0.52137,0.53570,16.484,0.00341582,0.000274967,3,,,,,,void at::native::elementwise_kernel<128; 4; at::native::gpu_kernel_imp ; void at::native::elementwise_kernel<128; 4; at::native::gpu_kernel_imp ; void pytorch_flash::flash_fwd_kernel<Flash_fwd_kernel_traits<64; 128; ,
+NVIDIA GeForce RTX 5050,epilogue_flash,64,512,128,0,8,2,5,1793555342506,1793555342510,0.37473,0.37472,0.37475,0.40158,22.923,0.00276601,0.000753929,2,,,,,,void pytorch_flash::flash_fwd_kernel<Flash_fwd_kernel_traits<64; 128;  ; void at::native::elementwise_kernel<128; 4; at::native::gpu_kernel_imp,
+NVIDIA GeForce RTX 5050,flash,64,512,128,0,9,2,6,1793555342537,1793555342541,0.32667,0.32645,0.32690,0.35539,26.295,0.00104305,0.000122617,1,,,,,,void pytorch_flash::flash_fwd_kernel<Flash_fwd_kernel_traits<64; 128; ,

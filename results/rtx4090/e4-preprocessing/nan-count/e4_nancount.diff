@@ -1,0 +1,10 @@
+--- e4_preprocessing.cu
++++ e4_preprocessing_nancount.cu
+@@ -48,0 +49 @@
++#include <cmath>
+@@ -217,0 +219,5 @@
++    {   // NaN REVIEW (a local copy for the NaN count, not committed): the number of NaN and Inf values of this output; maxAbsDiff below ignores NaN
++        size_t nanCount = 0, infCount = 0, zeroCount = 0;
++        for (const float v : host) { if (std::isnan(v)) { ++nanCount; } else if (std::isinf(v)) { ++infCount; } else if (v == 0.f) { ++zeroCount; } }
++        std::cout << "NANCOUNT " << g.experiment << " batch " << g.batch << " " << version << " (" << convention << "): " << nanCount << " NaN, " << infCount << " Inf, " << zeroCount << " zeros of " << host.size() << " values" << std::endl;
++    }

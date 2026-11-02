@@ -1,0 +1,30 @@
+# E11 batch-run: 2026-11-01T13:50:04Z, FKL c8fcbe8 (external/fkl), source fkl-self/diagnostics/e11_batch_mismatch_run.cu at fkl-benchmarks c860e14, back-ends: cpu cpu_mt cuda
+# g++ (Ubuntu 15.2.0-16ubuntu1) 15.2.0
+# Cuda compilation tools, release 13.4, V13.4.92
+
+## CPU (g++)
+$ g++ -x c++ -march=native -O3 -DNDEBUG -std=c++17 -ftemplate-depth=1000 -Iexternal/fkl/include fkl-self/diagnostics/e11_batch_mismatch_run.cu -o build/e11-batch-run/e11_run_cpu
+back-end CPU: 50 inputs read, 60 outputs: 50 processed (all 32 pixels = 2), 10 untouched (all -1; the first is output 50), 0 mixed
+exit code 0
+back-end CPU: 50 inputs read, 60 outputs: 50 processed (all 32 pixels = 2), 10 untouched (all -1; the first is output 50), 0 mixed
+exit code 0
+back-end CPU: 50 inputs read, 60 outputs: 50 processed (all 32 pixels = 2), 10 untouched (all -1; the first is output 50), 0 mixed
+exit code 0
+
+## CPU_MULTITHREAD (g++)
+$ g++ -x c++ -march=native -O3 -DNDEBUG -std=c++17 -ftemplate-depth=1000 -DFK_CPU_MULTITHREAD_ENABLED -DE11_RUN_CPU_MT -Iexternal/fkl/include -Iexternal/fkl/thread-pool/include -pthread fkl-self/diagnostics/e11_batch_mismatch_run.cu -o build/e11-batch-run/e11_run_cpu_mt
+back-end CPU_MULTITHREAD: 50 inputs read, 60 outputs: 50 processed (all 32 pixels = 2), 10 untouched (all -1; the first is output 50), 0 mixed
+exit code 0
+back-end CPU_MULTITHREAD: 50 inputs read, 60 outputs: 50 processed (all 32 pixels = 2), 10 untouched (all -1; the first is output 50), 0 mixed
+exit code 0
+back-end CPU_MULTITHREAD: 50 inputs read, 60 outputs: 50 processed (all 32 pixels = 2), 10 untouched (all -1; the first is output 50), 0 mixed
+exit code 0
+
+## CUDA (nvcc, sm_89)
+$ nvcc -x cu -arch sm_89 -ccbin /usr/bin/g++ -O3 -DNDEBUG -std=c++17 -ftemplate-depth=1000 -Iexternal/fkl/include fkl-self/diagnostics/e11_batch_mismatch_run.cu -o build/e11-batch-run/e11_run_cuda
+back-end GPU_NVIDIA: 50 inputs read, 60 outputs: 50 processed (all 32 pixels = 2), 10 untouched (all -1; the first is output 50), 0 mixed
+exit code 0
+back-end GPU_NVIDIA: 50 inputs read, 60 outputs: 50 processed (all 32 pixels = 2), 10 untouched (all -1; the first is output 50), 0 mixed
+exit code 0
+back-end GPU_NVIDIA: 50 inputs read, 60 outputs: 50 processed (all 32 pixels = 2), 10 untouched (all -1; the first is output 50), 0 mixed
+exit code 0

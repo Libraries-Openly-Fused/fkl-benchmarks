@@ -1,0 +1,23 @@
+# experiment: benchmark_vertical_fusion_loopMulAdd1_CUDAGraphs
+# repo: fkl-benchmarks 980075682a4c633f8425d2a0256d1d5042a2b73b
+# fkl: fb9ac3ad4a64aad40ae3122e14143f03814f2cc0
+# cvGPUSpeedup: 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c
+# FastNPP: 9dfc4f430225e40ded392bfa777b2e724367c5c1
+# nvcc: 13.4.92 (/home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/nvcc), architectures 89, -fmad on, -lineinfo on
+# hip: none (none), architectures none
+# host compiler: GNU 15.2.0, Release, -march=native, -ftemplate-depth=1000
+# opencv: 4.14.0
+# cpu: AMD Ryzen 9 5950X 16-Core Processor
+# gpu: NVIDIA GeForce RTX 4090, cc 8.9, 128 SMs, 24106 MiB, PCI 0000:09:00.0
+# cuda driver api: 13.3, cuda runtime: 13.4
+# nvidia-smi driver: 610.43.02
+# clocks (sm, mem, max sm, max mem, MHz): 2670 MHz, 10251 MHz, 3105 MHz, 10501 MHz
+# power limit, temperature at start: 450.00 W, 60
+Number of Operations (CV_8UC1XCV_32FC1), OpenCV MeanTime, OpenCV TimeVariance, OpenCV MaxTime, OpenCV MinTime, cvGS MeanTime, cvGS TimeVariance, cvGS MaxTime, cvGS MinTime, Mean Speedup
+2, 0.073576, 6.25538e-06, 0.08592, 0.064672, 0.0265248, 8.69294e-07, 0.032768, 0.0256, 2.77638
+2502, 46.4107, 0.0651552, 47.3805, 46.2582, 0.272944, 5.28023e-06, 0.284512, 0.27056, 170.045
+5402, 100.311, 0.0487896, 100.817, 99.7683, 0.570635, 1.60821e-06, 0.576512, 0.56832, 175.789
+8502, 158.263, 0.14021, 159.239, 157.513, 0.891917, 6.42879e-06, 0.903168, 0.887808, 177.442
+10002, 185.917, 0.214961, 187.389, 185.118, 1.04582, 6.36741e-06, 1.05443, 1.04038, 177.772
+16702, 310.716, 0.288364, 312.179, 309.374, 1.73105, 7.89935e-06, 1.73994, 1.72339, 179.496
+19902, 369.939, 0.380979, 371.559, 368.342, 2.13925, 0.00225689, 2.44019, 2.09613, 173.005

@@ -1,0 +1,26 @@
+# experiment: E0 the time of the fused kernel (cvGPUSpeedup) of the VF + HF experiment in the loops of the experiment and on its own (50 crops of 60 x 120)
+# notes: second = the interval the experiment reports for the fused kernel (events recorded on the stream; loop_* and alone_synced as the loop of the experiment; alone_pipelined*: total over N launches divided by N; alone_queued_behind_spin: between the event after a kernel of about 1 ms and the event after the fused kernel); first = the baseline interval; fused_launch_call_us = host time of the call that launches the fused kernel (per launch for alone_pipelined*)
+# repo: fkl-benchmarks c588536b1b3c8180fb845fa8ef4bc61a161bf851-dirty
+# fkl: c8fcbe816d629377886cbdd19c83527f37ccfc04
+# cvGPUSpeedup: 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c
+# FastNPP: 9dfc4f430225e40ded392bfa777b2e724367c5c1
+# nvcc: 13.4.92 (/home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/nvcc), architectures 89, -fmad on, -lineinfo on
+# hip: none (none), architectures none
+# host compiler: GNU 15.2.0, Release, -march=native, -ftemplate-depth=1000
+# opencv: 4.14.0
+# cpu: AMD Ryzen 9 5950X 16-Core Processor
+# gpu: NVIDIA GeForce RTX 4090, cc 8.9, 128 SMs, 24106 MiB, PCI 0000:09:00.0
+# cuda driver api: 13.3, cuda runtime: 13.4
+# nvidia-smi driver: 610.43.02
+# clocks (sm, mem, max sm, max mem, MHz): 210 MHz, 405 MHz, 3105 MHz, 10501 MHz
+# power limit, temperature at start: 450.00 W, 42
+ops,mode,kind,iters,first_ms_mean,second_ms_mean,second_ms_median,second_ms_min,second_ms_max,second_ms_p10,second_ms_p90,fused_launch_call_us_median,fused_launch_call_us_p90,baseline_launch_us_median
+502,loop_plain,loop,5,48.9358727,0.00832639998,0.00780799985,0.00710400008,0.0113599999,0.00710400008,0.00819199998,3.08,3.74,48812.358
+502,loop_child,loop,5,6.06009607,0.007424,0.0071680001,0.00646399986,0.00819199998,0.00646399986,0.00819199998,2.89,3.32,79.069
+502,loop_flat_serial,loop,5,25.5924099,0.00841599992,0.00819199998,0.0071680001,0.0102399997,0.0071680001,0.00838399958,3.43,3.8,32.649
+502,alone_synced,alone,20,0.0011888,0.0063760001,0.00614400022,0.00595200015,0.0071680001,0.00604799995,0.00707199983,2.07,2.12,0.02
+502,alone_synced_pollute2MB,alone,20,0.0011888,0.00693120004,0.00700799981,0.00614400022,0.00921600033,0.00614400022,0.0071680001,2.59,2.65,0.02
+502,alone_synced_pollute64MB,alone,20,0.0014384,0.0101248,0.0102399997,0.00921600033,0.011136,0.00921600033,0.0104,5.78,6.31,0.02
+502,alone_pipelined10,alone,20,0,0.00464896003,0.00460800016,0.00460480014,0.00471040001,0.00460480014,0.00470079994,2.042,2.071,0
+502,alone_pipelined50,alone,20,0,0.00450316791,0.00450559985,0.00448512007,0.0045248,0.00448512007,0.00450623967,2.01518,2.05518,0
+502,alone_queued_behind_spin,alone,20,1.00807843,0.00576160008,0.00614400022,0.00511999987,0.00627199979,0.00511999987,0.00614400022,2.08,2.21,0

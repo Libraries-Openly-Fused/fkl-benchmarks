@@ -1,0 +1,36 @@
+# E3: the GPU build of the generated chain against the CPU back-end build of the same source (g++ -DE3_CPU; E3_CHECK: a 64 x 64 deterministic input, the output written as raw float32), compared with scripts/e3_check_compare.py:
+# bit-pattern equality of every value (struct.pack('f')), the number of non-finite values in each file, and the largest differences; exit code 1 when the non-finite counts differ.
+# The outputs are committed in ../e3-launch-check (current_<variant>_<N>_{gpu,cpu}.bin; patched_* = the include tree with the get_arg change). Variant A: float, N = 1100 and 1500 (4,096 values); variant B: float3/int3, N = 100, 3500 and 3847 (12,288 values).
+#
+# 1) the lines of the window log results/cuda13.4/gpu-window9-run.txt (2026-10-30 12:59), section 'C. launches near the limit' (copied verbatim):
+== C. launches near the limit
+current_B_100 gpu: exit 0: variant B N 100: check output written (64 x 64)
+   vs CPU back-end: 12288 values; bit-identical 12288; non-finite in a 0, in b 0; max abs diff 0; max rel diff 0; values with rel diff > 1e-3: 0; range of b [23, 84]
+current_B_3500 gpu: exit 0: variant B N 3500: check output written (64 x 64)
+   vs CPU back-end: 12288 values; bit-identical 12288; non-finite in a 0, in b 0; max abs diff 0; max rel diff 0; values with rel diff > 1e-3: 0; range of b [1301, 1360]
+current_B_3847 gpu: exit 0: variant B N 3847: check output written (64 x 64)
+   vs CPU back-end: 12288 values; bit-identical 12288; non-finite in a 0, in b 0; max abs diff 0; max rel diff 0; values with rel diff > 1e-3: 0; range of b [1430.53, 1487.51]
+current_A_1100 gpu: exit 0: variant A N 1100: check output written (64 x 64)
+   vs CPU back-end: 4096 values; bit-identical 4096; non-finite in a 0, in b 0; max abs diff 0; max rel diff 0; values with rel diff > 1e-3: 0; range of b [2.42365, 2.42365]
+patched_A_1100 gpu: exit 0: variant A N 1100: check output written (64 x 64)
+current_A_1500 gpu: exit 0: variant A N 1500: check output written (64 x 64)
+   vs CPU back-end: 4096 values; bit-identical 4096; non-finite in a 0, in b 0; max abs diff 0; max rel diff 0; values with rel diff > 1e-3: 0; range of b [1.18438, 1.18438]
+patched_A_1500 gpu: exit 0: variant A N 1500: check output written (64 x 64)
+patched_B_3500 gpu: exit 0: variant B N 3500: check output written (64 x 64)
+patched_B_3847 gpu: exit 0: variant B N 3847: check output written (64 x 64)
+   current_A_1100 vs patched_A_1100 (GPU): 4096 values; bit-identical 4096; non-finite in a 0, in b 0; max abs diff 0; max rel diff 0; values with rel diff > 1e-3: 0; range of b [2.42365, 2.42365]
+   current_A_1500 vs patched_A_1500 (GPU): 4096 values; bit-identical 4096; non-finite in a 0, in b 0; max abs diff 0; max rel diff 0; values with rel diff > 1e-3: 0; range of b [1.18438, 1.18438]
+   current_B_3500 vs patched_B_3500 (GPU): 12288 values; bit-identical 12288; non-finite in a 0, in b 0; max abs diff 0; max rel diff 0; values with rel diff > 1e-3: 0; range of b [1301, 1360]
+rmdir: failed to remove '/home/oscar/tfkl-bench/fkl-benchmarks/results/rtx4090/.pause': Directory not empty
+window 9 end 2026-10-30T13:00:42+01:00
+#
+# 2) the same comparisons re-run offline on 2026-11-01 from the committed .bin files (no GPU needed):
+current_B_100 gpu vs cpu: 12288 values; bit-identical 12288; non-finite in a 0, in b 0; max abs diff 0; max rel diff 0; values with rel diff > 1e-3: 0; range of b [23, 84]
+current_B_3500 gpu vs cpu: 12288 values; bit-identical 12288; non-finite in a 0, in b 0; max abs diff 0; max rel diff 0; values with rel diff > 1e-3: 0; range of b [1301, 1360]
+current_B_3847 gpu vs cpu: 12288 values; bit-identical 12288; non-finite in a 0, in b 0; max abs diff 0; max rel diff 0; values with rel diff > 1e-3: 0; range of b [1430.53, 1487.51]
+current_A_1100 gpu vs cpu: 4096 values; bit-identical 4096; non-finite in a 0, in b 0; max abs diff 0; max rel diff 0; values with rel diff > 1e-3: 0; range of b [2.42365, 2.42365]
+current_A_1500 gpu vs cpu: 4096 values; bit-identical 4096; non-finite in a 0, in b 0; max abs diff 0; max rel diff 0; values with rel diff > 1e-3: 0; range of b [1.18438, 1.18438]
+current_A_1100 vs patched_A_1100 (GPU): 4096 values; bit-identical 4096; non-finite in a 0, in b 0; max abs diff 0; max rel diff 0; values with rel diff > 1e-3: 0; range of b [2.42365, 2.42365]
+current_A_1500 vs patched_A_1500 (GPU): 4096 values; bit-identical 4096; non-finite in a 0, in b 0; max abs diff 0; max rel diff 0; values with rel diff > 1e-3: 0; range of b [1.18438, 1.18438]
+current_B_3500 vs patched_B_3500 (GPU): 12288 values; bit-identical 12288; non-finite in a 0, in b 0; max abs diff 0; max rel diff 0; values with rel diff > 1e-3: 0; range of b [1301, 1360]
+current_B_3847 vs patched_B_3847 (GPU): 12288 values; bit-identical 12288; non-finite in a 0, in b 0; max abs diff 0; max rel diff 0; values with rel diff > 1e-3: 0; range of b [1430.53, 1487.51]

@@ -1,0 +1,103 @@
+e16_core_r2_y0.pdf: drawn by scripts/plot_e16.py
+size: 3.40 x 2.40 in (the printed width)
+csv: results/rtx4090/e16-attention/run1/e16_attention.csv
+  results commit that last changed it: not committed (working copy differs from it)
+  produced by repo: fkl-benchmarks c588536b1b3c8180fb845fa8ef4bc61a161bf851-dirty
+  produced by fkl: c8fcbe816d629377886cbdd19c83527f37ccfc04
+  produced by nvcc: 13.4.92 (/home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/nvcc), architectures 89, -fmad on, -lineinfo on
+  produced by gpu: NVIDIA GeForce RTX 4090, cc 8.9, 128 SMs, 24106 MiB, PCI 0000:09:00.0
+csv: results/rtx4090/e16-attention/run1/e16_baselines.csv
+  results commit that last changed it: not committed (working copy differs from it)
+  produced by gpu: NVIDIA GeForce RTX 4090, cc 8.9, 128 SMs, 24106 MiB
+csv: results/rtx4090/e16-attention/run2/e16_attention.csv
+  results commit that last changed it: not committed (working copy differs from it)
+  produced by repo: fkl-benchmarks c588536b1b3c8180fb845fa8ef4bc61a161bf851-dirty
+  produced by fkl: c8fcbe816d629377886cbdd19c83527f37ccfc04
+  produced by nvcc: 13.4.92 (/home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/nvcc), architectures 89, -fmad on, -lineinfo on
+  produced by gpu: NVIDIA GeForce RTX 4090, cc 8.9, 128 SMs, 24106 MiB, PCI 0000:09:00.0
+csv: results/rtx4090/e16-attention/run2/e16_baselines.csv
+  results commit that last changed it: not committed (working copy differs from it)
+  produced by gpu: NVIDIA GeForce RTX 4090, cc 8.9, 128 SMs, 24106 MiB
+csv: results/rtx4090/e16-attention/run3/e16_attention.csv
+  results commit that last changed it: not committed (working copy differs from it)
+  produced by repo: fkl-benchmarks c588536b1b3c8180fb845fa8ef4bc61a161bf851-dirty
+  produced by fkl: c8fcbe816d629377886cbdd19c83527f37ccfc04
+  produced by nvcc: 13.4.92 (/home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/nvcc), architectures 89, -fmad on, -lineinfo on
+  produced by gpu: NVIDIA GeForce RTX 4090, cc 8.9, 128 SMs, 24106 MiB, PCI 0000:09:00.0
+csv: results/rtx4090/e16-attention/run3/e16_baselines.csv
+  results commit that last changed it: not committed (working copy differs from it)
+  produced by gpu: NVIDIA GeForce RTX 4090, cc 8.9, 128 SMs, 24106 MiB
+D=64 S=512 FKL: 133.9 TFLOP/s [133.1-138.3] over 3 runs
+D=64 S=1024 FKL: 147.4 TFLOP/s [147.1-148.1] over 3 runs
+D=64 S=2048 FKL: 155.4 TFLOP/s [154.7-156.8] over 3 runs
+D=64 S=4096 FKL: 160.9 TFLOP/s [160.3-161.2] over 3 runs
+D=64 S=8192 FKL: 162.7 TFLOP/s [162.7-163.1] over 3 runs
+D=64 S=512 SDPA, FlashAttention-2: 138.5 TFLOP/s [138.5-143.6] over 3 runs
+D=64 S=1024 SDPA, FlashAttention-2: 148.5 TFLOP/s [147.6-148.7] over 3 runs
+D=64 S=2048 SDPA, FlashAttention-2: 153.4 TFLOP/s [151.6-153.8] over 3 runs
+D=64 S=4096 SDPA, FlashAttention-2: 156.1 TFLOP/s [156.0-157.0] over 3 runs
+D=64 S=8192 SDPA, FlashAttention-2: 157.5 TFLOP/s [156.7-157.6] over 3 runs
+D=64 S=512 SDPA, cuDNN: 133.9 TFLOP/s [133.6-133.9] over 3 runs
+D=64 S=1024 SDPA, cuDNN: 144.6 TFLOP/s [144.6-144.8] over 3 runs
+D=64 S=2048 SDPA, cuDNN: 150.3 TFLOP/s [150.3-150.4] over 3 runs
+D=64 S=4096 SDPA, cuDNN: 153.1 TFLOP/s [153.1-153.2] over 3 runs
+D=64 S=8192 SDPA, cuDNN: 154.6 TFLOP/s [154.4-154.6] over 3 runs
+D=64 S=512 flash-attn 2.8.3: 139.1 TFLOP/s [138.9-139.6] over 3 runs
+D=64 S=1024 flash-attn 2.8.3: 149.3 TFLOP/s [146.1-149.4] over 3 runs
+D=64 S=2048 flash-attn 2.8.3: 152.7 TFLOP/s [150.2-152.8] over 3 runs
+D=64 S=4096 flash-attn 2.8.3: 155.3 TFLOP/s [155.3-155.3] over 3 runs
+D=64 S=8192 flash-attn 2.8.3: 155.3 TFLOP/s [154.8-155.7] over 3 runs
+D=64 S=512 Triton: 144.0 TFLOP/s [144.0-144.1] over 3 runs
+D=64 S=1024 Triton: 153.8 TFLOP/s [153.6-153.9] over 3 runs
+D=64 S=2048 Triton: 156.7 TFLOP/s [156.7-157.0] over 3 runs
+D=64 S=4096 Triton: 158.9 TFLOP/s [157.8-159.1] over 3 runs
+D=64 S=8192 Triton: 160.8 TFLOP/s [160.5-160.8] over 3 runs
+D=64: y axis from 0 to 180 TFLOP/s
+D=128 S=512 FKL: 135.1 TFLOP/s [134.7-139.0] over 3 runs
+D=128 S=1024 FKL: 146.5 TFLOP/s [143.9-149.1] over 3 runs
+D=128 S=2048 FKL: 150.8 TFLOP/s [150.2-152.1] over 3 runs
+D=128 S=4096 FKL: 154.9 TFLOP/s [154.8-155.8] over 3 runs
+D=128 S=8192 FKL: 157.7 TFLOP/s [157.7-157.7] over 3 runs
+D=128 S=512 SDPA, FlashAttention-2: 141.5 TFLOP/s [141.2-144.9] over 3 runs
+D=128 S=1024 SDPA, FlashAttention-2: 151.4 TFLOP/s [150.4-152.1] over 3 runs
+D=128 S=2048 SDPA, FlashAttention-2: 156.9 TFLOP/s [155.6-157.0] over 3 runs
+D=128 S=4096 SDPA, FlashAttention-2: 157.8 TFLOP/s [156.6-158.1] over 3 runs
+D=128 S=8192 SDPA, FlashAttention-2: 158.5 TFLOP/s [158.4-158.6] over 3 runs
+D=128 S=512 SDPA, cuDNN: 138.4 TFLOP/s [138.1-138.4] over 3 runs
+D=128 S=1024 SDPA, cuDNN: 148.3 TFLOP/s [148.1-148.5] over 3 runs
+D=128 S=2048 SDPA, cuDNN: 153.1 TFLOP/s [153.0-153.2] over 3 runs
+D=128 S=4096 SDPA, cuDNN: 155.4 TFLOP/s [155.1-155.5] over 3 runs
+D=128 S=8192 SDPA, cuDNN: 156.4 TFLOP/s [156.3-156.8] over 3 runs
+D=128 S=512 flash-attn 2.8.3: 147.5 TFLOP/s [147.4-147.5] over 3 runs
+D=128 S=1024 flash-attn 2.8.3: 155.9 TFLOP/s [155.6-156.0] over 3 runs
+D=128 S=2048 flash-attn 2.8.3: 158.2 TFLOP/s [158.1-158.2] over 3 runs
+D=128 S=4096 flash-attn 2.8.3: 159.0 TFLOP/s [158.9-159.2] over 3 runs
+D=128 S=8192 flash-attn 2.8.3: 159.3 TFLOP/s [159.3-159.5] over 3 runs
+D=128 S=512 Triton: 144.0 TFLOP/s [144.0-144.1] over 3 runs
+D=128 S=1024 Triton: 153.3 TFLOP/s [152.8-153.5] over 3 runs
+D=128 S=2048 Triton: 158.6 TFLOP/s [157.8-158.7] over 3 runs
+D=128 S=4096 Triton: 160.9 TFLOP/s [160.9-161.1] over 3 runs
+D=128 S=8192 Triton: 161.7 TFLOP/s [161.7-161.8] over 3 runs
+D=128: y axis from 0 to 180 TFLOP/s
+D=64 S=512: FKL mma_raw / best baseline = 0.930 [0.924-0.960], best baseline triton; at equal SM clock 0.946 [0.944-0.949]; DIFFERENT CLOCKS (SM clock of FKL against the best baseline up to -2.3 %)
+D=64 S=1024: FKL mma_raw / best baseline = 0.958 [0.958-0.963], best baseline triton; at equal SM clock 0.963 [0.958-0.963]
+D=64 S=2048: FKL mma_raw / best baseline = 0.990 [0.987-1.001], best baseline triton; at equal SM clock 0.995 [0.993-1.001]
+D=64 S=4096: FKL mma_raw / best baseline = 1.013 [1.012-1.016], best baseline triton; at equal SM clock 1.013 [1.012-1.021]
+D=64 S=8192: FKL mma_raw / best baseline = 1.012 [1.012-1.016], best baseline triton; at equal SM clock 1.012 [1.006-1.016]
+D=128 S=512: FKL mma_raw / best baseline = 0.916 [0.913-0.943], best baseline flash_attn; at equal SM clock 0.975 [0.932-0.984]; DIFFERENT CLOCKS (SM clock of FKL against the best baseline up to -6.9 %)
+D=128 S=1024: FKL mma_raw / best baseline = 0.940 [0.925-0.955], best baseline flash_attn; at equal SM clock 0.998 [0.989-1.002]; DIFFERENT CLOCKS (SM clock of FKL against the best baseline up to -7.3 %)
+D=128 S=2048: FKL mma_raw / best baseline = 0.953 [0.946-0.959], best baseline triton; at equal SM clock 0.981 [0.974-1.010]; DIFFERENT CLOCKS (SM clock of FKL against the best baseline up to -5.1 %)
+D=128 S=4096: FKL mma_raw / best baseline = 0.962 [0.962-0.967], best baseline triton; at equal SM clock 1.002 [0.995-1.014]; DIFFERENT CLOCKS (SM clock of FKL against the best baseline up to -5.1 %)
+D=128 S=8192: FKL mma_raw / best baseline = 0.976 [0.975-0.976], best baseline triton; at equal SM clock 1.003 [0.998-1.004]; DIFFERENT CLOCKS (SM clock of FKL against the best baseline up to -2.8 %)
+largest difference on the plot, FKL below the best baseline: 8.4 % of the best baseline (D=128, S=512, best flash_attn); FKL above the best baseline by up to 1.3 % of it (D=64, S=4096, best triton) (statistic: 100 x (1 - median over the runs of the per-run fraction FKL / best baseline))
+largest spread between the highest and the lowest plotted series at one point: 8.4 % of the highest (D=128, S=512, highest flash_attn, lowest mma_raw; statistic: medians over the runs of TFLOP/s)
+no result for math on NVIDIA GeForce RTX 4090: skipped: S x S scores of 4.0 GiB
+SM clock of the 30 rows of FKL in this figure (both head sizes, 5 sequence lengths, 3 runs): median 2588 MHz (smallest row 2430, largest 2655); power median 448 W (largest 452 W); rows with median power >= 440 W: 20 of 30
+SM clock of the 30 rows of SDPA, FlashAttention-2 in this figure (both head sizes, 5 sequence lengths, 3 runs): median 2580 MHz (smallest row 2505, largest 2655); power median 445 W (largest 451 W); rows with median power >= 440 W: 22 of 30
+SM clock of the 30 rows of SDPA, cuDNN in this figure (both head sizes, 5 sequence lengths, 3 runs): median 2655 MHz (smallest row 2625, largest 2670); power median 423 W (largest 442 W); rows with median power >= 440 W: 2 of 30
+SM clock of the 30 rows of flash-attn 2.8.3 in this figure (both head sizes, 5 sequence lengths, 3 runs): median 2640 MHz (smallest row 2280, largest 2670); power median 398 W (largest 446 W); rows with median power >= 440 W: 5 of 30
+SM clock of the 30 rows of Triton in this figure (both head sizes, 5 sequence lengths, 3 runs): median 2640 MHz (smallest row 2595, largest 2655); power median 424 W (largest 437 W); rows with median power >= 440 W: 0 of 30
+GPU limits (gpu-info.csv, nvidia-smi): clocks.max.sm [MHz] = 3105 MHz, power.limit [W] = 450.00 W
+whole window (gpu_clocks.csv, 100 ms sampler, 9221 of 9510 samples with GPU utilisation >= 50 %): SM clock median 2655 MHz, 5th percentile 2475 MHz; power median 434 W, 40 % of the samples at >= 440 W
+palette (Okabe-Ito, fixed order: FKL blue, SDPA flash vermillion, cuDNN bluish green, flash-attn reddish purple, Triton sky blue) checked with the dataviz validator: lightness, chroma and normal-vision separation pass; the colour-blind separation of reddish purple against bluish green is 7.6 (deutan) and the contrast against the white surface of reddish purple (2.98) and sky blue (2.25) is below 3:1, so the identity of a series is carried by its marker and the legend, and every plotted value is in this file
+GPU: NVIDIA GeForce RTX 4090; 3 runs (run1, run2, run3); causal = 0; BH = tokens / S so that BH x S is the same for every S; the library chooses its own tile sizes (no tuning), the baselines are used as shipped (PyTorch SDPA backends, flash-attn 2.8.3, the Triton autotuner over 24 configurations that FKL has no counterpart of)

@@ -1,0 +1,21 @@
+sweeps of 120 batch sizes, three runs: results/rtx4090/e0-graph-structure/hf120/run1/hf_graph_structure_probe.csv, results/rtx4090/e0-graph-structure/hf120/run2/hf_graph_structure_probe.csv, results/rtx4090/e0-graph-structure/hf120/run3/hf_graph_structure_probe.csv
+child: spread between the three runs (largest / smallest - 1) over 120 batch sizes: median 0.38 %, 90th percentile 7.86 %, largest 14.45 % at 181 crops; batch sizes above 2 %: 28, above 5 %: 22
+flat_serial: spread between the three runs (largest / smallest - 1) over 120 batch sizes: median 0.02 %, 90th percentile 0.11 %, largest 2.01 % at 21 crops; batch sizes above 2 %: 1, above 5 %: 0
+
+child-node graph at the interleave batch sizes (mean GPU time of one launch, ms)
+crops | E0 child (median of runs) | sweep 1 | sweep 2 | sweep 3 | interleaved | sweep1/E0 | sweep2/E0 | sweep3/E0 | interleaved/E0
+101 | 0.1050 | 0.1049 | 0.1087 | 0.1154 | 0.1043 | 1.000 | 1.036 | 1.099 | 0.994
+301 | 0.3110 | 0.3079 | 0.3093 | 0.3077 | 0.3087 | 0.990 | 0.995 | 0.989 | 0.993
+661 | 0.6808 | 0.6762 | 0.7047 | 0.6750 | 0.6723 | 0.993 | 1.035 | 0.991 | 0.988
+831 | 0.8560 | 0.8500 | 0.8504 | 0.8505 | 0.8441 | 0.993 | 0.993 | 0.994 | 0.986
+1191 | 1.2205 | 1.2212 | 1.2195 | 1.2163 | 1.2107 | 1.001 | 0.999 | 0.997 | 0.992
+
+all structures at the interleave batch sizes: sweep 1 (no work in between) -> interleaved (ms, ratio interleaved / sweep 1)
+101: plain 0.1688 -> 0.1687 (0.999); child 0.1049 -> 0.1043 (0.994); child_chained 0.0858 -> 0.0858 (0.999); flat_serial 0.0857 -> 0.0857 (1.000); flat_parallel 0.1145 -> 0.1139 (0.995)
+301: plain 0.5027 -> 0.5000 (0.995); child 0.3079 -> 0.3087 (1.003); child_chained 0.2517 -> 0.2519 (1.001); flat_serial 0.2517 -> 0.2519 (1.000); flat_parallel 0.3064 -> 0.3090 (1.009)
+661: plain 1.0985 -> 1.0970 (0.999); child 0.6762 -> 0.6723 (0.994); child_chained 0.5502 -> 0.5504 (1.000); flat_serial 0.5504 -> 0.5504 (1.000); flat_parallel 0.6713 -> 0.6736 (1.004)
+831: plain 1.3803 -> 1.3751 (0.996); child 0.8500 -> 0.8441 (0.993); child_chained 0.6915 -> 0.6915 (1.000); flat_serial 0.6915 -> 0.6916 (1.000); flat_parallel 0.8454 -> 0.8460 (1.001)
+1191: plain 1.9758 -> 1.9663 (0.995); child 1.2212 -> 1.2107 (0.991); child_chained 0.9926 -> 0.9913 (0.999); flat_serial 0.9926 -> 0.9912 (0.999); flat_parallel 1.2091 -> 1.3132 (1.086)
+
+sweep 1 child / E0 child over 120 batch sizes: median 0.996, smallest 0.958 at 1 crops, largest 1.132 at 181 crops; batch sizes with ratio above 1.05: 9
+median of the three sweeps child / E0 child: median 0.995, smallest 0.955 at 1 crops, largest 1.075 at 171 crops; batch sizes above 1.05: 2

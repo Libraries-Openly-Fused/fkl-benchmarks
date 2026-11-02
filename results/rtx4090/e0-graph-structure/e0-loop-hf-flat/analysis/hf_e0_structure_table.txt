@@ -1,0 +1,20 @@
+120 batch sizes, 3 runs: results/rtx4090/e0-graph-structure/e0-loop-hf-flat/run1, results/rtx4090/e0-graph-structure/e0-loop-hf-flat/run2, results/rtx4090/e0-graph-structure/e0-loop-hf-flat/run3
+speedup = column Mean Speedup of the file of the structure (same loop as the fused kernel); median of the runs, in brackets the smallest and the largest run
+plain: maximum of the medians 59.70x at 821 crops (runs 58.79 to 59.99); median over the sweep 53.85x
+child: maximum of the medians 35.97x at 831 crops (runs 35.77 to 36.05); median over the sweep 32.65x
+flat: maximum of the medians 29.89x at 881 crops (runs 29.84 to 30.10); median over the sweep 28.36x
+fastest: maximum of the medians 29.89x at 881 crops (runs 29.84 to 30.10); median over the sweep 28.36x
+child, fused time of the plain-launch file of the run: maximum of the medians 36.98x at 821 crops (runs 36.71 to 37.03); median over the sweep 33.27x
+flat, fused time of the plain-launch file of the run: maximum of the medians 29.85x at 831 crops (runs 29.80 to 29.94); median over the sweep 26.93x
+
+crops | fused ms | plain | child nodes | one capture | fastest of each run (speedup) | child, fused of the plain file | one capture, fused of the plain file
+11 | 3.23 us | 6.29 (6.24 to 6.36) | 4.18 (4.18 to 4.26) | 3.61 (3.54 to 3.62) | flat/flat/flat: 3.61 (3.54 to 3.62) | 4.34 (4.27 to 4.40) | 3.61 (3.58 to 3.64)
+101 | 5.63 us | 31.56 (31.29 to 31.69) | 18.01 (17.98 to 18.09) | 16.07 (15.95 to 16.17) | flat/flat/flat: 16.07 (15.95 to 16.17) | 19.51 (19.38 to 19.56) | 16.61 (16.57 to 16.73)
+301 | 10.03 us | 50.15 (49.76 to 51.03) | 29.27 (29.09 to 29.46) | 25.11 (24.96 to 25.25) | flat/flat/flat: 25.11 (24.96 to 25.25) | 31.11 (31.01 to 31.30) | 25.22 (25.11 to 25.32)
+601 | 17.55 us | 57.82 (57.37 to 57.86) | 33.93 (33.91 to 33.95) | 28.59 (28.49 to 28.83) | flat/flat/flat: 28.59 (28.49 to 28.83) | 35.71 (35.65 to 35.74) | 28.93 (28.78 to 28.94)
+661 | 18.85 us | 58.43 (57.72 to 59.11) | 34.54 (34.52 to 34.80) | 29.27 (29.14 to 29.47) | flat/flat/flat: 29.27 (29.14 to 29.47) | 36.22 (35.96 to 36.45) | 29.34 (29.24 to 29.48)
+831 | 23.22 us | 59.43 (59.41 to 59.78) | 35.97 (35.77 to 36.05) | 29.78 (29.61 to 30.01) | flat/flat/flat: 29.78 (29.61 to 30.01) | 36.97 (36.94 to 37.08) | 29.85 (29.80 to 29.94)
+1191 | 38.81 us | 51.03 (50.32 to 51.32) | 31.58 (31.55 to 32.86) | 28.20 (28.15 to 28.51) | flat/flat/flat: 28.20 (28.15 to 28.51) | 31.61 (31.35 to 32.48) | 25.33 (25.27 to 25.50)
+fastest structure over the 3 runs x 120 batch sizes: child 2, flat 358
+fused kernel, largest over smallest of its three measurements in a run (worst run): median 6.1 %, largest 16.2 %
+E0 loop graph of one capture / probe flat_serial: median 0.999, range 0.995 to 1.082; E0 loop child graph / probe child: median 1.005, range 0.881 to 1.058

@@ -63,7 +63,28 @@ baseline with CUDA Graphs, and its kernels are in the OpenCV libraries, which th
   The NPP series (`e0-npp`, `e0-cpu-time-npp`, E4a NPP) are listed above for completeness; they will be re-run with the ctxfix configuration after FastNPP #45 is merged.
 - **Superseded:** `e0-graph-instantiate-preliminary` (first half of the graph-instantiate experiment, replaced by `e0-graph-instantiate`, same program).
 - **Host code.** The kernels are identical, so the device side of every time is the same. The host-side code of the library differs in `get_arg` (#417) and in the host run-time paths of `nearbyint` and `saturate_cast` (#414, #416), which no experiment executes on the host.
-  Whether the host-side time of the programs that report a host time (`e0-cpu-time-opencv`, `e0-cpu-time-npp`, `e0-wrapper-overhead`, `e0-data-type`) moved is measured separately (`host-check/`, added to this folder when done).
+  Whether the host-side time of the programs that report a host time (`e0-cpu-time-opencv`, `e0-cpu-time-npp`, `e0-wrapper-overhead`, `e0-data-type`) moved is measured in `host-check/` (next section); the NPP program is not part of it (it waits for FastNPP #45).
+
+## Host-side time: the frozen binary against the rebuild (`host-check/`)
+The kernels are identical, so the question left is whether the host time of the calls (the time the CPU spends enqueuing the work) moved with the library's host-side changes (`get_arg` #417, the host run-time paths of `nearbyint` and `saturate_cast`).
+The window of 2026-11-01 17:38 to 17:43 (second part of its script), 17:41 to 17:43, pinned to cores 0-3,16-19, no other job running (`processes-before.txt`), load every 20 s and SM clock every 100 ms:
+the three programs whose number is a host time, each run from the **frozen binary** (`build/e0-frozen-269d229/bin`: fkl-benchmarks 269d229 against FKL fb9ac3a, the binary that made the E0 numbers) and from the **rebuild** (fkl-benchmarks 269d229 against FKL c8fcbe8,
+`pin-transfer-work/src-269d229`), 10 rounds, alternating (odd rounds frozen first, even rounds rebuild first), 60 runs, all exit 0. Binaries and trees: `host-check/binary-sha256.txt`; one folder per run, `<program>_<frozen|rebuild>_r<round>`.
+`python scripts/host_check_summary.py results/rtx4090/e0-pin-transfer/host-check` (writes `host_check_summary.csv`): per round, the ratio rebuilt / frozen of the mean host time of the cvGS column row by row, then the median over the rows; the table gives the median, smallest and largest over the 10 rounds.
+The second column of each file is the baseline of that file: in `e0-cpu-time-opencv` and `e0-data-type` it is OpenCV-CUDA, whose calls do not depend on the library, so its ratio is the spread of the method (the control); in `e0-wrapper-overhead` it is the raw `fk::` API,
+which is FKL code too, so there it is a second measurement of the library, not a control.
+
+| program (experiment) | rows | cvGS column, rebuilt / frozen | second column (OpenCV-CUDA, or `fk::` API in the wrapper file), rebuilt / frozen |
+|---|---:|---|---|
+| `benchmark_CPU_OpenCV_vs_cvGS` (e0-cpu-time-opencv) | 16 batch sizes | 0.999 [0.987-1.009] | 0.999 [0.980-1.012] |
+| `benchmark_CPUandGPU_cvGS_vs_fk`, GPU file (e0-wrapper-overhead) | 1 | 0.997 [0.969-1.014] | 1.003 [0.974-1.025] |
+| the same, CPU-enqueue file | 1 | 1.005 [0.960-1.036] | 1.007 [0.968-1.025] |
+| `benchmark_data_type` (e0-data-type) | 26 types | 1.001 [0.994-1.005] | 1.001 [0.996-1.008] |
+
+All four medians are within 0.5 % of 1, and the spread over the 10 rounds (1 % to 4 %) is of the size of the spread of the second column, which in the two OpenCV files is the control: the host-side numbers of `e0-cpu-time-opencv`, `e0-wrapper-overhead` and `e0-data-type` made with the frozen binary hold at c8fcbe8 within the run-to-run spread, and they are kept as they are.
+The files in `../e0-cpu-time-opencv/` against the median of the 10 frozen runs, speedup per batch size: median 1.003, smallest 0.975 (batch 112), largest 1.060 (batch 122: 400.3x in the E0 file, 377.6x median of the 10 runs, range 368.7x to 387.7x), i.e. the E0 file is one sample of the same distribution.
+
+PCIe link (relevant for every host-bound number above, since each launch is submitted over the link): not logged during these runs; the link check under load made afterwards, `../pcie-check/` (generation 4, width 16 whenever the GPU leaves the idle state; pinned copies 25.6 and 24.8 GB/s), is the evidence that the link of the RTX 4090 runs at PCIe 4.0 x16 when it works.
 
 ## Reproduce
 `source scripts/env-cuda13.4.sh; scripts/pin_transfer.sh external/fkl <work dir> results/rtx4090/e0-pin-transfer <worktree of 38c4f32> <worktree of fb9ac3a>` (needs the frozen builds in `build/`), then `python scripts/pin_transfer_table.py results/rtx4090/e0-pin-transfer`.

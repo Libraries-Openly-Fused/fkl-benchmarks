@@ -1,0 +1,6 @@
+# E16 on the RTX 5050: material only
+
+Three complete runs (`run1`..`run3`) of the E16 harness (the same programs and settings as `../../rtx4090/e16-attention`, tokens 65,536), taken 2026-11-01 18:48 to 19:06 on the RTX 5050 (sm_120), with the smoke tests (`smoke/`, `smoke-py/`) and the precheck that came before.
+**These runs are not used in the paper.** Decision of 2026-11-01: the card sits in a chipset slot wired PCIe 3.0 x1 (nvidia-smi: link width current 1, maximum 16 when idle), so every kernel launch costs more on it, and any comparison between many individual kernels and one fused kernel (the fused/separate pairs of Q2) would be biased in favour of fusion. The paper keeps only the compiler and runtime
+capability facts for compute capability 12.0. The files stay here as material; no summary, figure or table is made from them for the paper. The programs, the CSV layout and the method are described in `../../rtx4090/e16-attention/README.md`. Device-side facts that do not depend on the link: all baselines (SDPA flash, cuDNN, efficient, flash-attn 2.8.3, Triton, the compiled dequantisation) ran on sm_120.
+The clock of the window was constant (about 2865 MHz, power 56 to 132 W), unlike the RTX 4090.

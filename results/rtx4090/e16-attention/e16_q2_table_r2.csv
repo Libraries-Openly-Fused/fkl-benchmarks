@@ -1,0 +1,37 @@
+gpu,head_dim,mask,seq,work,ratio_separate_over_fused_median,ratio_min,ratio_max,different_clocks,exceeds_spread,kernels_fused,kernels_separate,global_MB_fused_computed,global_MB_separate_computed,fused_ms,separate_ms,fused_tile,separate_tile,fused_regs,fused_local_B,separate_regs,separate_local_B
+NVIDIA GeForce RTX 4090,64,non-causal,512,epilogue o*a+b,1.1496,1.1382,1.1589,yes,yes,1,2,33.6,100.7,0.25407,0.29283,128x64x4,128x64x4,244,0,244,0
+NVIDIA GeForce RTX 4090,64,non-causal,2048,epilogue o*a+b,1.0335,1.0298,1.0439,,yes,1,2,33.6,100.7,0.88874,0.91527,128x64x4,128x64x4,244,0,244,0
+NVIDIA GeForce RTX 4090,64,non-causal,8192,epilogue o*a+b,1.0103,1.0102,1.0103,,yes,1,2,33.6,100.7,3.38364,3.41862,128x64x4,128x64x4,244,0,244,0
+NVIDIA GeForce RTX 4090,64,non-causal,512,"int8 K,V prologue",1.1794,1.1776,1.1802,,yes,1,2,35.7,169.9,0.31670,0.37336,128x32x4,128x64x4,196,0,244,0
+NVIDIA GeForce RTX 4090,64,non-causal,2048,"int8 K,V prologue",0.8778,0.8778,0.8782,,yes,1,2,35.7,169.9,1.13920,1.00007,128x32x4,128x64x4,196,0,244,0
+NVIDIA GeForce RTX 4090,64,non-causal,8192,"int8 K,V prologue",0.7845,0.7842,0.7848,,yes,1,2,35.7,169.9,4.46464,3.50385,128x32x4,128x64x4,196,0,244,0
+NVIDIA GeForce RTX 4090,64,non-causal,512,"fp8 e4m3 K,V prologue",1.1872,1.1872,1.1874,,yes,1,2,35.7,169.9,0.31557,0.37465,128x32x4,128x64x4,196,0,244,0
+NVIDIA GeForce RTX 4090,64,non-causal,2048,"fp8 e4m3 K,V prologue",0.8891,0.8888,0.8892,,yes,1,2,35.7,169.9,1.12521,1.00045,128x32x4,128x64x4,196,0,244,0
+NVIDIA GeForce RTX 4090,64,non-causal,8192,"fp8 e4m3 K,V prologue",0.7915,0.7913,0.7933,,yes,1,2,35.7,169.9,4.41774,3.50340,128x32x4,128x64x4,196,0,244,0
+NVIDIA GeForce RTX 4090,128,non-causal,512,epilogue o*a+b,1.2004,1.1973,1.2310,yes,yes,1,2,67.1,201.3,0.50993,0.61210,64x64x4,64x64x4,254,0,254,0
+NVIDIA GeForce RTX 4090,128,non-causal,2048,epilogue o*a+b,1.0585,1.0470,1.0681,yes,yes,1,2,67.1,201.3,1.82961,1.92065,64x64x4,64x64x4,254,0,254,0
+NVIDIA GeForce RTX 4090,128,non-causal,8192,epilogue o*a+b,1.0180,1.0130,1.0226,,yes,1,2,67.1,201.3,6.96958,7.09769,64x64x4,64x64x4,254,0,254,0
+NVIDIA GeForce RTX 4090,128,non-causal,512,"int8 K,V prologue",1.1020,1.0912,1.1029,yes,yes,1,2,69.2,337.6,0.67242,0.73532,64x32x4,64x64x4,174,0,254,0
+NVIDIA GeForce RTX 4090,128,non-causal,2048,"int8 K,V prologue",0.8665,0.8595,0.8791,yes,yes,1,2,69.2,337.6,2.36353,2.04790,64x32x4,64x64x4,174,0,254,0
+NVIDIA GeForce RTX 4090,128,non-causal,8192,"int8 K,V prologue",0.8020,0.7940,0.8034,yes,yes,1,2,69.2,337.6,9.05518,7.26903,64x32x4,64x64x4,174,0,254,0
+NVIDIA GeForce RTX 4090,128,non-causal,512,"fp8 e4m3 K,V prologue",1.1257,1.1118,1.1267,yes,yes,1,2,69.2,337.6,0.66053,0.74023,64x32x4,64x64x4,174,0,254,0
+NVIDIA GeForce RTX 4090,128,non-causal,2048,"fp8 e4m3 K,V prologue",0.8620,0.8534,0.8683,yes,yes,1,2,69.2,337.6,2.38228,2.04387,64x32x4,64x64x4,174,0,254,0
+NVIDIA GeForce RTX 4090,128,non-causal,8192,"fp8 e4m3 K,V prologue",0.7803,0.7781,0.7877,yes,yes,1,2,69.2,337.6,9.22858,7.22499,64x32x4,64x64x4,174,0,254,0
+NVIDIA GeForce RTX 4090,64,causal,512,epilogue o*a+b,1.2652,1.2428,1.2744,yes,yes,1,2,33.6,100.7,0.16424,0.20626,64x64x4,64x64x4,158,0,158,0
+NVIDIA GeForce RTX 4090,64,causal,2048,epilogue o*a+b,1.0748,1.0387,1.0781,yes,yes,1,2,33.6,100.7,0.52488,0.56090,64x128x4,64x128x4,246,0,246,0
+NVIDIA GeForce RTX 4090,64,causal,8192,epilogue o*a+b,1.0210,1.0209,1.0214,,yes,1,2,33.6,100.7,1.90508,1.94512,128x64x4,128x64x4,244,0,244,0
+NVIDIA GeForce RTX 4090,64,causal,512,"int8 K,V prologue",1.2694,1.2692,1.2708,yes,yes,1,2,35.7,169.9,0.22259,0.28255,128x32x4,64x64x4,196,0,158,0
+NVIDIA GeForce RTX 4090,64,causal,2048,"int8 K,V prologue",0.9444,0.9312,0.9469,yes,yes,1,2,35.7,169.9,0.66884,0.63050,128x32x4,64x128x4,196,0,246,0
+NVIDIA GeForce RTX 4090,64,causal,8192,"int8 K,V prologue",0.8224,0.8217,0.8235,,yes,1,2,35.7,169.9,2.46465,2.02865,128x32x4,128x64x4,196,0,244,0
+NVIDIA GeForce RTX 4090,64,causal,512,"fp8 e4m3 K,V prologue",1.2817,1.2812,1.2839,,yes,1,2,35.7,169.9,0.22085,0.28317,128x32x4,64x64x4,196,0,158,0
+NVIDIA GeForce RTX 4090,64,causal,2048,"fp8 e4m3 K,V prologue",0.9456,0.9440,0.9461,yes,yes,1,2,35.7,169.9,0.65837,0.62284,128x32x4,64x128x4,196,0,246,0
+NVIDIA GeForce RTX 4090,64,causal,8192,"fp8 e4m3 K,V prologue",0.8307,0.8307,0.8318,,yes,1,2,35.7,169.9,2.43448,2.02506,128x32x4,128x64x4,196,0,244,0
+NVIDIA GeForce RTX 4090,128,causal,512,epilogue o*a+b,1.3874,1.3791,1.3916,yes,yes,1,2,67.1,201.3,0.32495,0.45083,64x64x4,64x64x4,254,0,254,0
+NVIDIA GeForce RTX 4090,128,causal,2048,epilogue o*a+b,1.1105,1.0812,1.1144,yes,yes,1,2,67.1,201.3,1.01000,1.11411,64x64x4,64x64x4,254,0,254,0
+NVIDIA GeForce RTX 4090,128,causal,8192,epilogue o*a+b,1.0314,1.0306,1.0371,yes,yes,1,2,67.1,201.3,3.67565,3.79867,64x64x4,64x64x4,254,0,254,0
+NVIDIA GeForce RTX 4090,128,causal,512,"int8 K,V prologue",1.3714,1.3648,1.3726,yes,yes,1,2,69.2,337.6,0.41916,0.57484,64x32x4,64x64x4,174,0,254,0
+NVIDIA GeForce RTX 4090,128,causal,2048,"int8 K,V prologue",0.9455,0.9452,0.9498,yes,yes,1,2,69.2,337.6,1.29824,1.22754,64x32x4,64x64x4,174,0,254,0
+NVIDIA GeForce RTX 4090,128,causal,8192,"int8 K,V prologue",0.8489,0.8390,0.8507,,yes,1,2,69.2,337.6,4.65137,3.92721,64x32x4,64x64x4,174,0,254,0
+NVIDIA GeForce RTX 4090,128,causal,512,"fp8 e4m3 K,V prologue",1.3820,1.3815,1.3824,yes,yes,1,2,69.2,337.6,0.41522,0.57390,64x32x4,64x64x4,174,0,254,0
+NVIDIA GeForce RTX 4090,128,causal,2048,"fp8 e4m3 K,V prologue",0.9619,0.9468,0.9621,,yes,1,2,69.2,337.6,1.29382,1.24440,64x32x4,64x64x4,174,0,254,0
+NVIDIA GeForce RTX 4090,128,causal,8192,"fp8 e4m3 K,V prologue",0.8145,0.8135,0.8228,,yes,1,2,69.2,337.6,4.79150,3.91471,64x32x4,64x64x4,174,0,254,0

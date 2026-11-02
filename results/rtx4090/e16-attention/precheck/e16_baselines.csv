@@ -1,0 +1,26 @@
+# experiment: E16 forward attention baselines (PyTorch SDPA backends, flash-attn, Triton)
+# date: 2026-11-01T18:25:48
+# gpu: NVIDIA GeForce RTX 4090, cc 8.9, 128 SMs, 24106 MiB
+# torch: 2.14.1+cu130, cuda 13.0, cudnn 92400
+# flash-attn: 2.8.3.post2
+# triton: 3.8.0; TRITON_PTXAS_PATH=/home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/ptxas
+# nvidia-smi (driver, sm clock now, max sm clock, power limit): 610.43.02, 2685 MHz, 3105 MHz, 450.00 W
+# probe flash: ok
+# probe cudnn: ok
+# probe efficient: ok
+# probe math: ok
+# probe flash_attn: ok
+# probe triton: ok
+# probe dequant_compiled_flash: ok
+# note: dequant_flash, dequant_compiled_flash and epilogue_flash are compositions of off-the-shelf PyTorch pieces that a user has today (elementwise kernels around the flash kernel); they are not a hand-fused quantised-cache attention kernel such as the ones in serving systems, and not the best that could be written for these two cases
+# input: bf16 normal(0, 1), seeded; layout (BH, S, D) contiguous; time = per call from blocks of back-to-back calls between two CUDA events, single = one synchronised call; warm-up before; fp32 accumulation inside the kernels
+gpu,variant,d,seq,bh,causal,position,blocks,calls_per_block,t_start_ms,t_end_ms,time_ms_median,time_ms_min,time_ms_max,single_ms_median,tflops_median,max_abs_err,mean_abs_err,kernels,schedule,block_q,block_kv,num_warps,split_kv,kernel_facts,note
+NVIDIA GeForce RTX 4090,cudnn,64,512,512,0,1,2,8,1793553949021,1793553949025,0.25793,0.25756,0.25830,0.28256,133.211,0.00101107,0.000119807,1,,,,,,cudnn_generated_fort_native_sdpa_sm80_flash_fprop_wmma_f16_knob_1_128x,
+NVIDIA GeForce RTX 4090,efficient,64,512,512,0,2,2,6,1793553949070,1793553949073,0.30902,0.30842,0.30962,0.33714,111.190,0.00101107,0.000119807,3,,,,,,void at::native::vectorized_elementwise_kernel<2; at::native::FillFunc ; void at::native::vectorized_elementwise_kernel<2; at::native::FillFunc ; fmha_cutlassF_bf16_aligned_64x64_rf_sm80(PyTorchMemEffAttention::Atten,
+NVIDIA GeForce RTX 4090,math,64,512,512,0,3,2,1,1793553949127,1793553949140,6.66726,6.66118,6.67334,6.37728,5.153,0.000962973,7.95558e-05,14,,,,,,void at::native::unrolled_elementwise_kernel<at::native::direct_copy_k ; void at::native::unrolled_elementwise_kernel<at::native::direct_copy_k ; void at::native::unrolled_elementwise_kernel<at::native::direct_copy_k ; void at::native::vectorized_elementwise_kernel<4; at::native::AUnaryFu ; void at::native::vectorized_elementwise_kernel<4; at::native::AUnaryFu ; ampere_sgemm_128x128_tn ; void (anonymous namespace)::softmax_warp_forward<float; float; float;  ; void at::native::vectorized_elementwise_kernel<4; at::native::(anonymo ; void at::native::reduce_kernel<512; 1; at::native::ReduceOp<bool; at:: ; void at::native::vectorized_elementwise_kernel<4; at::native::FillFunc ; void at::native::elementwise_kernel<128; 2; at::native::gpu_kernel_imp ; void at::native::vectorized_elementwise_kernel<4; at::native::bfloat16 ; ampere_sgemm_128x128_nn ; void at::native::vectorized_elementwise_kernel<4; at::native::bfloat16,
+NVIDIA GeForce RTX 4090,flash_attn,64,512,512,0,4,2,8,1793553949185,1793553949189,0.24371,0.24360,0.24382,0.28602,140.985,0.0011805,0.00012133,1,,,,,,void flash::flash_fwd_kernel<Flash_fwd_kernel_traits<64; 128; 128; 4; ,
+NVIDIA GeForce RTX 4090,triton,64,512,512,0,5,2,8,1793553952009,1793553952013,0.23733,0.23704,0.23762,0.27109,144.777,0.00101107,0.000119807,1,,,,,,_attn_fwd,
+NVIDIA GeForce RTX 4090,dequant_compiled_flash,64,512,512,0,6,2,6,1793553952069,1793553952073,0.32855,0.32839,0.32872,0.36603,104.578,0.00350478,0.000274341,3,,,,,,triton_poi_fused_mul_unsqueeze_0 ; triton_poi_fused_mul_unsqueeze_0 ; void pytorch_flash::flash_fwd_kernel<Flash_fwd_kernel_traits<64; 128; ,
+NVIDIA GeForce RTX 4090,dequant_flash,64,512,512,0,7,2,6,1793553952098,1793553952103,0.36609,0.36595,0.36622,0.38094,93.857,0.00350478,0.000274341,3,,,,,,void at::native::elementwise_kernel<128; 4; at::native::gpu_kernel_imp ; void at::native::elementwise_kernel<128; 4; at::native::gpu_kernel_imp ; void pytorch_flash::flash_fwd_kernel<Flash_fwd_kernel_traits<64; 128; ,
+NVIDIA GeForce RTX 4090,epilogue_flash,64,512,512,0,8,2,7,1793553952142,1793553952146,0.29153,0.29135,0.29171,0.32072,117.860,0.0027529,0.000761411,2,,,,,,void pytorch_flash::flash_fwd_kernel<Flash_fwd_kernel_traits<64; 128;  ; void at::native::elementwise_kernel<128; 4; at::native::gpu_kernel_imp,
+NVIDIA GeForce RTX 4090,flash,64,512,512,0,9,2,8,1793553952172,1793553952175,0.23690,0.23665,0.23714,0.26304,145.041,0.0011805,0.000121333,1,,,,,,void pytorch_flash::flash_fwd_kernel<Flash_fwd_kernel_traits<64; 128; ,

@@ -1,0 +1,21 @@
+measured points: speedup = mean GPU time of the structure / cvGS MeanTime of the E0 run
+ops | cvGS ms | plain | child | child_chained | flat_serial | flat_parallel | E0 child (OpenCV MeanTime) | probe child / E0 child
+2 | 0.00486 | 0.2865 ms (59x) | 0.0546 ms (11x) | 0.1537 ms (32x) | 0.1538 ms (32x) | 0.0549 ms (11x) | 0.0560 ms (12x) | 0.976
+102 | 0.00513 | 10.1572 ms (1,980x) | 1.2457 ms (243x) | 5.2405 ms (1,022x) | 5.2401 ms (1,022x) | 1.2479 ms (243x) | 1.2507 ms (244x) | 0.996
+502 | 0.00710 | 49.3454 ms (6,953x) | 6.0692 ms (855x) | 25.6563 ms (3,615x) | 25.6632 ms (3,616x) | 6.0738 ms (856x) | 6.0540 ms (853x) | 1.003
+1002 | 0.00967 | 98.3972 ms (10,173x) | 12.1103 ms (1,252x) | 51.1414 ms (5,287x) | 51.1519 ms (5,288x) | 12.1122 ms (1,252x) | 12.0745 ms (1,248x) | 1.003
+2002 | 0.01491 | 196.4365 ms (13,171x) | 25.6001 ms (1,716x) | 102.3292 ms (6,861x) | 102.1047 ms (6,846x) | 25.6895 ms (1,722x) | 25.5202 ms (1,711x) | 1.003
+2502 | 0.01761 | 245.7262 ms (13,955x) | 32.2666 ms (1,832x) | 127.6518 ms (7,249x) | 127.5952 ms (7,246x) | 32.1697 ms (1,827x) | 32.0965 ms (1,823x) | 1.005
+5002 | 0.02953 | 490.4393 ms (16,608x) | 64.3387 ms (2,179x) | 254.2899 ms (8,611x) | 254.3245 ms (8,612x) | 64.3402 ms (2,179x) | 64.3310 ms (2,178x) | 1.000
+10002 | 0.05374 | 979.7535 ms (18,233x) | 128.6313 ms (2,394x) | 508.9112 ms (9,471x) | 508.6221 ms (9,465x) | 128.6330 ms (2,394x) | 128.7680 ms (2,396x) | 0.999
+17702 | 0.08927 | 1734.6948 ms (19,432x) | 227.6265 ms (2,550x) | 900.8334 ms (10,091x) | 900.6608 ms (10,089x) | 227.6467 ms (2,550x) | 227.9840 ms (2,554x) | 0.998
+19902 | 0.10083 | 1950.4153 ms (19,343x) | 255.9271 ms (2,538x) | 1012.6158 ms (10,042x) | 1012.4710 ms (10,041x) | 255.9493 ms (2,538x) | 256.2850 ms (2,542x) | 0.999
+
+whole sweep (points of the E0 run from 2502 operations), straight line fitted to the measured points of 502 operations or more
+plain: time = 0.25783 ms + 97.9791 us x ops (largest residual 0.2 % of the measured time); fitted plateau 18,121x, fitted maximum 19,432x at 17702 operations
+child: time = -0.28568 ms + 12.8780 us x ops (largest residual 4.2 % of the measured time); fitted plateau 2,375x, fitted maximum 2,551x at 17702 operations
+child_chained: time = 0.19792 ms + 50.8708 us x ops (largest residual 0.3 % of the measured time); fitted plateau 9,410x, fitted maximum 10,090x at 17702 operations
+flat_serial: time = 0.14815 ms + 50.8634 us x ops (largest residual 0.1 % of the measured time); fitted plateau 9,408x, fitted maximum 10,088x at 17702 operations
+flat_parallel: time = -0.28780 ms + 12.8790 us x ops (largest residual 4.2 % of the measured time); fitted plateau 2,375x, fitted maximum 2,551x at 17702 operations
+E0 run, child-node graph, ratio of means: plateau 2,380x, maximum 2,554x at 17702 operations
+E0 run, child-node graph, mean of ratios (the column Mean Speedup): plateau 2,382x, maximum 2,554x at 17702 operations

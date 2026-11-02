@@ -1,0 +1,4 @@
+Corrected series of e0-vf-mul-add (scripts/vf_replace_points.py).
+Replaced: 16 points of the plain pass (flagged irregular by the smoothness test, re-measured on a quiet machine): 11002, 11102, 11202, 11402, 11502, 11602, 11802, 11902, 12002, 12102, 12202, 12302, 12402, 12502, 12602, 12702
+Checked, not replaced: 13 plain-pass points re-measured and not flagged; 10 agree within 2.0 % in the OpenCV time, the cvGS time and the speedup; DISAGREE: 10002 (-3.6 % in the speedup), 12802 (+3.3 % in the speedup), 16602 (-2.5 % in the speedup)
+The CUDA Graphs pass is unchanged (no irregular point); checks.csv has its re-measured points too.

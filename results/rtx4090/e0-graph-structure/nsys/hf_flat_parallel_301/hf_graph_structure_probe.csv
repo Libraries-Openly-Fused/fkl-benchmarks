@@ -1,0 +1,18 @@
+# experiment: E0 CUDA Graphs: structure of the baseline of the HF experiment (crops of 60 x 120 of a 3840 x 2160 image, one kernel per crop)
+# notes: plain = the launches on one stream; child = one child graph node per crop, independent (the experiment's graph); child_chained = the child nodes one after the other; flat_serial = one stream capture of all the launches; flat_parallel = one capture with a fork and a join over one stream per crop. submit = host time of the launch call(s); gpu = events around the launch; total = host time from before the launch to after cudaStreamSynchronize; first_launch_ms = GPU time of the first launch (uploads the graph).
+# repo: fkl-benchmarks c588536b1b3c8180fb845fa8ef4bc61a161bf851-dirty
+# fkl: c8fcbe816d629377886cbdd19c83527f37ccfc04
+# cvGPUSpeedup: 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c
+# FastNPP: 9dfc4f430225e40ded392bfa777b2e724367c5c1
+# nvcc: 13.4.92 (/home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/nvcc), architectures 89, -fmad on, -lineinfo on
+# hip: none (none), architectures none
+# host compiler: GNU 15.2.0, Release, -march=native, -ftemplate-depth=1000
+# opencv: 4.14.0
+# cpu: AMD Ryzen 9 5950X 16-Core Processor
+# gpu: NVIDIA GeForce RTX 4090, cc 8.9, 128 SMs, 24106 MiB, PCI 0000:09:00.0
+# cuda driver api: 13.3, cuda runtime: 13.4
+# nvidia-smi driver: 610.43.02
+# clocks (sm, mem, max sm, max mem, MHz): 210 MHz, 405 MHz, 3105 MHz, 10501 MHz
+# power limit, temperature at start: 450.00 W, 35
+crops,structure,kernel_nodes,top_level_nodes,capture_s,instantiate_s,first_launch_ms,warmup_s,warmup_steady,reps,submit_us_median,submit_us_min,submit_us_max,gpu_ms_median,gpu_ms_mean,gpu_ms_min,gpu_ms_max,total_ms_median,total_ms_mean,total_ms_min,total_ms_max,bit_exact_vs_plain
+301,flat_parallel,301,301,0.001277807,0.001457725,0.619711995,0.500701255,1,20,525.504,517.895,536.775,0.527711987,0.527916801,0.519967973,0.538911998,0.530635,0.5310411,0.523115,0.541925,1

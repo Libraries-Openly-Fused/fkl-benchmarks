@@ -1,0 +1,42 @@
+e16_q2_table_r2.csv, e16_q2_table_r2.txt: the Q2 table of the paper for the NVIDIA GeForce RTX 4090, drawn by scripts/e16_q2_table.py from results/rtx4090/e16-attention (3 complete runs; e16_summary_fusion.csv holds every configuration).
+LAYOUT FOR ONE COLUMN (what fits): the three sequence lengths as columns and the two head sizes as row blocks, five rows per block (epilogue ratio, int8 ratio, kernels per call, K,V megabytes; the fp8 ratio stays in the CSV and here). Six rows (head size x sequence length) with one column per quantity
+do not fit one column once the run-to-run ranges are printed (a ratio with its range is about 19 characters); the layout below does, at about 6.5 pt, with the ranges in the cells.
+Ratios are separate time / fused time (> 1: the fused form is faster), median over the 3 runs of the run median with [smallest-largest of the run medians]; '*' = the SM clocks of the two forms differ by more than 2 % in some run. All numbers GPU-bound.
+KERNELS per call: epilogue 1 fused / 2 separate; K,V prologue 1 fused / 2 separate. The PyTorch compositions have 3 kernels (int8: two elementwise + flash) and 2 kernels (epilogue: flash + addcmul); torch.compile'd dequantisation also 3 (two Triton kernels, one for K and one for V, then flash).
+K,V GLOBAL MB (COMPUTED from the sizes, NOT measured; compulsory traffic, every element counted once, K and V together, BH x S = 262,144 tokens at every S): fused int8 or e4m3 read once with fp32 per-token scales; unfused = the dequantisation kernel reads them, writes bf16, and the attention reads bf16.
+What differs between the two forms: for the epilogue pair only the epilogue (same attention kernel and schedule). For the prologue pairs the fused kernel copies the raw quantised bytes with cp.async and dequantises them from shared memory to shared memory (tile BLOCK_Q x 32), the unfused form runs a dequantisation kernel and then the bf16 cp.async kernel (tile BLOCK_Q x 64 or 128):
+the two attention kernels differ in schedule details and tile size as well as in fusion. No cause of the prologue result is stated; registers (174 against 254 at D = 128, 196 against 244 or 158 at D = 64), local bytes (0) and blocks per SM do not distinguish the two kernels.
+Power: the RTX 4090 reaches its 450 W limit in the long runs; the median SM clock of the FKL raw kernel is 2588 MHz against 2640 to 2655 MHz for cuDNN, flash-attn and Triton in the Q1 rows (see e16_core_r2.txt); marks '*' show where the two forms of a pair differ by more than 2 %.
+
+D = 64, non-causal
+                                                   S = 512                S = 2048                S = 8192
+  epilogue o*a+b (separate / fused)       1.15 [1.14-1.16]*        1.03 [1.03-1.04]        1.01 [1.01-1.01]
+  int8 K,V (separate / fused)             1.18 [1.18-1.18]        0.88 [0.88-0.88]        0.78 [0.78-0.78]
+  fp8 K,V (separate / fused)              1.19 [1.19-1.19]        0.89 [0.89-0.89]        0.79 [0.79-0.79]
+  kernels per call (fused / sep.) epilogue 1 / 2; K,V prologue 1 / 2 (at every S)
+  K,V global MB (fused / unfused) 36 / 170  (computed, not measured; the same at every S)
+
+D = 128, non-causal
+                                                   S = 512                S = 2048                S = 8192
+  epilogue o*a+b (separate / fused)       1.20 [1.20-1.23]*       1.06 [1.05-1.07]*        1.02 [1.01-1.02]
+  int8 K,V (separate / fused)            1.10 [1.09-1.10]*       0.87 [0.86-0.88]*       0.80 [0.79-0.80]*
+  fp8 K,V (separate / fused)             1.13 [1.11-1.13]*       0.86 [0.85-0.87]*       0.78 [0.78-0.79]*
+  kernels per call (fused / sep.) epilogue 1 / 2; K,V prologue 1 / 2 (at every S)
+  K,V global MB (fused / unfused) 69 / 338  (computed, not measured; the same at every S)
+
+D = 64, causal
+                                                   S = 512                S = 2048                S = 8192
+  epilogue o*a+b (separate / fused)       1.27 [1.24-1.27]*       1.07 [1.04-1.08]*        1.02 [1.02-1.02]
+  int8 K,V (separate / fused)            1.27 [1.27-1.27]*       0.94 [0.93-0.95]*        0.82 [0.82-0.82]
+  fp8 K,V (separate / fused)              1.28 [1.28-1.28]       0.95 [0.94-0.95]*        0.83 [0.83-0.83]
+  kernels per call (fused / sep.) epilogue 1 / 2; K,V prologue 1 / 2 (at every S)
+  K,V global MB (fused / unfused) 36 / 170  (computed, not measured; the same at every S)
+
+D = 128, causal
+                                                   S = 512                S = 2048                S = 8192
+  epilogue o*a+b (separate / fused)       1.39 [1.38-1.39]*       1.11 [1.08-1.11]*       1.03 [1.03-1.04]*
+  int8 K,V (separate / fused)            1.37 [1.36-1.37]*       0.95 [0.95-0.95]*        0.85 [0.84-0.85]
+  fp8 K,V (separate / fused)             1.38 [1.38-1.38]*        0.96 [0.95-0.96]        0.81 [0.81-0.82]
+  kernels per call (fused / sep.) epilogue 1 / 2; K,V prologue 1 / 2 (at every S)
+  K,V global MB (fused / unfused) 69 / 338  (computed, not measured; the same at every S)
+

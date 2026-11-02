@@ -1,0 +1,9 @@
+batch sizes: 17 (the fused time is the median of 3 E0 runs)
+child graph of the experiment (probe): maximum 38.66x at 501 crops; median over the sweep 33.60x
+flat serial graph: maximum 29.16x at 831 crops; median over the sweep 25.90x
+fastest structure: maximum 29.16x at 831 crops; median over the sweep 25.90x
+plain launches: maximum 58.94x at 831 crops; median over the sweep 52.25x
+661 crops: fused 19.57 us; child 0.7382 ms (37.72x), flat_serial 0.5502 ms (28.11x), plain 1.1098 ms (56.71x); fastest flat_serial (28.11x)
+831 crops: fused 23.71 us; child 0.8491 ms (35.82x), flat_serial 0.6914 ms (29.16x), plain 1.3974 ms (58.94x); fastest child_chained (29.16x)
+1191 crops: fused 38.84 us; child 1.2167 ms (31.33x), flat_serial 0.9906 ms (25.51x), plain 1.9993 ms (51.48x); fastest flat_serial (25.51x)
+check of the probe against the experiment: the probe's child graph over the E0 child graph differs by at most 17.2 % over the sweep

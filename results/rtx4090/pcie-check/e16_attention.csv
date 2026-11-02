@@ -1,0 +1,18 @@
+# experiment: E16 forward attention with FKL: the tensor-core DPP and the SIMT DPP against their unfused alternatives
+# notes: bf16 Q, K, V (BH, S, D) contiguous, normal(0, 1), fp32 accumulation, bf16 output; time_ms_* = per call, from `blocks` blocks of `calls_per_block` calls enqueued back to back between two CUDA events (the GPU time of the call, no host gap between calls; the block lasts about E16_BLOCK_MS), after a warm-up of at least E16_WARMUP_MS of GPU time; position = place of the variant in the order of its configuration (ORDER: groups rotated by configuration + E16_ROTATE, pair members swapped on odd shifts, SIMT last); t_start_ms and t_end_ms = wall clock of the blocks, for the join with the SM clock sampler; single_ms_median = median of `blocks` single calls, each between two events and synchronised (launch latency included); TFLOP/s = 4 BH S^2 D (halved for causal) / time_ms_median; error against an fp32 attention of the same (dequantised) inputs for the first and the last head; kernels and per-kernel facts from capturing one call into a CUDA graph; the library chooses the tiles (no tuning); mma_epilogue_*: o * 1.25 + 0.5; SCHEDULES (columns schedule, block_q, block_kv, num_warps, split_kv: from the template arguments of the attention kernel; the LDGSTS count of every instantiation is in e16_sass_counts.csv): mma_raw, mma_epilogue_* and the bf16 buffers of the *_unfused variants run the library's bf16 cp.async schedule (16-byte cp.async copies of K and V tiles); the fused int8 and fp8 variants run the library's quantised schedule: the raw quantised bytes are copied with cp.async (8 bytes) into a staging area of shared memory and dequantised shared memory to shared memory inside the kernel, the per-token scales are read from global memory; each path has its own tile sizes (the library's choice). A fused-against-unfused prologue pair therefore compares an in-kernel shared-memory dequantisation pass (half the global bytes for K and V) with a separate dequantisation kernel that writes bf16 to global memory, and the two kernels differ in schedule details and tile sizes as well as in fusion: it is not a pure fusion effect. The epilogue pair runs the same kernel and schedule and differs only in the epilogue
+# repo: fkl-benchmarks c588536b1b3c8180fb845fa8ef4bc61a161bf851-dirty
+# fkl: c8fcbe816d629377886cbdd19c83527f37ccfc04
+# cvGPUSpeedup: 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c
+# FastNPP: 9dfc4f430225e40ded392bfa777b2e724367c5c1
+# nvcc: 13.4.92 (/home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/nvcc), architectures 89, -fmad on, -lineinfo on
+# hip: none (none), architectures none
+# host compiler: GNU 15.2.0, Release, -march=native, -ftemplate-depth=1000
+# opencv: 4.14.0
+# cpu: AMD Ryzen 9 5950X 16-Core Processor
+# gpu: NVIDIA GeForce RTX 4090, cc 8.9, 128 SMs, 24106 MiB, PCI 0000:09:00.0
+# cuda driver api: 13.3, cuda runtime: 13.4
+# nvidia-smi driver: 610.43.02
+# clocks (sm, mem, max sm, max mem, MHz): 210 MHz, 405 MHz, 3105 MHz, 10501 MHz
+# power limit, temperature at start: 450.00 W, 43
+gpu,variant,d,seq,bh,causal,position,blocks,calls_per_block,t_start_ms,t_end_ms,time_ms_median,time_ms_min,time_ms_max,single_ms_median,tflops_median,max_abs_err,mean_abs_err,kernels,schedule,block_q,block_kv,num_warps,split_kv,kernel_facts,note
+NVIDIA GeForce RTX 4090,mma_raw,128,4096,64,0,1,100,15,1793557117957,1793557123265,3.52945506,3.4648641,3.63151372,3.49113607,155.762237,0.00106149912,0.000106157341,1,cp.async bf16,64,64,4,false,_ZN2fk33launchFlashAttentionMmaDPP_KernelI13__nv_bfloat16Li128ENS_25Re... grid 64x64x1 block 128 regs 254 local_B 0 static_smem_B 0 dynamic_smem_B 49152 blocks_per_SM 2 occupancy 16.6667%,

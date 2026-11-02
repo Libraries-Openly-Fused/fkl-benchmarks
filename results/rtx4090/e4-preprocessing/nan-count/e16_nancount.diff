@@ -1,0 +1,23 @@
+--- e16_attention.cu
++++ e16_attention_nancount.cu
+@@ -77,0 +78,9 @@
++// NaN REVIEW (a local copy for the NaN count, not committed): counts the NaN, Inf and zero values of a bf16 array
++__global__ void countNonFiniteBf16(const bf16* x, const size_t n, unsigned long long* counts) {
++    const size_t i = blockIdx.x * static_cast<size_t>(blockDim.x) + threadIdx.x;
++    if (i >= n) { return; }
++    const unsigned short u = __bfloat16_as_ushort(x[i]);
++    if (((u >> 7) & 0xFF) == 0xFF) { atomicAdd(&counts[(u & 0x7F) != 0 ? 0 : 1], 1ULL); }
++    else if ((u & 0x7FFF) == 0) { atomicAdd(&counts[2], 1ULL); }
++}
++
+@@ -535,0 +545,10 @@
++                {   // NaN REVIEW (local copy): every one of the BH x S x D output values, not only the two checked heads
++                    unsigned long long* dc = nullptr;
++                    E16_CUDA(cudaMalloc(&dc, 3 * sizeof(unsigned long long)));
++                    E16_CUDA(cudaMemset(dc, 0, 3 * sizeof(unsigned long long)));
++                    countNonFiniteBf16<<<(n + 255) / 256, 256>>>(o.p, n, dc);
++                    unsigned long long h[3] = {0, 0, 0};
++                    E16_CUDA(cudaMemcpy(h, dc, sizeof(h), cudaMemcpyDeviceToHost));
++                    E16_CUDA(cudaFree(dc));
++                    std::cout << "NANCOUNT E16 " << variant.name << " D=" << D << " S=" << pt.seq << " BH=" << pt.bh << " causal=" << (pt.causal ? 1 : 0) << ": " << h[0] << " NaN, " << h[1] << " Inf, " << h[2] << " zeros of " << n << " output values" << std::endl;
++                }
