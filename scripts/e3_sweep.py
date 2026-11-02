@@ -27,6 +27,7 @@ Rows: scripts/e3_sweep.py writes e3_compile.csv with one row per compile (repeti
 import argparse
 import os
 import re
+import shutil
 import signal
 import subprocess
 import sys
@@ -111,6 +112,7 @@ def main():
     ap.add_argument("--csv", default="e3_compile.csv", help="name of the CSV in --out")
     ap.add_argument("--reps", type=int, default=3, help="repetitions of each compile")
     ap.add_argument("--rep-threshold", type=float, default=30.0, help="a compile slower than this many seconds is not repeated (default 30)")
+    ap.add_argument("--keep-time-files", action="store_true", help="copy the nvcc --time file of every compile to <out>/nvcc-time/<tree>_<variant>_<n>_rep<k>.time.csv (it is overwritten by the next compile otherwise)")
     args = ap.parse_args()
     os.makedirs(args.out, exist_ok=True)
     os.makedirs(args.work, exist_ok=True)
@@ -143,6 +145,9 @@ def main():
                     if os.path.exists(timefile):
                         os.remove(timefile)      # nvcc --time appends to an existing file
                     status, wall, user, sys_, rss, err = run_measured(cmd, args.core, args.timeout)
+                    if args.keep_time_files and os.path.exists(timefile):
+                        os.makedirs(os.path.join(args.out, "nvcc-time"), exist_ok=True)
+                        shutil.copyfile(timefile, os.path.join(args.out, "nvcc-time", f"{label}_rep{rep}.time.csv"))
                     row = dict.fromkeys(cols, "")
                     row.update(tree=args.tree, variant=variant, n=n, rep=rep, status=status, cuda_wall_s=f"{wall:.3f}", cuda_user_s=f"{user:.3f}", cuda_sys_s=f"{sys_:.3f}",
                                cuda_peak_rss_mb=f"{rss:.0f}")

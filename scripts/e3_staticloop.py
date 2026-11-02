@@ -17,12 +17,14 @@
   python scripts/e3_staticloop.py --build build/local-rtx4090 --instance mul_add1 --core 10 --out results/rtx4090/e3-compile
 
 Compiles generated/<instance>/200_experiments/kernel<k>.cu (k = 1 .. 200, operations = 100 * (k - 1) + 2) with the compile line CMake used for the benchmark
-(flags.make of the target, --threads 1 instead of --threads 0), pinned to ONE core, repeated three times when the first compile takes under 30 s, and records
-what scripts/e3_sweep.py records. Compile only: nothing is executed (the GPU is not touched).
+(flags.make of the target, --threads 1 instead of --threads 0), pinned to ONE core, repeated --reps (3) times unless a compile takes --rep-threshold (30) seconds or more,
+and records what scripts/e3_sweep.py records. Compile only: nothing is executed (the GPU is not touched).
+The controlled repeat of the final pin (results/rtx4090/e3-compile/repeat-c8fcbe8/) uses --reps 3 --rep-threshold 1e9 so that every length is compiled three times.
 """
 import argparse
 import os
 import re
+import shutil
 import subprocess
 import sys
 
@@ -44,6 +46,10 @@ def main():
     ap.add_argument("--instance", default="mul_add1", choices=list(TARGETS))
     ap.add_argument("--ks", default="1,2,3,6,11,21,41,61,81,101,126,151,176,200")
     ap.add_argument("--core", type=int, default=10)
+    ap.add_argument("--reps", type=int, default=3, help="repetitions of each compile")
+    ap.add_argument("--rep-threshold", type=float, default=30.0, help="a compile of this many seconds or more is not repeated (default 30)")
+    ap.add_argument("--csv", help="name of the CSV in --out (default e3_staticloop_<instance>.csv)")
+    ap.add_argument("--keep-time-files", action="store_true", help="copy the nvcc --time file of every compile to <out>/nvcc-time/<instance>_kernel<k>_rep<r>.time.csv (it is overwritten by the next compile otherwise)")
     ap.add_argument("--timeout", type=int, default=3600)
     ap.add_argument("--out", required=True)
     ap.add_argument("--arch", default="sm_89")
@@ -64,17 +70,20 @@ def main():
     cols = ["instance", "k", "ops", "rep", "status", "why", "cuda_wall_s", "cuda_user_s", "cuda_sys_s", "cuda_peak_rss_mb", "phase_cudafe_s", "phase_cicc_s", "phase_ptxas_s",
             "phase_gcc_s", "phase_other_s", "registers", "spill_stores", "spill_loads", "stack_bytes", "cmem0_bytes", "sass_instructions", "text_bytes", "cubin_bytes"]
     notes = f"one core ({args.core}), the compile line of {TARGETS[args.instance]} with --threads 1 and --resource-usage; the programs are not executed; translation units from {gen}"
-    with CsvWriter(os.path.join(args.out, f"e3_staticloop_{args.instance}.csv"), "E3 StaticLoop axis: compile time of the vertical-fusion TUs", cols, notes=notes) as csv:
+    with CsvWriter(os.path.join(args.out, args.csv or f"e3_staticloop_{args.instance}.csv"), "E3 StaticLoop axis: compile time of the vertical-fusion TUs", cols, notes=notes) as csv:
         for k in (int(x) for x in args.ks.split(",")):
             ops = 100 * (k - 1) + 2
             src = os.path.join(gen, f"kernel{k}.cu")
             obj = os.path.join(work, f"{args.instance}_kernel{k}.o")
-            for rep in range(3):
+            for rep in range(args.reps):
                 timefile = os.path.join(work, f"{args.instance}_kernel{k}.time.csv")
                 cmd = [nvcc] + defines + ["--options-file", rsp] + cflags + ["--resource-usage", "--time", timefile, "-c", src, "-o", obj]
                 if os.path.exists(timefile):
                     os.remove(timefile)      # nvcc --time appends to an existing file
                 status, wall, user, sys_, rss, err = e3.run_measured(cmd, args.core, args.timeout, cwd=vf)
+                if args.keep_time_files and os.path.exists(timefile):
+                    os.makedirs(os.path.join(args.out, "nvcc-time"), exist_ok=True)
+                    shutil.copyfile(timefile, os.path.join(args.out, "nvcc-time", f"{args.instance}_kernel{k}_rep{rep}.time.csv"))
                 row = dict.fromkeys(cols, "")
                 row.update(instance=args.instance, k=k, ops=ops, rep=rep, status=status, cuda_wall_s=f"{wall:.3f}", cuda_user_s=f"{user:.3f}", cuda_sys_s=f"{sys_:.3f}", cuda_peak_rss_mb=f"{rss:.0f}")
                 if status == "ok":
@@ -86,7 +95,7 @@ def main():
                     if funcs:
                         name, body = max(funcs.items(), key=lambda kv: len(kv[1]))
                         row["sass_instructions"] = st.classify(st.normalise_sass(body, rename=False))[0]
-                    import shutil, tempfile
+                    import tempfile
                     tmp = tempfile.mkdtemp(prefix="e3cubin")
                     subprocess.run(["cuobjdump", "-arch", args.arch, "-xelf", "all", obj], cwd=tmp, capture_output=True)
                     cubins = [f for f in os.listdir(tmp) if f.endswith(".cubin")]
@@ -101,7 +110,7 @@ def main():
                     row["why"] = e3.first_error(err)
                 csv.row(*[row[c] for c in cols])
                 print(f"{args.instance} k={k:3d} ops={ops:6d} rep {rep}: {status:20s} {wall:8.2f} s {rss:7.0f} MB  cicc {row['phase_cicc_s']} ptxas {row['phase_ptxas_s']} cudafe {row['phase_cudafe_s']} regs {row.get('registers')} SASS {row.get('sass_instructions')}", flush=True)
-                if status != "ok" or wall >= 30:
+                if status != "ok" or wall >= args.rep_threshold:
                     break
 
 
