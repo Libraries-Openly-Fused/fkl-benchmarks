@@ -56,7 +56,8 @@ class Sweep:
 
 
 def read_agreement(path):
-    """The names of the comparisons contain commas: split the first field off the left and the five numbers off the right."""
+    """The names of the comparisons contain commas (unquoted in the older files, quoted in the files written after the correction of the harness): split the first field off
+    the left and the five numbers off the right, and take the quotes off the name."""
     rows = {}
     with open(path) as f:
         for line in f:
@@ -65,6 +66,8 @@ def read_agreement(path):
             n, rest = line.rstrip("\n").split(",", 1)
             parts = rest.rsplit(",", 5)
             name = parts[0].strip()
+            if len(name) >= 2 and name[0] == '"' and name[-1] == '"':
+                name = name[1:-1].replace('""', '"')
             rows[(int(n), name)] = tuple(p.strip() for p in parts[1:])
     return rows
 

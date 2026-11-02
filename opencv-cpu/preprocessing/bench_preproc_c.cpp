@@ -47,8 +47,7 @@ constexpr Resolution RESOLUTIONS[] = {{"480p", 720, 480}, {"1080p", 1920, 1080},
 const cv::Scalar ALPHA_S(0.3, 0.3, 0.3), SUB_S(1.f, 4.f, 3.2f), DIV_S(3.2f, 0.6f, 11.8f);
 
 int envInt(const char* name, const int fallback) {
-    const char* value = std::getenv(name);
-    return value ? std::atoi(value) : fallback;
+    return fklb::envInt(name, fallback);
 }
 
 inline auto mulOp() { return fk::Mul<F3>::build(F3{0.3f, 0.3f, 0.3f}); }
@@ -144,7 +143,10 @@ double maxAbsDiff(const float* a, const float* b, const size_t n) {
     double worst = 0;
     for (size_t i = 0; i < n; ++i) {
         const double d = std::fabs(static_cast<double>(a[i]) - static_cast<double>(b[i]));
-        if (!(d <= worst)) {
+        if (std::isnan(d)) { // a NaN in either array fails every tolerance: report it (a later element must not overwrite it); the same infinity in both arrays gives inf - inf = NaN and fails the tolerance comparisons too (the exact comparisons use memcmp)
+            return d;
+        }
+        if (d > worst) {
             worst = d;
         }
     }
@@ -165,7 +167,7 @@ struct Agreement {
 } // namespace
 
 int launch() {
-    const int iters = envInt("E5_ITERS", 30);
+    const int iters = fklb::envInt("E5_ITERS", 30, 1, 1000000);
     const int warmup = envInt("E5_WARMUP", 3);
     const bool checkOnly = envInt("E5_CHECK_ONLY", 0) != 0;
     const char* outDirEnv = std::getenv("E5_OUT_DIR");
@@ -235,7 +237,7 @@ int launch() {
         os << "# tolerance: " << TOLERANCE << " absolute; identical = byte for byte\n";
         os << "resolution, comparison, max_abs_diff, pass, required\n";
         for (const auto& a : agreements) {
-            os << a.resolution << ", " << a.pair << ", " << a.maxAbsDiff << ", " << (a.pass ? 1 : 0) << ", " << (a.required ? 1 : 0) << "\n";
+            os << e5::csvField(a.resolution) << ", " << e5::csvField(a.pair) << ", " << a.maxAbsDiff << ", " << (a.pass ? 1 : 0) << ", " << (a.required ? 1 : 0) << "\n";
         }
     }
     if (!checkOnly) {

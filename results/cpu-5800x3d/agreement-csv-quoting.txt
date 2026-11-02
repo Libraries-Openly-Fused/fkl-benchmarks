@@ -1,0 +1,29 @@
+Agreement CSVs of results/cpu-5800x3d (pipelines (a) and (c)): the comparison names with a comma, now quoted
+================================================================================================================
+The benchmarks of opencv-cpu/preprocessing/ wrote the name of the comparison without quotes although some names have a comma ("opencv_default vs scalar reference, HALF_PIXEL
+sampling (<= 1e-4)"), so a reader that splits on commas saw 8 fields in those rows and 7 in the others (pipeline (c): 6 and 5). A review of the merged pull requests found it. The
+benchmarks quote such names from now on (e5::csvField); the 13 files below were written before and were repaired afterwards with scripts/e5_quote_agreement_csv.py --write: the name is
+in double quotes (RFC 4180) in the rows that need it and NOTHING ELSE changes (same number of lines, the same bytes except one pair of quote characters in each row listed).
+These are CPU data: no timing, no number, no pass flag changes. The fields of these files are separated by a comma and a space, so a reader has to skip the space after the separator
+(Python csv.reader(..., skipinitialspace=True), pandas.read_csv(..., skipinitialspace=True)) to see a quoted name as one field.
+
+'before' is the file as committed on main (3809465); 'after' is the file as it is now. How it was checked: a second script that does not share code with the repair (it splits the old
+rows from the right and the new ones with a csv reader) found in the 13 files the same fields in every row, the same lines, the same line endings and nothing but one pair of quote
+characters in each of the 672 rows repaired (11 files of pipeline (a) x 60 rows, 2 files of pipeline (c) x 6 rows). 'python scripts/e5_quote_agreement_csv.py --check' on these 13 files
+after the repair: exit status 0, 0 rows that need quotes, no row has more fields than its header (7 in the 11 files of pipeline (a), 5 in the 2 files of pipeline (c)). Running --write again changes
+nothing.
+
+file (below results/cpu-5800x3d/)                                                                    rows  repaired  sha256 before                                                                     sha256 after
+e5-preprocessing-a-c8fcbe8/clang++-23/e5_preprocessing_a_agreement_CPU.csv                                      360        60  406bfbf28ffee65ded732a33aa9369a951e7eb6a15857b60648f57ce85a66a5f  b4e44f98e1e79cd2f59febb701ea0c6135f69983c0fa6029e352c67e2908e698
+e5-preprocessing-a-c8fcbe8/g++-13/e5_preprocessing_a_agreement_CPU.csv                                          360        60  ba01373e00090a3b4e3047dcb2dc45a43a278bd91ab61ba80a26d825f8505081  ec9404a4bb9835ac6f422bf000c1bb556e816046044b191e52832b1cf49d619e
+e5-preprocessing-a-c8fcbe8/repeats/clang++-23/check-nothing-else-running/e5_preprocessing_a_agreement_CPU.csv   360        60  406bfbf28ffee65ded732a33aa9369a951e7eb6a15857b60648f57ce85a66a5f  b4e44f98e1e79cd2f59febb701ea0c6135f69983c0fa6029e352c67e2908e698
+e5-preprocessing-a-c8fcbe8/repeats/clang++-23/run2/e5_preprocessing_a_agreement_CPU.csv                         360        60  406bfbf28ffee65ded732a33aa9369a951e7eb6a15857b60648f57ce85a66a5f  b4e44f98e1e79cd2f59febb701ea0c6135f69983c0fa6029e352c67e2908e698
+e5-preprocessing-a-c8fcbe8/repeats/clang++-23/run3/e5_preprocessing_a_agreement_CPU.csv                         360        60  406bfbf28ffee65ded732a33aa9369a951e7eb6a15857b60648f57ce85a66a5f  b4e44f98e1e79cd2f59febb701ea0c6135f69983c0fa6029e352c67e2908e698
+e5-preprocessing-a-c8fcbe8/repeats/g++-13/check-nothing-else-running/e5_preprocessing_a_agreement_CPU.csv       360        60  ba01373e00090a3b4e3047dcb2dc45a43a278bd91ab61ba80a26d825f8505081  ec9404a4bb9835ac6f422bf000c1bb556e816046044b191e52832b1cf49d619e
+e5-preprocessing-a-c8fcbe8/repeats/g++-13/run2/e5_preprocessing_a_agreement_CPU.csv                             360        60  ba01373e00090a3b4e3047dcb2dc45a43a278bd91ab61ba80a26d825f8505081  ec9404a4bb9835ac6f422bf000c1bb556e816046044b191e52832b1cf49d619e
+e5-preprocessing-a-c8fcbe8/repeats/g++-13/run3/e5_preprocessing_a_agreement_CPU.csv                             360        60  ba01373e00090a3b4e3047dcb2dc45a43a278bd91ab61ba80a26d825f8505081  ec9404a4bb9835ac6f422bf000c1bb556e816046044b191e52832b1cf49d619e
+e5-preprocessing-a/clang++-23/e5_preprocessing_a_agreement_CPU.csv                                              360        60  b927d69e9c22530fa6b0e1a2535ce942d91e23dc93cad980795c533e4ae79136  b867158855e63c97db432610a2d08f802894aabb0b0ac87ef83ae8751040dfdd
+e5-preprocessing-a/g++-13/e5_preprocessing_a_agreement_CPU.csv                                                  360        60  f51f7f3a858e6119da78d93df0ccdfcf62a521ce5737c9bf878159ff5ba1c17b  47f643e2c8f3011f07bf1f29d7cc9d3f8b1939c1fc1a1b24242e5b2ff9eb8ee0
+e5-preprocessing-a/natural-image-g++-13/e5_preprocessing_a_agreement_CPU.csv                                    360        60  6b36cef52d647cc5670198df07d7d6f4b1128ea1e462ebc77c726617325f9ed9  812c6a3876ee56e32cc268670282fd0de66b118028e5fad2e489dd43eb8d570f
+e5-preprocessing-c/clang++-23/e5_preprocessing_c_agreement_CPU.csv                                               21         6  801d3cac730134c6d3d699e8904fa3a912f11dbf7d65fa1a959333c8878aef50  6481fa711e365d1e474d15d39e66e022d3839e96d71f1a13ad4b4188efb4015f
+e5-preprocessing-c/g++-13/e5_preprocessing_c_agreement_CPU.csv                                                   21         6  2cbffe42747ab835e83d885b54c191a26304101c9c6ffc37e9cee9877487a002  a0a822d41b03a6089e8da2f95c882374f83d305624efdb871a03bae15ed6d09e

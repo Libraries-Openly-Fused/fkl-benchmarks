@@ -16,13 +16,16 @@
 // The CUDA program (saturate_exhaustive.cu) compares against cv::cuda::device::saturate_cast and the PTX conversion cvt.rni.sat, which exist only for NVIDIA; this one compares
 //   fkl_dev   fk::SaturateCast<float, T>::exec on the device
 //   fkl_host  the same function on the host (cxp::saturate_cast, the branch free path of FKL #416)
-//   hw        the conversion of HIP on the device: __float2int_rn (round to nearest even, saturating to the range of int, NaN gives 0) and then the clamp to the range of T
+//   hw        the conversion of HIP on the device: __float2int_rn (round to nearest even; HIP's header defines it as (int)__builtin_elementwise_rint(x), which the language leaves unspecified out of range: on this toolchain it saturates to the range of int and a NaN gives 0) and then the clamp to the range of T
 //   ref       an independent reference on the host: a NaN gives 0, otherwise std::nearbyint of the value as a double, clamped to the range of T
 // in four comparisons, each over all 2^32 patterns: fkl_dev vs hw, fkl_dev vs ref, fkl_host vs fkl_dev, fkl_host vs ref. The disagreeing set is reported per class of float (NaN, +Inf,
 // -Inf, denormal, zero, normal) with the first examples (bits, both values), in the columns of e6_saturate_exhaustive.csv of the CUDA program.
 // The patterns are swept in chunks of 2^26: the device computes fkl_dev and hw for the chunk (and counts its comparison), the host gets fkl_dev and evaluates fkl_host and ref for the
-// same patterns on all its threads. E6_HOST=0 skips the host half.
+// same patterns on all its threads. E6_HOST=0 skips the host half (E6_HOST and E6_EXPECT_DISAGREEMENTS are the integers 0 or 1, an empty variable counts as unset: any other value stops the program with exit status 2, before the CSV is opened).
+// Exit status: 0 when no pattern disagrees in any comparison; 1 when some do (a regression of fk::SaturateCast fails the run and ctest); 255 when a HIP call failed.
+// E6_EXPECT_DISAGREEMENTS=1 is for the negative control (the program built against headers that are known to disagree): the exit status is 0 only if some patterns DO disagree.
 #include <common/csv_writer.h>
+#include <common/env_args.h>
 #include <common/main.h>
 
 #include <fused_kernel/fused_kernel.h>
@@ -49,6 +52,7 @@ const char* CLASS_NAMES[NCLASS] = {"NaN", "+Inf", "-Inf", "denormal", "zero", "n
 const char* CMP_NAMES[NCMP] = {"fkl_dev_vs_hw", "fkl_dev_vs_ref", "fkl_host_vs_fkl_dev", "fkl_host_vs_ref"};
 constexpr uint64_t CLASS_COUNT[NCLASS] = {2ull * ((1ull << 23) - 1), 1, 1, 2ull * ((1ull << 23) - 1), 2, 2ull * 254 * (1ull << 23)};
 constexpr uint64_t CHUNK = 1ull << 26;
+static_assert((1ull << 32) % CHUNK == 0, "the sweep takes whole chunks: no tail is tested");
 
 struct Example { uint32_t bits; long long a, b; };
 struct Counters {
@@ -146,7 +150,7 @@ void hostHalf(const uint64_t first, const std::vector<int>& dev, Counters& host,
 }
 
 template <typename T>
-bool sweepType(const char* typeName, const bool withHost, fklb::CsvWriter& csv) {
+bool sweepType(const char* typeName, const bool withHost, fklb::CsvWriter& csv, unsigned long long& disagreeing) {
     int* dF = nullptr;
     Counters* dCounters = nullptr;
     if (hipMalloc(&dF, CHUNK * sizeof(int)) != hipSuccess || hipMalloc(&dCounters, sizeof(Counters)) != hipSuccess) return false;
@@ -185,6 +189,7 @@ bool sweepType(const char* typeName, const bool withHost, fklb::CsvWriter& csv) 
         const Counters& src = cmp == 0 ? dev : host;
         unsigned long long total = 0;
         for (int cls = 0; cls < NCLASS; ++cls) total += src.mismatch[cmp][cls];
+        disagreeing += total;
         std::cout << "  " << CMP_NAMES[cmp] << " " << total;
     }
     std::cout << std::endl;
@@ -195,19 +200,39 @@ bool sweepType(const char* typeName, const bool withHost, fklb::CsvWriter& csv) 
 } // namespace e6amd
 
 int launch() {
-    const char* hostText = std::getenv("E6_HOST");
-    const bool withHost = hostText == nullptr || hostText[0] != '0';
+    const bool withHost = fklb::envInt("E6_HOST", 1, 0, 1) != 0;
+    const bool expectDisagreements = fklb::envInt("E6_EXPECT_DISAGREEMENTS", 0, 0, 1) != 0;
     fklb::CsvWriter csv("e6_saturate_exhaustive_amd.csv", "E6 fk::SaturateCast<float, T> over all 2^32 float bit patterns, gfx1200",
                         {"type", "comparison", "class", "patterns_in_class", "disagreeing", "examples"},
-                        std::string("comparisons: fkl_dev = fk::SaturateCast on the device; hw = __float2int_rn of HIP (round to nearest even, saturating, NaN gives 0) clamped to the range of the type; ") +
+                        std::string("comparisons: fkl_dev = fk::SaturateCast on the device; hw = __float2int_rn of HIP (round to nearest even; unspecified out of range by the language, on this toolchain saturating with NaN giving 0) clamped to the range of the type; ") +
                             "fkl_host = fk::SaturateCast on the host (cxp::saturate_cast); ref = a NaN gives 0, otherwise std::nearbyint of the value as a double clamped to the range of the type, on the host; " +
                             "classes by IEEE-754 binary32 bit pattern; examples: the first 4 disagreeing patterns (the smallest bit patterns for the host comparisons), as bits: value of the first against the second; host half " +
                             (withHost ? "included" : "skipped (E6_HOST=0)"));
     bool ok = true;
-    ok = e6amd::sweepType<unsigned char>("uchar", withHost, csv) && ok;
-    ok = e6amd::sweepType<signed char>("schar", withHost, csv) && ok;
-    ok = e6amd::sweepType<short>("short", withHost, csv) && ok;
-    ok = e6amd::sweepType<unsigned short>("ushort", withHost, csv) && ok;
-    ok = e6amd::sweepType<int>("int", withHost, csv) && ok;
-    return ok ? 0 : -1;
+    unsigned long long disagreeing = 0;
+    ok = e6amd::sweepType<unsigned char>("uchar", withHost, csv, disagreeing) && ok;
+    ok = e6amd::sweepType<signed char>("schar", withHost, csv, disagreeing) && ok;
+    ok = e6amd::sweepType<short>("short", withHost, csv, disagreeing) && ok;
+    ok = e6amd::sweepType<unsigned short>("ushort", withHost, csv, disagreeing) && ok;
+    ok = e6amd::sweepType<int>("int", withHost, csv, disagreeing) && ok;
+    if (!ok) {
+        std::cout << "E6 FAILED: a HIP call failed" << std::endl;
+        return -1;
+    }
+    // disagreeing is a sum over (pattern, comparison) pairs: a pattern that two comparisons get wrong counts twice
+    const std::string scope = withHost ? "" : " (the host half was skipped: E6_HOST=0)";
+    if (expectDisagreements) {
+        if (disagreeing == 0) {
+            std::cout << "E6 FAILED: E6_EXPECT_DISAGREEMENTS=1 (negative control) and nothing disagrees: the program did not detect what it should" << scope << std::endl;
+            return 1;
+        }
+        std::cout << "E6 negative control: " << disagreeing << " disagreements (pattern x comparison), as expected" << scope << std::endl;
+        return 0;
+    }
+    if (disagreeing != 0) {
+        std::cout << "E6 FAILED: " << disagreeing << " disagreements (pattern x comparison; the CSV says which)" << scope << std::endl;
+        return 1;
+    }
+    std::cout << "E6: 0 disagreements (pattern x comparison)" << scope << std::endl;
+    return 0;
 }
