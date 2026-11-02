@@ -89,9 +89,16 @@ class CsvWriter:
         self._f.write(",".join(columns) + "\n")
         self._n = len(columns)
 
+    @staticmethod
+    def _cell(value):
+        text = repr(value) if isinstance(value, float) else str(value)
+        if any(c in text for c in ',"\r\n'):   # a text with a comma, a quote or a line break is written quoted, so that every row has as many fields as the header
+            return '"' + text.replace('"', '""') + '"'
+        return text
+
     def row(self, *values):
         assert len(values) == self._n, "the number of values is not the number of columns"
-        self._f.write(",".join(repr(v) if isinstance(v, float) else str(v) for v in values) + "\n")
+        self._f.write(",".join(self._cell(v) for v in values) + "\n")
         self._f.flush()
 
     def __enter__(self):
