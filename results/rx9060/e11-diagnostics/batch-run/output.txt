@@ -1,0 +1,36 @@
+# E11 batch-run: 2026-11-01T06:57:07Z, FKL c8fcbe8 (external/fkl), source fkl-self/diagnostics/e11_batch_mismatch_run.cu at fkl-benchmarks d9bf34f, back-ends: cpu cpu_mt hip cuda
+# g++-13 (Ubuntu 13.4.0-10ubuntu1) 13.4.0
+# AMD clang version 24.0.0git (https://github.com/ROCm/llvm-project.git d6f6cb691863e9258034ab48c1dfce21689d5606)
+# Cuda compilation tools, release 13.4, V13.4.92
+
+## CPU (g++-13)
+$ g++-13 -x c++ -march=native -O3 -DNDEBUG -std=c++17 -ftemplate-depth=1000 -Iexternal/fkl/include fkl-self/diagnostics/e11_batch_mismatch_run.cu -o build/e11-batch-run/e11_run_cpu
+back-end CPU: 50 inputs read, 60 outputs: 50 processed (all 32 pixels = 2), 10 untouched (all -1; the first is output 50), 0 mixed
+exit code 0
+back-end CPU: 50 inputs read, 60 outputs: 50 processed (all 32 pixels = 2), 10 untouched (all -1; the first is output 50), 0 mixed
+exit code 0
+back-end CPU: 50 inputs read, 60 outputs: 50 processed (all 32 pixels = 2), 10 untouched (all -1; the first is output 50), 0 mixed
+exit code 0
+
+## CPU_MULTITHREAD (g++-13)
+$ g++-13 -x c++ -march=native -O3 -DNDEBUG -std=c++17 -ftemplate-depth=1000 -DFK_CPU_MULTITHREAD_ENABLED -DE11_RUN_CPU_MT -Iexternal/fkl/include -Iexternal/fkl/thread-pool/include -pthread fkl-self/diagnostics/e11_batch_mismatch_run.cu -o build/e11-batch-run/e11_run_cpu_mt
+back-end CPU_MULTITHREAD: 50 inputs read, 60 outputs: 50 processed (all 32 pixels = 2), 10 untouched (all -1; the first is output 50), 0 mixed
+exit code 0
+back-end CPU_MULTITHREAD: 50 inputs read, 60 outputs: 50 processed (all 32 pixels = 2), 10 untouched (all -1; the first is output 50), 0 mixed
+exit code 0
+back-end CPU_MULTITHREAD: 50 inputs read, 60 outputs: 50 processed (all 32 pixels = 2), 10 untouched (all -1; the first is output 50), 0 mixed
+exit code 0
+
+## HIP (amdclang++, gfx1200)
+$ /opt/rocm/core-10.1/bin/amdclang++ -x hip --offload-arch=gfx1200 -O3 -DNDEBUG -std=c++17 -ftemplate-depth=1000 -Iexternal/fkl/include fkl-self/diagnostics/e11_batch_mismatch_run.cu -o build/e11-batch-run/e11_run_hip
+back-end GPU_AMD: 50 inputs read, 60 outputs: 50 processed (all 32 pixels = 2), 10 untouched (all -1; the first is output 50), 0 mixed
+exit code 0
+back-end GPU_AMD: 50 inputs read, 60 outputs: 50 processed (all 32 pixels = 2), 10 untouched (all -1; the first is output 50), 0 mixed
+exit code 0
+back-end GPU_AMD: 50 inputs read, 60 outputs: 50 processed (all 32 pixels = 2), 10 untouched (all -1; the first is output 50), 0 mixed
+exit code 0
+
+## CUDA (nvcc, sm_89)
+no NVIDIA GPU on this machine: compiled only, not run
+$ /home/cudeiro/claude-albert/rocm-benchmarks/cuda-wheels/x/nvidia/cu13/bin/nvcc -x cu -arch sm_89 -ccbin /usr/bin/g++-13 -O3 -DNDEBUG -std=c++17 -ftemplate-depth=1000 -Iexternal/fkl/include -c fkl-self/diagnostics/e11_batch_mismatch_run.cu -o build/e11-batch-run/e11_run_cuda.o
+nvcc exit code 0

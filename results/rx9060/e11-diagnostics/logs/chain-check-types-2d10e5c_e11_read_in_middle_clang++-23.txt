@@ -1,0 +1,52 @@
+In file included from e11_read_in_middle.cu:18:
+In file included from fused_kernel/fused_kernel.h:18:
+In file included from fused_kernel/core/execution_model/executors.h:21:
+fused_kernel/core/execution_model/data_parallel_patterns.h:79:62: error: invalid operands to binary expression ('InputFoldType<float>' and 'const fk::ReadInstantiableOperation<fk::PerThreadRead<fk::ND::_2D, float>>')
+   79 |             return (InputFoldType<>::build(thread, i_data) | ... | iOpInstances).input;
+      |                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~
+fused_kernel/core/execution_model/data_parallel_patterns.h:132:40: note: in instantiation of function template specialization 'fk::TransformDPPBase<fk::TF::DISABLED, fk::TransformDPPDetails_<void, false, fk::ReadInstantiableOperation<fk::PerThreadRead<fk::ND::_2D, float>>, fk::BinaryInstantiableOperation<fk::Mul<float>>, fk::ReadInstantiableOperation<fk::PerThreadRead<fk::ND::_2D, float>>, fk::BinaryInstantiableOperation<fk::Add<float>>, fk::WriteInstantiableOperation<fk::PerThreadWrite<fk::ND::_2D, float>>>>::operate<float, fk::BinaryInstantiableOperation<fk::Mul<float>>, fk::ReadInstantiableOperation<fk::PerThreadRead<fk::ND::_2D, float>>, fk::BinaryInstantiableOperation<fk::Add<float>>, fk::WriteInstantiableOperation<fk::PerThreadWrite<fk::ND::_2D, float>>>' requested here
+  132 |                     const auto tempO = operate(thread, tempI, iOps...);
+      |                                        ^
+fused_kernel/core/execution_model/data_parallel_patterns.h:142:13: note: in instantiation of function template specialization 'fk::TransformDPPBase<fk::TF::DISABLED, fk::TransformDPPDetails_<void, false, fk::ReadInstantiableOperation<fk::PerThreadRead<fk::ND::_2D, float>>, fk::BinaryInstantiableOperation<fk::Mul<float>>, fk::ReadInstantiableOperation<fk::PerThreadRead<fk::ND::_2D, float>>, fk::BinaryInstantiableOperation<fk::Add<float>>, fk::WriteInstantiableOperation<fk::PerThreadWrite<fk::ND::_2D, float>>>>::execute_instantiable_operations_helper<fk::ThreadFusionInfo<float, float, false>, fk::ReadInstantiableOperation<fk::PerThreadRead<fk::ND::_2D, float>>, fk::BinaryInstantiableOperation<fk::Mul<float>>, fk::ReadInstantiableOperation<fk::PerThreadRead<fk::ND::_2D, float>>, fk::BinaryInstantiableOperation<fk::Add<float>>, fk::WriteInstantiableOperation<fk::PerThreadWrite<fk::ND::_2D, float>>>' requested here
+  142 |             execute_instantiable_operations_helper<TFI>(thread, iOps...);
+      |             ^
+fused_kernel/core/execution_model/data_parallel_patterns.h:149:17: note: in instantiation of function template specialization 'fk::TransformDPPBase<fk::TF::DISABLED, fk::TransformDPPDetails_<void, false, fk::ReadInstantiableOperation<fk::PerThreadRead<fk::ND::_2D, float>>, fk::BinaryInstantiableOperation<fk::Mul<float>>, fk::ReadInstantiableOperation<fk::PerThreadRead<fk::ND::_2D, float>>, fk::BinaryInstantiableOperation<fk::Add<float>>, fk::WriteInstantiableOperation<fk::PerThreadWrite<fk::ND::_2D, float>>>>::execute_instantiable_operations<fk::ThreadFusionInfo<float, float, false>, fk::ReadInstantiableOperation<fk::PerThreadRead<fk::ND::_2D, float>>, fk::BinaryInstantiableOperation<fk::Mul<float>>, fk::ReadInstantiableOperation<fk::PerThreadRead<fk::ND::_2D, float>>, fk::BinaryInstantiableOperation<fk::Add<float>>, fk::WriteInstantiableOperation<fk::PerThreadWrite<fk::ND::_2D, float>>>' requested here
+  149 |                 execute_instantiable_operations<TFI>(thread, iOps...);
+      |                 ^
+fused_kernel/core/execution_model/data_parallel_patterns.h:288:25: note: in instantiation of function template specialization 'fk::TransformDPPBase<fk::TF::DISABLED, fk::TransformDPPDetails_<void, false, fk::ReadInstantiableOperation<fk::PerThreadRead<fk::ND::_2D, float>>, fk::BinaryInstantiableOperation<fk::Mul<float>>, fk::ReadInstantiableOperation<fk::PerThreadRead<fk::ND::_2D, float>>, fk::BinaryInstantiableOperation<fk::Add<float>>, fk::WriteInstantiableOperation<fk::PerThreadWrite<fk::ND::_2D, float>>>>::execute_thread<fk::ReadInstantiableOperation<fk::PerThreadRead<fk::ND::_2D, float>>, fk::BinaryInstantiableOperation<fk::Mul<float>>, fk::ReadInstantiableOperation<fk::PerThreadRead<fk::ND::_2D, float>>, fk::BinaryInstantiableOperation<fk::Add<float>>, fk::WriteInstantiableOperation<fk::PerThreadWrite<fk::ND::_2D, float>>>' requested here
+  288 |                 Parent::execute_thread(thread, activeThreads, iOps...);
+      |                         ^
+fused_kernel/core/execution_model/data_parallel_patterns.h:298:21: note: in instantiation of function template specialization 'fk::TransformDPP<fk::ParArch::CPU, fk::TF::DISABLED, fk::TransformDPPDetails_<void, false, fk::ReadInstantiableOperation<fk::PerThreadRead<fk::ND::_2D, float>>, fk::BinaryInstantiableOperation<fk::Mul<float>>, fk::ReadInstantiableOperation<fk::PerThreadRead<fk::ND::_2D, float>>, fk::BinaryInstantiableOperation<fk::Add<float>>, fk::WriteInstantiableOperation<fk::PerThreadWrite<fk::ND::_2D, float>>>>::exec_row<fk::ReadInstantiableOperation<fk::PerThreadRead<fk::ND::_2D, float>>, fk::BinaryInstantiableOperation<fk::Mul<float>>, fk::ReadInstantiableOperation<fk::PerThreadRead<fk::ND::_2D, float>>, fk::BinaryInstantiableOperation<fk::Add<float>>, fk::WriteInstantiableOperation<fk::PerThreadWrite<fk::ND::_2D, float>>>' requested here
+  298 |                     exec_row(y, z, details, iOps...);
+      |                     ^
+fused_kernel/core/execution_model/executors.h:267:60: note: (skipping 3 contexts in backtrace; use -ftemplate-backtrace-limit=0 to see all)
+  267 |                 TransformDPP<PA, TFEN, TDPPDetails, true>::exec(tDetails, iOps...);
+      |                                                            ^
+fused_kernel/core/execution_model/executors.h:60:13: note: in instantiation of function template specialization 'fk::BaseExecutor<fk::Executor<fk::TransformDPP<fk::ParArch::CPU, fk::TF::DISABLED>>>::applyExecuteOperations_helper<fk::Stream_<ParArch::CPU> &, const fk::ReadInstantiableOperation<fk::PerThreadRead<fk::ND::_2D, float>> &, const fk::BinaryInstantiableOperation<fk::Mul<float>> &, const fk::ReadInstantiableOperation<fk::PerThreadRead<fk::ND::_2D, float>> &, const fk::BinaryInstantiableOperation<fk::Add<float>> &, const fk::WriteInstantiableOperation<fk::PerThreadWrite<fk::ND::_2D, float>> &>' requested here
+   60 |             applyExecuteOperations_helper(fullArgs);
+      |             ^
+fused_kernel/core/execution_model/executors.h:67:13: note: in instantiation of function template specialization 'fk::BaseExecutor<fk::Executor<fk::TransformDPP<fk::ParArch::CPU, fk::TF::DISABLED>>>::executeOperationsBase_helper<fk::ParArch::CPU, fk::ReadInstantiableOperation<fk::PerThreadRead<fk::ND::_2D, float>>, fk::BinaryInstantiableOperation<fk::Mul<float>>, fk::ReadInstantiableOperation<fk::PerThreadRead<fk::ND::_2D, float>>, fk::BinaryInstantiableOperation<fk::Add<float>>, fk::WriteInstantiableOperation<fk::PerThreadWrite<fk::ND::_2D, float>>>' requested here
+   67 |             executeOperationsBase_helper(stream, iOps...);
+      |             ^
+fused_kernel/core/execution_model/executors.h:275:9: note: in instantiation of function template specialization 'fk::BaseExecutor<fk::Executor<fk::TransformDPP<fk::ParArch::CPU, fk::TF::DISABLED>>>::executeOperations<fk::ParArch::CPU, fk::ReadInstantiableOperation<fk::PerThreadRead<fk::ND::_2D, float>>, fk::BinaryInstantiableOperation<fk::Mul<float>>, fk::ReadInstantiableOperation<fk::PerThreadRead<fk::ND::_2D, float>>, fk::BinaryInstantiableOperation<fk::Add<float>>, fk::WriteInstantiableOperation<fk::PerThreadWrite<fk::ND::_2D, float>>>' requested here
+  275 |         DECLARE_EXECUTOR_PARENT_IMPL
+      |         ^
+fused_kernel/core/execution_model/executors.h:118:13: note: expanded from macro 'DECLARE_EXECUTOR_PARENT_IMPL'
+  118 |     Parent::executeOperations(stream, iOps...); \
+      |             ^
+fused_kernel/fused_kernel.h:24:28: note: in instantiation of function template specialization 'fk::Executor<fk::TransformDPP<fk::ParArch::CPU, fk::TF::DISABLED>>::executeOperations<fk::ParArch::CPU, fk::ReadInstantiableOperation<fk::PerThreadRead<fk::ND::_2D, float>>, fk::BinaryInstantiableOperation<fk::Mul<float>>, fk::ReadInstantiableOperation<fk::PerThreadRead<fk::ND::_2D, float>>, fk::BinaryInstantiableOperation<fk::Add<float>>, fk::WriteInstantiableOperation<fk::PerThreadWrite<fk::ND::_2D, float>>>' requested here
+   24 |         Executor<DPPType>::executeOperations(stream, args...);
+      |                            ^
+e11_read_in_middle.cu:27:9: note: in instantiation of function template specialization 'fk::executeOperations<fk::TransformDPP<fk::ParArch::CPU, fk::TF::DISABLED>, fk::ReadInstantiableOperation<fk::PerThreadRead<fk::ND::_2D, float>>, fk::BinaryInstantiableOperation<fk::Mul<float>>, fk::ReadInstantiableOperation<fk::PerThreadRead<fk::ND::_2D, float>>, fk::BinaryInstantiableOperation<fk::Add<float>>, fk::WriteInstantiableOperation<fk::PerThreadWrite<fk::ND::_2D, float>>>' requested here
+   27 |     fk::executeOperations<fk::TransformDPP<>>(stream,
+      |         ^
+fused_kernel/core/execution_model/operation_model/instantiable_operations.h:84:41: note: candidate function not viable: no known conversion from 'InputFoldType<float>' to 'const Point' (aka 'const Point_<int, ND::_3D>') for 1st argument
+   84 |         FK_HOST_DEVICE_CNST friend auto operator|(const Point thread, const OperationData<Operation_t>& opData) {
+      |                                         ^         ~~~~~~~~~~~~~~~~~~
+fused_kernel/core/utils/vector_utils.h:617:1: note: candidate template ignored: substitution failure [with I1 = InputFoldType<float>, I2 = fk::ReadInstantiableOperation<fk::PerThreadRead<fk::ND::_2D, float>>]: implicit instantiation of undefined template 'fk::VectorTraits<fk::InputFoldType<float>>'
+  171 | VEC_BINARY_BITWISE(|)
+      | ^
+fused_kernel/core/utils/vector_utils.h:576:26: note: expanded from macro 'VEC_BINARY_BITWISE'
+  576 | FK_HOST_DEVICE_CNST auto operator op(const I1& a, const I2& b) \
+      |                          ^
+1 error generated.

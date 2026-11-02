@@ -1,0 +1,40 @@
+In file included from e11_type_mismatch.cu:19:
+In file included from fused_kernel/fused_kernel.h:18:
+In file included from fused_kernel/core/execution_model/executors.h:22:
+fused_kernel/core/execution_model/operation_model/chain_check.h:61:23: error: static assertion failed due to requirement 'fk::ChainLinkTypes<fk::BinaryInstantiableOperation<fk::Mul<fk::Float3, fk::Float3, fk::Float3>>, fk::BinaryInstantiableOperation<fk::Add<float, float, float, fk::BinaryType>>, void>::value': FKL: the OutputType of the previous Op is not convertible to the InputType of the next Op
+   61 |         static_assert(ChainLinkTypes<PrevIOp, NextIOp>::value,
+      |                       ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+fused_kernel/core/execution_model/operation_model/chain_check.h:69:48: note: in instantiation of template class 'fk::ChainLinkReport<fk::BinaryInstantiableOperation<fk::Mul<fk::Float3>>, fk::BinaryInstantiableOperation<fk::Add<float>>>' requested here
+   69 |         static constexpr bool reported = and_v<ChainLinkReport<PrevIOps, NextIOps>::reported...>;
+      |                                                ^
+fused_kernel/core/execution_model/operation_model/chain_check.h:74:129: note: in instantiation of static data member 'fk::ChainLinksReport<fk::ChainPack<fk::ReadInstantiableOperation<fk::PerThreadRead<fk::ND::_2D, fk::Float3>>, fk::BinaryInstantiableOperation<fk::Mul<fk::Float3>>, fk::BinaryInstantiableOperation<fk::Add<float>>, fk::WriteInstantiableOperation<fk::PerThreadWrite<fk::ND::_2D, float>>>, fk::ChainPack<fk::BinaryInstantiableOperation<fk::Mul<fk::Float3>>, fk::BinaryInstantiableOperation<fk::Add<float>>, fk::WriteInstantiableOperation<fk::PerThreadWrite<fk::ND::_2D, float>>, NullType>>::reported' requested here
+   74 |         ChainLinksReport<ChainPack<std::decay_t<FirstIOp>, std::decay_t<IOps>...>, ChainPack<std::decay_t<IOps>..., NullType>>::reported;
+      |                                                                                                                                 ^
+fused_kernel/core/execution_model/operation_model/chain_check.h:128:15: note: in instantiation of variable template specialization 'fk::reportChainLinks<const fk::ReadInstantiableOperation<fk::PerThreadRead<fk::ND::_2D, fk::Float3>> &, const fk::BinaryInstantiableOperation<fk::Mul<fk::Float3>> &, const fk::BinaryInstantiableOperation<fk::Add<float>> &, const fk::WriteInstantiableOperation<fk::PerThreadWrite<fk::ND::_2D, float>> &>' requested here
+  128 |         and_v<reportChainLinks<FirstIOp, IOps...>, and_v<ChainReadReport<std::decay_t<IOps>>::reported...>,
+      |               ^
+fused_kernel/core/execution_model/executors.h:246:60: note: in instantiation of variable template specialization 'fk::reportChain<const fk::ReadInstantiableOperation<fk::PerThreadRead<fk::ND::_2D, fk::Float3>> &, const fk::BinaryInstantiableOperation<fk::Mul<fk::Float3>> &, const fk::BinaryInstantiableOperation<fk::Add<float>> &, const fk::WriteInstantiableOperation<fk::PerThreadWrite<fk::ND::_2D, float>> &>' requested here
+  246 |                 [[maybe_unused]] constexpr bool reported = reportChain<IOps...>;
+      |                                                            ^
+fused_kernel/core/execution_model/executors.h:53:35: note: in instantiation of function template specialization 'fk::Executor<fk::TransformDPP<fk::ParArch::CPU, fk::TF::DISABLED>>::executeOperations_helper<const fk::ReadInstantiableOperation<fk::PerThreadRead<fk::ND::_2D, fk::Float3>> &, const fk::BinaryInstantiableOperation<fk::Mul<fk::Float3>> &, const fk::BinaryInstantiableOperation<fk::Add<float>> &, const fk::WriteInstantiableOperation<fk::PerThreadWrite<fk::ND::_2D, float>> &>' requested here
+   53 |             apply(Child::template executeOperations_helper<Args...>, argTuple);
+      |                                   ^
+fused_kernel/core/execution_model/executors.h:60:13: note: in instantiation of function template specialization 'fk::BaseExecutor<fk::Executor<fk::TransformDPP<fk::ParArch::CPU, fk::TF::DISABLED>>>::applyExecuteOperations_helper<fk::Stream_<ParArch::CPU> &, const fk::ReadInstantiableOperation<fk::PerThreadRead<fk::ND::_2D, fk::Float3>> &, const fk::BinaryInstantiableOperation<fk::Mul<fk::Float3>> &, const fk::BinaryInstantiableOperation<fk::Add<float>> &, const fk::WriteInstantiableOperation<fk::PerThreadWrite<fk::ND::_2D, float>> &>' requested here
+   60 |             applyExecuteOperations_helper(fullArgs);
+      |             ^
+fused_kernel/core/execution_model/executors.h:67:13: note: in instantiation of function template specialization 'fk::BaseExecutor<fk::Executor<fk::TransformDPP<fk::ParArch::CPU, fk::TF::DISABLED>>>::executeOperationsBase_helper<fk::ParArch::CPU, fk::ReadInstantiableOperation<fk::PerThreadRead<fk::ND::_2D, fk::Float3>>, fk::BinaryInstantiableOperation<fk::Mul<fk::Float3>>, fk::BinaryInstantiableOperation<fk::Add<float>>, fk::WriteInstantiableOperation<fk::PerThreadWrite<fk::ND::_2D, float>>>' requested here
+   67 |             executeOperationsBase_helper(stream, iOps...);
+      |             ^
+fused_kernel/core/execution_model/executors.h:275:9: note: in instantiation of function template specialization 'fk::BaseExecutor<fk::Executor<fk::TransformDPP<fk::ParArch::CPU, fk::TF::DISABLED>>>::executeOperations<fk::ParArch::CPU, fk::ReadInstantiableOperation<fk::PerThreadRead<fk::ND::_2D, fk::Float3>>, fk::BinaryInstantiableOperation<fk::Mul<fk::Float3>>, fk::BinaryInstantiableOperation<fk::Add<float>>, fk::WriteInstantiableOperation<fk::PerThreadWrite<fk::ND::_2D, float>>>' requested here
+  275 |         DECLARE_EXECUTOR_PARENT_IMPL
+      |         ^
+fused_kernel/core/execution_model/executors.h:118:13: note: expanded from macro 'DECLARE_EXECUTOR_PARENT_IMPL'
+  118 |     Parent::executeOperations(stream, iOps...); \
+      |             ^
+fused_kernel/fused_kernel.h:24:28: note: in instantiation of function template specialization 'fk::Executor<fk::TransformDPP<fk::ParArch::CPU, fk::TF::DISABLED>>::executeOperations<fk::ParArch::CPU, fk::ReadInstantiableOperation<fk::PerThreadRead<fk::ND::_2D, fk::Float3>>, fk::BinaryInstantiableOperation<fk::Mul<fk::Float3>>, fk::BinaryInstantiableOperation<fk::Add<float>>, fk::WriteInstantiableOperation<fk::PerThreadWrite<fk::ND::_2D, float>>>' requested here
+   24 |         Executor<DPPType>::executeOperations(stream, args...);
+      |                            ^
+e11_type_mismatch.cu:33:9: note: in instantiation of function template specialization 'fk::executeOperations<fk::TransformDPP<fk::ParArch::CPU, fk::TF::DISABLED>, fk::ReadInstantiableOperation<fk::PerThreadRead<fk::ND::_2D, fk::Float3>>, fk::BinaryInstantiableOperation<fk::Mul<fk::Float3>>, fk::BinaryInstantiableOperation<fk::Add<float>>, fk::WriteInstantiableOperation<fk::PerThreadWrite<fk::ND::_2D, float>>>' requested here
+   33 |     fk::executeOperations<fk::TransformDPP<>>(stream,
+      |         ^
+1 error generated.
