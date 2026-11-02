@@ -38,6 +38,7 @@
 #include <common/env_args.h>
 #include <common/main.h>
 #include <fkl-self/pipelines/nv12_pipeline.h>
+#include <fkl-self/pipelines/preproc_common.h>
 
 #include <hip/hip_runtime.h>
 #include <rpp.h>
@@ -59,8 +60,8 @@
 
 namespace rppbench {
 
-using nv12::F3;
-using nv12::U3;
+using preproc::F3;
+using preproc::U3;
 
 constexpr int SRC_W = 3840, SRC_H = 2160, CROP_W = 60, CROP_H = 120, OUT_W = 64, OUT_H = 128, PLANE = OUT_W * OUT_H;
 constexpr double TOLERANCE = 1e-4;
@@ -211,20 +212,20 @@ private:
 // Pipeline (a)
 
 inline fk::RawPtr<fk::ND::_2D, U3> cropRoi(const fk::RawPtr<fk::ND::_2D, U3>& full, const int x, const int y, const int w, const int h) {
-    return nv12::roiOf(full, fk::Rect(static_cast<uint>(x), static_cast<uint>(y), w, h));
+    return preproc::roiOf(full, fk::Rect(static_cast<uint>(x), static_cast<uint>(y), w, h));
 }
 
 // FKL: the chain of pipeline (a) fused and one execution per operation, on ParArch::GPU_AMD
-template <int N, typename ResizeT = nv12::LinearResize>
+template <int N, typename ResizeT = preproc::LinearResize>
 class FklA {
 public:
     using Dpp = fk::TransformDPP<fk::ParArch::GPU_AMD>;
     FklA(fk::Stream_<fk::ParArch::GPU_AMD>& stream, fk::Ptr2D<U3>& source)
         : stream_(stream), fusedOut_(OUT_W, OUT_H, N, 3), batchOut_(OUT_W, OUT_H, N, 3), tmpA_(OUT_W, OUT_H, N, 1), tmpB_(OUT_W, OUT_H, N, 1),
-          resize_(buildResize(source)), color_(nv12ColorOp()), mul_(fk::Mul<F3>::build(F3{ALPHA, ALPHA, ALPHA})),
+          resize_(buildResize(source)), color_(rgbToBgrOp()), mul_(fk::Mul<F3>::build(F3{ALPHA, ALPHA, ALPHA})),
           sub_(fk::Sub<F3>::build(F3{SUB[0], SUB[1], SUB[2]})), div_(fk::Div<F3>::build(F3{DIV[0], DIV[1], DIV[2]})),
-          splitFused_(nv12::split3D(fusedOut_.ptr())), splitBatch_(nv12::split3D(batchOut_.ptr())), readA_(nv12::read3D(tmpA_.ptr())),
-          readB_(nv12::read3D(tmpB_.ptr())), writeA_(nv12::write3D(tmpA_.ptr())), writeB_(nv12::write3D(tmpB_.ptr())) {}
+          splitFused_(preproc::split3D(fusedOut_.ptr())), splitBatch_(preproc::split3D(batchOut_.ptr())), readA_(preproc::read3D(tmpA_.ptr())),
+          readB_(preproc::read3D(tmpB_.ptr())), writeA_(preproc::write3D(tmpA_.ptr())), writeB_(preproc::write3D(tmpB_.ptr())) {}
     void fused() { fk::executeOperations<Dpp>(stream_, resize_, color_, mul_, sub_, div_, splitFused_); }
     void perOpBatch() {
         fk::executeOperations<Dpp>(stream_, resize_, writeA_);
@@ -239,11 +240,11 @@ public:
         fusedOut_.download(stream_);
         batchOut_.download(stream_);
     }
-    const float* fusedOut() const { return nv12::hostRaw(fusedOut_).data; }
-    const float* batchOut() const { return nv12::hostRaw(batchOut_).data; }
+    const float* fusedOut() const { return preproc::hostRaw(fusedOut_).data; }
+    const float* batchOut() const { return preproc::hostRaw(batchOut_).data; }
 
 private:
-    static auto nv12ColorOp() { return fk::ColorConversion<fk::ColorConversionCodes::COLOR_RGB2BGR, F3, F3>::build(); }
+    static auto rgbToBgrOp() { return fk::ColorConversion<fk::ColorConversionCodes::COLOR_RGB2BGR, F3, F3>::build(); }
     static auto buildResize(fk::Ptr2D<U3>& source) {
         std::array<fk::RawPtr<fk::ND::_2D, U3>, N> rois;
         for (int i = 0; i < N; ++i) {
@@ -255,13 +256,13 @@ private:
     fk::Tensor<float> fusedOut_, batchOut_;
     fk::Tensor<F3> tmpA_, tmpB_;
     decltype(buildResize(std::declval<fk::Ptr2D<U3>&>())) resize_;
-    decltype(nv12ColorOp()) color_;
+    decltype(rgbToBgrOp()) color_;
     decltype(fk::Mul<F3>::build(F3{})) mul_;
     decltype(fk::Sub<F3>::build(F3{})) sub_;
     decltype(fk::Div<F3>::build(F3{})) div_;
-    nv12::SplitOp splitFused_, splitBatch_;
-    nv12::Read3DOp readA_, readB_;
-    nv12::Write3DOp writeA_, writeB_;
+    preproc::SplitOp splitFused_, splitBatch_;
+    preproc::Read3DOp readA_, readB_;
+    preproc::Write3DOp writeA_, writeB_;
 };
 
 // Scalar reference of pipeline (a) in double precision, from the host copy of the source, with the sampling of a resize
@@ -287,13 +288,13 @@ struct Output {
     fklb::CsvWriter* agreement;
     bool allPass{true};
     int warmup, iters;
-    double warmupSeconds{2.0}; // minimum warm-up of a variant, see nv12::measure (steady state rule)
+    double warmupSeconds{2.0}; // minimum warm-up of a variant, see preproc::measure (steady state rule)
     int rotateOffset{0};       // E5_ROTATE_OFFSET: added to the index of the point that selects the first variant of the rotated order
 };
 
 template <typename Work>
 void timeVariant(Output& out, const int batch, const std::string& variant, const int calls, Work work) {
-    const nv12::Stats s = nv12::measure(work, out.warmup, out.iters, out.warmupSeconds, true);
+    const preproc::Stats s = preproc::measure(work, out.warmup, out.iters, out.warmupSeconds, true);
     out.timing->row(batch, variant, calls, s.median, s.min, s.max, s.mean, s.iters, s.warmupSeconds, s.warmupSteady ? 1 : 0, s.gpuClockStartMHz, s.gpuClockTimedMHz, s.gpuClockEndMHz);
     std::cout << "  " << variant << ": median " << s.median << " ms (min " << s.min << ", max " << s.max << ")" << std::endl;
 }
@@ -305,7 +306,7 @@ struct Variant {
 };
 
 // The variants of one point in a rotated order: the first one is variant (pointIndex mod the number of variants). A GPU that was at rest ramps its
-// clock during the first second of work; the warm-up rule of nv12::measure covers that, and the rotation makes sure that a ramp that is not covered
+// clock during the first second of work; the warm-up rule of preproc::measure covers that, and the rotation makes sure that a ramp that is not covered
 // would not always hit the same variant
 inline void timeRotated(Output& out, const int batch, const int pointIndex, const std::vector<Variant>& variants) {
     const size_t first = static_cast<size_t>(pointIndex + out.rotateOffset) % variants.size();
@@ -351,7 +352,7 @@ void runA(fk::Stream_<fk::ParArch::GPU_AMD>& stream, fk::Ptr2D<U3>& source, Outp
     fkl.sync();
     rpp.run();
     const std::vector<float> rppOut = rpp.download();
-    const auto hostSource = nv12::hostRaw(source);
+    const auto hostSource = preproc::hostRaw(source);
     const std::vector<float> refAsym = referenceA(hostSource, N, fklb::ResizeSampling::ASYMMETRIC);
     const std::vector<float> refHalf = referenceA(hostSource, N, fklb::ResizeSampling::HALF_PIXEL);
     agreementRows(out, N, "fkl_fused vs scalar reference ASYMMETRIC", fkl.fusedOut(), refAsym.data(), N, true, "");
@@ -487,7 +488,7 @@ int launch() {
         {
             std::vector<uchar> ppm;
             int w = 0, h = 0;
-            const bool natural = imagePath != nullptr && nv12::readPpm(imagePath, ppm, w, h);
+            const bool natural = imagePath != nullptr && preproc::readPpm(imagePath, ppm, w, h);
             uint32_t state = 12345u;
             for (int y = 0; y < SRC_H; ++y) {
                 for (int x = 0; x < SRC_W; ++x) {

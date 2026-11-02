@@ -23,57 +23,21 @@
 // its own (per batch: one executeOperations per operation for all the crops; per crop: one per operation and per crop).
 #pragma once
 
-#include <common/resize_reference.h>
-
-#include <fused_kernel/algorithms/algorithms.h>
-#include <fused_kernel/algorithms/basic_ops/memory_operations.h>
-#include <fused_kernel/algorithms/image_processing/color_conversion.h>
-#include <fused_kernel/algorithms/image_processing/image.h>
-#include <fused_kernel/algorithms/image_processing/resize.h>
-#include <fused_kernel/fused_kernel.h>
-
-#include <algorithm>
-#include <array>
-#include <chrono>
-#include <cmath>
-#include <filesystem>
-#include <functional>
-#include <cstdint>
-#include <cstring>
-#include <fstream>
-#include <stdexcept>
-#include <string>
-#include <system_error>
-#include <tuple>
-#include <utility>
-#include <vector>
+#include <fkl-self/pipelines/preproc_common.h>
 
 namespace nv12 {
+
+// The shared helpers moved to namespace preproc (fkl-self/pipelines/preproc_common.h); the NV12 files still call them as nv12::name
+using namespace preproc;
 
 constexpr int FRAME_W = 3840, FRAME_H = 2160, OUT_W = 64, OUT_H = 128;
 constexpr int PLANE = OUT_W * OUT_H;
 constexpr uint32_t FRAME_SEED = 424242u, CROPS_SEED = 777u;
 
-using U3 = fk::uchar3;
-using F3 = fk::float3;
 using Frame = fk::Image<fk::PixelFormat::NV12>;
 // BT.601 studio swing (Y 16..235, chroma 16..240) to full range RGB, the conversion of cv::COLOR_YUV2RGB_NV12. In FKL fb9ac3a the
 // matrix with the 1.164 gain is ColorRange::Full, bt601; ColorRange::Limited with bt601 has no matrix and gives black.
 using ToRgb = fk::ConvertYUVToRGB<fk::PixelFormat::NV12, fk::ColorRange::Full, fk::ColorPrimitives::bt601, false, U3>;
-using Rgb2D = fk::RawPtr<fk::ND::_2D, U3>;
-
-// The sampling of the linear resize: FKL's Resize samples the source at x * (src / dst) (ResizeSampling::ASYMMETRIC, the default).
-// With -DE5_RESIZE_HALF_PIXEL the resize is ResizeHalfPixel, (x + 0.5) * (src / dst) - 0.5, which needs an FKL with ResizeSampling
-// (FKL pull request #409).
-#ifdef E5_RESIZE_HALF_PIXEL
-using LinearResize = fk::ResizeHalfPixel<fk::InterpolationType::INTER_LINEAR>;
-constexpr fklb::ResizeSampling RESIZE_SAMPLING = fklb::ResizeSampling::HALF_PIXEL;
-constexpr const char* RESIZE_SAMPLING_NAME = "HALF_PIXEL";
-#else
-using LinearResize = fk::Resize<fk::InterpolationType::INTER_LINEAR>;
-constexpr fklb::ResizeSampling RESIZE_SAMPLING = fklb::ResizeSampling::ASYMMETRIC;
-constexpr const char* RESIZE_SAMPLING_NAME = "ASYMMETRIC";
-#endif
 
 // Normalisation of a DNN input: (x / 255 - mean) / std
 constexpr float MEAN[3] = {0.485f, 0.456f, 0.406f}, STD[3] = {0.229f, 0.224f, 0.225f};
@@ -83,13 +47,6 @@ constexpr float MEAN[3] = {0.485f, 0.456f, 0.406f}, STD[3] = {0.229f, 0.224f, 0.
 inline uint32_t lcg(uint32_t& state) {
     state = state * 1664525u + 1013904223u;
     return state >> 8;
-}
-
-// The host view of the memory of a Ptr: the pinned copy of a device Ptr, the memory itself otherwise
-template <typename PtrType>
-auto hostRaw(const PtrType& ptr) {
-    const auto pinned = ptr.ptrPinned();
-    return pinned.data != nullptr ? pinned : ptr.ptr();
 }
 
 // A frame of seeded noise: luma in 16..235, chroma in 16..240 (the limited range)
@@ -102,21 +59,6 @@ inline void fillNoise(Frame& frame) {
             data.at(x, y) = static_cast<uchar>(luma ? 16 + lcg(state) % 220 : 16 + lcg(state) % 225);
         }
     }
-}
-
-// A binary PPM (P6, 8 bit)
-inline bool readPpm(const char* path, std::vector<uchar>& rgb, int& w, int& h) {
-    std::ifstream in(path, std::ios::binary);
-    std::string magic;
-    int maxval = 0;
-    in >> magic >> w >> h >> maxval;
-    in.get();
-    if (!in || magic != "P6" || maxval != 255 || w <= 0 || h <= 0) {
-        return false;
-    }
-    rgb.resize(static_cast<size_t>(w) * h * 3);
-    in.read(reinterpret_cast<char*>(rgb.data()), static_cast<std::streamsize>(rgb.size()));
-    return static_cast<bool>(in);
 }
 
 // An RGB image tiled over the frame, converted to NV12 (BT.601, limited range, chroma averaged over 2x2 pixels)
@@ -165,14 +107,6 @@ std::array<fk::Rect, N> makeCrops() {
 
 // ------------------------------------------------------------------------------------------------------------------
 // Operations
-inline Rgb2D roiOf(const Rgb2D& frame, const fk::Rect& rect) {
-    Rgb2D roi = frame;
-    roi.data = reinterpret_cast<U3*>(reinterpret_cast<char*>(frame.data) + static_cast<size_t>(rect.y) * frame.dims.pitch) + rect.x;
-    roi.dims.width = static_cast<uint>(rect.width);
-    roi.dims.height = static_cast<uint>(rect.height);
-    return roi;
-}
-
 inline fk::RawPtr<fk::ND::_3D, float> tensorSlice(fk::RawPtr<fk::ND::_3D, float> tensor, const int i) {
     tensor.data = reinterpret_cast<float*>(reinterpret_cast<char*>(tensor.data) +
                                            static_cast<size_t>(i) * tensor.dims.plane_pitch * tensor.dims.color_planes);
@@ -185,9 +119,6 @@ inline auto resizeOf(const Rgb2D& roi) {
 }
 inline auto read2D(const fk::RawPtr<fk::ND::_2D, F3>& p) { return fk::PerThreadRead<fk::ND::_2D, F3>::build(p); }
 inline auto write2D(const fk::RawPtr<fk::ND::_2D, F3>& p) { return fk::PerThreadWrite<fk::ND::_2D, F3>::build(p); }
-inline auto read3D(const fk::RawPtr<fk::ND::_3D, F3>& p) { return fk::PerThreadRead<fk::ND::_3D, F3>::build(p); }
-inline auto write3D(const fk::RawPtr<fk::ND::_3D, F3>& p) { return fk::PerThreadWrite<fk::ND::_3D, F3>::build(p); }
-inline auto split3D(const fk::RawPtr<fk::ND::_3D, float>& p) { return fk::TensorSplit<F3>::build(p); }
 inline auto mulOp() { return fk::Mul<F3>::build(F3{1.f / 255.f, 1.f / 255.f, 1.f / 255.f}); }
 inline auto subOp() { return fk::Sub<F3>::build(F3{MEAN[0], MEAN[1], MEAN[2]}); }
 inline auto divOp() { return fk::Div<F3>::build(F3{STD[0], STD[1], STD[2]}); }
@@ -195,9 +126,6 @@ inline auto divOp() { return fk::Div<F3>::build(F3{STD[0], STD[1], STD[2]}); }
 using ResizeOp = decltype(resizeOf(std::declval<Rgb2D>()));
 using Read2DOp = decltype(read2D(std::declval<fk::RawPtr<fk::ND::_2D, F3>>()));
 using Write2DOp = decltype(write2D(std::declval<fk::RawPtr<fk::ND::_2D, F3>>()));
-using Read3DOp = decltype(read3D(std::declval<fk::RawPtr<fk::ND::_3D, F3>>()));
-using Write3DOp = decltype(write3D(std::declval<fk::RawPtr<fk::ND::_3D, F3>>()));
-using SplitOp = decltype(split3D(std::declval<fk::RawPtr<fk::ND::_3D, float>>()));
 using MulOp = decltype(mulOp());
 using SubOp = decltype(subOp());
 using DivOp = decltype(divOp());
@@ -330,101 +258,6 @@ inline double maxAbsDiff(const float* a, const float* b, const size_t n) {
         }
     }
     return worst;
-}
-
-// ------------------------------------------------------------------------------------------------------------------
-// Wall clock timing of fn() (it must end with the synchronisation of its stream): warmup runs, then iters timed runs
-struct Stats {
-    double median{0}, min{0}, max{0}, mean{0};
-    size_t iters{0};
-    double warmupSeconds{0};  // the warm-up that was run, in seconds
-    bool warmupSteady{true};  // false: the cap of the warm-up was reached before the time of the runs stopped changing
-    // The graphics clock of an AMD GPU (sysfs) at the start of the warm-up, at the start of the timed runs and after them; -1 when it can not be read
-    double gpuClockStartMHz{-1}, gpuClockTimedMHz{-1}, gpuClockEndMHz{-1};
-};
-
-// The graphics clock of the first AMD GPU in MHz (sysfs hwmon freq1_input of the device with the vendor 0x1002), -1 when it can not be read
-inline double amdGpuClockMHz() {
-    static const std::string path = [] {
-        std::error_code ec;
-        for (const auto& card : std::filesystem::directory_iterator("/sys/class/drm", ec)) {
-            const std::filesystem::path device = card.path() / "device";
-            std::ifstream vendor(device / "vendor");
-            std::string v;
-            if (!(vendor >> v) || v != "0x1002") {
-                continue;
-            }
-            for (const auto& hw : std::filesystem::directory_iterator(device / "hwmon", ec)) {
-                if (std::filesystem::exists(hw.path() / "freq1_input", ec)) {
-                    return (hw.path() / "freq1_input").string();
-                }
-            }
-        }
-        return std::string();
-    }();
-    if (path.empty()) {
-        return -1.0;
-    }
-    std::ifstream f(path);
-    double hz = 0;
-    return (f >> hz) ? hz / 1e6 : -1.0;
-}
-
-// Warm-up: at least `warmup` runs and, when minWarmupSeconds > 0, at least that long. With steady = true the warm-up goes on, in windows of 0.25 s,
-// until the mean time of two consecutive windows differs by at most 2 percent (up to maxWarmupSeconds): a GPU that was at rest raises its clock
-// during about a second of continuous work (an RX 9060 runs at 2.0 GHz for the first 0.7 s and at 3.0 GHz after 1 s), and a fused kernel that is
-// bound by the core clock is 20 percent slower until then.
-inline Stats measure(const std::function<void()>& fn, const int warmup, const int iters, const double minWarmupSeconds = 0.0, const bool steady = false,
-                     const double maxWarmupSeconds = 10.0) {
-    using Clock = std::chrono::steady_clock;
-    const double clockAtStart = amdGpuClockMHz();
-    const auto begin = Clock::now();
-    const auto elapsed = [&] { return std::chrono::duration<double>(Clock::now() - begin).count(); };
-    constexpr double WINDOW = 0.25, TOLERANCE_STEADY = 0.02;
-    int runs = 0, inWindow = 0;
-    double windowStart = 0, windowSum = 0, previousMean = -1;
-    bool isSteady = !steady;
-    while (!(runs >= warmup && elapsed() >= minWarmupSeconds && (isSteady || elapsed() >= maxWarmupSeconds))) {
-        const auto start = Clock::now();
-        fn();
-        windowSum += std::chrono::duration<double, std::milli>(Clock::now() - start).count();
-        ++runs;
-        ++inWindow;
-        if (elapsed() - windowStart >= WINDOW) {
-            const double mean = windowSum / inWindow;
-            isSteady = !steady || (previousMean > 0 && std::abs(mean - previousMean) <= TOLERANCE_STEADY * previousMean);
-            previousMean = mean;
-            windowSum = 0;
-            inWindow = 0;
-            windowStart = elapsed();
-        }
-    }
-    const double warmupSeconds = elapsed();
-    const double clockAtTimedStart = amdGpuClockMHz();
-    std::vector<double> ms(static_cast<size_t>(iters));
-    for (auto& t : ms) {
-        const auto start = Clock::now();
-        fn();
-        const auto stop = Clock::now();
-        t = std::chrono::duration<double, std::milli>(stop - start).count();
-    }
-    std::sort(ms.begin(), ms.end());
-    Stats s;
-    s.iters = ms.size();
-    s.min = ms.front();
-    s.max = ms.back();
-    s.median = ms.size() % 2 ? ms[ms.size() / 2] : 0.5 * (ms[ms.size() / 2 - 1] + ms[ms.size() / 2]);
-    double sum = 0;
-    for (const double t : ms) {
-        sum += t;
-    }
-    s.mean = sum / static_cast<double>(ms.size());
-    s.warmupSeconds = warmupSeconds;
-    s.warmupSteady = isSteady;
-    s.gpuClockStartMHz = clockAtStart;
-    s.gpuClockTimedMHz = clockAtTimedStart;
-    s.gpuClockEndMHz = amdGpuClockMHz();
-    return s;
 }
 
 } // namespace nv12
