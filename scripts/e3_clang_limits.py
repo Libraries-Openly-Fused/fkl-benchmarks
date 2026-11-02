@@ -17,7 +17,8 @@
 One translation unit per compile (variant A of fkl-self/compiletime/gen_chain.py: float, Mul/Add/Sub/Div/Max/Min cycled, each operation with its own parameter,
 all in ONE fused kernel), compiled with amdclang++ (HIP, one gfx target), clang++ (the CPU back-end) or g++ (the CPU back-end, for comparison), with the flags of
 scripts/e3_sweep.py (-O3 -DNDEBUG -std=c++17 -ftemplate-depth=1000). One compile at a time, under a monitor that samples the resident memory of the whole process
-tree at 4 Hz and kills it at a cap (--cap-gb, 40) or a time limit (--timeout, 3600 s) and says so. run and bisect never execute the programs; check does (below).
+tree at 4 Hz and kills it at a cap (--cap-gb, 40 GiB) or a time limit (--timeout, 3600 s) and says so. run and bisect never execute the programs; check does (below).
+The memory figures are GiB (GNU time's KiB and the sampled VmRSS in kB, divided by 1,048,576; the cap is cap_gb * 1,048,576 kB): the CSV columns peak_rss_gb and peak_tree_rss_gb are in GiB, object_mb is in MiB.
 
   python scripts/e3_clang_limits.py run    --backend hip   --ns 1100,2046,2047 --out results/rx9060/e3-compile-limits
   python scripts/e3_clang_limits.py run    --backend clang --ns 2100 --bracket-depth auto --stack-kb unlimited --out ...
@@ -249,7 +250,7 @@ def compile_once(s, n, series, check=False):
                 w.writeheader()
             w.writerow({k: row.get(k, "") for k in COLUMNS})
     res = f" sgpr {row.get('sgpr', '')} vgpr {row.get('vgpr', '')} scratch {row.get('scratch_bytes_per_lane', '')}" if s.backend == "hip" and outcome == "ok" and not check else ""
-    print(f"{s.backend}{' program' if check else ''} N={n} stack={stack_kb} aslr={row['aslr']} bracket={row['bracket_depth']}: {outcome} (exit {rc}) wall {row['wall_s']} s, peak {row['peak_rss_gb']} GB{res}"
+    print(f"{s.backend}{' program' if check else ''} N={n} stack={stack_kb} aslr={row['aslr']} bracket={row['bracket_depth']}: {outcome} (exit {rc}) wall {row['wall_s']} s, peak {row['peak_rss_gb']} GiB{res}"
           + (f" | {first}" if first else ""), flush=True)
     return row
 
@@ -342,7 +343,7 @@ def main():
     ap.add_argument("--offload-arch", default="gfx1200")
     ap.add_argument("--reference-compiler", default="g++-13", help="check: the compiler of the CPU back-end program that the GPU output is compared with")
     ap.add_argument("--fkl-include", help="FKL include dir (default: external/fkl/include)")
-    ap.add_argument("--cap-gb", type=float, default=40.0)
+    ap.add_argument("--cap-gb", type=float, default=40.0, help="cap of the resident memory of the process tree, in GiB")
     ap.add_argument("--timeout", type=float, default=3600.0)
     ap.add_argument("--work", help="directory for the translation units (default: a temporary one)")
     ap.add_argument("--out", help="directory of e3_limits.csv and logs/")

@@ -66,21 +66,21 @@ Compile time of the valid chains of E3 (variant A, N distinct operations; `scrip
 
 | compiler | N | unchanged | prototype | difference | peak memory, unchanged | prototype |
 |---|--:|--:|--:|--:|--:|--:|
-| g++ 13 | 1,000 | 8.8 s | 8.8 s | +0.0 % | 0.54 GB | 0.54 GB |
-| g++ 13 | 2,046 | 28.5 s | 28.8 s | +1.1 % | 2.15 GB | 2.15 GB |
-| clang++ 23 | 1,000 | 9.8 s | 10.0 s | +2.0 % | 1.83 GB | 1.83 GB |
-| clang++ 23 | 2,046 | 32.0 s | 31.8 s | -0.6 % | 6.86 GB | 6.87 GB |
-| amdclang++ | 1,000 | 20.5 s | 20.8 s | +1.5 % | 1.83 GB | 1.84 GB |
-| amdclang++ | 2,046 | 69.8 s | 70.3 s | +0.7 % | 6.85 GB | 6.87 GB |
+| g++ 13 | 1,000 | 8.8 s | 8.8 s | +0.0 % | 0.54 GiB | 0.54 GiB |
+| g++ 13 | 2,046 | 28.5 s | 28.8 s | +1.1 % | 2.15 GiB | 2.15 GiB |
+| clang++ 23 | 1,000 | 9.8 s | 10.0 s | +2.0 % | 1.83 GiB | 1.83 GiB |
+| clang++ 23 | 2,046 | 32.0 s | 31.8 s | -0.6 % | 6.86 GiB | 6.87 GiB |
+| amdclang++ | 1,000 | 20.5 s | 20.8 s | +1.5 % | 1.83 GiB | 1.84 GiB |
+| amdclang++ | 2,046 | 69.8 s | 70.3 s | +0.7 % | 6.85 GiB | 6.87 GiB |
 
 The limits of the chains do not move (`compile-time-overhead/e3_limits.csv`):
 
 | compiler | N | unchanged | prototype |
 |---|--:|---|---|
-| g++ 13 | 2,047 | compiles (28.8 s, 2.1 GB) | compiles (28.8 s, 2.1 GB) |
+| g++ 13 | 2,047 | compiles (28.8 s, 2.1 GiB) | compiles (28.8 s, 2.1 GiB) |
 | clang++ 23 | 2,047 | `iop_fuser.h:150:17: fatal error: instantiating fold expression with 2049 arguments exceeded expression nesting limit of 2048` | `iop_fuser.h:150:17: fatal error: instantiating fold expression with 2049 arguments exceeded expression nesting limit of 2048` |
 | amdclang++ | 2,047 | `iop_fuser.h:150:17: fatal error: instantiating fold expression with 2049 arguments exceeded expression nesting limit of 2048` | `iop_fuser.h:150:17: fatal error: instantiating fold expression with 2049 arguments exceeded expression nesting limit of 2048` |
-| g++ 13 | 4,000 | compiles (114.4 s, 6.5 GB) | compiles (115.4 s, 6.5 GB) |
+| g++ 13 | 4,000 | compiles (114.4 s, 6.5 GiB) | compiles (115.4 s, 6.5 GiB) |
 
 ## Reproduce
 
