@@ -79,8 +79,8 @@
 | current | 3000 | 25560 | 255 | 20188 | 53144 | 318.0 | 224.1 | 20.8 | 8230.0 | 55.3 |  | ok |
 | current | 3500 | 29800 | 255 | 28464 | 67560 | 526.2 | 346.5 | 62.1 | 10813.0 | 102.9 |  | ok |
 | current | 3847 | 32752 | 255 | 39900 | 75544 | 731.2 | 464.1 | 101.4 | 12820.0 |  |  | ok |
-| current | 3848 | 32768 |  |  |  |  |  |  | 13.5 |  |  | failed (exit 255): ptxas /tmp/tmpxft_0017a191_00000000-6_current_B_3848.ptx |
-| current | 4000 | 34056 |  |  |  |  |  |  | 14.1 |  |  | failed (exit 255): ptxas /tmp/tmpxft_0017c95d_00000000-6_current_B_4000.ptx |
+| current | 3848 | 32768 |  |  |  | 492.4 |  |  | 12833.0 |  |  | failed (exit 255): ptxas /tmp/tmpxft_0017a191_00000000-6_current_B_3848.ptx, line 86217; error   :  |
+| current | 4000 | 34056 |  |  |  | 511.1 |  |  | 13809.5 | 123.4 |  | failed (exit 255): ptxas /tmp/tmpxft_0017c95d_00000000-6_current_B_4000.ptx, line 89615; error   :  |
 | patched | 1000 | 8560 | 19 | 0 | 8144 | 25.4 | 14.2 | 0.6 | 1490.0 |  |  | ok |
 | patched | 1024 | 8760 | 19 | 0 | 8336 | 26.7 | 14.9 | 0.6 | 1537.0 |  |  | ok |
 | patched | 1500 | 12800 | 19 | 0 | 12120 | 55.4 | 35.0 | 1.2 | 2613.0 |  |  | ok |
@@ -144,8 +144,8 @@
 | B | 3000 | 25560 | 255 / 19 | 20188 / 0 | 53144 / 24144 | 318.0 / 319.1 | 224.1 / 230.1 | 20.8 / 5.9 | 8230.0 / 8093.0 |  /  |
 | B | 3500 | 29800 | 255 / 19 | 28464 / 0 | 67560 / 28120 | 526.2 / 493.2 | 346.5 / 352.4 | 62.1 / 12.4 | 10813.0 / 10631.0 |  /  |
 | B | 3847 | 32752 | 255 /  | 39900 /  | 75544 /  | 731.2 /  | 464.1 /  | 101.4 /  | 12820.0 /  |  /  |
-| B | 3848 failed (exit 255) | 32768 |  /  |  /  |  /  |  /  |  /  |  /  | 13.5 /  |  /  |
-| B | 4000 failed (exit 255) | 34056 |  /  |  /  |  /  |  /  |  /  |  /  | 14.1 /  |  /  |
+| B | 3848 failed (exit 255) | 32768 |  /  |  /  |  /  | 492.4 /  |  /  |  /  | 12833.0 /  |  /  |
+| B | 4000 failed (exit 255) | 34056 |  /  |  /  |  /  | 511.1 /  |  /  |  /  | 13809.5 /  |  /  |
 
 ## Fold versus recursion (Mul/Add<float>, variant L)
 
@@ -164,9 +164,9 @@
 | 07b2cb3 | 242 | 15.389 | 11 | ok |
 | 07b2cb3 | 243 | 15.959 | 11 | ok |
 | 07b2cb3 | 244 | 15.870 | 11 | ok |
-| 07b2cb3 | 245 | T |  | failed (exit 1): /tmp/claude-1000/-home-oscar-tfkl-bench/d3e03e77-0fda-4126-a580-8c31301e5300/scratchpad/fk |
-| 07b2cb3 | 250 | T |  | failed (exit 1): /tmp/claude-1000/-home-oscar-tfkl-bench/d3e03e77-0fda-4126-a580-8c31301e5300/scratchpad/fk |
-| 07b2cb3 | 300 | T |  | failed (exit 1): /tmp/claude-1000/-home-oscar-tfkl-bench/d3e03e77-0fda-4126-a580-8c31301e5300/scratchpad/fk |
+| 07b2cb3 | 245 | 7.470 |  | failed (exit 1): /tmp/claude-1000/-home-oscar-tfkl-bench/d3e03e77-0fda-4126-a580-8c31301e5300/scratchpad/fk |
+| 07b2cb3 | 250 | 7.734 |  | failed (exit 1): /tmp/claude-1000/-home-oscar-tfkl-bench/d3e03e77-0fda-4126-a580-8c31301e5300/scratchpad/fk |
+| 07b2cb3 | 300 | 12.431 |  | failed (exit 1): /tmp/claude-1000/-home-oscar-tfkl-bench/d3e03e77-0fda-4126-a580-8c31301e5300/scratchpad/fk |
 | 07b2cb3^ | 4 | 2.995 | 14 | ok |
 | 07b2cb3^ | 14 | 2.927 | 12 | ok |
 | 07b2cb3^ | 54 | 3.222 | 11 | ok |
@@ -180,9 +180,9 @@
 | 07b2cb3^ | 242 | 21.508 | 11 | ok |
 | 07b2cb3^ | 243 | 21.247 | 11 | ok |
 | 07b2cb3^ | 244 | 21.634 | 11 | ok |
-| 07b2cb3^ | 245 | T |  | failed (exit 1): /tmp/claude-1000/-home-oscar-tfkl-bench/d3e03e77-0fda-4126-a580-8c31301e5300/scratchpad/fk |
-| 07b2cb3^ | 250 | T |  | failed (exit 1): /tmp/claude-1000/-home-oscar-tfkl-bench/d3e03e77-0fda-4126-a580-8c31301e5300/scratchpad/fk |
-| 07b2cb3^ | 300 | T |  | failed (exit 1): /tmp/claude-1000/-home-oscar-tfkl-bench/d3e03e77-0fda-4126-a580-8c31301e5300/scratchpad/fk |
+| 07b2cb3^ | 245 | 12.609 |  | failed (exit 1): /tmp/claude-1000/-home-oscar-tfkl-bench/d3e03e77-0fda-4126-a580-8c31301e5300/scratchpad/fk |
+| 07b2cb3^ | 250 | 13.675 |  | failed (exit 1): /tmp/claude-1000/-home-oscar-tfkl-bench/d3e03e77-0fda-4126-a580-8c31301e5300/scratchpad/fk |
+| 07b2cb3^ | 300 | 22.838 |  | failed (exit 1): /tmp/claude-1000/-home-oscar-tfkl-bench/d3e03e77-0fda-4126-a580-8c31301e5300/scratchpad/fk |
 | 1f33224 | 4 | 3.110 | 14 | ok |
 | 1f33224 | 14 | 3.080 | 12 | ok |
 | 1f33224 | 54 | 3.264 | 11 | ok |
@@ -199,9 +199,9 @@
 | 1f33224 | 245 | 15.066 | 11 | ok |
 | 1f33224 | 246 | 13.924 | 11 | ok |
 | 1f33224 | 247 | 13.368 | 11 | ok |
-| 1f33224 | 248 | T |  | failed (exit 1): /tmp/claude-1000/-home-oscar-tfkl-bench/d3e03e77-0fda-4126-a580-8c31301e5300/scratchpad/fk |
-| 1f33224 | 250 | T |  | failed (exit 1): /tmp/claude-1000/-home-oscar-tfkl-bench/d3e03e77-0fda-4126-a580-8c31301e5300/scratchpad/fk |
-| 1f33224 | 300 | T |  | failed (exit 1): /tmp/claude-1000/-home-oscar-tfkl-bench/d3e03e77-0fda-4126-a580-8c31301e5300/scratchpad/fk |
+| 1f33224 | 248 | 10.695 |  | failed (exit 1): /tmp/claude-1000/-home-oscar-tfkl-bench/d3e03e77-0fda-4126-a580-8c31301e5300/scratchpad/fk |
+| 1f33224 | 250 | 10.153 |  | failed (exit 1): /tmp/claude-1000/-home-oscar-tfkl-bench/d3e03e77-0fda-4126-a580-8c31301e5300/scratchpad/fk |
+| 1f33224 | 300 | 17.516 |  | failed (exit 1): /tmp/claude-1000/-home-oscar-tfkl-bench/d3e03e77-0fda-4126-a580-8c31301e5300/scratchpad/fk |
 | current | 4 | 2.721 | 14 | ok |
 | current | 14 | 2.763 | 12 | ok |
 | current | 54 | 2.951 | 11 | ok |
