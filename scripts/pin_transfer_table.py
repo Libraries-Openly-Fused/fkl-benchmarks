@@ -40,7 +40,6 @@ GROUPS = [
     ("mul4-old", "e9e599d", "38c4f32", "rebuild at 38c4f32 against the frozen binary (source check)", [("benchmark_image_resolution_MAD_loop_mul4_cu", "e0-data-size-mul4 (same binary rebuilt at the old library)")]),
     ("mul4-new", "e9e599d", "38c4f32", "frozen binary of the measurement", [("benchmark_image_resolution_MAD_loop_mul4_cu", "e0-data-size-mul4, e0-data-size-parity")]),
     ("nan_saturate", "f3afadc", "fb9ac3a", "frozen binary of the measurement", [("nan_saturate_cu", "e6-nan-saturate")]),
-    ("nv12", "f81306d", "fb9ac3a", "rebuild at fb9ac3a (no frozen binary exists)", [("benchmark_nv12_pipeline_cu", "e4b-nv12")]),
 ]
 LINE = re.compile(r"^\s+binary (\S+): kernels in A (\d+), in B (\d+), identical (\d+), different (\d+), only in A (\d+), only in B (\d+)")
 
