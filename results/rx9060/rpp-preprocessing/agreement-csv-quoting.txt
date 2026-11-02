@@ -1,0 +1,18 @@
+RPP agreement CSVs of results/rx9060/rpp-preprocessing (pipeline (a)): the notes with a comma, now quoted
+=========================================================================================================
+The agreement files of the RPP benchmark (rpp/benchmark_rpp_preprocessing.h) were written before fklb::CsvWriter quoted its text fields. In the four pipeline (a) files the last
+column, `note`, has a comma in the rows of the comparison `rpp_fused_api vs fkl_fused` ("FKL samples ASYMMETRIC, RPP HALF_PIXEL"; 2 regions x 30 batches = 60 rows in each file), so a
+reader that splits on commas saw 9 fields in those 240 rows and 8 in the others. The numbers and the pass flag are columns 1 to 7 and are not affected. The 4 files below were repaired
+afterwards with scripts/e5_quote_agreement_csv.py --write: the note is in double quotes (RFC 4180) in the rows that need it and NOTHING ELSE changes (same number of lines, the same
+bytes except one pair of quote characters in each row repaired). Before the repair the files had no CR and no double quote, and the third column of every row is `interior` or `last 2
+columns and rows`, so the first two columns have no comma. The separator is a comma without a space: any csv reader reads the quoted note as one field.
+'before' is the file as committed on main (3809465); 'after' is the file as it is now. A second script that does not share code with the repair (it splits the old rows on commas, the
+first 7 fields and the rest as the note, and reads the new rows with a csv reader) found in the 4 files the same fields in every row, the same lines, no CR, the same final newline and
+nothing but one pair of quote characters in each of the 240 rows repaired. 'python scripts/e5_quote_agreement_csv.py --check' on the 4 files after the repair: exit status 0, 0 rows that need quotes,
+rows by number of fields {8: 360} in each (the header has 8). Running --write again changes nothing. The benchmarks write the notes quoted from now on (fklb::CsvWriter).
+
+file (below results/rx9060/rpp-preprocessing/)                     rows  repaired  sha256 before                                                     sha256 after
+natural-image/benchmark_rpp_preprocessing_a_agreement_GPU_AMD.csv   360        60  aadfef664104f02b648edc3744e6ba1a0da830bf0b07077510d8fb5bf7d646d9  c334f5a18a401ad56a6f3f850dddfb513dee9eafb0aeb579b68f1804c6d26988
+noise/run0/benchmark_rpp_preprocessing_a_agreement_GPU_AMD.csv      360        60  d1aead4962f906d869e4f06496e15d7241ca22ec1d3989f3862242f5ab3a56db  a8f59e1ca9b6197e5f2504f9951a8f457031bfcc2d64778157c004cf2aa12022
+noise/run1/benchmark_rpp_preprocessing_a_agreement_GPU_AMD.csv      360        60  f44e8062d19b0f6c3601cc43b1acaee4692bf6ef29d18197e6cd76c79708c5b1  10fd576a07bdd141c57c5bef155a05bc0860a688bcea338ebeb66c5f479890ad
+noise/run2/benchmark_rpp_preprocessing_a_agreement_GPU_AMD.csv      360        60  ca3dbc7e64c63990c6624f583794ce657a84a9110f08c7184120fc3ac632fb8d  74ab8339503d9dd10bde02f6edc369f1921cb0972035848996d973cf8de02cf2
