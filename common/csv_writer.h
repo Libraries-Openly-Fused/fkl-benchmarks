@@ -27,8 +27,10 @@
 #include <initializer_list>
 #include <iomanip>
 #include <stdexcept>
-#include <utility>
 #include <string>
+#include <string_view>
+#include <type_traits>
+#include <utility>
 
 namespace fklb {
 
@@ -36,12 +38,32 @@ class CsvWriter {
     std::ofstream m_file;
     size_t m_columns;
 
+    // A text value with a comma, a quote or a line break is written quoted (RFC 4180), so that every row has as many fields as the header
+    void putText(const std::string_view text) {
+        if (text.find_first_of(",\"\r\n") == std::string_view::npos) {
+            m_file << text;
+            return;
+        }
+        m_file << '"';
+        for (const char c : text) {
+            if (c == '"') {
+                m_file << '"';
+            }
+            m_file << c;
+        }
+        m_file << '"';
+    }
+
     template <typename T>
     void put(const T& value, bool first) {
         if (!first) {
             m_file << ',';
         }
-        m_file << value;
+        if constexpr (std::is_convertible_v<const T&, std::string_view>) {
+            putText(std::string_view(value));
+        } else {
+            m_file << value;
+        }
     }
 
 public:

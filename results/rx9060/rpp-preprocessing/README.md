@@ -18,6 +18,8 @@ These are the numbers to cite; the first run of this folder (warm-up 0.5 s, pin 
   (`rppt_yuv_to_rgb`, NV12 8 bit, BT.601, studio swing, default chroma upsampling) and `fkl_convert`, `*_chain_*` (the crops, without the conversion; also
   `fkl_chain_fused_halfpixel`), `*_pipeline_*` (conversion and chain; also `fkl_pipeline_fused_halfpixel`), `mixed_fkl_convert_rpp_chain`.
 
+Changes of the harness after the review of #6 (the committed runs were made before them): the interior of `rpp_fused_api vs scalar reference HALF_PIXEL` of pipeline (a) is a required check (`pass` 1 or 0 in the CSV, the edge stays informational), so a wrong RPP output fails the run (exit status and `NUMERICAL CHECK FAILED`) instead of being timed and published; the committed CSVs have -1 there, and their interior values (1.9e-06 at all 30 batches) would pass the tolerance of 1e-4. The maximum of a comparison keeps a NaN (it used to be overwritten by the next element). `E5_ITERS`, `E5_WARMUP`, `E5_WARMUP_SECONDS` (0 to 10 s: a warm-up ends after 10 s whatever the value) and `E5_ROTATE_OFFSET` are checked (a value that is not a number, zero iterations, a negative number, a NaN or an infinity stops the program with exit status 2).
+
 RPP calls: the crops of one image are a batch with a source batch stride of 0 and one ROI (XYWH) per crop; source `U8 NHWC`, destination `F32 NCHW`;
 `mean = sub / 0.3`, `std = div / 0.3` per channel (pipeline (a)), `mean = 255 * mean`, `std = 255 * std` (pipeline (b)), mirror off; the channel
 permutation (2, 1, 0) for BGR. RPP has no separate per-channel multiply, subtract and divide: its normalize calls cover the three (the

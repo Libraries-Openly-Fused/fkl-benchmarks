@@ -21,8 +21,8 @@
 // Pipeline (b): a 3840x2160 NV12 frame converted to RGB (BT.601 studio swing), then N = 1, 8, 16, 32, 64 detection crops resized
 // to 64x128, (x / 255 - mean) / std, an NCHW float tensor (fkl-self/pipelines/nv12_pipeline.h).
 //
-// Variants (wall clock including the synchronisation of the stream; 3 warm-up runs and at least 0.5 s of warm-up, E5_ITERS (30) timed
-// runs; median, min, max, mean):
+// Variants (wall clock including the synchronisation of the stream; E5_WARMUP (3) warm-up runs, then a warm-up of at least E5_WARMUP_SECONDS (2.0 s; 0 to 10, the warm-up ends after 10 s at the latest) that goes on until
+// the mean time of two consecutive windows of 0.25 s differs by at most 2 percent, E5_ITERS (30) timed runs; median, min, max, mean):
 //   fkl_fused           FKL, one executeOperations for the whole chain (pipeline (b): after the conversion kernel)
 //   fkl_fused_halfpixel the same with ResizeHalfPixel (FKL ResizeSampling::HALF_PIXEL: the sampling of cv::resize, NPP and RPP)
 //   fkl_perop_batch     FKL, one executeOperations per operation for all the crops
@@ -32,9 +32,10 @@
 // RPP has no separate per-channel multiply, subtract and divide: the normalize of rppt_resize_mirror_normalize covers the three, with
 // mean = sub / 0.3 and std = div / 0.3. The crops of one image are a batch with a source batch stride of 0 and one ROI per crop.
 // Output widths are multiples of 8.
-// Environment: E5_ITERS, E5_WARMUP, E5_IMAGE (a binary PPM tiled over the frame / image instead of seeded noise), E5_IMAGE_INFO.
+// Environment: E5_ITERS, E5_WARMUP, E5_WARMUP_SECONDS, E5_ROTATE_OFFSET (checked: common/env_args.h), E5_IMAGE (a binary PPM tiled over the frame / image instead of seeded noise), E5_IMAGE_INFO.
 // CSVs in the working directory: benchmark_rpp_preprocessing_{a,b}_GPU_AMD.csv and ..._agreement_GPU_AMD.csv.
 #include <common/csv_writer.h>
+#include <common/env_args.h>
 #include <common/main.h>
 #include <fkl-self/pipelines/nv12_pipeline.h>
 
@@ -51,6 +52,7 @@
 #include <exception>
 #include <functional>
 #include <iostream>
+#include <limits>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -66,8 +68,7 @@ constexpr float ALPHA = 0.3f;
 constexpr float SUB[3] = {1.f, 4.f, 3.2f}, DIV[3] = {3.2f, 0.6f, 11.8f};
 
 inline int envInt(const char* name, const int fallback) {
-    const char* value = std::getenv(name);
-    return value ? std::atoi(value) : fallback;
+    return fklb::envInt(name, fallback);
 }
 
 #define RPPB_CHECK_HIP(x) do { const hipError_t e_ = (x); if (e_ != hipSuccess) throw std::runtime_error(std::string("HIP error: ") + hipGetErrorString(e_)); } while (0)
@@ -95,6 +96,7 @@ inline Region compareTensors(const float* a, const float* b, const int n, const 
     Region r;
     double sum = 0;
     size_t over = 0;
+    bool sawNaN = false;
     for (int i = 0; i < n * 3; ++i) {
         for (int y = 0; y < h; ++y) {
             for (int x = 0; x < w; ++x) {
@@ -104,7 +106,9 @@ inline Region compareTensors(const float* a, const float* b, const int n, const 
                 }
                 const size_t k = (static_cast<size_t>(i) * h + y) * w + x;
                 const double d = std::fabs(static_cast<double>(a[k]) - static_cast<double>(b[k]));
-                if (!(d <= r.maxAbs)) {
+                if (std::isnan(d)) {
+                    sawNaN = true;
+                } else if (d > r.maxAbs) {
                     r.maxAbs = d;
                 }
                 sum += d;
@@ -112,6 +116,9 @@ inline Region compareTensors(const float* a, const float* b, const int n, const 
                 ++r.count;
             }
         }
+    }
+    if (sawNaN) { // a NaN (also inf - inf: the same infinity in both tensors) fails every tolerance: the maximum says so (the mean is NaN as well)
+        r.maxAbs = std::numeric_limits<double>::quiet_NaN();
     }
     r.meanAbs = r.count ? sum / static_cast<double>(r.count) : 0;
     r.fractionOver = r.count ? static_cast<double>(over) / static_cast<double>(r.count) : 0;
@@ -308,15 +315,17 @@ inline void timeRotated(Output& out, const int batch, const int pointIndex, cons
     }
 }
 
+// required: both regions must be within TOLERANCE; requiredInterior: only the interior must (the last two columns and rows of RPP differ from a reference by design)
 inline void agreementRows(Output& out, const int batch, const std::string& what, const float* a, const float* b, const int n, const bool required,
-                          const char* note) {
+                          const char* note, const bool requiredInterior = false) {
     for (const bool edge : {false, true}) {
         const Region r = compareTensors(a, b, n, OUT_W, OUT_H, edge);
         const bool pass = r.maxAbs <= TOLERANCE;
-        out.agreement->row(batch, what, edge ? "last 2 columns and rows" : "interior", r.maxAbs, r.meanAbs, r.fractionOver, required ? (pass ? 1 : 0) : -1, note);
-        out.allPass &= pass || !required;
+        const bool req = required || (requiredInterior && !edge);
+        out.agreement->row(batch, what, edge ? "last 2 columns and rows" : "interior", r.maxAbs, r.meanAbs, r.fractionOver, req ? (pass ? 1 : 0) : -1, note);
+        out.allPass &= pass || !req;
         std::cout << "  " << what << " [" << (edge ? "edge" : "interior") << "]: max " << r.maxAbs << ", mean " << r.meanAbs << ", over 1e-4 " << r.fractionOver
-                  << (required ? (pass ? " ok" : " FAIL") : " (informational)") << std::endl;
+                  << (req ? (pass ? " ok" : " FAIL") : " (informational)") << std::endl;
     }
 }
 
@@ -348,7 +357,7 @@ void runA(fk::Stream_<fk::ParArch::GPU_AMD>& stream, fk::Ptr2D<U3>& source, Outp
     agreementRows(out, N, "fkl_fused vs scalar reference ASYMMETRIC", fkl.fusedOut(), refAsym.data(), N, true, "");
     agreementRows(out, N, "fkl_perop_batch vs fkl_fused", fkl.batchOut(), fkl.fusedOut(), N, true, "");
     agreementRows(out, N, "rpp_fused_api vs scalar reference HALF_PIXEL", rppOut.data(), refHalf.data(), N, false,
-                  "RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference");
+                  "RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference; the interior is a required check (RPP's output must be right to be timed)", true);
     agreementRows(out, N, "rpp_fused_api vs fkl_fused", rppOut.data(), fkl.fusedOut(), N, false, "FKL samples ASYMMETRIC, RPP HALF_PIXEL");
     agreementRows(out, N, "fkl_fused_halfpixel vs scalar reference HALF_PIXEL", fklHalf.fusedOut(), refHalf.data(), N, true, "");
     agreementRows(out, N, "rpp_fused_api vs fkl_fused_halfpixel", rppOut.data(), fklHalf.fusedOut(), N, false,
@@ -466,9 +475,8 @@ int launch() {
     using namespace rppbench;
     const char* imagePath = std::getenv("E5_IMAGE");
     const char* imageInfo = std::getenv("E5_IMAGE_INFO");
-    const int warmup = envInt("E5_WARMUP", 3), iters = envInt("E5_ITERS", 30);
-    const char* warmupText = std::getenv("E5_WARMUP_SECONDS");
-    const double warmupSeconds = warmupText ? std::atof(warmupText) : 2.0;
+    const int warmup = envInt("E5_WARMUP", 3), iters = fklb::envInt("E5_ITERS", 30, 1, 1000000);
+    const double warmupSeconds = fklb::envDouble("E5_WARMUP_SECONDS", 2.0, 0.0, 10.0); // the warm-up ends after 10 s whatever the value
     const int rotateOffset = envInt("E5_ROTATE_OFFSET", 0);
     try {
         fk::Stream_<fk::ParArch::GPU_AMD> stream;

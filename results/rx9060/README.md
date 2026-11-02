@@ -17,7 +17,7 @@ The results of this folder were committed from 2026-10-30 to 2026-11-01. The mac
   `rocminfo`, `amd-smi` and the HIP runtime say "AMD Radeon RX 9060", which is what libdrm's `amdgpu.ids` has for the revision C7 (the XT is the revision C0).
   PCIe: 4.0 x16 (16 GT/s) on a root port of the CPU (0000:00:03.1); the card itself supports PCIe 5.0, the platform 4.0. The link was the same idle and under load in 114 samples read on 2026-11-01 (noted by hand, not kept in a file).
 
-The CSVs of this folder have no `# os:` or `# kernel:` line in their headers; this section is the record of the software state.
+The CSVs of this folder have no `# os:` or `# kernel:` line in their headers; this section is the record of the software state. The report of `scripts/gpu_clock_trace.py` prints the OS and the kernel of the traces that it took with its current version (`meta.txt`).
 
 ## The graphics clock of the GPU decides the result of a short run
 

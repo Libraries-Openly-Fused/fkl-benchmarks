@@ -60,8 +60,7 @@ using DppMT = fk::TransformDPP<fk::ParArch::CPU_MULTITHREAD>;
 const cv::Scalar ALPHA_S(0.3, 0.3, 0.3), SUB_S(1.f, 4.f, 3.2f), DIV_S(3.2f, 0.6f, 11.8f);
 
 int envInt(const char* name, const int fallback) {
-    const char* value = std::getenv(name);
-    return value ? std::atoi(value) : fallback;
+    return fklb::envInt(name, fallback);
 }
 
 // ------------------------------------------------------------------------------------------------------------------
@@ -437,7 +436,10 @@ double maxAbsDiff(const float* a, const float* b, const size_t n) {
     double worst = 0;
     for (size_t i = 0; i < n; ++i) {
         const double d = std::fabs(static_cast<double>(a[i]) - static_cast<double>(b[i]));
-        if (!(d <= worst)) { // also catches NaN
+        if (std::isnan(d)) { // a NaN in either array fails every tolerance: report it (a later element must not overwrite it); the same infinity in both arrays gives inf - inf = NaN and fails the tolerance comparisons too (the exact comparisons use memcmp)
+            return d;
+        }
+        if (d > worst) {
             worst = d;
         }
     }
@@ -550,7 +552,7 @@ void runSweep(const Source& source, const e5::Context& ctx, const int warmup, co
 } // namespace
 
 int launch() {
-    const int iters = envInt("E5_ITERS", 30);
+    const int iters = fklb::envInt("E5_ITERS", 30, 1, 1000000);
     const int warmup = envInt("E5_WARMUP", 3);
     const bool checkOnly = envInt("E5_CHECK_ONLY", 0) != 0;
     const char* outDirEnv = std::getenv("E5_OUT_DIR");
@@ -581,7 +583,7 @@ int launch() {
         os << "# tolerance: " << TOLERANCE << " absolute (the tolerance of test_batchresize_x_split3D); identical = byte for byte\n";
         os << "batch, comparison, max_abs_diff, mean_abs_diff, fraction_over_1e-4, pass, required\n";
         for (const auto& a : agreements) {
-            os << a.batch << ", " << a.pair << ", " << a.maxAbsDiff << ", " << a.meanAbsDiff << ", " << a.fractionOverTolerance << ", " << (a.pass ? 1 : 0) << ", " << (a.required ? 1 : 0)
+            os << a.batch << ", " << e5::csvField(a.pair) << ", " << a.maxAbsDiff << ", " << a.meanAbsDiff << ", " << a.fractionOverTolerance << ", " << (a.pass ? 1 : 0) << ", " << (a.required ? 1 : 0)
                << "\n";
         }
     }

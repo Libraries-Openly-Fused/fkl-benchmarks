@@ -11,6 +11,7 @@
 #include <functional>
 #include <iostream>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <thread>
 #include <vector>
@@ -18,6 +19,7 @@
 #include <opencv2/core.hpp>
 #include <opencv2/core/utility.hpp>
 
+#include <common/env_args.h>
 #include <common/system_info.h>
 
 #include <fused_kernel/fused_kernel.h>
@@ -32,6 +34,9 @@ struct Stats {
 
 // Wall clock milliseconds of fn(), after warmup untimed calls, over iters timed calls
 inline Stats measure(const std::function<void()>& fn, const int warmup, const int iters) {
+    if (iters < 1) {
+        throw std::invalid_argument("e5::measure: iters must be at least 1");
+    }
     for (int i = 0; i < warmup; ++i) {
         fn();
     }
@@ -54,6 +59,24 @@ inline Stats measure(const std::function<void()>& fn, const int warmup, const in
     }
     s.mean = sum / static_cast<double>(ms.size());
     return s;
+}
+
+// A text field of a CSV row, quoted (RFC 4180) when it contains a comma, a quote or a line break: the names of the comparisons have commas ("opencv_default vs scalar
+// reference, HALF_PIXEL sampling (<= 1e-4)"), and without the quotes a reader that splits on commas sees 8 fields in some rows of the agreement files and 7 in the others.
+// The fields of these files are separated by a comma and a space, so a reader has to skip the space after the separator to see a quoted field as one field
+// (Python csv.reader(..., skipinitialspace=True), pandas.read_csv(..., skipinitialspace=True)).
+inline std::string csvField(const std::string& text) {
+    if (text.find_first_of(",\"\r\n") == std::string::npos) {
+        return text;
+    }
+    std::string out = "\"";
+    for (const char c : text) {
+        if (c == '"') {
+            out += '"';
+        }
+        out += c;
+    }
+    return out + "\"";
 }
 
 inline std::string readFirstLine(const std::string& path) {
