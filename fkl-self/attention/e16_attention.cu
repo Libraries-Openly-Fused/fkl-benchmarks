@@ -31,6 +31,7 @@
 // E16_ROTATE (0: the offset of the order of the variants, see ORDER in Runner::run; the long runs use 0, 1, 2), E16_PROFILE (1: one call per variant, no timing, for Nsight Compute), E16_EPI_A (1.25), E16_EPI_B (0.5).
 #include <common/main.h>
 #include <common/csv_writer.h>
+#include <common/nan_safe.h>
 
 #include <fused_kernel/fused_kernel.h>
 #include <fused_kernel/algorithms/basic_ops/arithmetic.h>
@@ -416,7 +417,7 @@ struct Runner {
         for (size_t i = 0; i < hRef.size(); ++i) {
             const double r = static_cast<double>(hRef[i]) * affA + affB;
             const double e = std::fabs(static_cast<double>(__bfloat162float(hOut[i])) - r);
-            maxErr = std::max(maxErr, e);
+            maxErr = fklb::maxKeepNaN(maxErr, e);
             sum += e;
         }
         meanErr = sum / static_cast<double>(hRef.size());

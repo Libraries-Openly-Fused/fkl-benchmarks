@@ -31,6 +31,7 @@
 // The seed is fixed and written to the CSV header. Writes resize_convention.csv.
 #include <common/main.h>
 #include <common/csv_writer.h>
+#include <common/nan_safe.h>
 
 #include <cvGPUSpeedup.cuh>
 #include <npp.h>
@@ -130,9 +131,9 @@ Diff compare(const Image& a, const Image& b) {
     size_t gt = 0;
     for (size_t i = 0; i < a.size(); ++i) {
         const double d = std::fabs(static_cast<double>(a[i]) - b[i]);
-        maxAbs = std::max(maxAbs, d);
+        maxAbs = fklb::maxKeepNaN(maxAbs, d);
         sum += d;
-        gt += d > 1e-3;
+        gt += !(d <= 1e-3);   // a NaN counts as over the threshold
     }
     return {maxAbs, sum / a.size(), static_cast<double>(gt) / a.size()};
 }

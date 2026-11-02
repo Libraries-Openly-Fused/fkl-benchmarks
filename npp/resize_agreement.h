@@ -26,6 +26,7 @@
 // The timing code of the benchmarks is not touched. One row per batch size is written to <function>_agreement.csv.
 #pragma once
 
+#include <common/nan_safe.h>
 #include <common/system_info.h>
 
 #include <algorithm>
@@ -97,7 +98,7 @@ inline std::vector<double> resizeCrop(const std::vector<unsigned char>& img, con
 struct Agreement {
     double maxDiff = 0, sumDiff = 0;
     size_t n = 0;
-    void add(const double d) { maxDiff = std::max(maxDiff, d); sumDiff += d; ++n; }
+    void add(const double d) { maxDiff = fklb::maxKeepNaN(maxDiff, d); sumDiff += d; ++n; }
     double mean() const { return n ? sumDiff / n : 0.0; }
 };
 

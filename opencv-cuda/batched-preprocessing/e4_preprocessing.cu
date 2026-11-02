@@ -48,6 +48,7 @@
 //   Writes e4_preprocessing.csv and e4_preprocessing_agreement.csv.
 #include <common/main.h>
 #include <common/csv_writer.h>
+#include <common/nan_safe.h>
 #include <common/resize_reference.h>
 
 #include "e1_common.h"
@@ -195,7 +196,7 @@ std::vector<double> reference(const Geometry& g, const std::vector<unsigned char
 
 double maxAbsDiff(const std::vector<float>& out, const std::vector<double>& ref) {
     double m = 0;
-    for (size_t i = 0; i < out.size(); ++i) m = std::max(m, std::abs(static_cast<double>(out[i]) - ref[i]));
+    for (size_t i = 0; i < out.size(); ++i) m = fklb::maxKeepNaN(m, std::abs(static_cast<double>(out[i]) - ref[i]));   // a NaN in the output makes m NaN, and NaN <= TOLERANCE is false
     return m;
 }
 
@@ -447,7 +448,7 @@ bool runCase(const Geometry& g, const std::vector<unsigned char>& noise, cudaStr
             E4_CHECK(cudaStreamSynchronize(cs));
             E4_CHECK(cudaMemcpy(outTests.data(), dOutNpp, outBytes, cudaMemcpyDeviceToHost));
             double maxDiff = 0;
-            for (size_t i = 0; i < outCorrect.size(); ++i) maxDiff = std::max(maxDiff, std::abs(static_cast<double>(outCorrect[i]) - outTests[i]));
+            for (size_t i = 0; i < outCorrect.size(); ++i) maxDiff = fklb::maxKeepNaN(maxDiff, std::abs(static_cast<double>(outCorrect[i]) - outTests[i]));
             const bool identical = e1::sameBits(outCorrect, outTests);
             w.agreement.row(g.experiment, g.batch, "npp_ctx_as_tests_vs_npp", "HALF_PIXEL", maxDiff, int(identical), "", "");
             w.agreement.flush();

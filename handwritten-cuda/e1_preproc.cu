@@ -37,6 +37,7 @@
 // The batch sizes come from E1_PP_BATCHES (generated header, set by CMake): default 10, 50, 100, 200, 300. Writes e1_preproc.csv.
 #include <common/main.h>
 #include <common/csv_writer.h>
+#include <common/nan_safe.h>
 
 #include "e1_common.h"
 
@@ -215,7 +216,7 @@ bool runPoint(cudaStream_t cs, fk::Stream_<fk::ParArch::GPU_NVIDIA>& fkStream, f
     const bool exactHandPadded = sameBits(refHand, outHandPadded), exactHandGeneric = sameBits(refHand, outHandGeneric), exactFkl = sameBits(refHand, outFkl);
     if (!exactFkl) {
         size_t differing = 0; float maxDiff = 0;
-        for (size_t i = 0; i < refHand.size(); ++i) if (refHand[i] != outFkl[i]) { ++differing; maxDiff = std::max(maxDiff, std::abs(refHand[i] - outFkl[i])); }
+        for (size_t i = 0; i < refHand.size(); ++i) if (refHand[i] != outFkl[i]) { ++differing; maxDiff = static_cast<float>(fklb::maxKeepNaN(maxDiff, std::abs(refHand[i] - outFkl[i]))); }
         std::cerr << BATCH << " crops: FKL differs from the hand-written kernel in " << differing << " of " << refHand.size() << " elements, max " << maxDiff << std::endl;
     }
 

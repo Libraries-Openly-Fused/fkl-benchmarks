@@ -27,6 +27,7 @@
 // FKLB_VF_LOOP_WARMUP (3), FKLB_VF_ALONE_ITERS (500), FKLB_VF_ALONE_WARMUP (100); FKLB_VF_MODES selects modes by prefix. Output: vf_fused_time_probe.csv and vf_fused_time_probe_raw.csv, as the HF probe.
 #include <common/main.h>
 #include <common/csv_writer.h>
+#include <common/nan_safe.h>
 #include <common/graph_structures.h>
 
 #include <opencv2/core/cuda.hpp>
@@ -196,7 +197,7 @@ public:
         for (size_t k = 0; k < picks.size(); ++k) {
             for (int i = 0; i < CROP_W * CROP_H; ++i) {
                 const double a = reference[k * CROP_W * CROP_H + i], b = got[static_cast<size_t>(picks[k]) * CROP_W * CROP_H + i];
-                worst = std::max(worst, std::fabs(a - b) / std::max(1e-30, std::max(std::fabs(a), std::fabs(b))));
+                worst = fklb::maxKeepNaN(worst, std::fabs(a - b) / std::max(1e-30, std::max(std::fabs(a), std::fabs(b))));
             }
         }
         return worst;

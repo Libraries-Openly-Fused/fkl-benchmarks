@@ -61,6 +61,10 @@ bool checkResults(int NUM_ELEMS_X, int NUM_ELEMS_Y, cv::Mat& h_comparison1C) {
 #endif
 
         int errors = cv::countNonZero(h_comparison);
+        // A NaN is neither greater than the tolerance nor equal to itself: the CMP_GT above leaves it out, so it is counted here as an error.
+        cv::Mat isNaN;
+        cv::compare(h_comparison1C, h_comparison1C, isNaN, cv::CMP_NE);
+        errors += cv::countNonZero(isNaN);
         return errors == 0;
     } else {
         return cv::sum(h_comparison1C)[0] == 0;
