@@ -1,0 +1,29 @@
+Graphics clock of the RX 9060 (MHz), sampled by scripts/gpu_clock_trace.py at 200 Hz, FKL c8fcbe8 binaries (device code identical to 38c4f32), idle machine.
+
+benchmark_horizontal_fusion_hip (run 2 of the table in README.md): 6 sweeps of 120 points
+  plain: warm pass (results discarded, 1 iteration per point)   10.8 s: clock mean  1340  p10    31  max  2086
+  no-CPU-overhead: warm pass                                10.8 s: clock mean  1336  p10    31  max  2087
+  plain: MEASURED pass                                      40.5 s: clock mean  1869  p10  1304  max  2084
+  no-CPU-overhead: MEASURED pass                            40.5 s: clock mean  1865  p10  1251  max  2083
+  HIP graphs: warm pass                                    336.5 s: clock mean   870  p10   121  max  2088
+  HIP graphs: MEASURED pass                                390.3 s: clock mean  1052  p10   123  max  2699
+
+benchmark_numinstructions_x_operation_hip (the repeat run 22:25): 100 points; clock mean over the first second, the whole point and the last second of selected points
+  point   0 (   1 instr/op,  97.35 s): first second  2833  whole  3422  last second  2943
+  point   1 (   6 instr/op,  16.89 s): first second  2473  whole  3373  last second  3435
+  point   2 (  11 instr/op,   9.53 s): first second  3429  whole  3430  last second  3430
+  point  10 (  51 instr/op,   2.58 s): first second  3411  whole  3412  last second  3413
+  point  20 ( 101 instr/op,   1.67 s): first second  3329  whole  3327  last second  3323
+  point  40 ( 201 instr/op,   1.42 s): first second  3327  whole  3326  last second  3323
+  point  60 ( 301 instr/op,   1.32 s): first second  3335  whole  3335  last second  3334
+  point  80 ( 401 instr/op,   1.34 s): first second  3351  whole  3351  last second  3349
+  point  99 ( 496 instr/op,   1.61 s): first second  3393  whole  3069  last second  2865
+
+benchmark_horizontal_fusion_hip, first 75 s (run 5, sampler of 5 Hz: graphics clock, memory clock, GPU busy, power, temperature); file hf-first-75s-sclk-mclk-busy-power-temp.txt
+    0- 10 s: sclk mean  1598 max  1845 MHz; mclk {772: 32, 456: 11, 875: 3} MHz (counts); busy  33 %; power 21.9 W (cap 132 W); temp max 54 C
+   12- 20 s: sclk mean  1622 max  1764 MHz; mclk {772: 26, 456: 7, 875: 3} MHz (counts); busy  33 %; power 22.5 W (cap 132 W); temp max 54 C
+   25- 40 s: sclk mean  1950 max  2065 MHz; mclk {772: 62, 875: 5, 456: 1} MHz (counts); busy  86 %; power 26.9 W (cap 132 W); temp max 56 C
+   45- 60 s: sclk mean  1938 max  2065 MHz; mclk {875: 44, 1124: 13, 772: 11} MHz (counts); busy  83 %; power 28.7 W (cap 132 W); temp max 57 C
+   60- 75 s: sclk mean  1959 max  2065 MHz; mclk {772: 43, 456: 14, 875: 11} MHz (counts); busy  75 %; power 26.1 W (cap 132 W); temp max 58 C
+
+run 3 (after a pre-heat of 12 s of latency hiding), 5 Hz sampler over the whole run: sclk median 1824 MHz, p90 1825, max 3229

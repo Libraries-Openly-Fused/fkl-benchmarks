@@ -83,6 +83,12 @@ inline int testLatencyHiding(fk::Stream& stream) {
 
     // Warmup
     VerticalFusion<float, float, VARIABLE_DIMENSION, IOp>::execute(input, stream, output, df);
+    // With FKLB_GPU_SPIN_SECONDS set: the same work for that long, so that the GPU clock is at its steady value when the timing starts (the allocation
+    // and the initialisation of the buffers above leave the GPU idle between two points)
+    spinGpu([&] {
+        VerticalFusion<float, float, VARIABLE_DIMENSION, IOp>::execute(input, stream, output, df);
+        stream.sync();
+    });
 
     START_FK_BENCHMARK
 
@@ -104,6 +110,9 @@ inline int testLatencyHidingHelper(fk::Stream& stream, const std::integer_sequen
 }
 
 int launch() {
+    benchmarkNotes = "float, one 1D buffer of 66,355,200 elements (265,420,800 bytes) as input and another as output; N times Mul by 2 in ONE fused kernel (nested StaticLoops of 20 plus the remainder), "
+                     "N = 1, 21, ..., 1181; one warm-up execution, then 100 timed executions per point with events on the stream; FKLB_GPU_SPIN_SECONDS = " +
+                     std::to_string(gpuSpinSeconds()) + " (seconds of the same work before the timed runs of every point, 0 = none)";
     fk::Stream stream;
 
     const int result = testLatencyHidingHelper(stream, std::make_integer_sequence<int, variableDimensionValues.size()>{});

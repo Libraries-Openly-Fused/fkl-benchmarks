@@ -1,0 +1,71 @@
+two hipEventRecord calls on an idle stream (host, ms): median 0.00157 p10 0.00155 p90 0.00193 min 0.00147 max 0.00539 over 1000 pairs
+   graph children    : 11 nodes (kernel 0, child graph 11, other 0)
+   output of children     identical to the plain launches: yes
+   graph children_seq: 11 nodes (kernel 0, child graph 11, other 0)
+   output of children_seq identical to the plain launches: yes
+   graph flat        : 11 nodes (kernel 11, child graph 0, other 0)
+   output of flat         identical to the plain launches: yes
+   graph flat_parallel: 11 nodes (kernel 11, child graph 0, other 0)
+   output of flat_parallel identical to the plain launches: yes
+batch   11 | plain: submit 0.0123 total 0.0621 event 0.0396 | children: submit 0.0303 total 0.0952 event 0.0737 | children_seq: submit 0.0317 total 0.0981 event 0.0766 | flat: submit 0.0031 total 0.0572 event 0.0355 | flat_parallel: submit 0.0080 total 0.0568 event 0.0355   (ms)
+batch   11 | old definition of submit (two hipEventRecord calls included): plain 0.0140 children 0.0324 children_seq 0.0338 flat 0.0052 flat_parallel 0.0100
+   graph children    : 51 nodes (kernel 0, child graph 51, other 0)
+   output of children     identical to the plain launches: yes
+   graph children_seq: 51 nodes (kernel 0, child graph 51, other 0)
+   output of children_seq identical to the plain launches: yes
+   graph flat        : 51 nodes (kernel 51, child graph 0, other 0)
+   output of flat         identical to the plain launches: yes
+   graph flat_parallel: 51 nodes (kernel 51, child graph 0, other 0)
+   output of flat_parallel identical to the plain launches: yes
+batch   51 | plain: submit 0.0628 total 0.1838 event 0.1560 | children: submit 0.1373 total 0.3386 event 0.3160 | children_seq: submit 0.1386 total 0.3446 event 0.3222 | flat: submit 0.0031 total 0.1539 event 0.1320 | flat_parallel: submit 0.0295 total 0.1556 event 0.1340   (ms)
+batch   51 | old definition of submit (two hipEventRecord calls included): plain 0.0659 children 0.1395 children_seq 0.1407 flat 0.0053 flat_parallel 0.0314
+   graph children    : 101 nodes (kernel 0, child graph 101, other 0)
+   output of children     identical to the plain launches: yes
+   graph children_seq: 101 nodes (kernel 0, child graph 101, other 0)
+   output of children_seq identical to the plain launches: yes
+   graph flat        : 101 nodes (kernel 101, child graph 0, other 0)
+   output of flat         identical to the plain launches: yes
+   graph flat_parallel: 101 nodes (kernel 101, child graph 0, other 0)
+   output of flat_parallel identical to the plain launches: yes
+batch  101 | plain: submit 0.1234 total 0.3325 event 0.3046 | children: submit 0.2713 total 0.6428 event 0.6203 | children_seq: submit 0.2718 total 0.6512 event 0.6281 | flat: submit 0.0033 total 0.2755 event 0.2535 | flat_parallel: submit 0.0554 total 0.2796 event 0.2578   (ms)
+batch  101 | old definition of submit (two hipEventRecord calls included): plain 0.1264 children 0.2737 children_seq 0.2742 flat 0.0054 flat_parallel 0.0574
+   graph children    : 201 nodes (kernel 0, child graph 201, other 0)
+   output of children     identical to the plain launches: yes
+   graph children_seq: 201 nodes (kernel 0, child graph 201, other 0)
+   output of children_seq identical to the plain launches: yes
+   graph flat        : 201 nodes (kernel 201, child graph 0, other 0)
+   output of flat         identical to the plain launches: yes
+   graph flat_parallel: 201 nodes (kernel 201, child graph 0, other 0)
+   output of flat_parallel identical to the plain launches: yes
+batch  201 | plain: submit 0.2480 total 0.6272 event 0.5987 | children: submit 0.5337 total 1.2510 event 1.2280 | children_seq: submit 0.5280 total 1.2579 event 1.2346 | flat: submit 0.0040 total 0.5140 event 0.4918 | flat_parallel: submit 0.1101 total 0.5225 event 0.5005   (ms)
+batch  201 | old definition of submit (two hipEventRecord calls included): plain 0.2505 children 0.5361 children_seq 0.5303 flat 0.0061 flat_parallel 0.1123
+   graph children    : 301 nodes (kernel 0, child graph 301, other 0)
+   output of children     identical to the plain launches: yes
+   graph children_seq: 301 nodes (kernel 0, child graph 301, other 0)
+   output of children_seq identical to the plain launches: yes
+   graph flat        : 301 nodes (kernel 301, child graph 0, other 0)
+   output of flat         identical to the plain launches: yes
+   graph flat_parallel: 301 nodes (kernel 301, child graph 0, other 0)
+   output of flat_parallel identical to the plain launches: yes
+batch  301 | plain: submit 0.3764 total 0.9241 event 0.8978 | children: submit 0.7928 total 1.8587 event 1.8350 | children_seq: submit 0.7884 total 1.8590 event 1.8361 | flat: submit 0.0048 total 0.7506 event 0.7280 | flat_parallel: submit 0.1642 total 0.7646 event 0.7423   (ms)
+batch  301 | old definition of submit (two hipEventRecord calls included): plain 0.3786 children 0.7953 children_seq 0.7908 flat 0.0070 flat_parallel 0.1663
+   graph children    : 601 nodes (kernel 0, child graph 601, other 0)
+   output of children     identical to the plain launches: yes
+   graph children_seq: 601 nodes (kernel 0, child graph 601, other 0)
+   output of children_seq identical to the plain launches: yes
+   graph flat        : 601 nodes (kernel 601, child graph 0, other 0)
+   output of flat         identical to the plain launches: yes
+   graph flat_parallel: 601 nodes (kernel 601, child graph 0, other 0)
+   output of flat_parallel identical to the plain launches: yes
+batch  601 | plain: submit 0.7380 total 1.8157 event 1.7895 | children: submit 1.5822 total 3.6783 event 3.6546 | children_seq: submit 1.5687 total 3.6787 event 3.6555 | flat: submit 0.0068 total 1.4599 event 1.4369 | flat_parallel: submit 0.3350 total 1.4870 event 1.4644   (ms)
+batch  601 | old definition of submit (two hipEventRecord calls included): plain 0.7405 children 1.5848 children_seq 1.5716 flat 0.0094 flat_parallel 0.3375
+   graph children    : 1191 nodes (kernel 0, child graph 1191, other 0)
+   output of children     identical to the plain launches: yes
+   graph children_seq: 1191 nodes (kernel 0, child graph 1191, other 0)
+   output of children_seq identical to the plain launches: yes
+   graph flat        : 1191 nodes (kernel 1191, child graph 0, other 0)
+   output of flat         identical to the plain launches: yes
+   graph flat_parallel: 1191 nodes (kernel 1191, child graph 0, other 0)
+   output of flat_parallel identical to the plain launches: yes
+batch 1191 | plain: submit 1.3576 total 3.6236 event 3.5911 | children: submit 3.1346 total 7.3727 event 7.3484 | children_seq: submit 3.1436 total 7.3639 event 7.3392 | flat: submit 0.0106 total 2.9388 event 2.9139 | flat_parallel: submit 0.6761 total 2.9938 event 2.9696   (ms)
+batch 1191 | old definition of submit (two hipEventRecord calls included): plain 1.3633 children 3.1374 children_seq 3.1460 flat 0.0130 flat_parallel 0.6789
