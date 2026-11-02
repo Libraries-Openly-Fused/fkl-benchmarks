@@ -5,8 +5,8 @@ parameter, one translation unit per N; the source of the RTX 4090 sweep in `../.
 --offload-arch=gfx1200`), **clang++ 23** and **g++ 13** (the CPU back-end of the same source, `-DE3_CPU`). Flags as in `scripts/e3_sweep.py`: `-O3 -DNDEBUG -std=c++17 -ftemplate-depth=1000`
 (CPU: also `-march=native`). FKL `c8fcbe8` (the final pin of LTS-C++17, with #417), fkl-benchmarks at the commit of this folder. Ryzen 7 5800X3D, 60 GiB, governor `powersave`; **one compile at a time**
 on an idle machine (the script waits while a CI job runs), not pinned (the compiles are single threaded: user + system time is 97 to 100 percent of the wall time in the CSV), peak resident memory from GNU time (`peak_rss_gb`, the largest
-process) and of the whole process tree sampled at 4 Hz (`peak_tree_rss_gb`; the two agree within 5 percent), cap 40 GB or 1 h per compile: **no compile was cut** (the largest, amdclang++ at N = 4,000 with the resource usage remark, took
-271.9 s and 35.9 GB). The programs are executed only in section 4.
+process) and of the whole process tree sampled at 4 Hz (`peak_tree_rss_gb`; the two agree within 5 percent), cap 40 GiB or 1 h per compile: **no compile was cut** (the largest, amdclang++ at N = 4,000 with the resource usage remark, took
+271.9 s and 35.9 GiB). The programs are executed only in section 4. The memory figures of this folder are GiB (GNU time reports KiB, divided by 1,048,576; the cap too), so the CSV columns `peak_rss_gb` and `peak_tree_rss_gb` are in GiB and `object_mb` is in MiB although their names say gb and mb (the columns are not renamed).
 
 Files: `e3_limits.csv` (one row per compile: 96 rows), `e3_check.csv` (section 4), `logs/` (the first 400 lines of the output of every compile that did not succeed, gzip; an empty one is a compiler that was
 killed without saying a word), `run_series.sh` (the commands, by section), `../../../scripts/e3_clang_limits.py` (the tool: generates the translation unit, compiles it under the monitor, classifies the outcome).
@@ -21,7 +21,7 @@ killed without saying a word), `run_series.sh` (the commands, by section), `../.
 | **Stack limit raised** (16 MiB): largest N that compiles | 2,046 | 2,046 | |
 | first N that fails | 2,047: `fatal error: instantiating fold expression with 2049 arguments exceeded expression nesting limit of 2048` at `iop_fuser.h:150:17`, after 1.0 s | the same, after 0.5 s | none |
 | `-fbracket-depth` that lifts it | N + 2 (N = 2,100: 2,100 and 2,101 fail with the same error naming that limit, 2,102 compiles) | N + 2 (the same) | has no such limit |
-| N = 4,000 (`-fbracket-depth=4002`, stack limit 32 MiB) | compiles: 226.1 s, 25.1 GB (271.9 s, 35.9 GB with the resource usage remark) | compiles: 105.9 s, 25.1 GB | compiles (defaults): 114.6 s, 6.5 GB |
+| N = 4,000 (`-fbracket-depth=4002`, stack limit 32 MiB) | compiles: 226.1 s, 25.1 GiB (271.9 s, 35.9 GiB with the resource usage remark) | compiles: 105.9 s, 25.1 GiB | compiles (defaults): 114.6 s, 6.5 GiB |
 
 The kernels that compile are all alike: 54 SGPRs, 9 VGPRs, no scratch, no spills, occupancy 16 at N = 1,100, 2,046, 2,100 and 4,000 (section 3), the one with N = 4,000 operations (kernel argument block of 16,312 B) launches on the RX 9060 and
 gives the bit-identical result of the CPU back-end (section 4). Up to N = 4,000, the two limits that stop a chain are both in the compiler: the stack of the compiler process and the nesting limit of a fold expression.
@@ -35,7 +35,7 @@ gives the bit-identical result of the CPU back-end (section 4). Up to N = 4,000,
 |---|--:|--:|--:|--:|---|---|--:|--:|--:|--:|
 | amdclang++ compiles | 5 of 5 | 1 of 5 | 0 of 5 | 0 of 5 | | clang++ compiles | 5 of 5 | 3 of 5 | 0 of 5 | 0 of 5 |
 
-It is the stack and not memory: the compile that crashes has used 3.2 to 3.9 GB of 60; 8 MiB divided by the first failing N is 6.0 KiB (amdclang++) and 5.4 KiB (clang++) of stack per operation of the chain; N = 2,046 needs between 10 and 12 MiB with both
+It is the stack and not memory: the compile that crashes has used 3.2 to 3.9 GiB of 60; 8 MiB divided by the first failing N is 6.0 KiB (amdclang++) and 5.4 KiB (clang++) of stack per operation of the chain; N = 2,046 needs between 10 and 12 MiB with both
 compilers (`stack-needed-2046` in the CSV, randomisation off: 10 MiB crash / 12 MiB ok / 14 MiB ok with amdclang++, crash / ok / ok with clang++); 16 MiB compiles it,
 and 32 MiB compiles N = 2,100 and 4,000 (`ulimit -s 32768` before the compiler, or `ulimit -s unlimited`).
 
@@ -60,20 +60,20 @@ g++ 13 has no such limit: N = 2,047 and 2,100 compile with the defaults, as does
 
 | N | amdclang++ (wall, peak RSS) | clang++ | g++ |
 |--:|---|---|---|
-| 1,100 | 27.5 s, 3.0 GB (plain: 24.0 s, 2.2 GB) | 11.8 s, 2.2 GB | 10.3 s, 0.8 GB |
-| 2,046 | 81.6 s, 9.7 GB (stack 16 MiB; plain: 70.1 s, 6.8 GB) | 33.3 s, 6.9 GB (stack 16 MiB) | 28.5 s, 2.1 GB |
-| 2,100 | 82.1 s, 10.2 GB (`-fbracket-depth=2102`, stack 32 MiB) | 33.3 s, 7.2 GB (the same) | 30.0 s, 2.2 GB |
-| 4,000 | 271.9 s, 35.9 GB (`-fbracket-depth=4002`, stack 32 MiB; plain: 226.1 s, 25.1 GB) | 105.9 s, 25.1 GB (the same) | 114.6 s, 6.5 GB |
+| 1,100 | 27.5 s, 3.0 GiB (plain: 24.0 s, 2.2 GiB) | 11.8 s, 2.2 GiB | 10.3 s, 0.8 GiB |
+| 2,046 | 81.6 s, 9.7 GiB (stack 16 MiB; plain: 70.1 s, 6.8 GiB) | 33.3 s, 6.9 GiB (stack 16 MiB) | 28.5 s, 2.1 GiB |
+| 2,100 | 82.1 s, 10.2 GiB (`-fbracket-depth=2102`, stack 32 MiB) | 33.3 s, 7.2 GiB (the same) | 30.0 s, 2.2 GiB |
+| 4,000 | 271.9 s, 35.9 GiB (`-fbracket-depth=4002`, stack 32 MiB; plain: 226.1 s, 25.1 GiB) | 105.9 s, 25.1 GiB (the same) | 114.6 s, 6.5 GiB |
 
 From 2,046 to 4,000 (1.95 times the operations) the time grows as N^1.7 (amdclang++, plain), N^1.7 (clang++) and N^2.1 (g++), and the memory as N^1.9, N^1.9 and N^1.7.
 At the same N, amdclang++ needs 2.9 to 3.9 times the memory of g++ and 2.0 to 2.5 times the time (it compiles the source for the device and for the host),
 clang++ 2.8 to 3.9 times the memory and 0.9 to 1.2 times the time.
 
 **The resource usage remark of amdclang++ has a price.** The amdclang++ rows above ask for the resource usage of the kernel (`-Rpass-analysis=kernel-resource-usage`); without it (`hip-no-remarks` in the CSV, the compile that a user
-does) the same compiles take 24.0 s and 2.17 GB (N = 1,100), 70.1 s and 6.85 GB (N = 2,046) and 226.1 s and 25.13 GB (N = 4,000): the remark adds 15 to 20 percent of the time and 38 to 43 percent of the memory. The exponents and the ratios to g++ above are those of the plain compiles of amdclang++; the plain compile is the one to quote as the cost of a chain.
+does) the same compiles take 24.0 s and 2.17 GiB (N = 1,100), 70.1 s and 6.85 GiB (N = 2,046) and 226.1 s and 25.13 GiB (N = 4,000): the remark adds 15 to 20 percent of the time and 38 to 43 percent of the memory. The exponents and the ratios to g++ above are those of the plain compiles of amdclang++; the plain compile is the one to quote as the cost of a chain.
 
 The fused kernel (`launchTransformDPP_Kernel`, resource usage remark of the compiler) is the same at every N that compiled with amdclang++: 54 SGPRs, 9 VGPRs, scratch 0 bytes per lane, occupancy 16 waves per SIMD, no spills of either kind
-(N = 1,100, 2,046, 2,100 and 4,000; there is no register cliff as in the RTX 4090 sweep before #417). The object file grows from 0.3 MB (N = 1,100) to 0.8 MB (N = 4,000).
+(N = 1,100, 2,046, 2,100 and 4,000; there is no register cliff as in the RTX 4090 sweep before #417). The object file grows from 0.3 MiB (N = 1,100) to 0.8 MiB (N = 4,000).
 
 ## 4. Do the kernels launch, and do they compute the same?
 
@@ -91,7 +91,7 @@ for `Mul`/`Div` and `1 + 0.001 ((i mod 13) + 1)` for `Add`/`Sub` (the parameters
 | 4,000 | 16,312 | 227.1 s | 0 | 0 | 4096 | 4096 | 0 | 853.754, 929.051 |
 
 All sizes launch on the RX 9060 (gfx1200, ROCm 10.1) and give exactly the output of the CPU back-end, the kernel with 16,312 B of arguments included: no limit of the kernel argument block was reached up to N = 4,000
-(a larger N was not tried: N = 4,000 already takes 25 to 36 GB of the 40 GB cap). The N = 1,100 and larger programs run the whole chain once on 4,096 elements; this is a correctness check of the launch, not a timing.
+(a larger N was not tried: N = 4,000 already takes 25 to 36 GiB of the 40 GiB cap). The N = 1,100 and larger programs run the whole chain once on 4,096 elements; this is a correctness check of the launch, not a timing.
 
 Which number proves the equality: the text that `scripts/e3_check_compare.py` prints, which is the column `compare` of `e3_check.csv` and the columns `values` and `bit-identical` above. It counts the values whose 32 bits are equal (4,096 of 4,096 in every row), counts the non-finite values of each
 file (0 in both files in every row: no NaN and no infinity) and prints the largest differences (0). The column `compare_exit` of the five committed rows was written by the first version of the script, whose exit status was 0 whenever the two files had the same number of non-finite values, that is for any
@@ -100,7 +100,7 @@ is limited to what was run: five lengths of the check chain, one deterministic i
 
 ## What this does not cover
 
-nvcc (RTX 4090, `../../rtx4090/e3-compile/`: N = 4,000 in 675 s and 13.6 GB, the predicted limit of the parameter space for this variant at N = 8,177); variants B and L; the execution time of these kernels; N above 4,000 (the limit of the kernel argument block of gfx1200 was not reached).
+nvcc (RTX 4090, `../../rtx4090/e3-compile/`: N = 4,000 in 675 s without the fix and 13,613 MiB = 13.3 GiB (`cuda_peak_rss_mb` = 13613 in its `e3_compile.csv`: GNU time's KiB divided by 1,024), the predicted limit of the parameter space for this variant at N = 8,177); variants B and L; the execution time of these kernels; N above 4,000 (the limit of the kernel argument block of gfx1200 was not reached).
 
 ## Reproduce
 
