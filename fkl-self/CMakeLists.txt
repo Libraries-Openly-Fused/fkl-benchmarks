@@ -17,6 +17,28 @@ fklb_add_benchmark(benchmark_numinstructions_x_operation
     BACKENDS cu hip cpp LIBS fkl
     LAUNCHER_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/numinstructions/benchmark_numinstructions_x_operation.h")
 
+# E0 baseline fairness check of the CUDA-Graphs series of the HF experiment: the same kernels and parameters as plain launches, as the experiment's child-node graph, as chained child nodes, and as flat graphs
+# (results/rtx4090/e0-graph-structure). CUDA only: the structures are CUDA graph API calls.
+fklb_add_benchmark(hf_graph_structure_probe
+    BACKENDS cu LIBS fkl
+    SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/graphs/hf_graph_structure_probe.cu")
+
+# E0: the time of the fused kernel of the HF experiment in each loop of the experiment and on its own (results/rtx4090/e0-graph-structure/fused-time). CUDA only.
+fklb_add_benchmark(hf_fused_time_probe
+    BACKENDS cu LIBS fkl
+    SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/graphs/hf_fused_time_probe.cu")
+
+# E16: forward attention with FKL (the tensor-core and the SIMT DPP; K and V read raw, or dequantised in the prologue from int8 / fp8 e4m3 with one scale per token; an epilogue chain
+# in registers) against the same work as separate kernels (results/rtx4090/e16-attention, results/rtx5050/e16-attention). CUDA only. Baselines: pytorch-attention/e16_baselines.py.
+fklb_add_benchmark(e16_attention
+    BACKENDS cu LIBS fkl
+    SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/attention/e16_attention.cu")
+
+# Link check (results/rtx4090/pcie-check): host to device and device to host copy bandwidth of pinned and pageable memory while the link state is sampled. CUDA only.
+fklb_add_benchmark(pcie_bandwidth
+    BACKENDS cu LIBS fkl
+    SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/pcie/pcie_bandwidth.cu")
+
 # Seed of the compile-time generator (E3): copied from FKL tests/buildAPI/. Host-side build() of one NV12 pipeline.
 fklb_add_benchmark(batch_build_compilation_time
     BACKENDS cu hip cpp LIBS fkl

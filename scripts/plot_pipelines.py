@@ -24,7 +24,10 @@ y axes start at 0 and are linear (the ranges are 14x to 420x and 30x to 145x, be
 The FastNPP and NPP series must come from the runs made after the FastNPP resize-convention change (PR #45) is merged and the submodule is moved; the
 sidecar .txt records the build (the '# fkl' line is the FKL commit, '# repo' the fkl-benchmarks commit) of every CSV it read.
 """
+import csv
+import glob
 import os
+import statistics as stats
 
 import plot_common as pc
 import matplotlib.pyplot as plt
@@ -39,6 +42,68 @@ def load(path):
     _, blocks = pc.read_blocks(path)
     block = blocks[0]
     return pc.column(block, block[0][0]), pc.column(block, "Mean Speedup")
+
+
+def audit_notes(results, experiments):
+    """What the load audit (results/rtx4090/e0-load-audit) records for the runs of these experiments."""
+    d = os.path.join(results, "e0-load-audit")
+    try:
+        with open(os.path.join(d, "window_summary.csv"), newline="") as f:
+            windows = [r for r in csv.DictReader(f) if r["experiment"] in experiments]
+        with open(os.path.join(d, "overlaps.csv"), newline="") as f:
+            overlaps = [r for r in csv.DictReader(f) if r["experiment"] in experiments]
+        with open(os.path.join(d, "irregular_points.csv"), newline="") as f:
+            irregular = [r for r in csv.DictReader(f) if r["run"] in experiments]
+    except OSError:
+        return ["load audit (results/rtx4090/e0-load-audit): not found, the runs are not covered by it"]
+    out = []
+    for w in windows:
+        out.append(f"load audit: {w['experiment']} ran {w['start'][:10]} {w['start'][11:19]}-{w['end'][11:19]} ({w['seconds']} s); seconds with a loaded core on the E0 cores / the other cores of its CCD / CCD1 / unpinned: "
+                   f"{w['loaded_s_E0_cores']} / {w['loaded_s_CCD0_other_cores']} / {w['loaded_s_CCD1']} / {w['loaded_s_unpinned']}; maximum parallel jobs {w['max_parallel_jobs']}")
+    out.append(f"load audit: rows of these experiments in overlaps.csv: {len(overlaps)}, in irregular_points.csv: {len(irregular)}; no row of the CSVs read here is flagged"
+               if not overlaps and not irregular else
+               f"load audit: rows of these experiments in overlaps.csv: {len(overlaps)}, in irregular_points.csv: {len(irregular)} (see results/rtx4090/e0-load-audit)")
+    return out
+
+
+def host_check_notes(results, p_cv):
+    """The frozen-vs-rebuilt A/B of the host-time experiments (results/rtx4090/e0-pin-transfer/host-check), for the OpenCV panel."""
+    d = os.path.join(results, "e0-pin-transfer", "host-check")
+    summary = os.path.join(d, "host_check_summary.csv")
+    if not os.path.exists(summary):
+        return ["frozen-vs-rebuilt host-time A/B (pin transfer): not run when this figure was made"]
+    with open(summary, newline="") as f:
+        r = {row["experiment"]: row for row in csv.DictReader(f)}["cpu-time-opencv"]
+    out = [f"frozen-vs-rebuilt host-time A/B of this experiment (results/rtx4090/e0-pin-transfer/host-check): the binary that made the numbers of this figure (fkl-benchmarks 269d229, FKL fb9ac3a) against the rebuild "
+           f"against the FKL pin c8fcbe8, {r['rounds']} rounds, alternating order, {r['rows']} batch sizes; rebuilt / frozen mean host time of the cvGS call, per round the median over the batch sizes: median {float(r['fkl_ratio_median']):.3f}, "
+           f"smallest {float(r['fkl_ratio_smallest']):.3f}, largest {float(r['fkl_ratio_largest']):.3f}; same ratio of the OpenCV-CUDA calls (the control, which does not depend on the library): median "
+           f"{float(r['baseline_ratio_median']):.3f}, smallest {float(r['baseline_ratio_smallest']):.3f}, largest {float(r['baseline_ratio_largest']):.3f}; the host times of this figure hold at c8fcbe8 within the run-to-run spread"]
+    runs = [load(p) for p in sorted(glob.glob(os.path.join(d, "cpu_time_opencv_frozen_r*", CPU_OPENCV)))]
+    x0, y0 = load(p_cv)
+    if runs and all(x == x0 for x, _ in runs):
+        med = [stats.median(y[i] for _, y in runs) for i in range(len(x0))]
+        ratio = [a / b for a, b in zip(y0, med)]
+        lo, hi = ratio.index(min(ratio)), ratio.index(max(ratio))
+        out.append(f"the plotted file against the median of the {len(runs)} frozen-binary runs of the A/B (speedup per batch size, plotted / median): median {stats.median(ratio):.3f}, smallest {min(ratio):.3f} at batch {x0[lo]:.0f}, "
+                   f"largest {max(ratio):.3f} at batch {x0[hi]:.0f} (plotted {y0[hi]:.1f}x, A/B median {med[hi]:.1f}x, A/B range {min(y[hi] for _, y in runs):.1f}x to {max(y[hi] for _, y in runs):.1f}x); the plotted run is one of the samples, the figure is not redrawn from the A/B")
+    return out
+
+
+def cpu_notes(results, p_cv, p_cn):
+    _, blocks = pc.read_blocks(p_cv)
+    b = blocks[0]
+    col, ocv, cvgs = pc.column(b, "Mean Speedup"), pc.column(b, "OpenCV MeanTime"), pc.column(b, "cvGS MeanTime")
+    dev = [100.0 * (c / (o / g) - 1.0) for c, o, g in zip(col, ocv, cvgs)]
+    out = ["what is measured: host time, not GPU time. The time the CPU spends in the calls that enqueue the work (std::chrono::steady_clock around the OpenCV-CUDA calls of one iteration and around the one cvGS::executeOperations "
+           "call of the same iteration, no synchronisation inside the timed region), 100 iterations after a warm-up pass. It measures the launch cost of the GPU pipelines; it is not the CPU back-end of the library",
+           f"speedup = host time of the baseline / host time of the fused call: the column 'Mean Speedup', the mean over the 100 iterations of the per-iteration ratio; the ratio of the two mean times is lower by "
+           f"{min(dev):.1f} % to {max(dev):.1f} % over the batch sizes",
+           "the OpenCV-CUDA side of this experiment is the per-crop loop: for each crop on one stream convertTo, resize, multiply, cvtColor (3 channels), subtract, divide, split = 7 enqueued calls per crop, 7 x batch in total "
+           "(benchmark_CPU_OpenCV_vs_cvGS.cu); it is not the stacked 'opencv_batch' formulation of E4, which runs 3 x batch + 4 calls (e4_preprocessing.cu) and is not in this experiment",
+           "the FastNPP vs NPP series is from the run made before the FastNPP resize-convention change (PR #45): it is to be re-run after #45 is merged and the submodule is moved, and it is not part of the A/B above"]
+    out += audit_notes(results, ("e0-cpu-time-opencv", "e0-cpu-time-npp"))
+    out += host_check_notes(results, p_cv)
+    return out
 
 
 def panel(ax, curves, ylabel, legend):
@@ -75,17 +140,18 @@ def main():
             j = y.index(max(y))
             notes.append(f"({label}) {name}: {len(x)} points, batch {x[0]:.0f} to {x[-1]:.0f}; first {y[0]:.2f}x, maximum {max(y):.2f}x at batch {x[j]:.0f}; last {y[-1]:.2f}x")
 
+    cpu = cpu_notes(args.csv, p_cv, p_cn)
     pc.apply_style()
     fig, ax = plt.subplots(figsize=(args.width, 2.0), constrained_layout=True)
     panel(ax, a, "CPU-time speedup", "upper left")
-    pc.save(fig, os.path.join(args.out_dir, "cputime_r2.pdf"), [p_cv, p_cn], "plot_pipelines.py", notes)
+    pc.save(fig, os.path.join(args.out_dir, "cputime_r2.pdf"), [p_cv, p_cn], "plot_pipelines.py", notes[:len(a)] + cpu)
     fig, ax = plt.subplots(figsize=(args.width, 2.0), constrained_layout=True)
     panel(ax, b, "GPU speedup of FastNPP vs NPP", "lower right")
     pc.save(fig, os.path.join(args.out_dir, "npp_r2.pdf"), [p_without, p_with], "plot_pipelines.py", notes)
     fig, axes = plt.subplots(1, 2, figsize=(7.1, 2.0), constrained_layout=True)
     panel(axes[0], a, "CPU-time speedup", "upper left")
     panel(axes[1], b, "GPU speedup of FastNPP vs NPP", "lower right")
-    pc.save(fig, os.path.join(args.out_dir, "pipelines_r2.pdf"), [p_cv, p_cn, p_without, p_with], "plot_pipelines.py", notes)
+    pc.save(fig, os.path.join(args.out_dir, "pipelines_r2.pdf"), [p_cv, p_cn, p_without, p_with], "plot_pipelines.py", notes + cpu)
 
 
 if __name__ == "__main__":

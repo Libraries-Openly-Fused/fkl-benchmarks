@@ -28,7 +28,7 @@ import shutil
 import plot_common as pc
 import matplotlib.pyplot as plt
 
-SERIES = [("opencv_batch", "vs OpenCV-CUDA (batched ops)"), ("opencv_percrop", "vs OpenCV-CUDA (per crop)"), ("npp", "vs NPP")]
+SERIES = [("opencv_batch", "vs OpenCV-CUDA (batched)"), ("opencv_percrop", "vs OpenCV-CUDA (per crop)"), ("npp", "vs NPP")]
 FRAMES = {720: "720p (720 x 480)", 1920: "1080p (1920 x 1080)", 3840: "4K (3840 x 2160)"}
 OUT_SIZES = {720: "768 x 512", 1920: "2048 x 1152", 3840: "4096 x 2304"}
 
@@ -61,7 +61,7 @@ def main():
     ax.set_xticks(range(0, 301, 50))
     ax.set_xlabel("Number of crops (batch)")
     ax.set_ylabel("Speedup of the fused\nkernel")
-    ax.legend(loc="upper left")
+    ax.legend(loc="lower right")
     notes.append("FKL sampling: ASYMMETRIC against OpenCV-CUDA (the convention of cv::cuda::resize), HALF_PIXEL against NPP (its convention)")
     notes.append("the three quiet runs read: " + ", ".join(os.path.relpath(p, pc.REPO) for p in runs) + " (median over the runs of the per-run ratio; no other process was running)")
     pc.save(fig, args.out, runs, "plot_e4.py", notes)

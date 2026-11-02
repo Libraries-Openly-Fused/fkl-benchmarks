@@ -28,6 +28,7 @@ set -u
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 BUILD=${BUILD:-$ROOT/build/local-rtx4090}
 OUT=$ROOT/results/rtx4090
+source "$ROOT/scripts/os_kernel_lines.sh"
 
 # name | binary (in $BUILD/bin) | what it is
 EXPERIMENTS=(
@@ -74,6 +75,7 @@ if [ "${FKLB_ALLOW_DIRTY:-0}" != 1 ] && ! git -C "$ROOT" diff --quiet "${BUILT%-
   echo "sources changed since the build ($BUILT): rebuild first"; exit 1
 fi
 echo "binaries: $BUILD/bin, built from fkl-benchmarks $BUILT"
+os_kernel_lines
 
 # GPU processes of the desktop session (the 4090 drives the display) do not count; anything else does
 DESKTOP='/usr/bin/(ptyxis|nautilus|gnome-shell|Xwayland|Xorg|gnome-terminal|firefox)'

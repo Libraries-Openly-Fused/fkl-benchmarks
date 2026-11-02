@@ -18,8 +18,8 @@ column of cpu-time-npp) run alternately from the frozen binary and from the rebu
   python scripts/host_check_summary.py results/rtx4090/e0-pin-transfer/host-check
 
 Per program and file: for every round the ratio rebuild / frozen of the mean time of the FKL column, row by row (rows = fused operations, or the batch of the experiment), then the median over the rows;
-the table gives the median, the smallest and the largest of these per-round medians over the rounds, and the same for the OpenCV / NPP column (the baseline, which does not depend on the library: the
-control of the method). A ratio of 1.00 is no change.
+the table gives the median, the smallest and the largest of these per-round medians over the rounds, and the same for the second column of the file (OpenCV or NPP: a baseline that does not depend on the library, the
+control of the method; in the wrapper-overhead file it is the raw fk:: API, which is library code too, so not a control). A ratio of 1.00 is no change.
 """
 import csv
 import glob
@@ -39,7 +39,15 @@ def read(path):
         lines = [l for l in f if not l.startswith("#")]
     rows = list(csv.reader(lines))
     head = [h.strip() for h in rows[0]]
-    return head, [r for r in rows[1:] if len(r) == len(head) and r[0].strip()]
+    out, block = [], rows[0][0].strip()
+    for r in rows[1:]:
+        if len(r) != len(head) or not r[0].strip():
+            continue
+        if r[0].strip().startswith("Batch size"):   # a new block: the data-type file repeats the header for every type
+            block = r[0].strip()
+            continue
+        out.append([f"{block}|{r[0].strip()}"] + r[1:])
+    return head, out
 
 
 def per_round(d, prog_dir, fname, col, rnd):
@@ -56,10 +64,12 @@ def per_round(d, prog_dir, fname, col, rnd):
 def main():
     d = sys.argv[1] if len(sys.argv) > 1 else "results/rtx4090/e0-pin-transfer/host-check"
     out = []
-    print(f"{'experiment':34s} {'rows':>4s} {'rounds':>6s}   FKL column: median [smallest-largest]   baseline column (control): median [smallest-largest]")
+    print(f"{'experiment':34s} {'rows':>4s} {'rounds':>6s}   FKL column: median [smallest-largest]   second column (control for OpenCV / NPP): median [smallest-largest]")
     for name, fname, fkl_col, base_col in PROGRAMS:
         prog_dir = {"cpu-time-opencv": "cpu_time_opencv", "wrapper-overhead": "wrapper_overhead", "wrapper-overhead (CPU enqueue)": "wrapper_overhead", "data-type": "data_type", "cpu-time-npp": "cpu_time_npp"}[name]
         rounds = sorted(int(p.rsplit("_r", 1)[1]) for p in glob.glob(os.path.join(d, f"{prog_dir}_frozen_r*")))
+        if not rounds:
+            continue
         fk, base, nrows = [], [], 0
         for r in rounds:
             m, nrows = per_round(d, prog_dir, fname, fkl_col, r)

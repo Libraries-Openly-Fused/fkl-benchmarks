@@ -14,7 +14,7 @@
 # limitations under the License.
 """F2, fig:VerticalOnly: vertical fusion without and with horizontal fusion, three panels (each its own PDF, plus a combined preview).
 
-  python scripts/plot_vf.py --csv results/rtx4090 [--mul-add1 DIR] [--mul1 DIR] [--mul-add DIR] [--width 2.3] [--out-dir figures]
+  python scripts/plot_vf.py --csv results/rtx4090 [--mul-add1 DIR] [--mul1 DIR] [--mul-add DIR] [--width 2.3] [--out-dir figures] [--graphs-definition B|same-loop]
 
   vf_a_r2.pdf     (a) batch 1, 4096 x 2160 uchar -> float: speedup of cvGS against OpenCV-CUDA, series "Mul+Add chain" (e0-vf-mul-add1) and
                   "Mul+Mul chain" (e0-vf-mul1; the instance 'mul1' is Mul then Mul)
@@ -25,6 +25,11 @@
 --mul-add1 / --mul1 / --mul-add are the experiment directories (default: <csv>/e0-vf-mul-add1, e0-vf-mul1, e0-vf-mul-add); the re-run of
 e0-vf-mul-add1 (the first run has one disturbed row, at 5,402 operations) is given with --mul-add1. Every point of the files is drawn.
 x axis: number of fused operations, linear; y axis from 0, linear (as the old figures).
+
+Definition of the speedup of the Graphs series (--graphs-definition, default B, the definition of revision 2): the time of the OpenCV-CUDA graph of the Graphs pass (column "OpenCV MeanTime" of the
+*_CUDAGraphs.csv file) over the time of the fused kernel of the PLAIN pass of the same run (column "cvGS MeanTime" of the plain file), a ratio of mean times, at every number of operations. The time of the
+fused kernel depends on the loop that times it (results/rtx4090/e0-graph-structure/README.md), and B uses the one of the plain pass for every baseline. The plain series are the column "Mean Speedup" of
+the plain file as before (their own loop: A = B). "same-loop" gives the column "Mean Speedup" of the Graphs file (the Graphs pass over the fused kernel of its own loop).
 """
 import os
 
@@ -49,6 +54,16 @@ def load(path):
     return pc.column(block, block[0][0]), pc.column(block, "Mean Speedup")
 
 
+def load_graphs_b(graphs_path, plain_path):
+    """Definition B: OpenCV MeanTime of the Graphs pass over cvGS MeanTime of the plain pass, at every number of operations."""
+    _, gb = pc.read_blocks(graphs_path)
+    _, pb = pc.read_blocks(plain_path)
+    gx, px = pc.column(gb[0], gb[0][0][0]), pc.column(pb[0], pb[0][0][0])
+    if gx != px:
+        raise SystemExit(f"the operation counts of {graphs_path} and {plain_path} differ")
+    return gx, [o / f for o, f in zip(pc.column(gb[0], "OpenCV MeanTime"), pc.column(pb[0], "cvGS MeanTime"))]
+
+
 def panel(ax, curves, ylabel, legend="lower right"):
     for i, (label, (x, y)) in enumerate(curves):
         ax.plot(x, y, color=pc.SERIES_COLORS[i], marker=pc.SERIES_MARKERS[i], markersize=2.8, markevery=max(1, len(x) // 8), linewidth=1.0, label=label, clip_on=False)
@@ -67,6 +82,7 @@ def main():
     ap = pc.arg_parser(__doc__, "vf_a_r2.pdf")
     ap.set_defaults(out=None)
     ap.add_argument("--out-dir", default=pc.FIGURES)
+    ap.add_argument("--graphs-definition", choices=["B", "same-loop"], default="B", help="speedup of the Graphs series: B = OpenCV graph / fused kernel of the plain pass (default); same-loop = column Mean Speedup of the Graphs file")
     ap.add_argument("--width", type=float, default=2.3, help="width of each panel in inches (2.3 = a third of the figure*, 3.4 = one column)")
     for k in FILES:
         ap.add_argument(f"--{k}", default=None, help=f"experiment directory of e0-vf-{k}")
@@ -74,10 +90,13 @@ def main():
     dirs = {k: getattr(args, k.replace("-", "_")) or os.path.join(args.csv, f"e0-vf-{k}") for k in FILES}
     paths = {k: [os.path.join(dirs[k], f) for f in FILES[k]] for k in FILES}
 
-    ma, ma_g = load(paths["mul-add1"][0]), load(paths["mul-add1"][1])
-    mm, mm_g = load(paths["mul1"][0]), load(paths["mul1"][1])
-    hf = load(paths["mul-add"][0])
-    hf_g = load(paths["mul-add"][1]) if os.path.exists(paths["mul-add"][1]) else None
+    ma, mm, hf = load(paths["mul-add1"][0]), load(paths["mul1"][0]), load(paths["mul-add"][0])
+    if args.graphs_definition == "B":
+        ma_g, mm_g = load_graphs_b(paths["mul-add1"][1], paths["mul-add1"][0]), load_graphs_b(paths["mul1"][1], paths["mul1"][0])
+        hf_g = load_graphs_b(paths["mul-add"][1], paths["mul-add"][0]) if os.path.exists(paths["mul-add"][1]) else None
+    else:
+        ma_g, mm_g = load(paths["mul-add1"][1]), load(paths["mul1"][1])
+        hf_g = load(paths["mul-add"][1]) if os.path.exists(paths["mul-add"][1]) else None
 
     a = [("Mul+Add chain", ma), ("Mul+Mul chain", mm)]
     b = [("Mul+Add chain", ma_g), ("Mul+Mul chain", mm_g)]
@@ -90,6 +109,8 @@ def main():
         for name, (x, y) in curves:
             j = y.index(max(y))
             notes.append(f"({label}) {name}: {len(x)} points, {x[0]:.0f} to {x[-1]:.0f} operations; maximum {max(y):.2f}x at {x[j]:.0f}; last {y[-1]:.2f}x")
+    notes.insert(0, ("Graphs series (panels b and c): definition B, the OpenCV MeanTime of the Graphs-pass file over the cvGS MeanTime of the plain-pass file of the same run (ratio of mean times); plain series: column 'Mean Speedup' of the plain file"
+                     if args.graphs_definition == "B" else "Graphs series (panels b and c): column 'Mean Speedup' of the Graphs-pass file (same-loop definition)"))
     first_run_kept = os.path.isdir(dirs["mul-add1"].rstrip("/") + "-run1")
     notes.append("e0-vf-mul-add1 run read: " + ("the SECOND run (the first, in e0-vf-mul-add1-run1, has one row disturbed by another process, at 5,402 operations)" if first_run_kept else
                  "the FIRST run (one row, at 5,402 operations, was disturbed by another process; it changes the mean by at most 0.07 %; the second run is pending)"))

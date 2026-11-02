@@ -82,6 +82,7 @@ def main():
     notes = ["S1-S4: FLOP/B and maximum speedup of the 2025 runs, not re-measured: " + ", ".join(f"{k} {v[0]:g} FLOP/B {v[1]:.0f}x" for k, v in SYSTEMS_2025.items()),
              f"S5: FLOP/B {S5_FLOPB}; maximum speedup {s5:.1f}x at {x[j]:.0f} operations (batch 50, vs OpenCV-CUDA), from {len(x)} points ({x[0]:.0f} to {x[-1]:.0f} operations)",
              f"y axis: {args.yscale}" + (" (S1-S3 are near the bottom of a linear axis; log keeps them legible)" if args.yscale == "log" else "")]
+    notes.append("S5 is read from the plain pass (OpenCV-CUDA launched as plain calls), whose speedup is the column 'Mean Speedup' of its own loop: that is definition B of revision 2 by construction (the fused kernel of the plain-launch loop); no Graphs series is drawn here")
     if x[-1] < 19902:
         notes.append(f"WARNING: the CSV stops at {x[-1]:.0f} operations: the run is not finished, do NOT use this figure")
     pc.save(fig, args.out, [path], "plot_gpusize.py", notes)

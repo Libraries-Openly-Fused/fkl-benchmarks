@@ -24,11 +24,22 @@ The benchmark itself is one of the processes listed (it is the one on the benchm
 import argparse
 import datetime as dt
 import os
+import platform
 import signal
 import sys
 import time
 
 CLK = os.sysconf("SC_CLK_TCK")
+
+
+def os_kernel_lines():
+    """The two comment lines of every log of a run (as scripts/os_kernel_lines.sh and common/system_info.h write them), read at run time."""
+    try:
+        name = platform.freedesktop_os_release()["PRETTY_NAME"]
+    except (OSError, KeyError):
+        name = "unavailable"
+    u = os.uname()
+    return f"# os: {name}\n# kernel: {u.sysname} {u.release}\n"
 
 
 def parse_cores(spec):
@@ -107,6 +118,7 @@ def main():
     me = os.getpid()
     with open(args.log, "a", buffering=1) as log:
         log.write(f"# load logger started {dt.datetime.now().astimezone().isoformat(timespec='seconds')}, interval {args.interval} s, benchmark cores {args.bench_cores}, first CCD {args.ccd0}\n")
+        log.write(os_kernel_lines())
         first = True
         while not stop:
             time.sleep(1.0 if first else args.interval)

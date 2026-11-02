@@ -51,6 +51,15 @@ inline std::string cpuModel() {
     return firstLineOf("grep -m1 'model name' /proc/cpuinfo | cut -d: -f2- | sed 's/^ *//'");
 }
 
+// PRETTY_NAME of /etc/os-release ("Ubuntu 26.04.1 LTS") and "<sysname> <release>" of uname ("Linux 7.0.0-38-generic"): the system the run was made on
+inline std::string osName() {
+    return firstLineOf("(. /etc/os-release && echo \"$PRETTY_NAME\")");
+}
+
+inline std::string kernelName() {
+    return firstLineOf("uname -sr");
+}
+
 // hipDriverGetVersion / hipRuntimeGetVersion return major * 10^7 + minor * 10^5 + patch
 inline std::string hipVersionString(const int version) {
     return std::to_string(version / 10000000) + "." + std::to_string((version / 100000) % 100) + "." +
@@ -84,6 +93,8 @@ inline void writeSystemInfoHeader(std::ostream& os, const std::string& experimen
        << ", -ftemplate-depth=" << FKLB_TEMPLATE_DEPTH << "\n";
     os << "# opencv: " << FKLB_OPENCV_VERSION << "\n";
     os << "# cpu: " << cpuModel() << "\n";
+    os << "# os: " << osName() << "\n";
+    os << "# kernel: " << kernelName() << "\n";
 #if defined(__CUDACC__)
     int device = 0;
     cudaGetDevice(&device);

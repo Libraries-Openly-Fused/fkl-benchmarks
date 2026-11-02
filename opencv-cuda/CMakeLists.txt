@@ -26,6 +26,17 @@ fklb_add_benchmark(graph_instantiate_time
     BACKENDS cu LIBS cvgs opencv
     SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/graphs/graph_instantiate_time.cu")
 
+# E0 baseline fairness check of the CUDA-Graphs series of the VF + HF sweep: the same OpenCV-CUDA work as plain launches, as the experiment's child-node graph, as chained child nodes, and as a flat graph
+# from one stream capture (results/rtx4090/e0-graph-structure)
+fklb_add_benchmark(graph_structure_probe
+    BACKENDS cu LIBS cvgs opencv
+    SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/graphs/graph_structure_probe.cu")
+
+# E0: the time of the fused kernel (cvGPUSpeedup) of the VF + HF sweep in each loop of the experiment and on its own (results/rtx4090/e0-graph-structure/vf-fused-time)
+fklb_add_benchmark(vf_fused_time_probe
+    BACKENDS cu LIBS cvgs opencv
+    SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/graphs/vf_fused_time_probe.cu")
+
 # E0 data-type experiment: copied from cvGPUSpeedup tests/batchread/ (benchmark mode, 26 type combinations)
 fklb_add_benchmark(benchmark_data_type
     BACKENDS cu LIBS cvgs opencv
