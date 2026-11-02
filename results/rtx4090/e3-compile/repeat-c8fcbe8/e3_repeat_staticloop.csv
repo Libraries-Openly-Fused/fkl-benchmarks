@@ -1,0 +1,26 @@
+# experiment: E3 StaticLoop axis: compile time of the vertical-fusion TUs
+# notes: one core (8), the compile line of benchmark_vertical_fusionCompareMulAdd1_cu with --threads 1 and --resource-usage; the programs are not executed; translation units from /home/oscar/tfkl-bench/fkl-benchmarks/build/merged/opencv-cuda/verticalfusion/generated/mul_add1/200_experiments
+# repo: e9744c5923a1efd3b41abcf741f44bd24a3dbf34-dirty
+# fkl: c8fcbe816d629377886cbdd19c83527f37ccfc04
+# cvGPUSpeedup: 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c
+# FastNPP: 9dfc4f430225e40ded392bfa777b2e724367c5c1
+# python: 3.12.13, torch: 2.14.1+cu130, torch.version.cuda: 13.0
+# triton: 3.8.0; ptxas /home/oscar/tfkl-bench/venv-torch/lib/python3.12/site-packages/triton/backends/nvidia/bin/ptxas (release 12.9); ptxas_blackwell /home/oscar/tfkl-bench/venv-torch/lib/python3.12/site-packages/triton/backends/nvidia/bin/ptxas-blackwell (release 13.3); cuobjdump /home/oscar/tfkl-bench/venv-torch/lib/python3.12/site-packages/triton/backends/nvidia/bin/cuobjdump (release 13.1); nvdisasm /home/oscar/tfkl-bench/venv-torch/lib/python3.12/site-packages/triton/backends/nvidia/bin/nvdisasm (release 13.1)
+# flash_attn: 2.8.3.post2
+# os: Ubuntu 26.04.1 LTS
+# kernel: Linux 7.0.0-38-generic
+# gpu: NVIDIA GeForce RTX 4090, cc 8.9, 128 SMs, 24106 MiB
+# cuda_visible_devices: 1 (device 0, pci 00000000:05:00.0)
+# nvidia-smi driver: 610.43.02
+# clocks (sm, mem, max sm, max mem, MHz): 180 MHz, 405 MHz, 3090 MHz, 10001 MHz
+# power limit, temperature at start: 130.00 W, 31
+instance,k,ops,rep,status,why,cuda_wall_s,cuda_user_s,cuda_sys_s,cuda_peak_rss_mb,phase_cudafe_s,phase_cicc_s,phase_ptxas_s,phase_gcc_s,phase_other_s,registers,spill_stores,spill_loads,stack_bytes,cmem0_bytes,sass_instructions,text_bytes,cubin_bytes
+mul_add1,1,2,0,ok,,3.738,3.150,0.580,431,1.284,1.059,0.014,1.367,0.003,12,0,0,0,448,48,768,30048
+mul_add1,1,2,1,ok,,3.747,3.110,0.620,431,1.290,1.060,0.014,1.368,0.003,12,0,0,0,448,48,768,30048
+mul_add1,1,2,2,ok,,3.732,3.130,0.590,431,1.289,1.044,0.013,1.372,0.002,12,0,0,0,448,48,768,30048
+mul_add1,101,10002,0,ok,,10.109,9.170,0.930,437,1.289,6.410,0.983,1.389,0.025,12,0,0,0,456,5048,80768,687072
+mul_add1,101,10002,1,ok,,10.090,9.140,0.940,437,1.290,6.389,0.983,1.390,0.025,12,0,0,0,456,5048,80768,687072
+mul_add1,101,10002,2,ok,,10.034,9.140,0.880,437,1.290,6.345,0.973,1.388,0.024,12,0,0,0,456,5048,80768,687072
+mul_add1,200,19902,0,ok,,31.450,29.290,2.140,1072,1.287,25.074,3.631,1.400,0.045,12,0,0,0,456,10000,160000,1342176
+mul_add1,200,19902,1,ok,,31.552,29.380,2.150,1073,1.286,25.175,3.630,1.402,0.045,12,0,0,0,456,10000,160000,1342176
+mul_add1,200,19902,2,ok,,31.532,29.300,2.220,1075,1.289,25.152,3.622,1.410,0.045,12,0,0,0,456,10000,160000,1342176

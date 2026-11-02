@@ -1,0 +1,88 @@
+# 2026-11-02T13:00:00+01:00 window e3-repeat starts; load before: 0.03 0.10 0.21; no compile job, transfer or measurement running (checked)
+# os: Ubuntu 26.04.1 LTS
+# kernel: Linux 7.0.0-38-generic
+# warm-up: one compile of N = 1 (fills the file cache; recorded in its own CSV)
+# 2026-11-02T13:00:00+01:00 start: taskset -c 4-7,20-23 /home/oscar/tfkl-bench/venv-torch/bin/python scripts/e3_sweep.py --variants A --core 8 --tree c8fcbe8 --out /home/oscar/tfkl-bench/fkl-benchmarks/results/rtx4090/e3-compile/repeat-c8fcbe8 --work /home/osc
+A N=    1 rep 0: ok                       nvcc     2.56 s,     293 MB  regs 10 spills 0 cmem0 416 SASS 32
+# 2026-11-02T13:00:04+01:00 end (exit 0)
+# REQUESTED: StaticLoop at 2, 10,002 and 19,902 operations, three compiles each
+# 2026-11-02T13:00:04+01:00 start: taskset -c 4-7,20-23 /home/oscar/tfkl-bench/venv-torch/bin/python scripts/e3_staticloop.py --build build/merged --instance mul_add1 --core 8 --out /home/oscar/tfkl-bench/fkl-benchmarks/results/rtx4090/e3-compile/repeat-c8fcbe
+mul_add1 k=  1 ops=     2 rep 0: ok                       3.74 s     431 MB  cicc 1.059 ptxas 0.014 cudafe 1.284 regs 12 SASS 48
+mul_add1 k=  1 ops=     2 rep 1: ok                       3.75 s     431 MB  cicc 1.060 ptxas 0.014 cudafe 1.290 regs 12 SASS 48
+mul_add1 k=  1 ops=     2 rep 2: ok                       3.73 s     431 MB  cicc 1.044 ptxas 0.013 cudafe 1.289 regs 12 SASS 48
+mul_add1 k=101 ops= 10002 rep 0: ok                      10.11 s     437 MB  cicc 6.410 ptxas 0.983 cudafe 1.289 regs 12 SASS 5048
+mul_add1 k=101 ops= 10002 rep 1: ok                      10.09 s     437 MB  cicc 6.389 ptxas 0.983 cudafe 1.290 regs 12 SASS 5048
+mul_add1 k=101 ops= 10002 rep 2: ok                      10.03 s     437 MB  cicc 6.345 ptxas 0.973 cudafe 1.290 regs 12 SASS 5048
+mul_add1 k=200 ops= 19902 rep 0: ok                      31.45 s    1072 MB  cicc 25.074 ptxas 3.631 cudafe 1.287 regs 12 SASS 10000
+mul_add1 k=200 ops= 19902 rep 1: ok                      31.55 s    1073 MB  cicc 25.175 ptxas 3.630 cudafe 1.286 regs 12 SASS 10000
+mul_add1 k=200 ops= 19902 rep 2: ok                      31.53 s    1075 MB  cicc 25.152 ptxas 3.622 cudafe 1.289 regs 12 SASS 10000
+# 2026-11-02T13:02:24+01:00 end (exit 0)
+# REQUESTED: distinct operations (variant A) at N = 1, 1000, 2000, 3000, 4000, three compiles each
+# 2026-11-02T13:02:24+01:00 start: taskset -c 4-7,20-23 /home/oscar/tfkl-bench/venv-torch/bin/python scripts/e3_sweep.py --variants A --core 8 --tree c8fcbe8 --out /home/oscar/tfkl-bench/fkl-benchmarks/results/rtx4090/e3-compile/repeat-c8fcbe8 --work /home/osc
+A N=    1 rep 0: ok                       nvcc     2.57 s,     296 MB  regs 10 spills 0 cmem0 416 SASS 32
+A N=    1 rep 1: ok                       nvcc     2.57 s,     296 MB  regs 10 spills 0 cmem0 416 SASS 32
+A N=    1 rep 2: ok                       nvcc     2.58 s,     296 MB  regs 10 spills 0 cmem0 416 SASS 32
+A N= 1000 rep 0: ok                       nvcc    22.21 s,    1463 MB  regs 17 spills 0 cmem0 4408 SASS 3640
+A N= 1000 rep 1: ok                       nvcc    22.31 s,    1462 MB  regs 17 spills 0 cmem0 4408 SASS 3640
+A N= 1000 rep 2: ok                       nvcc    22.40 s,    1465 MB  regs 17 spills 0 cmem0 4408 SASS 3640
+A N= 2000 rep 0: ok                       nvcc    95.18 s,    4060 MB  regs 17 spills 0 cmem0 14840 SASS 7136
+A N= 2000 rep 1: ok                       nvcc    95.18 s,    4060 MB  regs 17 spills 0 cmem0 14840 SASS 7136
+A N= 2000 rep 2: ok                       nvcc    94.76 s,    4060 MB  regs 17 spills 0 cmem0 14840 SASS 7136
+A N= 3000 rep 0: ok                       nvcc   262.36 s,    8048 MB  regs 17 spills 0 cmem0 18840 SASS 10640
+A N= 3000 rep 1: ok                       nvcc   262.77 s,    8048 MB  regs 17 spills 0 cmem0 18840 SASS 10640
+A N= 3000 rep 2: ok                       nvcc   262.31 s,    8048 MB  regs 17 spills 0 cmem0 18840 SASS 10640
+A N= 4000 rep 0: ok                       nvcc   571.74 s,   13429 MB  regs 17 spills 0 cmem0 22840 SASS 14144
+A N= 4000 rep 1: ok                       nvcc   573.15 s,   13433 MB  regs 17 spills 0 cmem0 22840 SASS 14144
+A N= 4000 rep 2: ok                       nvcc   574.40 s,   13432 MB  regs 17 spills 0 cmem0 22840 SASS 14144
+# 2026-11-02T13:50:24+01:00 end (exit 0)
+# 2026-11-02T13:50:24+01:00 the requested set is done
+# EXTRA: distinct operations at N = 100, 500, 1500, three compiles each
+# 2026-11-02T13:50:24+01:00 start: taskset -c 4-7,20-23 /home/oscar/tfkl-bench/venv-torch/bin/python scripts/e3_sweep.py --variants A --core 8 --tree c8fcbe8 --out /home/oscar/tfkl-bench/fkl-benchmarks/results/rtx4090/e3-compile/repeat-c8fcbe8 --work /home/osc
+A N=  100 rep 0: ok                       nvcc     3.07 s,     349 MB  regs 17 spills 0 cmem0 808 SASS 488
+A N=  100 rep 1: ok                       nvcc     3.05 s,     345 MB  regs 17 spills 0 cmem0 808 SASS 488
+A N=  100 rep 2: ok                       nvcc     3.09 s,     349 MB  regs 17 spills 0 cmem0 808 SASS 488
+A N=  500 rep 0: ok                       nvcc     7.60 s,     691 MB  regs 17 spills 0 cmem0 2408 SASS 1880
+A N=  500 rep 1: ok                       nvcc     7.62 s,     691 MB  regs 17 spills 0 cmem0 2408 SASS 1880
+A N=  500 rep 2: ok                       nvcc     7.66 s,     691 MB  regs 17 spills 0 cmem0 2408 SASS 1880
+A N= 1500 rep 0: ok                       nvcc    50.62 s,    2589 MB  regs 17 spills 0 cmem0 12840 SASS 5384
+A N= 1500 rep 1: ok                       nvcc    50.09 s,    2589 MB  regs 17 spills 0 cmem0 12840 SASS 5384
+A N= 1500 rep 2: ok                       nvcc    50.18 s,    2589 MB  regs 17 spills 0 cmem0 12840 SASS 5384
+# 2026-11-02T13:53:33+01:00 end (exit 0)
+# EXTRA: StaticLoop at the other lengths of the old figure, three compiles each
+# 2026-11-02T13:53:33+01:00 start: taskset -c 4-7,20-23 /home/oscar/tfkl-bench/venv-torch/bin/python scripts/e3_staticloop.py --build build/merged --instance mul_add1 --core 8 --out /home/oscar/tfkl-bench/fkl-benchmarks/results/rtx4090/e3-compile/repeat-c8fcbe
+mul_add1 k=  2 ops=   102 rep 0: ok                       3.78 s     434 MB  cicc 1.098 ptxas 0.016 cudafe 1.283 regs 12 SASS 96
+mul_add1 k=  2 ops=   102 rep 1: ok                       3.79 s     434 MB  cicc 1.102 ptxas 0.016 cudafe 1.288 regs 12 SASS 96
+mul_add1 k=  2 ops=   102 rep 2: ok                       3.80 s     434 MB  cicc 1.104 ptxas 0.016 cudafe 1.292 regs 12 SASS 96
+mul_add1 k=  3 ops=   202 rep 0: ok                       3.81 s     434 MB  cicc 1.112 ptxas 0.017 cudafe 1.293 regs 12 SASS 144
+mul_add1 k=  3 ops=   202 rep 1: ok                       3.81 s     434 MB  cicc 1.109 ptxas 0.017 cudafe 1.287 regs 12 SASS 144
+mul_add1 k=  3 ops=   202 rep 2: ok                       3.81 s     430 MB  cicc 1.111 ptxas 0.017 cudafe 1.285 regs 12 SASS 144
+mul_add1 k=  6 ops=   502 rep 0: ok                       3.85 s     434 MB  cicc 1.141 ptxas 0.021 cudafe 1.285 regs 12 SASS 296
+mul_add1 k=  6 ops=   502 rep 1: ok                       3.84 s     431 MB  cicc 1.128 ptxas 0.021 cudafe 1.296 regs 12 SASS 296
+mul_add1 k=  6 ops=   502 rep 2: ok                       3.83 s     434 MB  cicc 1.120 ptxas 0.021 cudafe 1.292 regs 12 SASS 296
+mul_add1 k= 11 ops=  1002 rep 0: ok                       3.91 s     434 MB  cicc 1.193 ptxas 0.031 cudafe 1.292 regs 12 SASS 544
+mul_add1 k= 11 ops=  1002 rep 1: ok                       3.91 s     434 MB  cicc 1.203 ptxas 0.031 cudafe 1.291 regs 12 SASS 544
+mul_add1 k= 11 ops=  1002 rep 2: ok                       3.92 s     434 MB  cicc 1.198 ptxas 0.031 cudafe 1.293 regs 12 SASS 544
+mul_add1 k= 21 ops=  2002 rep 0: ok                       4.13 s     434 MB  cicc 1.362 ptxas 0.065 cudafe 1.292 regs 12 SASS 1048
+mul_add1 k= 21 ops=  2002 rep 1: ok                       4.12 s     434 MB  cicc 1.373 ptxas 0.064 cudafe 1.290 regs 12 SASS 1048
+mul_add1 k= 21 ops=  2002 rep 2: ok                       4.13 s     434 MB  cicc 1.372 ptxas 0.065 cudafe 1.295 regs 12 SASS 1048
+mul_add1 k= 41 ops=  4002 rep 0: ok                       4.83 s     435 MB  cicc 1.952 ptxas 0.185 cudafe 1.292 regs 12 SASS 2048
+mul_add1 k= 41 ops=  4002 rep 1: ok                       4.83 s     434 MB  cicc 1.939 ptxas 0.184 cudafe 1.292 regs 12 SASS 2048
+mul_add1 k= 41 ops=  4002 rep 2: ok                       4.83 s     435 MB  cicc 1.949 ptxas 0.185 cudafe 1.295 regs 12 SASS 2048
+mul_add1 k= 61 ops=  6002 rep 0: ok                       6.03 s     435 MB  cicc 2.944 ptxas 0.375 cudafe 1.291 regs 12 SASS 3048
+mul_add1 k= 61 ops=  6002 rep 1: ok                       5.99 s     435 MB  cicc 2.926 ptxas 0.368 cudafe 1.290 regs 12 SASS 3048
+mul_add1 k= 61 ops=  6002 rep 2: ok                       6.06 s     435 MB  cicc 2.968 ptxas 0.374 cudafe 1.298 regs 12 SASS 3048
+mul_add1 k= 81 ops=  8002 rep 0: ok                       7.75 s     436 MB  cicc 4.407 ptxas 0.637 cudafe 1.292 regs 12 SASS 4048
+mul_add1 k= 81 ops=  8002 rep 1: ok                       7.72 s     433 MB  cicc 4.366 ptxas 0.641 cudafe 1.293 regs 12 SASS 4048
+mul_add1 k= 81 ops=  8002 rep 2: ok                       7.73 s     436 MB  cicc 4.384 ptxas 0.642 cudafe 1.292 regs 12 SASS 4048
+mul_add1 k=126 ops= 12502 rep 0: ok                      13.70 s     470 MB  cicc 9.482 ptxas 1.497 cudafe 1.290 regs 12 SASS 6296
+mul_add1 k=126 ops= 12502 rep 1: ok                      13.76 s     470 MB  cicc 9.534 ptxas 1.502 cudafe 1.288 regs 12 SASS 6296
+mul_add1 k=126 ops= 12502 rep 2: ok                      13.76 s     468 MB  cicc 9.521 ptxas 1.510 cudafe 1.293 regs 12 SASS 6296
+mul_add1 k=151 ops= 15002 rep 0: ok                      18.88 s     652 MB  cicc 14.049 ptxas 2.102 cudafe 1.288 regs 12 SASS 7544
+mul_add1 k=151 ops= 15002 rep 1: ok                      19.06 s     652 MB  cicc 14.237 ptxas 2.086 cudafe 1.294 regs 12 SASS 7544
+mul_add1 k=151 ops= 15002 rep 2: ok                      18.93 s     651 MB  cicc 14.069 ptxas 2.121 cudafe 1.294 regs 12 SASS 7544
+mul_add1 k=176 ops= 17502 rep 0: ok                      24.82 s     800 MB  cicc 19.213 ptxas 2.858 cudafe 1.292 regs 12 SASS 8800
+mul_add1 k=176 ops= 17502 rep 1: ok                      24.65 s     800 MB  cicc 19.065 ptxas 2.843 cudafe 1.287 regs 12 SASS 8800
+mul_add1 k=176 ops= 17502 rep 2: ok                      24.81 s     799 MB  cicc 19.209 ptxas 2.857 cudafe 1.289 regs 12 SASS 8800
+# 2026-11-02T13:58:29+01:00 end (exit 0)
+# 2026-11-02T13:58:42+01:00 window e3-repeat ended
+e3-repeat window end 2026-11-02T13:58:42+01:00

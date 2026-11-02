@@ -16,10 +16,11 @@
 
   python scripts/plot_compiletime.py --csv results/rtx4090/e3-compile [--layout single|wide] [--out figures/compiletime_single_r2.pdf]
   python scripts/plot_compiletime.py --csv results/rtx4090/e3-compile --history --out <not the paper folders>.pdf     (response letter only)
-  python scripts/plot_compiletime.py --csv results/rtx4090/e3-compile/repeat-c8fcbe8 --trees c8fcbe8 --timeouts-csv results/rtx4090/e3-compile/e3_table_chains.csv \
-         --provenance results/rtx4090/e3-compile/repeat-c8fcbe8/e3_repeat_A.csv results/rtx4090/e3-compile/repeat-c8fcbe8/e3_repeat_staticloop.csv --out figures/compiletime_single_r2_c8fcbe8.pdf
-     the same figure from the controlled repeat at the final pin (scripts/e3_repeat_table.py writes its tables). --timeouts-csv: the time-out marker (N = 6,000) is not part of the repeat and is taken from
-     the committed table of the earlier sweeps; --provenance: the sweep CSVs whose header (repo, fkl, nvcc, gpu) and last commit are written to the sidecar.
+  python scripts/plot_compiletime.py --csv results/rtx4090/e3-compile/repeat-c8fcbe8 --trees c8fcbe8 --out figures/compiletime_single_r2_c8fcbe8.pdf \
+         --provenance <the sweep CSVs of the repeat and results/rtx4090/e3-compile/e3_limit_B_3847.csv e3_limit_B_3848.csv> --note "<the conditions of the window>"
+     the same figure from the controlled repeat at the final pin (scripts/e3_repeat_table.py writes its tables): no time-out marker (the 6,000-operation time-out is not part of that set), the dotted line at
+     N = 3,848 is kept (it comes from the committed sweeps of variant B and the sidecar says so). --trees: the tree labels of the distinct-operations series in e3_table_chains.csv; --provenance: the CSV files whose header
+     (repo, fkl, nvcc, gpu) and last commit are written to the sidecar (the first one names the pin); --note: one more line for the sidecar (repeatable).
 
 Paper-facing default (the paper describes the library as it is now): two series on a log-log plot, nvcc wall time (one core, nvcc 13.4.92, -O3, -std=c++17,
 sm_89 + PTX):
@@ -71,8 +72,8 @@ def main():
     ap.add_argument("--layout", choices=["single", "wide"], default="single", help="single: nvcc time only, 3.4 x 2.1 in; wide: time and compiler memory, 7.1 x 2.0 in")
     ap.add_argument("--history", action="store_true", help="also draw the tree before the change (response letter only)")
     ap.add_argument("--trees", default=",".join(CURRENT_TREES), help="tree labels of the distinct-operations series in e3_table_chains.csv (default: the PR #417 branch and the copy of the pin)")
-    ap.add_argument("--timeouts-csv", help="an e3_table_chains.csv from which the time-out markers (trees getarg-pr and patched) are taken, when the --csv tables have none")
     ap.add_argument("--provenance", nargs="*", default=[], help="more CSV files (the sweeps the tables were made from) whose header and last commit are written to the sidecar")
+    ap.add_argument("--note", action="append", default=[], help="one more line for the sidecar of a figure drawn with --trees (repeatable)")
     args = ap.parse_args()
     chains = pc.resolve(args.csv, "e3_table_chains.csv")
     loops = pc.resolve(args.csv, "e3_table_staticloop.csv")
@@ -80,8 +81,6 @@ def main():
     sl = rows(loops)
     trees = args.trees.split(",")
     cur, to_cur, used = series(table, "A", trees)
-    if args.timeouts_csv:
-        to_cur = {**series(rows(args.timeouts_csv), "A", CURRENT_TREES)[1], **to_cur}
     hist, to_hist, _ = series(table, "A", HISTORY_TREES)
     sl_n = [int(r["ops"]) for r in sl]
 
@@ -119,7 +118,7 @@ def main():
     ax_t.legend(loc="upper left")
     if ax_m is not None:
         draw(ax_m, "peak_rss_mb", 1 / 1024.0, False)
-        ax_m.set_ylabel("Peak compiler memory (GB)")
+        ax_m.set_ylabel("Peak compiler memory (GiB)")    # the column is MiB (GNU time reports KiB), drawn as MiB / 1024
         ax_m.set_ylim(0.1, 30)
         ax_m.yaxis.set_major_formatter(FuncFormatter(lambda v, _: f"{v:g}"))
 
@@ -132,14 +131,19 @@ def main():
     if trees != CURRENT_TREES:      # another set of trees (the controlled repeat of the final pin): its own description
         pin = "see the CSV headers"
         for p in args.provenance[:1]:
-            pin = (pc.read_blocks(p)[0].get("fkl") or pin)[:7]
-        notes = [f"distinct operations (variant A): tree label(s) {', '.join(trees)} in {chains}; N = {', '.join(str(n) for n in cur)}: the median of the compiles of each N (scripts/e3_repeat_table.py; every compile is in the sweep CSVs below)",
-                 f"the library at the pin of fkl-benchmarks (external/fkl at {pin}), compiled in one quiet window, one compile at a time on one core",
-                 "not part of this set: the dotted vertical line (variant B, N = 3,848: e3_limit_B_3848.csv)" + (f" and the time-out marker (N = 6,000, 5,400 s cap), taken from {args.timeouts_csv}" if args.timeouts_csv else ""),
-                 f"StaticLoop: N {sl_n[0]}..{sl_n[-1]} ({len(sl_n)} points), nvcc {float(sl[0]['nvcc_s']):.1f} s to {float(sl[-1]['nvcc_s']):.1f} s",
-                 f"toolchain: CUDA 13.4.3, nvcc 13.4.92, one core, --threads 1, -O3 -DNDEBUG -std=c++17, sm_89 + PTX; fkl-benchmarks pins external/fkl at {pin}",
+            pin = pc.read_blocks(p)[0].get("fkl") or pin
+        nmax = max(cur)
+        mib = lambda x: f"{float(x):,.0f} MiB ({float(x) / 1024:.2f} GiB)"
+        notes = [f"distinct operations (variant A, tree label {', '.join(trees)}): N = {', '.join(str(n) for n in cur)}; StaticLoop (cvGS mul_add1): {len(sl_n)} lengths, {sl_n[0]} to {sl_n[-1]} operations; "
+                 "every point is the median of three compiles (scripts/e3_repeat_table.py; every compile is in the sweep CSVs listed above)",
+                 f"library: fkl-benchmarks external/fkl at {pin}"] + args.note + [
+                 f"nvcc wall time: StaticLoop {float(sl[0]['nvcc_s']):.1f} s to {float(sl[-1]['nvcc_s']):.1f} s; distinct operations {float(cur[min(cur)]['nvcc_s']):.1f} s (N = {min(cur)}) to {float(cur[nmax]['nvcc_s']):.0f} s (N = {nmax})",
+                 f"peak compiler memory (not drawn in this layout; MiB = GNU time KiB / 1024; median of the compiles): distinct N = {nmax}: {mib(cur[nmax]['peak_rss_mb'])}; StaticLoop {sl_n[-1]:,} operations: {mib(sl[-1]['peak_rss_mb'])}",
+                 "the dotted vertical line at N = 3,848 is the first failing N of variant B (float3 parameters, 12 B per operation): ptxas refuses the kernel parameter space (0x8508 B, limit 0x7ffc B). It comes from the committed "
+                 "sweeps results/rtx4090/e3-compile/e3_limit_B_3847.csv and e3_limit_B_3848.csv, NOT from the repeat. There is no time-out marker: the 6,000-operation time-out is not part of this set",
+                 "toolchain: CUDA 13.4.3, nvcc 13.4.92, g++ 15.2, one core, --threads 1, -O3 -DNDEBUG -std=c++17, sm_89 + PTX",
                  f"tables: {chains}, {loops}"]
-    pc.save(fig, args.out, [chains, loops] + args.provenance + ([args.timeouts_csv] if args.timeouts_csv else []), "plot_compiletime.py", notes)
+    pc.save(fig, args.out, [chains, loops] + args.provenance, "plot_compiletime.py", notes)
 
 
 if __name__ == "__main__":
