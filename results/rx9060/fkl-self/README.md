@@ -16,7 +16,7 @@ launches, without it, and `..._HIPGraphs_...` (the iterated batch as one HIP gra
 
 Provenance of the headers: the line `# repo:` of 11 CSVs names fkl-benchmarks `e7f28e2` (`horizontal_fusion_repeats/run2_traced_22-12`, `run3_after_preheat_22-33` and `run4_clean_22-48`, three files each;
 `numinstructions_x_operation_repeat_22-25/`; `latency_hiding_without_spin_same_day/`). `e7f28e2` is the merge of main (with #1 to #5) into the branch `rpp-baseline` of #6; it is not in the history of this pull request, whose base is main at `1be0f5e`. The benchmark headers of the
-three programs are those of the base: `git diff e7f28e2 1be0f5e -- fkl-self common` differs in `fkl-self/pipelines/nv12_pipeline.h` only (the NV12 pipeline, which none of the three includes), and the CMake files differ by the optional build of `rpp/` (`FKLB_BUILD_RPP`, off by default) only. One of the 11,
+three programs are those of the base: `git diff e7f28e2 1be0f5e -- fkl-self common` differs in `fkl-self/pipelines/nv12_pipeline.h` only (the NV12 pipeline, which none of the three includes; removed later, see `../README.md`), and the CMake files differ by the optional build of `rpp/` (`FKLB_BUILD_RPP`, off by default) only. One of the 11,
 `latency_hiding_without_spin_same_day/testLatencyHiding_GPU_AMD.csv`, says `e7f28e2...-dirty`: its binary was built in a tree with a scratch patch of `benchmark_latency_hiding.h`, an optional spin read from the environment variable `LH_SPIN_SECONDS`, which was not set for that run
 (a spin of zero seconds); `FKLB_GPU_SPIN_SECONDS` of this pull request is the version of that patch that is kept.
 

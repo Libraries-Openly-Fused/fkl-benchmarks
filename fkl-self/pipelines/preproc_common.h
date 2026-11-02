@@ -12,12 +12,10 @@
    See the License for the specific language governing permissions and
    limitations under the License. */
 
-// Helpers of the pre-processing benchmarks (the RPP harness, rpp/benchmark_rpp_preprocessing.h): the types of an 8 bit RGB image and of the
-// operations on it, the linear resize, the host view of the memory of a Ptr, a PPM reader, and the wall clock timing of a function (the
-// warm-up rule included) with the graphics clock of an AMD GPU. This header is compiled by nvcc, amdclang++ and the host compiler.
+// Helpers of the RPP benchmark (rpp/benchmark_rpp_preprocessing.h, HIP): the types of an 8 bit RGB image and of the operations on it, the linear
+// resize, the host view of the memory of a Ptr, a PPM reader, and the wall clock timing of a function (the warm-up rule included) with the
+// graphics clock of an AMD GPU.
 #pragma once
-
-#include <common/resize_reference.h>
 
 #include <fused_kernel/algorithms/algorithms.h>
 #include <fused_kernel/algorithms/basic_ops/memory_operations.h>
@@ -27,7 +25,6 @@
 #include <fused_kernel/fused_kernel.h>
 
 #include <algorithm>
-#include <array>
 #include <chrono>
 #include <cmath>
 #include <filesystem>
@@ -48,18 +45,8 @@ using U3 = fk::uchar3;
 using F3 = fk::float3;
 using Rgb2D = fk::RawPtr<fk::ND::_2D, U3>;
 
-// The sampling of the linear resize: FKL's Resize samples the source at x * (src / dst) (ResizeSampling::ASYMMETRIC, the default).
-// With -DE5_RESIZE_HALF_PIXEL the resize is ResizeHalfPixel, (x + 0.5) * (src / dst) - 0.5, which needs an FKL with ResizeSampling
-// (FKL pull request #409).
-#ifdef E5_RESIZE_HALF_PIXEL
-using LinearResize = fk::ResizeHalfPixel<fk::InterpolationType::INTER_LINEAR>;
-constexpr fklb::ResizeSampling RESIZE_SAMPLING = fklb::ResizeSampling::HALF_PIXEL;
-constexpr const char* RESIZE_SAMPLING_NAME = "HALF_PIXEL";
-#else
+// The linear resize: FKL's Resize samples the source at x * (src / dst) (ResizeSampling::ASYMMETRIC, the default)
 using LinearResize = fk::Resize<fk::InterpolationType::INTER_LINEAR>;
-constexpr fklb::ResizeSampling RESIZE_SAMPLING = fklb::ResizeSampling::ASYMMETRIC;
-constexpr const char* RESIZE_SAMPLING_NAME = "ASYMMETRIC";
-#endif
 
 // The host view of the memory of a Ptr: the pinned copy of a device Ptr, the memory itself otherwise
 template <typename PtrType>

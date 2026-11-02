@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""E5 on the CPU (Ryzen 7 5800X3D): compare repeated sweeps of one pipeline and write the median-of-three files.
+"""E5 on the CPU (Ryzen 7 5800X3D): compare repeated sweeps of pipeline (a) and write the median-of-three files.
 
   e5_cpu_compare_runs.py a OLD_DIR NEW_DIR [--write]
       Pipeline (a), the new rows (FKL c8fcbe8, three sweeps per compiler) against the old rows (FKL fb9ac3a, one sweep).
@@ -9,15 +9,11 @@
                   <compiler>/                                       sweep 1
                   repeats/<compiler>/run2, run3                     sweeps 2 and 3
                   repeats/<compiler>/check-nothing-else-running     one more sweep, only printed (not part of the median)
-  e5_cpu_compare_runs.py b REPEATS_DIR [--write]
-      Pipeline (b), three sweeps per compiler at FKL c8fcbe8.
-        REPEATS_DIR = results/cpu-5800x3d/e5-preprocessing-b-c8fcbe8-repeats
-                      <compiler>/run1 (= the rows of pull request #9), run2, run3
 
-  With --write, <compiler>/e5_preprocessing_{a,b}_CPU_median_of_3.csv is written in NEW_DIR (a) or REPEATS_DIR (b): for every point and variant the median of the
+  With --write, <compiler>/e5_preprocessing_a_CPU_median_of_3.csv is written in NEW_DIR: for every point and variant the median of the
   three sweep medians (median_ms), the smallest and the largest of the three medians (medians_min_ms, medians_max_ms).
 
-Definitions used in the output (a):
+Definitions used in the output:
   O = old median;  N1, N2, N3 = medians of the three new sweeps;  N = median(N1, N2, N3)
   D = N / O - 1;   S = (max Ni - min Ni) / N          (run-to-run spread of the new sweeps at that point)
   'outside the window':  O < min Ni - w  or  O > max Ni + w,  with w = max Ni - min Ni
@@ -45,7 +41,7 @@ class Sweep:
                 else:
                     data.append(line)
         reader = csv.DictReader(data, skipinitialspace=True)
-        self.first = reader.fieldnames[0]          # 'batch' (a) or 'crops' (b)
+        self.first = reader.fieldnames[0]          # 'batch'
         self.rows = {}
         self.order = []
         for r in reader:
@@ -61,7 +57,7 @@ def read_agreement(path):
     rows = {}
     with open(path) as f:
         for line in f:
-            if line.startswith("#") or line.startswith(("batch", "crops")):
+            if line.startswith("#") or line.startswith("batch"):
                 continue
             n, rest = line.rstrip("\n").split(",", 1)
             parts = rest.rsplit(",", 5)
@@ -242,110 +238,12 @@ def run_a(old_dir, new_dir, write):
                 print(f"| {comp} | {a} - {b} | " + " | ".join(cells) + " |")
 
 
-# ---------------------------------------------------------------------------------------------------------------- pipeline (b)
-# the columns of the tables of pull request #9 (README of e5-preprocessing-b-c8fcbe8)
-HEADLINE_B = [("fkl_convert_cpu", "FKL convert 1 thread"), ("fkl_convert_cpu_mt", "FKL convert 16 threads"), ("opencv_convert_1thread", "OpenCV convert 1 thread"),
-              ("opencv_convert_default", "OpenCV convert 16 threads"), ("fkl_chain_fused_cpu", "FKL chain only (fused) 1 thread"),
-              ("fkl_chain_fused_cpu_mt", "FKL chain only (fused) 16 threads"), ("opencv_pipeline_percrop_1thread", "OpenCV whole pipeline 1 thread"),
-              ("fkl_pipeline_fused_cpu", "FKL whole pipeline (fused) 1 thread"), ("fkl_pipeline_fused_cpu_mt", "FKL whole pipeline (fused) 16 threads"),
-              ("opencv_pipeline_percrop_parallel", "OpenCV whole pipeline, crops in parallel (16 threads)")]
-CROPS_B = [1, 8, 16, 32, 64]
-
-
-def run_b(rep_dir, write):
-    results = {}
-    for comp in COMPILERS:
-        runs = [os.path.join(rep_dir, comp, f"run{i}") for i in (1, 2, 3)]
-        sw = [Sweep(os.path.join(r, "e5_preprocessing_b_CPU.csv")) for r in runs]
-        for s in sw[1:]:
-            assert s.order == sw[0].order
-        results[comp] = (sw, runs)
-        if write:
-            write_median3(os.path.join(rep_dir, comp, "e5_preprocessing_b_CPU_median_of_3.csv"), sw,
-                          f"the sweeps {comp}/run1 (= the rows of pull request #9), {comp}/run2 and {comp}/run3 of the same binary")
-
-    print("## Numerical checks")
-    print("| compiler | sweep | comparisons | differ from run1 | required checks failed | log says all passed |")
-    print("|---|---|--:|--:|--:|---|")
-    for comp in COMPILERS:
-        sw, runs = results[comp]
-        base = read_agreement(os.path.join(runs[0], "e5_preprocessing_b_agreement_CPU.csv"))
-        for i, r in enumerate(runs, 1):
-            ag = read_agreement(os.path.join(r, "e5_preprocessing_b_agreement_CPU.csv"))
-            assert set(ag) == set(base)
-            print(f"| {comp} | {i} | {len(ag)} | {sum(1 for k in base if base[k] != ag[k])} | {sum(1 for v in ag.values() if v[4] == '1' and v[3] != '1')} | "
-                  f"{'yes' if log_passed(os.path.join(r, 'stdout.log')) else 'NO'} |")
-
-    print("\n## Median of the three sweeps against run1 (the rows of pull request #9)")
-    print("| compiler | points | change \\|D\\| = \\|median of three / run1 - 1\\|: median / 90th percentile / max | spread S = (max-min)/median of the three sweeps: median / 90th percentile / max |")
-    print("|---|--:|--|--|")
-    pts = []
-    for comp in COMPILERS:
-        sw, runs = results[comp]
-        for key in sw[0].order:
-            ms = [s.rows[key]["median"] for s in sw]
-            n = statistics.median(ms)
-            pts.append(dict(comp=comp, key=key, ms=ms, N=n, D=n / ms[0] - 1, S=(max(ms) - min(ms)) / n))
-    for comp in COMPILERS:
-        ps = [p for p in pts if p["comp"] == comp]
-        ad = [abs(p["D"]) for p in ps]
-        ss = [p["S"] for p in ps]
-        print(f"| {comp} | {len(ps)} | {fmt(statistics.median(ad))} / {fmt(pct(ad, 0.9))} / {fmt(max(ad))} | {fmt(statistics.median(ss))} / {fmt(pct(ss, 0.9))} / {fmt(max(ss))} |")
-
-    print("\n## Largest differences between the median of three and run1 (the three sweeps; D; S)")
-    for comp in COMPILERS:
-        for p in sorted((p for p in pts if p["comp"] == comp), key=lambda q: -abs(q["D"]))[:6]:
-            print(f"- {comp}, {p['key'][0]} crops, {p['key'][1]}: {p['ms'][0]:.4f} {p['ms'][1]:.4f} {p['ms'][2]:.4f}, median of three {p['N']:.4f}, D {100 * p['D']:+.2f} %, S {fmt(p['S'])}")
-
-    print("\n## Points where the median of three differs from run1 by more than the spread (|D| > S)")
-    for comp in COMPILERS:
-        bad = [p for p in pts if p["comp"] == comp and abs(p["D"]) > p["S"] + 1e-12]
-        if not bad:
-            print(f"- {comp}: none")
-        for p in bad:
-            print(f"- {comp}, {p['key'][0]} crops, {p['key'][1]}: {p['ms'][0]:.4f} {p['ms'][1]:.4f} {p['ms'][2]:.4f}, median of three {p['N']:.4f}, D {100 * p['D']:+.2f} %, S {fmt(p['S'])}")
-
-    print("\n## Points where the largest of the three sweep medians is more than twice the smallest")
-    for comp in COMPILERS:
-        wide = [p for p in pts if p["comp"] == comp and max(p["ms"]) > 2 * min(p["ms"])]
-        if not wide:
-            print(f"- {comp}: none")
-        for p in wide:
-            print(f"- {comp}, {p['key'][0]} crops, {p['key'][1]}: {p['ms'][0]:.4f} {p['ms'][1]:.4f} {p['ms'][2]:.4f}, median of three {p['N']:.4f}")
-
-    print("\n## FKL conversion and whole pipeline (fused): median of three against run1 over the five crop counts")
-    print("| compiler | variant | max \\|D\\| over the crop counts | median of three over the crop counts: smallest to largest (ms) | S: median / max |")
-    print("|---|---|--:|--|--|")
-    for comp in COMPILERS:
-        for v in ("fkl_convert_cpu", "fkl_convert_cpu_mt", "fkl_pipeline_fused_cpu", "fkl_pipeline_fused_cpu_mt"):
-            ps = [p for p in pts if p["comp"] == comp and p["key"][1] == v]
-            assert len(ps) == len(CROPS_B)
-            nd = 1 if min(p["N"] for p in ps) >= 20 else 2
-            print(f"| {comp} | {v} | {fmt(max(abs(p['D']) for p in ps))} | {min(p['N'] for p in ps):.{nd}f} to {max(p['N'] for p in ps):.{nd}f} "
-                  f"| {fmt(statistics.median(p['S'] for p in ps))} / {fmt(max(p['S'] for p in ps))} |")
-
-    print("\n## Median of the three sweeps, ms (smallest to largest of the three medians in brackets)")
-    for comp in COMPILERS:
-        print(f"\n### {comp}")
-        print("| crops | " + " | ".join(n for _, n in HEADLINE_B) + " |")
-        print("|--:|" + "--:|" * len(HEADLINE_B))
-        for c in CROPS_B:
-            cells = []
-            for v, _ in HEADLINE_B:
-                p = next(q for q in pts if q["comp"] == comp and q["key"] == (c, v))
-                nd = 1 if p["N"] >= 20 else (2 if p["N"] >= 1 else 3)
-                cells.append(f"{p['N']:.{nd}f} ({min(p['ms']):.{nd}f} to {max(p['ms']):.{nd}f})")
-            print(f"| {c} | " + " | ".join(cells) + " |")
-
-
 # ---------------------------------------------------------------------------------------------------------------- main
 def main(argv):
     write = "--write" in argv
     args = [a for a in argv if a != "--write"]
     if len(args) >= 4 and args[1] == "a":
         run_a(args[2], args[3], write)
-    elif len(args) >= 3 and args[1] == "b":
-        run_b(args[2], write)
     else:
         print(__doc__)
         return 1
