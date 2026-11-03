@@ -12,39 +12,36 @@
    See the License for the specific language governing permissions and
    limitations under the License. */
 
-// FKL on HIP against AMD's RPP (Radeon Performance Primitives, the rppt tensor API with the HIP back-end) on the two pre-processing
-// pipelines of the paper, on an AMD GPU. RPP is the counterpart of NPP.
+// FKL on HIP against AMD's RPP (Radeon Performance Primitives, the rppt tensor API with the HIP back-end) on the pre-processing
+// pipeline (a) of the paper, on an AMD GPU. RPP is the counterpart of NPP.
 //
 // Pipeline (a): the batched DNN pre-processing of cvGPUSpeedup test_batchresize_x_split3D. A 3840x2160 8UC3 image in device memory,
 // BATCH crops of 60x120 at (i, i), bilinear resize to 64x128, multiply by 0.3, RGB to BGR, subtract {1, 4, 3.2}, divide by
 // {3.2, 0.6, 11.8}, an NCHW float tensor. Batches 10 to 300 step 10.
-// Pipeline (b): a 3840x2160 NV12 frame converted to RGB (BT.601 studio swing), then N = 1, 8, 16, 32, 64 detection crops resized
-// to 64x128, (x / 255 - mean) / std, an NCHW float tensor (fkl-self/pipelines/nv12_pipeline.h).
 //
 // Variants (wall clock including the synchronisation of the stream; E5_WARMUP (3) warm-up runs, then a warm-up of at least E5_WARMUP_SECONDS (2.0 s; 0 to 10, the warm-up ends after 10 s at the latest) that goes on until
 // the mean time of two consecutive windows of 0.25 s differs by at most 2 percent, E5_ITERS (30) timed runs; median, min, max, mean):
-//   fkl_fused           FKL, one executeOperations for the whole chain (pipeline (b): after the conversion kernel)
+//   fkl_fused           FKL, one executeOperations for the whole chain
 //   fkl_fused_halfpixel the same with ResizeHalfPixel (FKL ResizeSampling::HALF_PIXEL: the sampling of cv::resize, NPP and RPP)
 //   fkl_perop_batch     FKL, one executeOperations per operation for all the crops
 //   rpp_fused_api       RPP, its own fused function: rppt_resize_mirror_normalize (ROI per crop of one image, 8-bit input, float NCHW
-//                       output, per channel mean and standard deviation) and, in pipeline (a), rppt_channel_permute (RGB to BGR): two
-//                       calls (pipeline (b) has no channel swap: one call)
+//                       output, per channel mean and standard deviation) and rppt_channel_permute (RGB to BGR): two calls
 // RPP has no separate per-channel multiply, subtract and divide: the normalize of rppt_resize_mirror_normalize covers the three, with
 // mean = sub / 0.3 and std = div / 0.3. The crops of one image are a batch with a source batch stride of 0 and one ROI per crop.
 // Output widths are multiples of 8.
-// Environment: E5_ITERS, E5_WARMUP, E5_WARMUP_SECONDS, E5_ROTATE_OFFSET (checked: common/env_args.h), E5_IMAGE (a binary PPM tiled over the frame / image instead of seeded noise), E5_IMAGE_INFO.
-// CSVs in the working directory: benchmark_rpp_preprocessing_{a,b}_GPU_AMD.csv and ..._agreement_GPU_AMD.csv.
+// Environment: E5_ITERS, E5_WARMUP, E5_WARMUP_SECONDS, E5_ROTATE_OFFSET (checked: common/env_args.h), E5_IMAGE (a binary PPM tiled over the image instead of seeded noise), E5_IMAGE_INFO.
+// CSVs in the working directory: benchmark_rpp_preprocessing_a_GPU_AMD.csv and benchmark_rpp_preprocessing_a_agreement_GPU_AMD.csv.
 #include <common/csv_writer.h>
 #include <common/env_args.h>
 #include <common/main.h>
-#include <fkl-self/pipelines/nv12_pipeline.h>
+#include <common/resize_reference.h>
+#include <fkl-self/pipelines/preproc_common.h>
 
 #include <hip/hip_runtime.h>
 #include <rpp.h>
 #include <rppdefs.h>
 #include <rpp_version.h>
 
-#include <algorithm>
 #include <array>
 #include <cmath>
 #include <cstdlib>
@@ -59,8 +56,8 @@
 
 namespace rppbench {
 
-using nv12::F3;
-using nv12::U3;
+using preproc::F3;
+using preproc::U3;
 
 constexpr int SRC_W = 3840, SRC_H = 2160, CROP_W = 60, CROP_H = 120, OUT_W = 64, OUT_H = 128, PLANE = OUT_W * OUT_H;
 constexpr double TOLERANCE = 1e-4;
@@ -211,20 +208,20 @@ private:
 // Pipeline (a)
 
 inline fk::RawPtr<fk::ND::_2D, U3> cropRoi(const fk::RawPtr<fk::ND::_2D, U3>& full, const int x, const int y, const int w, const int h) {
-    return nv12::roiOf(full, fk::Rect(static_cast<uint>(x), static_cast<uint>(y), w, h));
+    return preproc::roiOf(full, fk::Rect(static_cast<uint>(x), static_cast<uint>(y), w, h));
 }
 
 // FKL: the chain of pipeline (a) fused and one execution per operation, on ParArch::GPU_AMD
-template <int N, typename ResizeT = nv12::LinearResize>
+template <int N, typename ResizeT = preproc::LinearResize>
 class FklA {
 public:
     using Dpp = fk::TransformDPP<fk::ParArch::GPU_AMD>;
     FklA(fk::Stream_<fk::ParArch::GPU_AMD>& stream, fk::Ptr2D<U3>& source)
         : stream_(stream), fusedOut_(OUT_W, OUT_H, N, 3), batchOut_(OUT_W, OUT_H, N, 3), tmpA_(OUT_W, OUT_H, N, 1), tmpB_(OUT_W, OUT_H, N, 1),
-          resize_(buildResize(source)), color_(nv12ColorOp()), mul_(fk::Mul<F3>::build(F3{ALPHA, ALPHA, ALPHA})),
+          resize_(buildResize(source)), color_(rgbToBgrOp()), mul_(fk::Mul<F3>::build(F3{ALPHA, ALPHA, ALPHA})),
           sub_(fk::Sub<F3>::build(F3{SUB[0], SUB[1], SUB[2]})), div_(fk::Div<F3>::build(F3{DIV[0], DIV[1], DIV[2]})),
-          splitFused_(nv12::split3D(fusedOut_.ptr())), splitBatch_(nv12::split3D(batchOut_.ptr())), readA_(nv12::read3D(tmpA_.ptr())),
-          readB_(nv12::read3D(tmpB_.ptr())), writeA_(nv12::write3D(tmpA_.ptr())), writeB_(nv12::write3D(tmpB_.ptr())) {}
+          splitFused_(preproc::split3D(fusedOut_.ptr())), splitBatch_(preproc::split3D(batchOut_.ptr())), readA_(preproc::read3D(tmpA_.ptr())),
+          readB_(preproc::read3D(tmpB_.ptr())), writeA_(preproc::write3D(tmpA_.ptr())), writeB_(preproc::write3D(tmpB_.ptr())) {}
     void fused() { fk::executeOperations<Dpp>(stream_, resize_, color_, mul_, sub_, div_, splitFused_); }
     void perOpBatch() {
         fk::executeOperations<Dpp>(stream_, resize_, writeA_);
@@ -239,11 +236,11 @@ public:
         fusedOut_.download(stream_);
         batchOut_.download(stream_);
     }
-    const float* fusedOut() const { return nv12::hostRaw(fusedOut_).data; }
-    const float* batchOut() const { return nv12::hostRaw(batchOut_).data; }
+    const float* fusedOut() const { return preproc::hostRaw(fusedOut_).data; }
+    const float* batchOut() const { return preproc::hostRaw(batchOut_).data; }
 
 private:
-    static auto nv12ColorOp() { return fk::ColorConversion<fk::ColorConversionCodes::COLOR_RGB2BGR, F3, F3>::build(); }
+    static auto rgbToBgrOp() { return fk::ColorConversion<fk::ColorConversionCodes::COLOR_RGB2BGR, F3, F3>::build(); }
     static auto buildResize(fk::Ptr2D<U3>& source) {
         std::array<fk::RawPtr<fk::ND::_2D, U3>, N> rois;
         for (int i = 0; i < N; ++i) {
@@ -255,13 +252,13 @@ private:
     fk::Tensor<float> fusedOut_, batchOut_;
     fk::Tensor<F3> tmpA_, tmpB_;
     decltype(buildResize(std::declval<fk::Ptr2D<U3>&>())) resize_;
-    decltype(nv12ColorOp()) color_;
+    decltype(rgbToBgrOp()) color_;
     decltype(fk::Mul<F3>::build(F3{})) mul_;
     decltype(fk::Sub<F3>::build(F3{})) sub_;
     decltype(fk::Div<F3>::build(F3{})) div_;
-    nv12::SplitOp splitFused_, splitBatch_;
-    nv12::Read3DOp readA_, readB_;
-    nv12::Write3DOp writeA_, writeB_;
+    preproc::SplitOp splitFused_, splitBatch_;
+    preproc::Read3DOp readA_, readB_;
+    preproc::Write3DOp writeA_, writeB_;
 };
 
 // Scalar reference of pipeline (a) in double precision, from the host copy of the source, with the sampling of a resize
@@ -287,13 +284,13 @@ struct Output {
     fklb::CsvWriter* agreement;
     bool allPass{true};
     int warmup, iters;
-    double warmupSeconds{2.0}; // minimum warm-up of a variant, see nv12::measure (steady state rule)
+    double warmupSeconds{2.0}; // minimum warm-up of a variant, see preproc::measure (steady state rule)
     int rotateOffset{0};       // E5_ROTATE_OFFSET: added to the index of the point that selects the first variant of the rotated order
 };
 
 template <typename Work>
 void timeVariant(Output& out, const int batch, const std::string& variant, const int calls, Work work) {
-    const nv12::Stats s = nv12::measure(work, out.warmup, out.iters, out.warmupSeconds, true);
+    const preproc::Stats s = preproc::measure(work, out.warmup, out.iters, out.warmupSeconds, true);
     out.timing->row(batch, variant, calls, s.median, s.min, s.max, s.mean, s.iters, s.warmupSeconds, s.warmupSteady ? 1 : 0, s.gpuClockStartMHz, s.gpuClockTimedMHz, s.gpuClockEndMHz);
     std::cout << "  " << variant << ": median " << s.median << " ms (min " << s.min << ", max " << s.max << ")" << std::endl;
 }
@@ -305,7 +302,7 @@ struct Variant {
 };
 
 // The variants of one point in a rotated order: the first one is variant (pointIndex mod the number of variants). A GPU that was at rest ramps its
-// clock during the first second of work; the warm-up rule of nv12::measure covers that, and the rotation makes sure that a ramp that is not covered
+// clock during the first second of work; the warm-up rule of preproc::measure covers that, and the rotation makes sure that a ramp that is not covered
 // would not always hit the same variant
 inline void timeRotated(Output& out, const int batch, const int pointIndex, const std::vector<Variant>& variants) {
     const size_t first = static_cast<size_t>(pointIndex + out.rotateOffset) % variants.size();
@@ -351,7 +348,7 @@ void runA(fk::Stream_<fk::ParArch::GPU_AMD>& stream, fk::Ptr2D<U3>& source, Outp
     fkl.sync();
     rpp.run();
     const std::vector<float> rppOut = rpp.download();
-    const auto hostSource = nv12::hostRaw(source);
+    const auto hostSource = preproc::hostRaw(source);
     const std::vector<float> refAsym = referenceA(hostSource, N, fklb::ResizeSampling::ASYMMETRIC);
     const std::vector<float> refHalf = referenceA(hostSource, N, fklb::ResizeSampling::HALF_PIXEL);
     agreementRows(out, N, "fkl_fused vs scalar reference ASYMMETRIC", fkl.fusedOut(), refAsym.data(), N, true, "");
@@ -378,97 +375,6 @@ void runAll(fk::Stream_<fk::ParArch::GPU_AMD>& stream, fk::Ptr2D<U3>& source, Ou
     (runA<(Ns + 1) * 10>(stream, source, out), ...);
 }
 
-// ------------------------------------------------------------------------------------------------------------------------------
-// Pipeline (b)
-
-template <int N>
-void runB(fk::Stream_<fk::ParArch::GPU_AMD>& stream, nv12::Frame& frame, fk::Ptr2D<U3>& rgbFkl, fk::Ptr2D<U3>& rgbRpp, rppHandle_t convertHandle, Output& out) {
-    std::cout << "(b) crops " << N << std::endl;
-    const auto crops = nv12::makeCrops<N>();
-    using HalfPixel = fk::ResizeHalfPixel<fk::InterpolationType::INTER_LINEAR>;
-    nv12::Pipeline<fk::ParArch::GPU_AMD, N> fkl(stream, frame, rgbFkl, crops);
-    nv12::Pipeline<fk::ParArch::GPU_AMD, N, HalfPixel> fklHalf(stream, frame, rgbFkl, crops);
-    std::vector<std::array<int, 4>> roiList(N);
-    for (int i = 0; i < N; ++i) {
-        roiList[i] = {static_cast<int>(crops[i].x), static_cast<int>(crops[i].y), crops[i].width, crops[i].height};
-    }
-    const auto rgbRaw = rgbRpp.ptr();
-    RppFusedApi rpp(stream.getHIPStream(), rgbRaw.data, rgbRaw.dims.pitch, nv12::FRAME_W, nv12::FRAME_H, roiList, 1.f / 255.f, nv12::MEAN, nv12::STD, false);
-
-    const auto frameRaw = frame.getData().ptr();
-    uchar* yPlane = reinterpret_cast<uchar*>(frameRaw.data);
-    uchar* uvPlane = yPlane + static_cast<size_t>(frameRaw.dims.pitch) * nv12::FRAME_H;
-    RpptDesc yuvDesc(1, 3, nv12::FRAME_H, nv12::FRAME_W, U8, NHWC), rgbDesc(1, 3, nv12::FRAME_H, nv12::FRAME_W, U8, NHWC);
-    rgbDesc.strides.hStride = static_cast<Rpp32u>(rgbRaw.dims.pitch);
-    const auto convertRpp = [&] {
-        RPPB_CHECK_RPP(rppt_yuv_to_rgb(yPlane, uvPlane, &yuvDesc, rgbRaw.data, &rgbDesc, frameRaw.dims.pitch, frameRaw.dims.pitch, rgbRaw.dims.pitch,
-                                       nv12::FRAME_W, nv12::FRAME_H, RpptColorStandard_BT601, RpptColorRange_STUDIO, convertHandle,
-                                       RppBackend::RPP_HIP_BACKEND));
-    };
-
-    // Agreement
-    fkl.convert();
-    fkl.fused();
-    fkl.perOpBatch();
-    fkl.download();
-    fklHalf.fused();
-    fklHalf.download();
-    fkl.sync();
-    convertRpp();
-    rpp.run();
-    const std::vector<float> rppOut = rpp.download();
-    rgbRpp.download(stream);
-    stream.sync();
-    {
-        // The RGB frames of FKL and RPP, in levels
-        const auto a = nv12::hostRaw(rgbFkl);
-        const auto b = nv12::hostRaw(rgbRpp);
-        int worst = 0;
-        double sum = 0;
-        for (int y = 0; y < nv12::FRAME_H; ++y) {
-            const U3* ra = reinterpret_cast<const U3*>(reinterpret_cast<const char*>(a.data) + static_cast<size_t>(y) * a.dims.pitch);
-            const U3* rb = reinterpret_cast<const U3*>(reinterpret_cast<const char*>(b.data) + static_cast<size_t>(y) * b.dims.pitch);
-            for (int x = 0; x < nv12::FRAME_W; ++x) {
-                const int d = std::max({std::abs(int(ra[x].x) - int(rb[x].x)), std::abs(int(ra[x].y) - int(rb[x].y)), std::abs(int(ra[x].z) - int(rb[x].z))});
-                worst = std::max(worst, d);
-                sum += std::abs(int(ra[x].x) - int(rb[x].x)) + std::abs(int(ra[x].y) - int(rb[x].y)) + std::abs(int(ra[x].z) - int(rb[x].z));
-            }
-        }
-        out.agreement->row(N, "RGB frame: rppt_yuv_to_rgb vs FKL ConvertYUVToRGB (levels)", "frame", worst, sum / (3.0 * nv12::FRAME_W * nv12::FRAME_H), 0, -1,
-                           "BT.601 studio swing, default chroma upsampling of RPP");
-        std::cout << "  RGB frame RPP vs FKL: max " << worst << " levels, mean " << sum / (3.0 * nv12::FRAME_W * nv12::FRAME_H) << std::endl;
-    }
-    const std::vector<float> ref = nv12::referenceTensor<N>(nv12::hostRaw(rgbFkl), crops);
-    agreementRows(out, N, "fkl_fused vs scalar reference", fkl.fusedOut(), ref.data(), N, true, "");
-    agreementRows(out, N, "fkl_perop_batch vs fkl_fused", fkl.batchOut(), fkl.fusedOut(), N, true, "");
-    agreementRows(out, N, "rpp_fused_api vs fkl_fused", rppOut.data(), fkl.fusedOut(), N, false, "different RGB frames and sampling conventions");
-    const std::vector<float> refHalf = nv12::referenceTensor<N>(nv12::hostRaw(rgbFkl), crops, fklb::ResizeSampling::HALF_PIXEL);
-    agreementRows(out, N, "fkl_fused_halfpixel vs scalar reference HALF_PIXEL", fklHalf.fusedOut(), refHalf.data(), N, true, "");
-    agreementRows(out, N, "rpp_fused_api vs fkl_fused_halfpixel", rppOut.data(), fklHalf.fusedOut(), N, false,
-                  "both HALF_PIXEL; the RGB frames differ by at most 1 level; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ");
-
-    // Timing
-    // pointIndex: log2 of the number of crops (0, 3, 4, 5, 6)
-    int pointIndex = 0;
-    for (int n = N; n > 1; n >>= 1) {
-        ++pointIndex;
-    }
-    timeRotated(out, N, pointIndex,
-                {{"rpp_convert", 1, [&] { convertRpp(); RPPB_CHECK_HIP(hipStreamSynchronize(stream.getHIPStream())); }},
-                 {"fkl_convert", 1, [&] { fkl.convert(); fkl.sync(); }},
-                 {"fkl_chain_fused", 1, [&] { fkl.fused(); fkl.sync(); }},
-                 {"fkl_chain_fused_halfpixel", 1, [&] { fklHalf.fused(); fklHalf.sync(); }},
-                 {"fkl_chain_perop_batch", 5, [&] { fkl.perOpBatch(); fkl.sync(); }},
-                 {"rpp_chain_fused_api", 1, [&] { rpp.run(); RPPB_CHECK_HIP(hipStreamSynchronize(stream.getHIPStream())); }},
-                 {"fkl_pipeline_fused", 2, [&] { fkl.convert(); fkl.fused(); fkl.sync(); }},
-                 {"fkl_pipeline_fused_halfpixel", 2, [&] { fklHalf.convert(); fklHalf.fused(); fklHalf.sync(); }},
-                 {"fkl_pipeline_perop_batch", 6, [&] { fkl.convert(); fkl.perOpBatch(); fkl.sync(); }},
-                 {"rpp_pipeline_fused_api", 2, [&] { convertRpp(); rpp.run(); RPPB_CHECK_HIP(hipStreamSynchronize(stream.getHIPStream())); }},
-                 {"mixed_fkl_convert_rpp_chain", 2, [&] { fkl.convert(); fkl.sync(); rpp.run(); RPPB_CHECK_HIP(hipStreamSynchronize(stream.getHIPStream())); }}});
-    out.timing->flush();
-    out.agreement->flush();
-}
-
 } // namespace rppbench
 
 int launch() {
@@ -482,12 +388,12 @@ int launch() {
         fk::Stream_<fk::ParArch::GPU_AMD> stream;
         std::string sourceText;
 
-        // The image of pipeline (a), in device memory
+        // The image, in device memory
         fk::Ptr2D<U3> source(SRC_W, SRC_H);
         {
             std::vector<uchar> ppm;
             int w = 0, h = 0;
-            const bool natural = imagePath != nullptr && nv12::readPpm(imagePath, ppm, w, h);
+            const bool natural = imagePath != nullptr && preproc::readPpm(imagePath, ppm, w, h);
             uint32_t state = 12345u;
             for (int y = 0; y < SRC_H; ++y) {
                 for (int x = 0; x < SRC_W; ++x) {
@@ -508,8 +414,7 @@ int launch() {
 
         const std::string rppText = "RPP " + std::to_string(RPP_VERSION_MAJOR) + "." + std::to_string(RPP_VERSION_MINOR) + "." + std::to_string(RPP_VERSION_PATCH) +
                                     " (ROCm package amdrocm-rpp), rppt tensor API, HIP back-end; rppt_resize_mirror_normalize: BILINEAR, ROI XYWH, source U8 NHWC "
-                                    "(batch stride 0, one ROI per crop), destination F32 NCHW, mirror off; rppt_channel_permute F32 NCHW; rppt_yuv_to_rgb: "
-                                    "RpptColorStandard_BT601, RpptColorRange_STUDIO, default chroma upsampling; output widths are multiples of 8";
+                                    "(batch stride 0, one ROI per crop), destination F32 NCHW, mirror off; rppt_channel_permute F32 NCHW; output widths are multiples of 8";
         const std::string notes = "FKL HIP vs RPP; source: " + sourceText + "; " + rppText +
                                   "; wall clock including the stream synchronisation; warm-up: 3 runs, at least " + std::to_string(warmupSeconds).substr(0, std::to_string(warmupSeconds).find('.') + 2) + " s and until the mean time of two consecutive windows of 0.25 s differs by at most 2 percent (cap 10 s; the columns warmup_s, warmup_steady and sclk_start_mhz, sclk_timed_start_mhz and sclk_end_mhz, the graphics clock at the start of the warm-up, at the start of the timed runs and after them, record it); the variants of a point are timed in a rotated order: the first one is variant ((index of the point + E5_ROTATE_OFFSET = " + std::to_string(rotateOffset) + ") mod the number of variants)";
 
@@ -520,39 +425,8 @@ int launch() {
                                notes + "; pass -1 = informational; tolerance 1e-4 absolute");
         Output outA{&timingA, &agreeA, true, warmup, iters, warmupSeconds, rotateOffset};
         runAll(stream, source, outA, std::make_integer_sequence<int, 30>{});
-
-        // Pipeline (b)
-        nv12::Frame frame(nv12::FRAME_W, nv12::FRAME_H);
-        if (imagePath != nullptr) {
-            std::vector<uchar> ppm;
-            int w = 0, h = 0;
-            if (nv12::readPpm(imagePath, ppm, w, h)) {
-                nv12::fillFromRgb(frame, ppm, w, h);
-            } else {
-                nv12::fillNoise(frame);
-            }
-        } else {
-            nv12::fillNoise(frame);
-        }
-        frame.getData().upload(stream);
-        stream.sync();
-        fk::Ptr2D<U3> rgbFkl(nv12::FRAME_W, nv12::FRAME_H), rgbRpp(nv12::FRAME_W, nv12::FRAME_H);
-        rppHandle_t convertHandle{};
-        RPPB_CHECK_RPP(rppCreate(&convertHandle, 1, 0, stream.getHIPStream(), RppBackend::RPP_HIP_BACKEND));
-        fklb::CsvWriter timingB("benchmark_rpp_preprocessing_b_GPU_AMD.csv", "benchmark_rpp_preprocessing_b",
-                                {"crops", "variant", "calls", "median_ms", "min_ms", "max_ms", "mean_ms", "iters", "warmup_s", "warmup_steady", "sclk_start_mhz", "sclk_timed_start_mhz", "sclk_end_mhz"}, notes);
-        fklb::CsvWriter agreeB("benchmark_rpp_preprocessing_b_agreement_GPU_AMD.csv", "benchmark_rpp_preprocessing_b",
-                               {"crops", "comparison", "region", "max_abs_diff", "mean_abs_diff", "fraction_over_1e-4", "pass", "note"},
-                               notes + "; pass -1 = informational; tolerance 1e-4 absolute");
-        Output outB{&timingB, &agreeB, true, warmup, iters, warmupSeconds, rotateOffset};
-        runB<1>(stream, frame, rgbFkl, rgbRpp, convertHandle, outB);
-        runB<8>(stream, frame, rgbFkl, rgbRpp, convertHandle, outB);
-        runB<16>(stream, frame, rgbFkl, rgbRpp, convertHandle, outB);
-        runB<32>(stream, frame, rgbFkl, rgbRpp, convertHandle, outB);
-        runB<64>(stream, frame, rgbFkl, rgbRpp, convertHandle, outB);
-        (void)rppDestroy(convertHandle, RppBackend::RPP_HIP_BACKEND);
-        std::cout << ((outA.allPass && outB.allPass) ? "all required numerical checks passed" : "NUMERICAL CHECK FAILED") << std::endl;
-        return (outA.allPass && outB.allPass) ? 0 : -1;
+        std::cout << (outA.allPass ? "all required numerical checks passed" : "NUMERICAL CHECK FAILED") << std::endl;
+        return outA.allPass ? 0 : -1;
     } catch (const std::exception& e) {
         std::cerr << e.what() << std::endl;
         return -1;

@@ -1,8 +1,8 @@
 # Do the numbers of E0 to E2 transfer to the final library pin c8fcbe8? (RTX 4090, sm_89, CUDA 13.4.3)
 
-The numbers of the paper were measured with older trees of the library: E0 (and the E4b NV12 and E6 NaN programs) with fb9ac3a (LTS-C++17 after #406), E1, E2 and the data-size mul4 sweep with 38c4f32 (after #409). The pin of the
-revision is c8fcbe8 (merge of #417). **Every kernel of every program that produced a number was rebuilt against c8fcbe8 and compared, one by one, with the kernel of the binary that produced the number: 1,132 kernels in 22 binaries,
-1,132 identical, 0 different, 0 present on one side only.**
+The numbers of the paper were measured with older trees of the library: E0 (and the E6 NaN program) with fb9ac3a (LTS-C++17 after #406), E1, E2 and the data-size mul4 sweep with 38c4f32 (after #409). The pin of the
+revision is c8fcbe8 (merge of #417). **Every kernel of every program that produced a number was rebuilt against c8fcbe8 and compared, one by one, with the kernel of the binary that produced the number: 1,117 kernels in 21 binaries,
+1,117 identical, 0 different, 0 present on one side only.**
 
 ## What changed in the library between the trees
 `git diff --stat fb9ac3a c8fcbe8 -- include` (5 files):
@@ -23,7 +23,7 @@ Kernels are matched by mangled name. Where some names exist on one side only (`s
 is the only normalisation of names. Two causes of different mangled names exist, both unrelated to the code: (1) the defaulted `ResizeSampling` template argument that PR #409 added to the resize operations (the frozen E0 binaries were built
 with fb9ac3a, before it), which appears in the names of the resize kernels; (2) the per-compile hash of the anonymous namespace (`_GLOBAL__N__<hash>_`) in the names of hand-written kernels of the E1 programs and of the `l2Flush` kernel of E2.
 Source checks: rebuilding the E2 and mul4 programs at the OLD library (38c4f32) gives kernels identical to the frozen binaries (E2 7 of 7, mul4 2 of 2), so the frozen binaries are what the sources produce and the rebuild at c8fcbe8 is a like for like comparison.
-Programs without a frozen binary (E4b NV12, whose binary no longer exists) are compared between a rebuild at fb9ac3a and a rebuild at c8fcbe8.
+The NV12 program of E4b was part of this proof in an earlier version (15 kernels; it had no frozen binary, so it was compared between a rebuild at fb9ac3a and a rebuild at c8fcbe8). The NV12 pipeline is not in the paper and was removed, with its row of the table: every other row and number is as it was, and the totals above are those of the table below. The earlier table is in the git history (`git show 341ecd1:results/rtx4090/e0-pin-transfer/transfer_table.md`).
 
 ## Every binary compared (`transfer_table.md`, `transfer_table.csv`)
 | group | benchmarks commit | baseline (library) | binary | results it produced | kernels in baseline | in c8fcbe8 build | identical | different | only on one side | matched by |
@@ -51,8 +51,7 @@ Programs without a frozen binary (E4b NV12, whose binary no longer exists) are c
 | mul4-old | e9e599d | rebuild at 38c4f32 against the frozen binary (source check) (38c4f32) | `benchmark_image_resolution_MAD_loop_mul4_cu` | e0-data-size-mul4 (same binary rebuilt at the old library) | 2 | 2 | 2 | 0 | 0 | mangled name |
 | mul4-new | e9e599d | frozen binary of the measurement (38c4f32) | `benchmark_image_resolution_MAD_loop_mul4_cu` | e0-data-size-mul4, e0-data-size-parity | 2 | 2 | 2 | 0 | 0 | mangled name |
 | nan_saturate | f3afadc | frozen binary of the measurement (fb9ac3a) | `nan_saturate_cu` | e6-nan-saturate | 1 | 1 | 1 | 0 | 0 | demangled name, ResizeSampling argument and anonymous-namespace hash ignored |
-| nv12 | f81306d | rebuild at fb9ac3a (no frozen binary exists) (fb9ac3a) | `benchmark_nv12_pipeline_cu` | e4b-nv12 | 15 | 15 | 15 | 0 | 0 | demangled name, ResizeSampling argument and anonymous-namespace hash ignored |
-| **total (new tree against the baseline)** | | | 22 binaries | | **1132** | **1132** | **1132** | **0** | **0** | |
+| **total (new tree against the baseline)** | | | 21 binaries | | **1117** | **1117** | **1117** | **0** | **0** | |
 
 Kernel counts are the kernels in the sm_89 SASS of the binary (the binaries also carry compute_89 PTX, which is not compared). `graph_instantiate_time_cu` has no kernel of its own: it measures capture and instantiation of the OpenCV-CUDA
 baseline with CUDA Graphs, and its kernels are in the OpenCV libraries, which this proof does not change.
@@ -87,5 +86,5 @@ The files in `../e0-cpu-time-opencv/` against the median of the 10 frozen runs, 
 PCIe link (relevant for every host-bound number above, since each launch is submitted over the link): not logged during these runs; the link check under load made afterwards, `../pcie-check/` (generation 4, width 16 whenever the GPU leaves the idle state; pinned copies 25.6 and 24.8 GB/s), is the evidence that the link of the RTX 4090 runs at PCIe 4.0 x16 when it works.
 
 ## Reproduce
-`source scripts/env-cuda13.4.sh; scripts/pin_transfer.sh external/fkl <work dir> results/rtx4090/e0-pin-transfer <worktree of 38c4f32> <worktree of fb9ac3a>` (needs the frozen builds in `build/`), then `python scripts/pin_transfer_table.py results/rtx4090/e0-pin-transfer`.
+`source scripts/env-cuda13.4.sh; scripts/pin_transfer.sh external/fkl <work dir> results/rtx4090/e0-pin-transfer <worktree of 38c4f32>` (needs the frozen builds in `build/`), then `python scripts/pin_transfer_table.py results/rtx4090/e0-pin-transfer`.
 `ONLY="e1 e2-new"` runs just some groups. The raw comparison of every group is in `sass_<group>.txt` (per binary: kernels on each side, identical, different).

@@ -9,7 +9,7 @@ the 22 percent does not follow from these two figures (22.5 percent is the ratio
 ## 1. Five pins of FKL, three rounds, alternating (`five-pins-three-rounds/`)
 
 The same benchmark source (fkl-benchmarks `e7f28e2`), the same flags, five builds that differ only in `external/fkl`: `38` = 38c4f32 (the pin of the first run; #409 is in it), `b44725e` = the
-merge of #411, `d776713` = #414, `bbc5a7b` = #416, `c8` = c8fcbe8 (#417, the final pin). `r<round>_<pin>/` has the timing CSVs of pipelines (a) and (b) of that run; the pins alternate in every round;
+merge of #411, `d776713` = #414, `bbc5a7b` = #416, `c8` = c8fcbe8 (#417, the final pin). `r<round>_<pin>/` has the timing CSV of pipeline (a) of that run; the pins alternate in every round;
 no CI job ran during any of the 15 runs. `summary.txt`: median ms of `fkl_fused`, `fkl_fused_halfpixel`, `fkl_perop_batch` and `rpp_fused_api` at the batches 100, 200 and 300 in each round.
 `fkl_fused` (default resize), mean of the three rounds: batch 100: 0.0623 to 0.0624 ms at all pins; batch 200: 0.1094, 0.1107, 0.1109, 0.1114, 0.1097; batch 300: 0.1508, 0.1510, 0.1499, 0.1506, 0.1505.
 The build of 38c4f32 made today is as slow as the one of c8fcbe8, and no step between them changes anything: no FKL commit is responsible. The HALF_PIXEL variant and RPP are flat at all pins to 1.5 percent; the per-op batch is not (below).
@@ -20,7 +20,7 @@ The build of 38c4f32 made today is as slow as the one of c8fcbe8, and no step be
 
 ## 2. The device code is the same (`device-code-identical-at-five-pins.txt`)
 
-The gfx1200 code objects of `benchmark_rpp_preprocessing_hip` (238 functions), `benchmark_horizontal_fusion_hip` (246) and `benchmark_nv12_pipeline_hip` (46) are identical function by function at the five pins
+The gfx1200 code objects of `benchmark_rpp_preprocessing_hip` (238 functions, with those of pipeline (b), removed later), `benchmark_horizontal_fusion_hip` (246) and `benchmark_nv12_pipeline_hip` (46; the NV12 benchmark was removed later) are identical function by function at the five pins
 (instruction text hashed with the `hip_cuid` names normalised). The chain kernel of batch 300 (ASYMMETRIC: 201 instructions, HALF_PIXEL: 211) has 21 VGPRs, 22 SGPRs, no scratch and no spills in both, a
 kernarg segment of 352 + 48 * batch bytes (14,752 B at 300) that is read in place with 9 scalar loads. The host side of a launch costs about 2 microseconds at batch 300 (the `burst launch` column of `standalone-harness/hostsplit-*.txt`: 0.0020 to 0.0023 ms, 20 launches back to back without event records), measured at two pins, 38c4f32 and c8fcbe8.
 *Correction: an earlier version said "4 microseconds ... at every pin". The `host(launch)` column (0.0041 to 0.0043 ms at batch 300) is the launch plus the two `hipEventRecord` calls that the harness puts around it (about 2 microseconds; 3.4 to 3.5 us
@@ -38,7 +38,7 @@ the memory clock was 1124 MHz in 683 to 692 of the 765 to 772 busy samples (89 p
 
 The first RPP benchmark (warm-up 0.5 s, 38c4f32) under `scripts/gpu_clock_trace.py` (about 176 Hz: 17,000 samples in 96.6 s): `lines.txt` (every output line with its arrival time), `clk.txt` (time, MHz, GPU busy %),
 `report-fkl_fused-windows.txt`: the clock in the 0.52 s that end at each `fkl_fused` / `fkl_fused_halfpixel` timing line (the warm-up and the timed runs of the variant). The lines alternate fkl_fused,
-fkl_fused_halfpixel for the batches 10, 20, ..., 300, then the same for the crops of pipeline (b). During the warm-up and the timed runs of `fkl_fused` at the batches 150 to 300, the clock is 2.0 GHz
+fkl_fused_halfpixel for the batches 10, 20, ..., 300, then the same for the crops of pipeline (b) (removed later; its lines stay in the file). During the warm-up and the timed runs of `fkl_fused` at the batches 150 to 300, the clock is 2.0 GHz
 (2017 to 2029 MHz in the last 50 ms; 2659 MHz at batch 100); during `fkl_fused_halfpixel`, right after, 2.8 to 3.1 GHz; during the next variants 3.0 to 3.2 GHz. The GPU is idle (31 MHz) while the host computes the
 scalar references between two batches, and the 0.5 s of warm-up are shorter than the ramp.
 
@@ -52,5 +52,5 @@ busy since the start: batch 300 ASYMMETRIC 0.1277 ms (device 0.1062), HALF_PIXEL
 
 ## 6. Other results of the rule
 
-- E4b (`../e4b-nv12-steady-clock/` against `../e4b-nv12/`): the convert kernel at one crop 0.2602 ms with a warm-up of 0.5 s (in the overshoot of the clock, 3.3 GHz and more) and 0.2808 ms at the steady clock.
+- E4b (removed later; `git show 341ecd1:results/rx9060/e4b-nv12-steady-clock/` against `341ecd1:results/rx9060/e4b-nv12/`): the convert kernel at one crop 0.2602 ms with a warm-up of 0.5 s (in the overshoot of the clock, 3.3 GHz and more) and 0.2808 ms at the steady clock.
 - Latency hiding (`../fkl-self/`, FKL-only benchmarks): without keeping the GPU busy before each point the series is up to 52 percent slower at 301 operations.

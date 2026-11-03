@@ -44,11 +44,6 @@ fklb_add_benchmark(batch_build_compilation_time
     BACKENDS cu hip cpp LIBS fkl
     LAUNCHER_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/compiletime/batch_build_compilation_time.h")
 
-# FKL pipelines (e.g. the NV12 preprocessing, E4b): pipelines/CMakeLists.txt, when it exists
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/pipelines/CMakeLists.txt")
-    add_subdirectory(pipelines)
-endif()
-
 # E6: the value of fk::SaturateCast for NaN on the device (cu only: it reads the hardware conversions through inline PTX)
 fklb_add_benchmark(nan_saturate
     BACKENDS cu LIBS fkl

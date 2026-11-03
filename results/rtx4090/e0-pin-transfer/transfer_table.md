@@ -23,5 +23,4 @@
 | mul4-old | e9e599d | rebuild at 38c4f32 against the frozen binary (source check) (38c4f32) | `benchmark_image_resolution_MAD_loop_mul4_cu` | e0-data-size-mul4 (same binary rebuilt at the old library) | 2 | 2 | 2 | 0 | 0 | mangled name |
 | mul4-new | e9e599d | frozen binary of the measurement (38c4f32) | `benchmark_image_resolution_MAD_loop_mul4_cu` | e0-data-size-mul4, e0-data-size-parity | 2 | 2 | 2 | 0 | 0 | mangled name |
 | nan_saturate | f3afadc | frozen binary of the measurement (fb9ac3a) | `nan_saturate_cu` | e6-nan-saturate | 1 | 1 | 1 | 0 | 0 | demangled name, ResizeSampling argument and anonymous-namespace hash ignored |
-| nv12 | f81306d | rebuild at fb9ac3a (no frozen binary exists) (fb9ac3a) | `benchmark_nv12_pipeline_cu` | e4b-nv12 | 15 | 15 | 15 | 0 | 0 | demangled name, ResizeSampling argument and anonymous-namespace hash ignored |
-| **total (new tree against the baseline)** | | | 22 binaries | | **1132** | **1132** | **1132** | **0** | **0** | |
+| **total (new tree against the baseline)** | | | 21 binaries | | **1117** | **1117** | **1117** | **0** | **0** | |

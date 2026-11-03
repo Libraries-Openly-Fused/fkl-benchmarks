@@ -30,9 +30,10 @@ that the first results of this folder used ended on the ramp. What it did to the
   0.1328 ms) after 3 s without GPU work and a warm-up of 0.5 s; 0.1265 ms (device 0.1050 ms) with a warm-up of 2 s or 5 s. The same kernel with the HALF_PIXEL
   sampling had been timed second, after the ramp, and looked unchanged. In the first RPP run after the 0.5 s warm-up the default chain read 0.1146 / 0.1577 ms
   at batch 200 / 300 with FKL c8fcbe8, against 0.0924 / 0.1241 ms in the first run with FKL 38c4f32 (same benchmark source and identical device code, `clock-ramp/`): the ramp had been faster in that run by chance.
-- In the other direction, a warm-up that ends right after the ramp can be measured in the overshoot: the NV12 to RGB kernel of E4b at one crop read 0.2602 ms
-  with a warm-up of 0.5 s (FKL 38c4f32, `e4b-nv12/`) and 0.2808 ms at the steady clock (FKL c8fcbe8, `e4b-nv12-steady-clock/`, median of three repetitions; 7 percent too fast), and it varied with the
-  number of crops (0.2602 to 0.2827 ms at 38c4f32) although the kernel does not depend on it; with the steady warm-up it is 0.2808 to 0.2840 ms for 1 to 64 crops (c8fcbe8).
+- In the other direction, a warm-up that ends right after the ramp can be measured in the overshoot: the NV12 to RGB kernel of the E4b pipeline (removed later, see "Folders") at one crop read 0.2602 ms
+  with a warm-up of 0.5 s (FKL fb9ac3a) and 0.2808 ms at the steady clock (FKL c8fcbe8, median of three repetitions; 7 percent too fast), and it varied with the
+  number of crops (0.2602 to 0.2827 ms at fb9ac3a) although the kernel does not depend on it; with the steady warm-up it is 0.2808 to 0.2840 ms for 1 to 64 crops (c8fcbe8).
+  The data are in the git history: `git show 341ecd1:results/rx9060/e4b-nv12/` and `git show 341ecd1:results/rx9060/e4b-nv12-steady-clock/`.
 - The latency hiding series of `fkl-self` (the buffers are allocated and filled between two points, which leaves the GPU idle) was up to 52 percent slower
   without keeping the GPU busy before the timed runs of each point (301 operations: 6.10 ms without and 4.01 ms with the spin of 2 s, both runs with FKL c8fcbe8 and the same device code; the run with the spin
   was made with `FKLB_GPU_SPIN_SECONDS=2`, implemented in fkl-benchmarks #7; the first series, with FKL 38c4f32 and no spin, gave 4.14 ms).
@@ -42,7 +43,7 @@ that the first results of this folder used ended on the ramp. What it did to the
 
 ## The rule
 
-For the pipelines (E4b and `rpp/`, `nv12::measure` in `fkl-self/pipelines/nv12_pipeline.h`): a warm-up of at least 2 s and until the mean time of two consecutive
+For the pipeline of `rpp/` (`preproc::measure` in `fkl-self/pipelines/preproc_common.h`): a warm-up of at least 2 s and until the mean time of two consecutive
 windows of 0.25 s differs by at most 2 percent (cap 10 s), then 30 timed runs; the variants of a point are timed in a rotated order (the first one is variant
 (index of the point + E5_ROTATE_OFFSET) mod the number of variants) and the whole run is repeated three times with the offsets 0, 1 and 2; the result is the median of
 the three medians and the CSV columns `warmup_s`, `warmup_steady`, `sclk_start_mhz`, `sclk_timed_start_mhz` and `sclk_end_mhz` give the warm-up that was run
@@ -52,8 +53,10 @@ before its timed runs. The variable is implemented in fkl-benchmarks #7 (`fkl-se
 
 ## Folders
 
-- `rpp-preprocessing/`: FKL against RPP 3.2.0, pipelines (a) and (b), at the final pin c8fcbe8 with the rule above (replaces the first run, which used a warm-up of 0.5 s
+- `rpp-preprocessing/`: FKL against RPP 3.2.0, pipeline (a), at the final pin c8fcbe8 with the rule above (replaces the first run, which used a warm-up of 0.5 s
   at the pin 38c4f32 and is in the history of the branch).
-- `e4b-nv12-steady-clock/`: the E4b NV12 pipeline of the RX 9060 with the rule above (c8fcbe8). `e4b-nv12/` is the first run (warm-up 0.5 s, pin 38c4f32); do not cite it.
+- Removed: the NV12 video pipeline (pipeline (b), experiment E4b: the folders `e4b-nv12/` and `e4b-nv12-steady-clock/` and the pipeline (b) files of `rpp-preprocessing/` and `clock-ramp/`) is not in the paper.
+  Its code and results are in the git history up to `341ecd1`, for example `git show 341ecd1:results/rx9060/e4b-nv12-steady-clock/README.md`.
+  The `# notes:` header line of the pipeline (a) CSVs written before the removal (in `rpp-preprocessing/` and `clock-ramp/`) still names `rppt_yuv_to_rgb`, the RPP conversion that only pipeline (b) called; the benchmark does not write it any more.
 - `fkl-self/` (added by fkl-benchmarks #7): horizontal fusion, instructions per operation and latency hiding (FKL only).
 - `clock-ramp/`: the evidence of this section.
