@@ -23,7 +23,6 @@ Kernels are matched by mangled name. Where some names exist on one side only (`s
 is the only normalisation of names. Two causes of different mangled names exist, both unrelated to the code: (1) the defaulted `ResizeSampling` template argument that PR #409 added to the resize operations (the frozen E0 binaries were built
 with fb9ac3a, before it), which appears in the names of the resize kernels; (2) the per-compile hash of the anonymous namespace (`_GLOBAL__N__<hash>_`) in the names of hand-written kernels of the E1 programs and of the `l2Flush` kernel of E2.
 Source checks: rebuilding the E2 and mul4 programs at the OLD library (38c4f32) gives kernels identical to the frozen binaries (E2 7 of 7, mul4 2 of 2), so the frozen binaries are what the sources produce and the rebuild at c8fcbe8 is a like for like comparison.
-The NV12 program of E4b was part of this proof in an earlier version (15 kernels; it had no frozen binary, so it was compared between a rebuild at fb9ac3a and a rebuild at c8fcbe8). The NV12 pipeline is not in the paper and was removed, with its row of the table: every other row and number is as it was, and the totals above are those of the table below. The earlier table is in the git history (`git show 341ecd1:results/rtx4090/e0-pin-transfer/transfer_table.md`).
 
 ## Every binary compared (`transfer_table.md`, `transfer_table.csv`)
 | group | benchmarks commit | baseline (library) | binary | results it produced | kernels in baseline | in c8fcbe8 build | identical | different | only on one side | matched by |
