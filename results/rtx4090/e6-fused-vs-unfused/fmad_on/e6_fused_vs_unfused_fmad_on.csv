@@ -1,0 +1,163 @@
+# experiment: E6 fused against kernel-per-op
+# notes: build tag fmad_on; identical = memcmp of the bit patterns; max_ulp in ULP (integer distance of the monotonic bit mapping; NaN pairs excluded and counted); for fused_vs_fp64_rounded x1 = max error against the unrounded double result in ULP; for P1 fused_vs_perop x1,x2 = min and max of the output; the fp64 host reference is compiled with -ffp-contract=off
+# repo: fkl-benchmarks 91dfcddfdaa601db5453e776cf6d1aa433a8affe-dirty
+# fkl: c8fcbe816d629377886cbdd19c83527f37ccfc04
+# cvGPUSpeedup: 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c
+# FastNPP: 9dfc4f430225e40ded392bfa777b2e724367c5c1
+# nvcc: 13.4.92 (/home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/nvcc), architectures 89, -fmad on, -lineinfo on
+# hip: none (none), architectures none
+# host compiler: GNU 15.2.0, Release, -march=native, -ftemplate-depth=1000
+# opencv: none
+# cpu: AMD Ryzen 9 5950X 16-Core Processor
+# os: Ubuntu 26.04.1 LTS
+# kernel: Linux 7.0.0-38-generic
+# gpu: NVIDIA GeForce RTX 4090, cc 8.9, 128 SMs, 24106 MiB, PCI 0000:09:00.0
+# cuda driver api: 13.3, cuda runtime: 13.4
+# nvidia-smi driver: 610.43.02
+# clocks (sm, mem, max sm, max mem, MHz): 2550 MHz, 10251 MHz, 3105 MHz, 10501 MHz
+# power limit, temperature at start: 450.00 W, 43
+pipeline,case,seed,comparison,n,identical,differing,max_ulp,nan_a,nan_b,inf_a,inf_b,region,x1,x2
+P1,pairs=1,0,fused_vs_perop,129600,0,30329,1,0,0,0,0,all,0.502500296,2.00097322
+P1,pairs=1,0,fused_vs_fp64_rounded,129600,1,0,0,0,0,0,0,all,0.49999702,0
+P1,pairs=1,0,perop_vs_fp64_rounded,129600,0,30329,1,0,0,0,0,all,0.851501524,0
+P1,pairs=10,0,fused_vs_perop,129600,0,118448,10,0,0,0,0,all,0.524888098,2.0099287
+P1,pairs=10,0,fused_vs_fp64_rounded,129600,0,63821,5,0,0,0,0,all,4.55966117,0
+P1,pairs=10,0,perop_vs_fp64_rounded,129600,0,126152,7,0,0,0,0,all,7.07522466,0
+P1,pairs=100,0,fused_vs_perop,129600,0,129600,48,0,0,0,0,all,0.738020539,2.095186
+P1,pairs=100,0,fused_vs_fp64_rounded,129600,0,110759,11,0,0,0,0,all,11.1584809,0
+P1,pairs=100,0,perop_vs_fp64_rounded,129600,0,129595,44,0,0,0,0,all,44.0277138,0
+P1,pairs=1000,0,fused_vs_perop,129600,0,129600,71,0,0,0,0,all,2.08077288,2.63231659
+P1,pairs=1000,0,fused_vs_fp64_rounded,129600,0,120079,22,0,0,0,0,all,21.8558073,0
+P1,pairs=1000,0,perop_vs_fp64_rounded,129600,0,129600,77,0,0,0,0,all,77.2566607,0
+P1,pairs=1,1,fused_vs_perop,129600,0,30089,1,0,0,0,0,all,0.502500057,2.00099945
+P1,pairs=1,1,fused_vs_fp64_rounded,129600,1,0,0,0,0,0,0,all,0.499997854,0
+P1,pairs=1,1,perop_vs_fp64_rounded,129600,0,30089,1,0,0,0,0,all,0.85152477,0
+P1,pairs=10,1,fused_vs_perop,129600,0,118370,10,0,0,0,0,all,0.52488786,2.00995469
+P1,pairs=10,1,fused_vs_fp64_rounded,129600,0,63962,5,0,0,0,0,all,4.53409275,0
+P1,pairs=10,1,perop_vs_fp64_rounded,129600,0,126187,7,0,0,0,0,all,7.03624604,0
+P1,pairs=100,1,fused_vs_perop,129600,0,129600,50,0,0,0,0,all,0.73802042,2.09521031
+P1,pairs=100,1,fused_vs_fp64_rounded,129600,0,110373,11,0,0,0,0,all,11.2410911,0
+P1,pairs=100,1,perop_vs_fp64_rounded,129600,0,129595,44,0,0,0,0,all,43.7156839,0
+P1,pairs=1000,1,fused_vs_perop,129600,0,129600,72,0,0,0,0,all,2.08077288,2.63232565
+P1,pairs=1000,1,fused_vs_fp64_rounded,129600,0,120106,22,0,0,0,0,all,22.379938,0
+P1,pairs=1000,1,perop_vs_fp64_rounded,129600,0,129600,77,0,0,0,0,all,76.8203777,0
+P1,pairs=1,2,fused_vs_perop,129600,0,30182,1,0,0,0,0,all,0.502503812,2.0009923
+P1,pairs=1,2,fused_vs_fp64_rounded,129600,1,0,0,0,0,0,0,all,0.499991596,0
+P1,pairs=1,2,perop_vs_fp64_rounded,129600,0,30182,1,0,0,0,0,all,0.851525664,0
+P1,pairs=10,2,fused_vs_perop,129600,0,118296,10,0,0,0,0,all,0.524891615,2.00994778
+P1,pairs=10,2,fused_vs_fp64_rounded,129600,0,64098,5,0,0,0,0,all,4.54488909,0
+P1,pairs=10,2,perop_vs_fp64_rounded,129600,0,126013,7,0,0,0,0,all,7.03722714,0
+P1,pairs=100,2,fused_vs_perop,129600,0,129600,49,0,0,0,0,all,0.738023818,2.09520364
+P1,pairs=100,2,fused_vs_fp64_rounded,129600,0,110337,11,0,0,0,0,all,11.2105932,0
+P1,pairs=100,2,perop_vs_fp64_rounded,129600,0,129595,44,0,0,0,0,all,44.0008548,0
+P1,pairs=1000,2,fused_vs_perop,129600,0,129600,71,0,0,0,0,all,2.08077455,2.6323235
+P1,pairs=1000,2,fused_vs_fp64_rounded,129600,0,120046,22,0,0,0,0,all,21.7354808,0
+P1,pairs=1000,2,perop_vs_fp64_rounded,129600,0,129600,77,0,0,0,0,all,77.3133449,0
+P1,pairs=1,3,fused_vs_perop,129600,0,30358,1,0,0,0,0,all,0.502528191,2.00098324
+P1,pairs=1,3,fused_vs_fp64_rounded,129600,1,0,0,0,0,0,0,all,0.499997616,0
+P1,pairs=1,3,perop_vs_fp64_rounded,129600,0,30358,1,0,0,0,0,all,0.851555347,0
+P1,pairs=10,3,fused_vs_perop,129600,0,118439,10,0,0,0,0,all,0.524915814,2.00993872
+P1,pairs=10,3,fused_vs_fp64_rounded,129600,0,63644,5,0,0,0,0,all,4.59078817,0
+P1,pairs=10,3,perop_vs_fp64_rounded,129600,0,126112,7,0,0,0,0,all,7.05671645,0
+P1,pairs=100,3,fused_vs_perop,129600,0,129600,49,0,0,0,0,all,0.73804611,2.09519553
+P1,pairs=100,3,fused_vs_fp64_rounded,129600,0,110360,12,0,0,0,0,all,11.944866,0
+P1,pairs=100,3,perop_vs_fp64_rounded,129600,0,129598,44,0,0,0,0,all,44.4090456,0
+P1,pairs=1000,3,fused_vs_perop,129600,0,129600,71,0,0,0,0,all,2.08078527,2.63231945
+P1,pairs=1000,3,fused_vs_fp64_rounded,129600,0,120224,22,0,0,0,0,all,22.1463304,0
+P1,pairs=1000,3,perop_vs_fp64_rounded,129600,0,129600,77,0,0,0,0,all,77.3629638,0
+P1,pairs=1,4,fused_vs_perop,129600,0,30440,1,0,0,0,0,all,0.502503932,2.00099802
+P1,pairs=1,4,fused_vs_fp64_rounded,129600,1,0,0,0,0,0,0,all,0.499994397,0
+P1,pairs=1,4,perop_vs_fp64_rounded,129600,0,30440,1,0,0,0,0,all,0.851545632,0
+P1,pairs=10,4,fused_vs_perop,129600,0,118362,10,0,0,0,0,all,0.524891734,2.00995326
+P1,pairs=10,4,fused_vs_fp64_rounded,129600,0,63941,5,0,0,0,0,all,4.55966117,0
+P1,pairs=10,4,perop_vs_fp64_rounded,129600,0,126173,7,0,0,0,0,all,7.00520887,0
+P1,pairs=100,4,fused_vs_perop,129600,0,129600,49,0,0,0,0,all,0.738023877,2.09520888
+P1,pairs=100,4,fused_vs_fp64_rounded,129600,0,110583,12,0,0,0,0,all,12.0027445,0
+P1,pairs=100,4,perop_vs_fp64_rounded,129600,0,129598,44,0,0,0,0,all,43.9006929,0
+P1,pairs=1000,4,fused_vs_perop,129600,0,129600,71,0,0,0,0,all,2.08077455,2.63232541
+P1,pairs=1000,4,fused_vs_fp64_rounded,129600,0,120189,22,0,0,0,0,all,21.6415834,0
+P1,pairs=1000,4,perop_vs_fp64_rounded,129600,0,129600,77,0,0,0,0,all,77.0756666,0
+P2,ASYMMETRIC,0,fused_vs_perop,1081344,0,126326,1820,0,0,0,0,interior,0,0
+P2,ASYMMETRIC,0,fused_vs_perop,147456,0,17176,81,0,0,0,0,border,0,0
+P2,ASYMMETRIC,0,fused_vs_fp64_rounded,1081344,0,318201,1,0,0,0,0,interior,1.2222224,0
+P2,ASYMMETRIC,0,fused_vs_fp64_rounded,147456,0,43219,1,0,0,0,0,border,1.2222222,0
+P2,HALF_PIXEL,0,fused_vs_perop,1081344,0,126785,398,0,0,0,0,interior,0,0
+P2,HALF_PIXEL,0,fused_vs_perop,147456,0,17373,1139,0,0,0,0,border,0,0
+P2,HALF_PIXEL,0,fused_vs_fp64_rounded,1081344,0,318308,1,0,0,0,0,interior,1.2222222,0
+P2,HALF_PIXEL,0,fused_vs_fp64_rounded,147456,0,43273,1,0,0,0,0,border,1.2222222,0
+P3,ASYMMETRIC,0,fused_vs_perop,147852,0,17395,285,0,0,0,0,interior,0,0
+P3,ASYMMETRIC,0,fused_vs_perop,2676,0,309,85,0,0,0,0,border,0,0
+P3,ASYMMETRIC,0,fused_vs_fp64_rounded,147852,0,146627,1236537,0,0,0,0,interior,1236536.79,0
+P3,ASYMMETRIC,0,fused_vs_fp64_rounded,2676,0,2571,6637967,0,0,0,0,border,3918116.65,0
+P3,HALF_PIXEL,0,fused_vs_perop,147852,0,17272,398,0,0,0,0,interior,0,0
+P3,HALF_PIXEL,0,fused_vs_perop,2676,0,308,5,0,0,0,0,border,0,0
+P3,HALF_PIXEL,0,fused_vs_fp64_rounded,147852,0,146576,5148610,0,0,0,0,interior,5148609.52,0
+P3,HALF_PIXEL,0,fused_vs_fp64_rounded,2676,0,2629,70946,0,0,0,0,border,70946.1816,0
+P2,ASYMMETRIC,1,fused_vs_perop,1081344,0,126454,199,0,0,0,0,interior,0,0
+P2,ASYMMETRIC,1,fused_vs_perop,147456,0,17460,163,0,0,0,0,border,0,0
+P2,ASYMMETRIC,1,fused_vs_fp64_rounded,1081344,0,317766,1,0,0,0,0,interior,1.2222224,0
+P2,ASYMMETRIC,1,fused_vs_fp64_rounded,147456,0,43476,1,0,0,0,0,border,1.2222224,0
+P2,HALF_PIXEL,1,fused_vs_perop,1081344,0,126931,1851,0,0,0,0,interior,0,0
+P2,HALF_PIXEL,1,fused_vs_perop,147456,0,17636,113,0,0,0,0,border,0,0
+P2,HALF_PIXEL,1,fused_vs_fp64_rounded,1081344,0,318046,1,0,0,0,0,interior,1.2222224,0
+P2,HALF_PIXEL,1,fused_vs_fp64_rounded,147456,0,43387,1,0,0,0,0,border,1.2222222,0
+P3,ASYMMETRIC,1,fused_vs_perop,147852,0,17393,93,0,0,0,0,interior,0,0
+P3,ASYMMETRIC,1,fused_vs_perop,2676,0,355,11,0,0,0,0,border,0,0
+P3,ASYMMETRIC,1,fused_vs_fp64_rounded,147852,0,146589,477477,0,0,0,0,interior,477477.128,0
+P3,ASYMMETRIC,1,fused_vs_fp64_rounded,2676,0,2573,35704,0,0,0,0,border,35703.834,0
+P3,HALF_PIXEL,1,fused_vs_perop,147852,0,17064,647,0,0,0,0,interior,0,0
+P3,HALF_PIXEL,1,fused_vs_perop,2676,0,358,2,0,0,0,0,border,0,0
+P3,HALF_PIXEL,1,fused_vs_fp64_rounded,147852,0,146613,4485761,0,0,0,0,interior,7051570.07,0
+P3,HALF_PIXEL,1,fused_vs_fp64_rounded,2676,0,2624,21934,0,0,0,0,border,21934.4635,0
+P2,ASYMMETRIC,2,fused_vs_perop,1081344,0,126716,285,0,0,0,0,interior,0,0
+P2,ASYMMETRIC,2,fused_vs_perop,147456,0,17137,114,0,0,0,0,border,0,0
+P2,ASYMMETRIC,2,fused_vs_fp64_rounded,1081344,0,318895,1,0,0,0,0,interior,1.2222224,0
+P2,ASYMMETRIC,2,fused_vs_fp64_rounded,147456,0,43254,1,0,0,0,0,border,1.2222224,0
+P2,HALF_PIXEL,2,fused_vs_perop,1081344,0,127223,285,0,0,0,0,interior,0,0
+P2,HALF_PIXEL,2,fused_vs_perop,147456,0,17422,796,0,0,0,0,border,0,0
+P2,HALF_PIXEL,2,fused_vs_fp64_rounded,1081344,0,318534,1,0,0,0,0,interior,1.2222224,0
+P2,HALF_PIXEL,2,fused_vs_fp64_rounded,147456,0,43386,1,0,0,0,0,border,1.2222224,0
+P3,ASYMMETRIC,2,fused_vs_perop,147852,0,17426,143,0,0,0,0,interior,0,0
+P3,ASYMMETRIC,2,fused_vs_perop,2676,0,342,5,0,0,0,0,border,0,0
+P3,ASYMMETRIC,2,fused_vs_fp64_rounded,147852,0,146614,1005010,0,0,0,0,interior,1211246.83,0
+P3,ASYMMETRIC,2,fused_vs_fp64_rounded,2676,0,2567,39870,0,0,0,0,border,39869.5883,0
+P3,HALF_PIXEL,2,fused_vs_perop,147852,0,17212,184,0,0,0,0,interior,0,0
+P3,HALF_PIXEL,2,fused_vs_perop,2676,0,332,7,0,0,0,0,border,0,0
+P3,HALF_PIXEL,2,fused_vs_fp64_rounded,147852,0,146645,3365713,0,0,0,0,interior,3365713.07,0
+P3,HALF_PIXEL,2,fused_vs_fp64_rounded,2676,0,2621,42147,0,0,0,0,border,42146.7099,0
+P2,ASYMMETRIC,3,fused_vs_perop,1081344,0,126520,1820,0,0,0,0,interior,0,0
+P2,ASYMMETRIC,3,fused_vs_perop,147456,0,17109,285,0,0,0,0,border,0,0
+P2,ASYMMETRIC,3,fused_vs_fp64_rounded,1081344,0,318132,1,0,0,0,0,interior,1.22223352,0
+P2,ASYMMETRIC,3,fused_vs_fp64_rounded,147456,0,43578,1,0,0,0,0,border,1.2222224,0
+P2,HALF_PIXEL,3,fused_vs_perop,1081344,0,127123,2591,0,0,0,0,interior,0,0
+P2,HALF_PIXEL,3,fused_vs_perop,147456,0,17371,1820,0,0,0,0,border,0,0
+P2,HALF_PIXEL,3,fused_vs_fp64_rounded,1081344,0,318988,1,0,0,0,0,interior,1.2222224,0
+P2,HALF_PIXEL,3,fused_vs_fp64_rounded,147456,0,43302,1,0,0,0,0,border,1.2222224,0
+P3,ASYMMETRIC,3,fused_vs_perop,147852,0,17510,184,0,0,0,0,interior,0,0
+P3,ASYMMETRIC,3,fused_vs_perop,2676,0,333,5,0,0,0,0,border,0,0
+P3,ASYMMETRIC,3,fused_vs_fp64_rounded,147852,0,146599,2467836,0,0,0,0,interior,2467835.8,0
+P3,ASYMMETRIC,3,fused_vs_fp64_rounded,2676,0,2580,109568,0,0,0,0,border,109568.222,0
+P3,HALF_PIXEL,3,fused_vs_perop,147852,0,17153,796,0,0,0,0,interior,0,0
+P3,HALF_PIXEL,3,fused_vs_perop,2676,0,306,41,0,0,0,0,border,0,0
+P3,HALF_PIXEL,3,fused_vs_fp64_rounded,147852,0,146619,3190032,0,0,0,0,interior,3190032.46,0
+P3,HALF_PIXEL,3,fused_vs_fp64_rounded,2676,0,2614,189678,0,0,0,0,border,189678.209,0
+P2,ASYMMETRIC,4,fused_vs_perop,1081344,0,127107,323,0,0,0,0,interior,0,0
+P2,ASYMMETRIC,4,fused_vs_perop,147456,0,17486,796,0,0,0,0,border,0,0
+P2,ASYMMETRIC,4,fused_vs_fp64_rounded,1081344,0,318390,1,0,0,0,0,interior,1.22223352,0
+P2,ASYMMETRIC,4,fused_vs_fp64_rounded,147456,0,43486,1,0,0,0,0,border,1.2222224,0
+P2,HALF_PIXEL,4,fused_vs_perop,1081344,0,127468,1297,0,0,0,0,interior,0,0
+P2,HALF_PIXEL,4,fused_vs_perop,147456,0,17277,143,0,0,0,0,border,0,0
+P2,HALF_PIXEL,4,fused_vs_fp64_rounded,1081344,0,318608,1,0,0,0,0,interior,1.2222224,0
+P2,HALF_PIXEL,4,fused_vs_fp64_rounded,147456,0,43130,1,0,0,0,0,border,1.2222224,0
+P3,ASYMMETRIC,4,fused_vs_perop,147852,0,17435,81,0,0,0,0,interior,0,0
+P3,ASYMMETRIC,4,fused_vs_perop,2676,0,334,11,0,0,0,0,border,0,0
+P3,ASYMMETRIC,4,fused_vs_fp64_rounded,147852,0,146563,473966,0,0,0,0,interior,473965.679,0
+P3,ASYMMETRIC,4,fused_vs_fp64_rounded,2676,0,2574,52365,0,0,0,0,border,52365.1393,0
+P3,HALF_PIXEL,4,fused_vs_perop,147852,0,17435,98,0,0,0,0,interior,0,0
+P3,HALF_PIXEL,4,fused_vs_perop,2676,0,325,57,0,0,0,0,border,0,0
+P3,HALF_PIXEL,4,fused_vs_fp64_rounded,147852,0,146625,1461468,0,0,0,0,interior,1461468.05,0
+P3,HALF_PIXEL,4,fused_vs_fp64_rounded,2676,0,2620,119012,0,0,0,0,border,119011.964,0
+alias_elementwise_1000pairs,in_place_vs_out_of_place,0,bitwise,2073600,1,0,0,0,0,0,0,all,0,0
+alias_gather_resize_half,in_place_vs_out_of_place,0,bitwise,518400,0,2192,16350155,0,0,0,0,all,0,0
+alias_gather_resize_half,in_place_vs_out_of_place,1,bitwise,518400,0,2352,16534204,0,0,0,0,all,0,0
+alias_gather_resize_half,in_place_vs_out_of_place,2,bitwise,518400,0,1616,16350155,0,0,0,0,all,0,0

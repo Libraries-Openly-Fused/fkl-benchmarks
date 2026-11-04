@@ -1,0 +1,11 @@
+| pipeline | case | region | fused vs per-op, -fmad on | fused vs per-op, -fmad off | fused, -fmad on vs off | fused vs fp64 (max ULP, worst of 5 seeds) |
+|---|---|---|---|---|---|---|
+| P1 | pairs=1000 | all | 648,000 of 648,000 differ, max 72 ULP | identical, 0 ULP | 648,000 of 648,000 differ, max 72 ULP | on 22, off 77 |
+| P2 | ASYMMETRIC | interior | 633,123 of 5,406,720 differ, max 1820 ULP | identical, 0 ULP | 719,491 of 6,144,000 differ, max 1820 ULP | on 1, off 1820 |
+| P2 | ASYMMETRIC | border | 86,368 of 737,280 differ, max 796 ULP | identical, 0 ULP | (whole tensor above) | on 1, off 795 |
+| P2 | HALF_PIXEL | interior | 635,530 of 5,406,720 differ, max 2591 ULP | identical, 0 ULP | 722,609 of 6,144,000 differ, max 2591 ULP | on 1, off 2591 |
+| P2 | HALF_PIXEL | border | 87,079 of 737,280 differ, max 1820 ULP | identical, 0 ULP | (whole tensor above) | on 1, off 1820 |
+| P3 | ASYMMETRIC | interior | 87,159 of 739,260 differ, max 285 ULP | identical, 0 ULP | 188,673 of 752,640 differ, max 285 ULP | on 2.46784e+06, off 2.46802e+06 |
+| P3 | ASYMMETRIC | border | 1,673 of 13,380 differ, max 85 ULP | identical, 0 ULP | (whole tensor above) | on 6.63797e+06, off 6.63788e+06 |
+| P3 | HALF_PIXEL | interior | 86,136 of 739,260 differ, max 796 ULP | identical, 0 ULP | 189,418 of 752,640 differ, max 7190 ULP | on 5.14861e+06, off 5.14841e+06 |
+| P3 | HALF_PIXEL | border | 1,629 of 13,380 differ, max 57 ULP | identical, 0 ULP | (whole tensor above) | on 189678, off 189811 |
