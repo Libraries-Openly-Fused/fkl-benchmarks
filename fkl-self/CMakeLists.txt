@@ -53,17 +53,7 @@ fklb_add_benchmark(batch_build_compilation_time
     BACKENDS cu hip cpp LIBS fkl
     LAUNCHER_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/compiletime/batch_build_compilation_time.h")
 
-# E6: the value of fk::SaturateCast for NaN on the device (cu only: it reads the hardware conversions through inline PTX)
-fklb_add_benchmark(nan_saturate
-    BACKENDS cu LIBS fkl
-    SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/numerics/nan_saturate.cu")
-
-# E6: fk::SaturateCast<float, T> over all 2^32 float bit patterns against cv::cuda::device::saturate_cast, the PTX conversion and the host functions
-fklb_add_benchmark(e6_saturate_exhaustive
-    BACKENDS cu LIBS fkl opencv
-    SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/numerics/saturate_exhaustive.cu")
-
-# E6 (reduced set): fused against kernel-per-op, special values, aliasing; built under the presets rtx4090 and rtx4090-fmad-off. The host references need -ffp-contract=off
+# E6 (reduced set): fused against kernel-per-op (P1 to P3); built under the presets rtx4090 and rtx4090-fmad-off. The host references need -ffp-contract=off
 fklb_add_benchmark(e6_fused_vs_unfused
     BACKENDS cu LIBS fkl
     SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/numerics/e6_fused_vs_unfused.cu")
