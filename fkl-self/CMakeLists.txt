@@ -54,6 +54,14 @@ fklb_add_benchmark(e6_saturate_exhaustive
     BACKENDS cu LIBS fkl opencv
     SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/numerics/saturate_exhaustive.cu")
 
+# E6 (reduced set): fused against kernel-per-op, special values, aliasing; built under the presets rtx4090 and rtx4090-fmad-off. The host references need -ffp-contract=off
+fklb_add_benchmark(e6_fused_vs_unfused
+    BACKENDS cu LIBS fkl
+    SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/numerics/e6_fused_vs_unfused.cu")
+if(TARGET e6_fused_vs_unfused_cu)
+    target_compile_options(e6_fused_vs_unfused_cu PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler=-ffp-contract=off>)
+endif()
+
 # E6 (AMD): fk::SaturateCast<float, T> over all 2^32 float bit patterns on the device (gfx1200) against the host, the conversion of HIP and an independent reference
 fklb_add_benchmark(e6_saturate_exhaustive_amd
     BACKENDS hip LIBS fkl
