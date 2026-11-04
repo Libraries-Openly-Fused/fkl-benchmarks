@@ -52,12 +52,13 @@ Source checks: rebuilding the E2 and mul4 programs at the OLD library (38c4f32) 
 | nan_saturate | f3afadc | frozen binary of the measurement (fb9ac3a) | `nan_saturate_cu` | e6-nan-saturate | 1 | 1 | 1 | 0 | 0 | demangled name, ResizeSampling argument and anonymous-namespace hash ignored |
 | **total (new tree against the baseline)** | | | 21 binaries | | **1117** | **1117** | **1117** | **0** | **0** | |
 
+*Note, 2026-11-04: the row `nan_saturate` (and its result folder `e6-nan-saturate`) refers to a program that was removed from the repository after this proof was made (see below); the row, the totals above and the logs of that program in this folder (`build-nan_saturate.log`, `configure-nan_saturate.log`, `sass_nan_saturate*.txt`) stay as the proof was made, so that the totals are those of the table that was checked. `scripts/pin_transfer.sh` and `scripts/pin_transfer_table.py` still name that target: they reproduce the proof at the commit that has it (5911330), not at HEAD.*
+
 Kernel counts are the kernels in the sm_89 SASS of the binary (the binaries also carry compute_89 PTX, which is not compared). `graph_instantiate_time_cu` has no kernel of its own: it measures capture and instantiation of the OpenCV-CUDA
 baseline with CUDA Graphs, and its kernels are in the OpenCV libraries, which this proof does not change.
 
 ## What is not covered by this proof, and why
-- **Results that are not from a program of this list.** E3 (compile time): `../e3-compile/` (the tree check at c8fcbe8). E4 (`../e4-preprocessing/`) and `../e4-resize-regression/` were built against c8fcbe8 or against all three trees directly. E6 exhaustive saturate_cast:
-  `../e6-saturate-exhaustive-c8fcbe8/` (run against c8fcbe8; the saturate and cmath headers are also byte-identical to PR #416's head 231dec8, which `../e6-saturate-exhaustive-pr416/` tested).
+- **Results that are not from a program of this list.** E3 (compile time): `../e3-compile/` (the tree check at c8fcbe8). E4 (`../e4-preprocessing/`) and `../e4-resize-regression/` were built against c8fcbe8 or against all three trees directly. E6 exhaustive saturate_cast: the program, its results (run against c8fcbe8, and the tests of PR #416) and the E6 NaN-saturate program were REMOVED from the repository on 2026-11-04 (not used by the paper; git history keeps them: `git show 5911330:results/rtx4090/e6-saturate-exhaustive-c8fcbe8/README.md`, and `e6-nan-saturate`, `e6-saturate-exhaustive`, `e6-saturate-exhaustive-pr416` of the same commit).
   The NPP series (`e0-npp`, `e0-cpu-time-npp`, E4a NPP) are listed above for completeness; they will be re-run with the ctxfix configuration after FastNPP #45 is merged.
 - **Superseded:** `e0-graph-instantiate-preliminary` (first half of the graph-instantiate experiment, replaced by `e0-graph-instantiate`, same program).
 - **Host code.** The kernels are identical, so the device side of every time is the same. The host-side code of the library differs in `get_arg` (#417) and in the host run-time paths of `nearbyint` and `saturate_cast` (#414, #416), which no experiment executes on the host.
