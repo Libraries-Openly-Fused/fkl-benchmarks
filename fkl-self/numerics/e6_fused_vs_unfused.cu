@@ -65,12 +65,17 @@ constexpr int SEED0 = 1000;
 
 // ---------- comparison of two float arrays by bit pattern ----------
 inline uint32_t bitsOf(float f) { uint32_t u; std::memcpy(&u, &f, 4); return u; }
+#define E6_EXTRA(st) (st).maxAbs, (st).magAtMaxUlp, ((st).maxOut > 0 ? (st).maxAbs / (st).maxOut : 0.0), (st).nSmall, (st).maxUlpOutside
 inline int64_t mono(float f) { const uint32_t u = bitsOf(f); return (u & 0x80000000u) ? -static_cast<int64_t>(u & 0x7fffffffu) : static_cast<int64_t>(u); }  // monotonic map; +0 and -0 both 0
 
 struct Stats {
     size_t n = 0, differing = 0, nanA = 0, nanB = 0, infA = 0, infB = 0, nanMismatch = 0, signedZeroDiff = 0;
     double maxUlp = 0, sumUlp = 0;
     size_t finitePairs = 0;
+    // run 2 (new columns): maximum absolute difference, |b| at the element of maximum ULP, the largest |value| of either side, elements whose both values are below 1e-3 in magnitude
+    // (the cancelling zone), and the maximum ULP over the elements outside that zone
+    double maxAbs = 0, magAtMaxUlp = 0, maxOut = 0, maxUlpOutside = 0;
+    size_t nSmall = 0;
     void add(const float a, const float b) {
         ++n;
         const bool na = std::isnan(a), nb = std::isnan(b);
@@ -81,6 +86,10 @@ struct Stats {
         if (a == 0.f && b == 0.f && bitsOf(a) != bitsOf(b)) ++signedZeroDiff;
         if (std::isinf(a) || std::isinf(b)) { if (a != b) { maxUlp = std::numeric_limits<double>::infinity(); } return; }
         const double u = std::abs(static_cast<double>(mono(a) - mono(b)));
+        if (u > maxUlp) magAtMaxUlp = std::abs(static_cast<double>(b));
+        maxAbs = std::max(maxAbs, std::abs(static_cast<double>(a) - static_cast<double>(b)));
+        maxOut = std::max(maxOut, std::max(std::abs(static_cast<double>(a)), std::abs(static_cast<double>(b))));
+        if (std::max(std::abs(a), std::abs(b)) < 1e-3f) ++nSmall; else maxUlpOutside = std::max(maxUlpOutside, u);
         maxUlp = fklb::maxKeepNaN(maxUlp, u);
         sumUlp += u; ++finitePairs;
     }
@@ -148,9 +157,9 @@ void p1CompareOne(const int pairs, const int seed, fklb::CsvWriter& csv, fk::Ptr
     const std::string name = "p1_pairs" + std::to_string(pairs) + "_seed" + std::to_string(seed);
     dump(name + "_fused", f.data(), f.size() * 4);
     dump(name + "_perop", p.data(), p.size() * 4);
-    csv.row("P1", "pairs=" + std::to_string(pairs), seed, "fused_vs_perop", fp.n, int(fp.identical()), fp.differing, fp.maxUlp, fp.nanA, fp.nanB, fp.infA, fp.infB, "all", outMin, outMax);
-    csv.row("P1", "pairs=" + std::to_string(pairs), seed, "fused_vs_fp64_rounded", f64f.n, int(f64f.identical()), f64f.differing, f64f.maxUlp, f64f.nanA, f64f.nanB, f64f.infA, f64f.infB, "all", maxErrF, 0);
-    csv.row("P1", "pairs=" + std::to_string(pairs), seed, "perop_vs_fp64_rounded", f64p.n, int(f64p.identical()), f64p.differing, f64p.maxUlp, f64p.nanA, f64p.nanB, f64p.infA, f64p.infB, "all", maxErrP, 0);
+    csv.row("P1", "pairs=" + std::to_string(pairs), seed, "fused_vs_perop", fp.n, int(fp.identical()), fp.differing, fp.maxUlp, fp.nanA, fp.nanB, fp.infA, fp.infB, "all", outMin, outMax, E6_EXTRA(fp));
+    csv.row("P1", "pairs=" + std::to_string(pairs), seed, "fused_vs_fp64_rounded", f64f.n, int(f64f.identical()), f64f.differing, f64f.maxUlp, f64f.nanA, f64f.nanB, f64f.infA, f64f.infB, "all", maxErrF, 0, E6_EXTRA(f64f));
+    csv.row("P1", "pairs=" + std::to_string(pairs), seed, "perop_vs_fp64_rounded", f64p.n, int(f64p.identical()), f64p.differing, f64p.maxUlp, f64p.nanA, f64p.nanB, f64p.infA, f64p.infB, "all", maxErrP, 0, E6_EXTRA(f64p));
 }
 
 // ---------- P2 / P3: crops -> resize -> reorder -> Mul -> Sub -> Div -> split (the E4a chain) ----------
@@ -228,7 +237,7 @@ void resizeNormalise(const Geo& g, const std::vector<std::array<int, 2>>& pos, c
     dump(name + "_fused", f.data(), total * 4);
     dump(name + "_perop", p.data(), total * 4);
     auto row = [&](const char* cmp, const char* region, const Stats& st_, const double extra) {
-        csv.row(pipeline, conv, seed, cmp, st_.n, int(st_.identical()), st_.differing, st_.maxUlp, st_.nanA, st_.nanB, st_.infA, st_.infB, region, extra, 0);
+        csv.row(pipeline, conv, seed, cmp, st_.n, int(st_.identical()), st_.differing, st_.maxUlp, st_.nanA, st_.nanB, st_.infA, st_.infB, region, extra, 0, E6_EXTRA(st_));
     };
     row("fused_vs_perop", "interior", fpI, 0); row("fused_vs_perop", "border", fpB, 0);
     row("fused_vs_fp64_rounded", "interior", fdI, maxErrI); row("fused_vs_fp64_rounded", "border", fdB, maxErrB);
@@ -487,7 +496,7 @@ void aliasing(fklb::CsvWriter& csv, cudaStream_t s) {
     download(out, a, W, H); download(inplace, b, W, H);
     Stats e;
     for (size_t i = 0; i < a.size(); ++i) e.add(a[i], b[i]);
-    csv.row("alias_elementwise_1000pairs", "in_place_vs_out_of_place", 0, "bitwise", e.n, int(e.identical()), e.differing, e.maxUlp, e.nanA, e.nanB, e.infA, e.infB, "all", 0, 0);
+    csv.row("alias_elementwise_1000pairs", "in_place_vs_out_of_place", 0, "bitwise", e.n, int(e.identical()), e.differing, e.maxUlp, e.nanA, e.nanB, e.infA, e.infB, "all", 0, 0, E6_EXTRA(e));
     // ReadBack gather in place: Resize to half size (INTER_LINEAR) reads many source pixels per output pixel; written into the same buffer (same pointer and pitch)
     const int OW = W / 2, OH = H / 2;
     const auto rs = fk::Resize<fk::InterpolationType::INTER_LINEAR>::build(fk::Size(OW, OH));
@@ -508,7 +517,7 @@ void aliasing(fklb::CsvWriter& csv, cudaStream_t s) {
         download(buf, g, OW, OH);
         Stats d;
         for (size_t i = 0; i < r.size(); ++i) d.add(r[i], g[i]);
-        csv.row("alias_gather_resize_half", "in_place_vs_out_of_place", run, "bitwise", d.n, int(d.identical()), d.differing, d.maxUlp, d.nanA, d.nanB, d.infA, d.infB, "all", 0, 0);
+        csv.row("alias_gather_resize_half", "in_place_vs_out_of_place", run, "bitwise", d.n, int(d.identical()), d.differing, d.maxUlp, d.nanA, d.nanB, d.infA, d.infB, "all", 0, 0, E6_EXTRA(d));
     }
 }
 }  // namespace
@@ -522,7 +531,7 @@ int launch() {
     if (std::system(mk.c_str()) != 0) return 1;
     cudaStream_t s;
     E6_CHECK(cudaStreamCreate(&s));
-    fklb::CsvWriter csv("e6_fused_vs_unfused_" + g_tag + ".csv", "E6 fused against kernel-per-op", {"pipeline", "case", "seed", "comparison", "n", "identical", "differing", "max_ulp", "nan_a", "nan_b", "inf_a", "inf_b", "region", "x1", "x2"},
+    fklb::CsvWriter csv("e6_fused_vs_unfused_" + g_tag + ".csv", "E6 fused against kernel-per-op", {"pipeline", "case", "seed", "comparison", "n", "identical", "differing", "max_ulp", "nan_a", "nan_b", "inf_a", "inf_b", "region", "x1", "x2", "max_abs", "mag_at_max_ulp", "max_abs_over_max_out", "n_small_lt_1e-3", "max_ulp_outside_small"},
                         "build tag " + g_tag + "; identical = memcmp of the bit patterns; max_ulp in ULP (integer distance of the monotonic bit mapping; NaN pairs excluded and counted); for fused_vs_fp64_rounded x1 = max error against the unrounded double result in ULP; "
                         "for P1 fused_vs_perop x1,x2 = min and max of the output; the fp64 host reference is compiled with -ffp-contract=off");
     // ---- P1
