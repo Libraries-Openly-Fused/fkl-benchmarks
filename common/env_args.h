@@ -12,7 +12,7 @@
    See the License for the specific language governing permissions and
    limitations under the License. */
 
-// Numbers from the environment (E5_ITERS, E5_WARMUP, E5_WARMUP_SECONDS, E5_ROTATE_OFFSET, E6_HOST ...) that are checked: an unset or empty variable gives the
+// Numbers from the environment (E5_ITERS, E5_WARMUP, E5_WARMUP_SECONDS, E5_ROTATE_OFFSET ...) that are checked: an unset or empty variable gives the
 // fallback; text, trailing characters, a value outside [lo, hi], and for envDouble a NaN or an infinity, are an error. The program says which variable and
 // exits with status 2 (leading white space is accepted, as strtol and strtod do; trailing white space and a value that underflows, "1e-400", are errors), instead of running with the 0 that atoi makes of "abc" (E5_ITERS=0 left an empty vector, a negative value wrapped to a huge size_t, a NaN
 // warm-up never ended).

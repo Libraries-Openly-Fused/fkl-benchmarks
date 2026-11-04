@@ -60,8 +60,3 @@ fklb_add_benchmark(e6_fused_vs_unfused
 if(TARGET e6_fused_vs_unfused_cu)
     target_compile_options(e6_fused_vs_unfused_cu PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler=-ffp-contract=off>)
 endif()
-
-# E6 (AMD): fk::SaturateCast<float, T> over all 2^32 float bit patterns on the device (gfx1200) against the host, the conversion of HIP and an independent reference
-fklb_add_benchmark(e6_saturate_exhaustive_amd
-    BACKENDS hip LIBS fkl
-    LAUNCHER_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/numerics/e6_saturate_exhaustive_amd.h")

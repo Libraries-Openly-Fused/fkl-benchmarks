@@ -58,5 +58,7 @@ before its timed runs. The variable is implemented in fkl-benchmarks #7 (`fkl-se
 - Removed: the NV12 video pipeline (pipeline (b), experiment E4b: the folders `e4b-nv12/` and `e4b-nv12-steady-clock/` and the pipeline (b) files of `rpp-preprocessing/` and `clock-ramp/`) is not in the paper.
   Its code and results are in the git history up to `341ecd1`, for example `git show 341ecd1:results/rx9060/e4b-nv12-steady-clock/README.md`.
   The `# notes:` header line of the pipeline (a) CSVs written before the removal (in `rpp-preprocessing/` and `clock-ramp/`) still names `rppt_yuv_to_rgb`, the RPP conversion that only pipeline (b) called; the benchmark does not write it any more.
+- Removed: the exhaustive `fk::SaturateCast<float, T>` sweep over all 2^32 float bit patterns on the RX 9060 (experiment E6: the folder `e6-saturate-exhaustive/` and its program `fkl-self/numerics/e6_saturate_exhaustive_amd.h`) is not used by the paper.
+  Its code and results are in the git history up to `5911330`, for example `git show 5911330:results/rx9060/e6-saturate-exhaustive/README.md`.
 - `fkl-self/` (added by fkl-benchmarks #7): horizontal fusion, instructions per operation and latency hiding (FKL only).
 - `clock-ramp/`: the evidence of this section.
