@@ -79,6 +79,7 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("report")
     ap.add_argument("folder")
+    ap.add_argument("--kernels", help="label|regex|nth;label|regex|nth;... instead of the 8 kernels of the E16 pass (the query-tile pass: scripts/e16_qt_ncu_summary.py), in launch order")
     ap.add_argument("--ncu", default=os.path.join(os.environ.get("FKLB_CUDA_HOME", "/home/oscar/tfkl-bench/toolchains/cuda-13.4.3"), "bin", "ncu"))
     a = ap.parse_args()
     raw_totals = {}
@@ -88,7 +89,8 @@ def main():
         col = rows[0].index("smsp__inst_executed.sum")
         raw_totals = {i: number(r[col]) for i, r in enumerate(rows[2:])}
     per_kernel, full = OrderedDict(), OrderedDict()
-    for i, (label, pattern, nth) in enumerate(KERNELS):
+    kernels = [(x.split("|")[0], x.split("|")[1], int(x.split("|")[2])) for x in a.kernels.split(";")] if a.kernels else KERNELS
+    for i, (label, pattern, nth) in enumerate(kernels):
         rows, name = parse(export(a.ncu, a.report, pattern, nth))
         base, withmod, base_s = Counter(), Counter(), Counter()
         for op, executed, samples in rows:

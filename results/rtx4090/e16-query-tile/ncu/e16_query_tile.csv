@@ -1,0 +1,23 @@
+# experiment: E16 query-tile experiment: fused int8 attention against bf16 and the no-dequantise timing variant
+# notes: bf16 Q, K, V (BH, S, D) contiguous, normal(0, 1), fp32 accumulation, bf16 output; D = 128, non-causal; time_ms_* = per call, from `blocks` blocks of `calls_per_block` calls enqueued back to back between two CUDA events (the GPU time of the call; the block lasts about E16_BLOCK_MS), after a warm-up of at least E16_WARMUP_MS of GPU time; position = place of the variant in the order of its configuration (the variants are rotated by configuration index + E16_ROTATE); TFLOP/s = 4 BH S^2 D / time_ms_median. Every variant is executeFlashAttentionMma with EXPLICIT tiles (variant name: bq = BLOCK_Q, kv = BLOCK_KV, w = warps; raw_default is the library's own pick). int8_* = K and V int8 with one fp32 scale per token (quantised schedule). int8nodq_* = TIMING ONLY (timing_only = 1): THE OUTPUT IS WRONG (max_abs_err and mean_abs_err of those rows are meaningless) and the rows are never a result: the same schedule with a patched private copy of the library header whose dequantTile removes the int-to-float conversion, the scale multiply and the float-to-bf16 rounding and keeps the copies, the shared-memory pass, the barriers, the scale loads and the 16-byte store. The decision rule and the definitions of excess, ratio and share are in the header comment of fkl-self/attention/e16_query_tile.cu, fixed before the first run. kernel_facts = registers, local memory, shared memory and blocks per SM of each kernel of the call.
+# repo: fkl-benchmarks 35ebfd86286097ffef8014d01911e9963da9fad9-dirty
+# fkl: c8fcbe816d629377886cbdd19c83527f37ccfc04
+# cvGPUSpeedup: 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c
+# FastNPP: 9dfc4f430225e40ded392bfa777b2e724367c5c1
+# nvcc: 13.4.92 (/home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/nvcc), architectures 89, -fmad on, -lineinfo on
+# hip: none (none), architectures none
+# host compiler: GNU 15.2.0, Release, -march=native, -ftemplate-depth=1000
+# opencv: none
+# cpu: AMD Ryzen 9 5950X 16-Core Processor
+# os: Ubuntu 26.04.1 LTS
+# kernel: Linux 7.0.0-38-generic
+# gpu: NVIDIA GeForce RTX 4090, cc 8.9, 128 SMs, 24106 MiB, PCI 0000:09:00.0
+# cuda driver api: 13.3, cuda runtime: 13.4
+# nvidia-smi driver: 610.43.02
+# clocks (sm, mem, max sm, max mem, MHz): 210 MHz, 405 MHz, 3105 MHz, 10501 MHz
+# power limit, temperature at start: 450.00 W, 42
+gpu,variant,d,seq,bh,causal,position,blocks,calls_per_block,t_start_ms,t_end_ms,time_ms_median,time_ms_min,time_ms_max,single_ms_median,tflops_median,max_abs_err,mean_abs_err,kernels,schedule,block_q,block_kv,num_warps,split_kv,kernel_facts,note,timing_only
+NVIDIA GeForce RTX 4090,raw_bq64_kv32_w4,128,2048,128,0,1,0,0,0,0,0,0,0,0,0,0.00111100078,0.000115492069,-1,,0,0,0,,,profile run: one call; not timed,0
+NVIDIA GeForce RTX 4090,int8_bq64_w4,128,2048,128,0,2,0,0,0,0,0,0,0,0,0,0.00128269196,0.000137956199,-1,,0,0,0,,,profile run: one call; not timed,0
+NVIDIA GeForce RTX 4090,int8_bq128_w4,128,2048,128,0,3,0,0,0,0,0,0,0,0,0,0.00128269196,0.000137956199,-1,,0,0,0,,,profile run: one call; not timed,0
+NVIDIA GeForce RTX 4090,int8nodq_bq64_w4,128,2048,128,0,4,0,0,0,0,0,0,0,0,0,0.397096276,0.0723937811,-1,,0,0,0,,,profile run: one call; not timed,1
