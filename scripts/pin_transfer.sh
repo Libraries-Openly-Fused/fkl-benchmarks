@@ -52,7 +52,6 @@ build_group a266bc9 a266bc9 "$FKL" e0-frozen-a266bc9 local-rtx4090 graph_instant
 build_group e1 74f47c6 "$FKL" rtx4090-e1 "rtx4090-e1 -DFKLB_BUILD_OPENCV_CUDA=OFF -DFKLB_BUILD_NPP=OFF" e1_vf_chain_cu e1_hf_batch_cu e1_preproc_cu
 build_group mul4-old e9e599d "$OLD" e4 local-rtx4090 benchmark_image_resolution_MAD_loop_mul4_cu
 build_group mul4-new e9e599d "$FKL" e4 local-rtx4090 benchmark_image_resolution_MAD_loop_mul4_cu
-build_group nan_saturate f3afadc "$FKL" local-rtx4090 local-rtx4090 nan_saturate_cu
 build_group e2-old e9e599d "$OLD" e4 local-rtx4090 e2_fkl_chain_cu
 build_group e2-new e9e599d "$FKL" e4 local-rtx4090 e2_fkl_chain_cu
 echo "pin transfer done $(date -Iseconds)"

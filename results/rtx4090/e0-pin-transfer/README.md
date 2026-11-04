@@ -1,8 +1,8 @@
 # Do the numbers of E0 to E2 transfer to the final library pin c8fcbe8? (RTX 4090, sm_89, CUDA 13.4.3)
 
 The numbers of the paper were measured with older trees of the library: E0 (and the E6 NaN program) with fb9ac3a (LTS-C++17 after #406), E1, E2 and the data-size mul4 sweep with 38c4f32 (after #409). The pin of the
-revision is c8fcbe8 (merge of #417). **Every kernel of every program that produced a number was rebuilt against c8fcbe8 and compared, one by one, with the kernel of the binary that produced the number: 1,117 kernels in 21 binaries,
-1,117 identical, 0 different, 0 present on one side only.**
+revision is c8fcbe8 (merge of #417). **Every kernel of every program that produced a number was rebuilt against c8fcbe8 and compared, one by one, with the kernel of the binary that produced the number: 1,116 kernels in 20 binaries,
+1,116 identical, 0 different, 0 present on one side only.**
 
 ## What changed in the library between the trees
 `git diff --stat fb9ac3a c8fcbe8 -- include` (5 files):
@@ -17,7 +17,7 @@ revision is c8fcbe8 (merge of #417). **Every kernel of every program that produc
 ## Method (`scripts/pin_transfer.sh`, `scripts/sass_compare_builds.py`, `scripts/pin_transfer_table.py`)
 For every result the program is taken from the commit of fkl-benchmarks that produced it (the `# repo:` line of its CSV; e1_vf_chain and e1_hf_batch were measured at 5201059, whose sources of these two programs are identical to 74f47c6; for the programs added later, e9e599d) in a separate worktree with `external/fkl` replaced by c8fcbe8,
 configured with the same preset (`local-rtx4090`, or `rtx4090-e1` without OpenCV and NPP for E1), built with the same nvcc (13.4.92) and flags, and every kernel of the sm_89 SASS (`cuobjdump -sass`) is compared with the same
-kernel of the frozen binary (`build/e0-frozen-<commit>/bin` for E0, `build/rtx4090-e1/bin` for E1, `build/e4/bin` for E2 and mul4, `build/local-rtx4090/bin` for nan_saturate). The SASS is normalised (addresses and encodings removed) and compared
+kernel of the frozen binary (`build/e0-frozen-<commit>/bin` for E0, `build/rtx4090-e1/bin` for E1, `build/e4/bin` for E2 and mul4). The SASS is normalised (addresses and encodings removed) and compared
 instruction by instruction, **register numbers included** (no renaming). Compile only: nothing is executed in this folder.
 Kernels are matched by mangled name. Where some names exist on one side only (`sass_<group>.txt`), the comparison is repeated matching by demangled name, whitespace removed, with `, (fk::ResizeSampling)0` removed (`sass_<group>_demangled.txt`); that
 is the only normalisation of names. Two causes of different mangled names exist, both unrelated to the code: (1) the defaulted `ResizeSampling` template argument that PR #409 added to the resize operations (the frozen E0 binaries were built
@@ -49,16 +49,13 @@ Source checks: rebuilding the E2 and mul4 programs at the OLD library (38c4f32) 
 | e2-new | e9e599d | frozen binary of the measurement (38c4f32) | `e2_fkl_chain_cu` | e2-chain | 7 | 7 | 7 | 0 | 0 | demangled name, ResizeSampling argument and anonymous-namespace hash ignored |
 | mul4-old | e9e599d | rebuild at 38c4f32 against the frozen binary (source check) (38c4f32) | `benchmark_image_resolution_MAD_loop_mul4_cu` | e0-data-size-mul4 (same binary rebuilt at the old library) | 2 | 2 | 2 | 0 | 0 | mangled name |
 | mul4-new | e9e599d | frozen binary of the measurement (38c4f32) | `benchmark_image_resolution_MAD_loop_mul4_cu` | e0-data-size-mul4, e0-data-size-parity | 2 | 2 | 2 | 0 | 0 | mangled name |
-| nan_saturate | f3afadc | frozen binary of the measurement (fb9ac3a) | `nan_saturate_cu` | e6-nan-saturate | 1 | 1 | 1 | 0 | 0 | demangled name, ResizeSampling argument and anonymous-namespace hash ignored |
-| **total (new tree against the baseline)** | | | 21 binaries | | **1117** | **1117** | **1117** | **0** | **0** | |
-
-*Note, 2026-11-04: the row `nan_saturate` (and its result folder `e6-nan-saturate`) refers to a program that was removed from the repository after this proof was made (see below); the row, the totals above and the logs of that program in this folder (`build-nan_saturate.log`, `configure-nan_saturate.log`, `sass_nan_saturate*.txt`) stay as the proof was made, so that the totals are those of the table that was checked. `scripts/pin_transfer.sh` and `scripts/pin_transfer_table.py` still name that target: they reproduce the proof at the commit that has it (5911330), not at HEAD.*
+| **total (new tree against the baseline)** | | | 20 binaries | | **1116** | **1116** | **1116** | **0** | **0** | |
 
 Kernel counts are the kernels in the sm_89 SASS of the binary (the binaries also carry compute_89 PTX, which is not compared). `graph_instantiate_time_cu` has no kernel of its own: it measures capture and instantiation of the OpenCV-CUDA
 baseline with CUDA Graphs, and its kernels are in the OpenCV libraries, which this proof does not change.
 
 ## What is not covered by this proof, and why
-- **Results that are not from a program of this list.** E3 (compile time): `../e3-compile/` (the tree check at c8fcbe8). E4 (`../e4-preprocessing/`) and `../e4-resize-regression/` were built against c8fcbe8 or against all three trees directly. E6 exhaustive saturate_cast: the program, its results (run against c8fcbe8, and the tests of PR #416) and the E6 NaN-saturate program were REMOVED from the repository on 2026-11-04 (not used by the paper; git history keeps them: `git show 5911330:results/rtx4090/e6-saturate-exhaustive-c8fcbe8/README.md`, and `e6-nan-saturate`, `e6-saturate-exhaustive`, `e6-saturate-exhaustive-pr416` of the same commit).
+- **Results that are not from a program of this list.** E3 (compile time): `../e3-compile/` (the tree check at c8fcbe8). E4 (`../e4-preprocessing/`) and `../e4-resize-regression/` were built against c8fcbe8 or against all three trees directly. E6 exhaustive saturate_cast: the results (run against c8fcbe8 and the tests of PR #416) were removed from the repository on 2026-11-04 (not used by the paper); git history keeps them: `git show 5911330:results/rtx4090/e6-saturate-exhaustive-c8fcbe8/README.md`.
   The NPP series (`e0-npp`, `e0-cpu-time-npp`, E4a NPP) are listed above for completeness; they will be re-run with the ctxfix configuration after FastNPP #45 is merged.
 - **Superseded:** `e0-graph-instantiate-preliminary` (first half of the graph-instantiate experiment, replaced by `e0-graph-instantiate`, same program).
 - **Host code.** The kernels are identical, so the device side of every time is the same. The host-side code of the library differs in `get_arg` (#417) and in the host run-time paths of `nearbyint` and `saturate_cast` (#414, #416), which no experiment executes on the host.
