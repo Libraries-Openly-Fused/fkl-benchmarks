@@ -1,0 +1,89 @@
+--- external/fkl/include/fused_kernel/algorithms/attention/flash_attention_mma.h	2026-10-30 07:35:07.356811498 +0100
++++ fkl-self/attention/nodq/fused_kernel/algorithms/attention/flash_attention_mma.h	2026-11-04 12:04:16.222724057 +0100
+@@ -108,8 +108,43 @@
+ template <typename IOp>
+ constexpr bool isFp8KVRead = false;
+ #endif
++// ---- FKLB PATCH (benchmark repository, NOT the library): Int8TokenNoDequantRead, a copy of Int8TokenDequantRead with another type name. The kernel treats it as an int8 KV read (the same
++// quantised schedule: cp.async of the raw bytes, the shared-memory pass, the same barriers, the same scale loads) but dequantTile does NOT convert or scale it: see dequantTile<..., NODQ>.
++// The output of a kernel that uses it is WRONG; it exists only to time what the conversion costs. ----
++struct Int8TokenNoDequantRead {
++private:
++    using Parent = ReadOperation<int8_t, Int8TokenDequantReadParams, float,
++                                 TF::DISABLED, Int8TokenNoDequantRead>;
++    using SelfType = Int8TokenNoDequantRead;
++public:
++    FK_STATIC_STRUCT(Int8TokenNoDequantRead, SelfType)
++    DECLARE_READ_PARENT
++
++    FK_HOST_DEVICE_FUSE float exec(const Point thread, const ParamsType& params) {
++        const int8_t q = *PtrAccessor<ND::_3D>::cr_point(thread, params.data);
++        const int seq = static_cast<int>(params.data.dims.height);
++        const float sc = params.scales[(long)thread.z * seq + thread.y];
++        return static_cast<float>(q) * sc;
++    }
++    FK_HOST_DEVICE_FUSE uint num_elems_x(const Point thread, const OperationDataType& opData) { return opData.params.data.dims.width; }
++    FK_HOST_DEVICE_FUSE uint num_elems_y(const Point thread, const OperationDataType& opData) { return opData.params.data.dims.height; }
++    FK_HOST_DEVICE_FUSE uint num_elems_z(const Point thread, const OperationDataType& opData) { return opData.params.data.dims.planes; }
++    FK_HOST_DEVICE_FUSE uint pitch(const Point thread, const OperationDataType& opData) { return opData.params.data.dims.pitch; }
++    FK_HOST_DEVICE_FUSE ActiveThreads getActiveThreads(const OperationDataType& opData) {
++        return { num_elems_x(Point{0,0,0}, opData), num_elems_y(Point{0,0,0}, opData), num_elems_z(Point{0,0,0}, opData) };
++    }
++};
++inline auto makeInt8KVNoDequantRead(const int8_t* data, const float* scales, const int batchHeads, const int seq, const int headDim) {
++    const RawPtr<ND::_3D, int8_t> ptr{
++        const_cast<int8_t*>(data),
++        PtrDims<ND::_3D>(static_cast<uint>(headDim), static_cast<uint>(seq), static_cast<uint>(batchHeads), 1, static_cast<uint>(headDim)) };
++    return Int8TokenNoDequantRead::build(Int8TokenDequantReadParams{ ptr, scales });
++}
+ template <typename IOp>
+-constexpr bool isInt8KVRead = std::is_same_v<typename IOp::Operation, Int8TokenDequantRead>;
++constexpr bool isNoDequantRead = std::is_same_v<typename IOp::Operation, Int8TokenNoDequantRead>;
++template <typename IOp>
++constexpr bool isInt8KVRead = std::is_same_v<typename IOp::Operation, Int8TokenDequantRead> ||
++                              std::is_same_v<typename IOp::Operation, Int8TokenNoDequantRead>;
+ 
+ // ---- FLEX ATTENTION: score mods (FlexAttention-style score_mod) ------------
+ // A score mod is a tiny device functor applied to each attention score
+@@ -568,7 +603,7 @@
+ 
+     /* smem bytes -> swizzled bf16 smem, dequantizing in-register. scales
+        read from global (coalesced; BLOCK_KV floats per tile). */
+-    template <int GROUPS, bool FP8>
++    template <int GROUPS, bool FP8, bool NODQ = false>
+     FK_DEVICE_FUSE void dequantTile(char* smemBytes, const uint32_t stageOff,
+                                     const uint32_t bf16Off, const float* scales,
+                                     const int rowBase, const int seqLen) {
+@@ -587,6 +622,14 @@
+                 float lo, hi;
+                 const int8_t b0 = static_cast<int8_t>((packed >> (16 * h)) & 0xFF);
+                 const int8_t b1 = static_cast<int8_t>((packed >> (16 * h + 8)) & 0xFF);
++                if constexpr (NODQ) {
++                    // FKLB PATCH, timing only: no int-to-float conversion, no scale multiply, no float-to-bf16 rounding; the scale is loaded above and kept alive here, the two bytes are
++                    // packed into the 32-bit slot of the pair (garbage as a bf16x2) and stored with the same 16-byte shared-memory store as the real pass
++                    asm volatile("" :: "f"(sc));
++                    const uint32_t w = static_cast<uint32_t>(static_cast<uint8_t>(b0)) | (static_cast<uint32_t>(static_cast<uint8_t>(b1)) << 16);
++                    *reinterpret_cast<uint32_t*>(&out.h[h]) = w;
++                    continue;
++                }
+                 if constexpr (FP8) {
+ #ifdef FK_HAS_FP8
+                     __nv_fp8_e4m3 f0, f1;
+@@ -1702,7 +1745,7 @@
+                 if constexpr (!FP8_QK) {
+                     // bf16 fallback: dequant K smem->smem, then ldmatrix
+                     if (act) {
+-                        dequantTile<KV_GROUPS, IS_FP8>(smemBytes, kStage(kv), kBuf(kv),
++                        dequantTile<KV_GROUPS, IS_FP8, isNoDequantRead<KIOp>>(smemBytes, kStage(kv), kBuf(kv),
+                                                        kScales, offKV, p.seq_k);
+                     }
+                     __syncthreads();
+@@ -1742,7 +1785,7 @@
+                 cp_async_wait<1>();   // V bytes ready
+                 __syncthreads();
+                 if (act) {
+-                    dequantTile<KV_GROUPS, IS_FP8>(smemBytes, vStage, vBufOff,
++                    dequantTile<KV_GROUPS, IS_FP8, isNoDequantRead<VIOp>>(smemBytes, vStage, vBufOff,
+                                                    vScales, offKV, p.seq_k);
+                 }
+                 __syncthreads();

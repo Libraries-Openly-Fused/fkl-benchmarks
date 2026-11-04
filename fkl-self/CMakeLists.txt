@@ -34,6 +34,15 @@ fklb_add_benchmark(e16_attention
     BACKENDS cu LIBS fkl
     SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/attention/e16_attention.cu")
 
+# E16 query-tile experiment (fused int8 attention against bf16 at several BLOCK_Q, plus a TIMING-ONLY no-dequantise variant). The patched copy of flash_attention_mma.h in attention/nodq comes FIRST in the
+# include path (the library header has an include guard, so the unpatched one is not read); the library is not changed. See the header comment of the program.
+fklb_add_benchmark(e16_query_tile
+    BACKENDS cu LIBS fkl
+    SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/attention/e16_query_tile.cu")
+if(TARGET e16_query_tile_cu)
+    target_include_directories(e16_query_tile_cu BEFORE PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/attention/nodq")
+endif()
+
 # Link check (results/rtx4090/pcie-check): host to device and device to host copy bandwidth of pinned and pageable memory while the link state is sampled. CUDA only.
 fklb_add_benchmark(pcie_bandwidth
     BACKENDS cu LIBS fkl
