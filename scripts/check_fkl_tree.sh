@@ -47,10 +47,20 @@ FKL=$(cd "$FKL" && pwd) || exit 2
 [ -d "$FKL/include/fused_kernel" ] && [ -f "$FKL/lib/export/FKLConfig.cmake" ] || { echo "$FKL is not an FKL tree (include/fused_kernel or lib/export/FKLConfig.cmake missing)"; exit 2; }
 [ -f "$REF/CMakeCache.txt" ] || { echo "reference build $REF has no CMakeCache.txt (use --ref-build)"; exit 2; }
 FKL_SHA=$(git -C "$FKL" rev-parse HEAD 2>/dev/null || echo "not-a-git-tree")
+FKL_ORIG=$FKL
 [ -n "$OUT" ] || OUT=/home/oscar/tfkl-bench/scratch/fkl-check-${FKL_SHA:0:7}-$(date +%H%M%S)
 if [ -n "$(ls -A "$OUT" 2>/dev/null)" ]; then echo "$OUT is not empty: not starting"; exit 2; fi
 mkdir -p "$OUT/tmp" || exit 2
 export TMPDIR=$OUT/tmp
+# A fresh clone or worktree of FKL has no thread-pool submodule: the CPU_MULTITHREAD back-end (and the CPU benchmarks that use it) would silently be left out, and the result would not be comparable with the baseline.
+# Then the pinned thread-pool of this repository's external/fkl is linked in, through a link overlay of the tree (the tree itself is not touched).
+if [ ! -f "$FKL/thread-pool/include/ThreadPool.h" ] && [ -f "$ROOT/external/fkl/thread-pool/include/ThreadPool.h" ]; then
+  mkdir -p "$OUT/fkl-overlay" || exit 2
+  for e in "$FKL"/* "$FKL"/.[!.]*; do b=$(basename "$e"); case $b in thread-pool) continue;; esac; [ -e "$e" ] && ln -s "$e" "$OUT/fkl-overlay/$b"; done
+  ln -s "$ROOT/external/fkl/thread-pool" "$OUT/fkl-overlay/thread-pool"
+  FKL=$OUT/fkl-overlay
+  OVERLAY_NOTE="thread-pool of the tree under test is missing: the pinned thread-pool of external/fkl ($(git -C "$ROOT/external/fkl/thread-pool" rev-parse --short HEAD)) is linked in (overlay $FKL)"
+fi
 
 # the CUDA 13.4 toolchain: the one of this machine when no FKLB_CUDA_HOME is set
 if [ -z "${FKLB_CUDA_HOME:-}" ]; then
@@ -68,7 +78,8 @@ COMMON=(-G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release "-DCMAKE_CUDA_COMPILER=$F
 
 REPORT=$OUT/report.txt
 say() { echo "$@" | tee -a "$REPORT"; }
-say "check_fkl_tree: FKL tree $FKL ($FKL_SHA), $(date -Iseconds), jobs $JOBS, cores $CORES, groups $ONLY"
+say "check_fkl_tree: FKL tree $FKL_ORIG ($FKL_SHA), $(date -Iseconds), jobs $JOBS, cores $CORES, groups $ONLY"
+[ -n "${OVERLAY_NOTE:-}" ] && say "note: $OVERLAY_NOTE"
 say "nvcc: $(nvcc --version | grep release | sed 's/^ *//')  c++: $(c++ --version | head -1)  OpenCV: $OPENCV"
 say "fkl-benchmarks HEAD $(git -C "$ROOT" rev-parse --short HEAD); cvGPUSpeedup $(git -C "$ROOT/external/cvGPUSpeedup" rev-parse --short HEAD); FastNPP $(git -C "$ROOT/external/FastNPP" rev-parse --short HEAD); the repository itself is not changed"
 STATUS=0
