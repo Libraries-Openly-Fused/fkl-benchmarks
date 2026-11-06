@@ -1,0 +1,37 @@
+# 2026-11-06T19:20:00+01:00 window e3-repeat-pr423 starts; load before: 0.12 0.15 1.35; no compile job, transfer or measurement running (checked)
+# os: Ubuntu 26.04.1 LTS
+# kernel: Linux 7.0.0-38-generic
+# warm-up: one compile of N = 1 (fills the file cache; recorded in its own CSV)
+# 2026-11-06T19:20:00+01:00 start: taskset -c 4-7,20-23 /home/oscar/tfkl-bench/venv-torch/bin/python scripts/e3_sweep.py --variants A --core 8 --tree 9e20bd4e --include /home/oscar/tfkl-bench/scratch/pr423/fkl-head/include --out /home/oscar/tfkl-bench/fkl-benc
+A N=    1 rep 0: ok                       nvcc     2.60 s,     291 MB  regs 10 spills 0 cmem0 416 SASS 32
+# 2026-11-06T19:20:04+01:00 end (exit 0)
+# distinct operations (variant A) at N = 1,100,500,1000,1500,2000,3000,4000, 3 compiles each
+# 2026-11-06T19:20:04+01:00 start: taskset -c 4-7,20-23 /home/oscar/tfkl-bench/venv-torch/bin/python scripts/e3_sweep.py --variants A --core 8 --tree 9e20bd4e --include /home/oscar/tfkl-bench/scratch/pr423/fkl-head/include --out /home/oscar/tfkl-bench/fkl-benc
+A N=    1 rep 0: ok                       nvcc     2.59 s,     292 MB  regs 10 spills 0 cmem0 416 SASS 32
+A N=    1 rep 1: ok                       nvcc     2.60 s,     291 MB  regs 10 spills 0 cmem0 416 SASS 32
+A N=    1 rep 2: ok                       nvcc     2.62 s,     291 MB  regs 10 spills 0 cmem0 416 SASS 32
+A N=  100 rep 0: ok                       nvcc     3.08 s,     345 MB  regs 17 spills 0 cmem0 808 SASS 488
+A N=  100 rep 1: ok                       nvcc     3.08 s,     344 MB  regs 17 spills 0 cmem0 808 SASS 488
+A N=  100 rep 2: ok                       nvcc     3.08 s,     345 MB  regs 17 spills 0 cmem0 808 SASS 488
+A N=  500 rep 0: ok                       nvcc     7.68 s,     691 MB  regs 17 spills 0 cmem0 2408 SASS 1880
+A N=  500 rep 1: ok                       nvcc     7.67 s,     690 MB  regs 17 spills 0 cmem0 2408 SASS 1880
+A N=  500 rep 2: ok                       nvcc     7.69 s,     691 MB  regs 17 spills 0 cmem0 2408 SASS 1880
+A N= 1000 rep 0: ok                       nvcc    22.32 s,    1470 MB  regs 17 spills 0 cmem0 4408 SASS 3640
+A N= 1000 rep 1: ok                       nvcc    22.36 s,    1470 MB  regs 17 spills 0 cmem0 4408 SASS 3640
+A N= 1000 rep 2: ok                       nvcc    22.39 s,    1470 MB  regs 17 spills 0 cmem0 4408 SASS 3640
+A N= 1500 rep 0: ok                       nvcc    50.91 s,    2597 MB  regs 17 spills 0 cmem0 12840 SASS 5384
+A N= 1500 rep 1: ok                       nvcc    50.82 s,    2598 MB  regs 17 spills 0 cmem0 12840 SASS 5384
+A N= 1500 rep 2: ok                       nvcc    50.90 s,    2598 MB  regs 17 spills 0 cmem0 12840 SASS 5384
+A N= 2000 rep 0: ok                       nvcc    96.59 s,    4073 MB  regs 17 spills 0 cmem0 14840 SASS 7136
+A N= 2000 rep 1: ok                       nvcc    96.69 s,    4074 MB  regs 17 spills 0 cmem0 14840 SASS 7136
+A N= 2000 rep 2: ok                       nvcc    96.81 s,    4073 MB  regs 17 spills 0 cmem0 14840 SASS 7136
+A N= 3000 rep 0: ok                       nvcc   265.11 s,    8070 MB  regs 17 spills 0 cmem0 18840 SASS 10640
+A N= 3000 rep 1: ok                       nvcc   267.63 s,    8070 MB  regs 17 spills 0 cmem0 18840 SASS 10640
+A N= 3000 rep 2: ok                       nvcc   266.40 s,    8070 MB  regs 17 spills 0 cmem0 18840 SASS 10640
+A N= 4000 rep 0: ok                       nvcc   578.89 s,   13465 MB  regs 17 spills 0 cmem0 22840 SASS 14144
+A N= 4000 rep 1: ok                       nvcc   580.75 s,   13465 MB  regs 17 spills 0 cmem0 22840 SASS 14144
+A N= 4000 rep 2: ok                       nvcc   579.59 s,   13464 MB  regs 17 spills 0 cmem0 22840 SASS 14144
+# 2026-11-06T20:11:51+01:00 end (exit 0)
+# 2026-11-06T20:11:51+01:00 the set is done
+# 2026-11-06T20:12:02+01:00 window e3-repeat-pr423 ended
+e3-repeat-pr423 window end 2026-11-06T20:12:02+01:00

@@ -42,11 +42,15 @@ def system_info_lines(experiment, device_index=None, notes=None):
     if notes:
         lines.append(f"notes: {notes}")
     repo = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    for name, path in (("repo", repo), ("fkl", f"{repo}/external/fkl"), ("cvGPUSpeedup", f"{repo}/external/cvGPUSpeedup"),
+    # FKLB_FKL_TREE: a library tree other than the pin of this repository (a compile sweep against the head of a PR, scripts/e3_sweep.py --include): the header then names THAT tree
+    fkl_tree = os.environ.get("FKLB_FKL_TREE") or f"{repo}/external/fkl"
+    for name, path in (("repo", repo), ("fkl", fkl_tree), ("cvGPUSpeedup", f"{repo}/external/cvGPUSpeedup"),
                        ("FastNPP", f"{repo}/external/FastNPP")):
         head = _run(["git", "-C", path, "rev-parse", "HEAD"])
         dirty = _run(["git", "-C", path, "status", "--porcelain", "--untracked-files=no"])
         lines.append(f"{name}: {head}{'-dirty' if dirty not in ('', 'unavailable') else ''}")
+    if os.environ.get("FKLB_FKL_TREE"):
+        lines.append(f"fkl tree (FKLB_FKL_TREE, not the pin external/fkl of this repository): {fkl_tree}")
     lines.append(f"python: {platform.python_version()}, torch: {torch.__version__}, torch.version.cuda: {torch.version.cuda}")
     try:
         import triton

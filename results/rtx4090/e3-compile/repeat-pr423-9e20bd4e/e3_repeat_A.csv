@@ -1,0 +1,42 @@
+# experiment: E3 compile-time sweep
+# notes: one core (8), nvcc --threads 1, -O3 -DNDEBUG -std=c++17 sm_89 +PTX -ftemplate-depth=1000 -lineinfo; GNU time for the peak RSS; timeout 3600 s per compile; the programs are not executed; fkl include /home/oscar/tfkl-bench/scratch/pr423/fkl-head/include
+# repo: 1cd591431d4e010159be29ee95848a31cdbbbd3b-dirty
+# fkl: 9e20bd4e5286be70fbeb0f79a19b96f00c81a06f
+# cvGPUSpeedup: 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c
+# FastNPP: a1b5e245d7dd70fba23dcb51a0aea80495dbc61d
+# fkl tree (FKLB_FKL_TREE, not the pin external/fkl of this repository): /home/oscar/tfkl-bench/scratch/pr423/fkl-head
+# python: 3.12.13, torch: 2.14.1+cu130, torch.version.cuda: 13.0
+# triton: 3.8.0; ptxas /home/oscar/tfkl-bench/venv-torch/lib/python3.12/site-packages/triton/backends/nvidia/bin/ptxas (release 12.9); ptxas_blackwell /home/oscar/tfkl-bench/venv-torch/lib/python3.12/site-packages/triton/backends/nvidia/bin/ptxas-blackwell (release 13.3); cuobjdump /home/oscar/tfkl-bench/venv-torch/lib/python3.12/site-packages/triton/backends/nvidia/bin/cuobjdump (release 13.1); nvdisasm /home/oscar/tfkl-bench/venv-torch/lib/python3.12/site-packages/triton/backends/nvidia/bin/nvdisasm (release 13.1)
+# flash_attn: 2.8.3.post2
+# os: Ubuntu 26.04.1 LTS
+# kernel: Linux 7.0.0-38-generic
+# gpu: NVIDIA GeForce RTX 4090, cc 8.9, 128 SMs, 24106 MiB
+# cuda_visible_devices: 1 (device 0, pci 00000000:05:00.0)
+# nvidia-smi driver: 610.43.02
+# clocks (sm, mem, max sm, max mem, MHz): 180 MHz, 405 MHz, 3090 MHz, 10001 MHz
+# power limit, temperature at start: 130.00 W, 30
+tree,variant,n,rep,status,why,cuda_wall_s,cuda_user_s,cuda_sys_s,cuda_peak_rss_mb,phase_cudafe_s,phase_cicc_s,phase_ptxas_s,phase_gcc_s,phase_other_s,registers,spill_stores,spill_loads,stack_bytes,cmem0_bytes,sass_instructions,text_bytes,cubin_bytes,host_status,host_wall_s,host_peak_rss_mb
+9e20bd4e,A,1,0,ok,,2.587,2.140,0.430,292,0.830,0.678,0.012,1.048,0.007,10,0,0,0,416,32,512,18080,,,
+9e20bd4e,A,1,1,ok,,2.596,2.170,0.420,291,0.833,0.682,0.012,1.050,0.007,10,0,0,0,416,32,512,18080,,,
+9e20bd4e,A,1,2,ok,,2.623,2.160,0.450,291,0.832,0.692,0.013,1.068,0.007,10,0,0,0,416,32,512,18080,,,
+9e20bd4e,A,100,0,ok,,3.078,2.590,0.470,345,0.840,0.979,0.030,1.207,0.012,17,0,0,0,808,488,7808,266528,,,
+9e20bd4e,A,100,1,ok,,3.077,2.610,0.460,344,0.836,0.981,0.030,1.206,0.012,17,0,0,0,808,488,7808,266528,,,
+9e20bd4e,A,100,2,ok,,3.078,2.620,0.450,345,0.839,0.977,0.030,1.209,0.011,17,0,0,0,808,488,7808,266528,,,
+9e20bd4e,A,500,0,ok,,7.683,6.840,0.830,691,0.845,3.707,0.144,2.913,0.057,17,0,0,0,2408,1880,30080,3643424,,,
+9e20bd4e,A,500,1,ok,,7.665,6.810,0.840,690,0.841,3.684,0.144,2.921,0.056,17,0,0,0,2408,1880,30080,3643424,,,
+9e20bd4e,A,500,2,ok,,7.685,6.830,0.840,691,0.849,3.700,0.145,2.916,0.057,17,0,0,0,2408,1880,30080,3643424,,,
+9e20bd4e,A,1000,0,ok,,22.324,20.560,1.750,1470,0.853,12.490,0.440,8.396,0.118,17,0,0,0,4408,3640,58240,13266080,,,
+9e20bd4e,A,1000,1,ok,,22.364,20.670,1.680,1470,0.852,12.540,0.442,8.384,0.119,17,0,0,0,4408,3640,58240,13266080,,,
+9e20bd4e,A,1000,2,ok,,22.390,20.690,1.680,1470,0.851,12.539,0.443,8.411,0.119,17,0,0,0,4408,3640,58240,13266080,,,
+9e20bd4e,A,1500,0,ok,,50.910,47.960,2.930,2597,0.855,32.253,0.931,16.578,0.250,17,0,0,0,12840,5384,86144,28897184,,,
+9e20bd4e,A,1500,1,ok,,50.817,47.920,2.880,2598,0.860,32.139,0.929,16.596,0.250,17,0,0,0,12840,5384,86144,28897184,,,
+9e20bd4e,A,1500,2,ok,,50.903,47.920,2.960,2598,0.860,32.246,0.931,16.573,0.250,17,0,0,0,12840,5384,86144,28897184,,,
+9e20bd4e,A,2000,0,ok,,96.589,91.770,4.790,4073,0.867,66.630,1.671,26.921,0.436,17,0,0,0,14840,7136,114176,50521760,,,
+9e20bd4e,A,2000,1,ok,,96.686,91.950,4.720,4074,0.871,66.555,1.672,27.089,0.436,17,0,0,0,14840,7136,114176,50521760,,,
+9e20bd4e,A,2000,2,ok,,96.806,92.170,4.610,4073,0.870,66.834,1.663,26.941,0.435,17,0,0,0,14840,7136,114176,50521760,,,
+9e20bd4e,A,3000,0,ok,,265.111,256.040,9.040,8070,0.880,196.180,4.904,62.084,0.945,17,0,0,0,18840,10640,170240,111770016,,,
+9e20bd4e,A,3000,1,ok,,267.628,258.580,9.010,8070,0.881,198.436,4.915,62.336,0.943,17,0,0,0,18840,10640,170240,111770016,,,
+9e20bd4e,A,3000,2,ok,,266.403,257.070,9.300,8070,0.879,196.542,4.917,63.002,0.947,17,0,0,0,18840,10640,170240,111770016,,,
+9e20bd4e,A,4000,0,ok,,578.894,563.170,15.660,13465,0.896,432.167,11.112,132.841,1.685,17,0,0,0,22840,14144,226304,197023392,,,
+9e20bd4e,A,4000,1,ok,,580.751,564.920,15.760,13465,0.900,434.029,11.141,132.799,1.687,17,0,0,0,22840,14144,226304,197023392,,,
+9e20bd4e,A,4000,2,ok,,579.593,563.820,15.710,13464,0.902,432.498,11.119,133.200,1.681,17,0,0,0,22840,14144,226304,197023392,,,
