@@ -4,7 +4,7 @@ Machine: Ryzen 7 5800X3D, 60 GiB, AMD Radeon RX 9060 (gfx1200, 28 CUs, wave32, 8
 CPU governor `powersave` (amd-pstate-epp, EPP balance_performance, boost on); the machine is also the self-hosted ROCm CI runner, so every run waits for the
 runner to be idle (no `Runner.Worker`, load average below 0.8).
 
-Pins: each folder names the FKL commit it was measured at. The pin of this repository was c8fcbe8 until 2026-11-07; since then it is 64ad9195, the final library version (c8fcbe8 plus #422, #426, #423 and #427; `../rtx4090/final-checks/README.md`). The device-code comparisons of c8fcbe8, 9e20bd4e and 64ad9195 (`../rtx4090/fkl-pr423-check/`, `../rtx4090/fkl-pr427-check/`) cover the CUDA programs on the RTX 4090 only, not the HIP and CPU builds of this folder.
+Pins: each folder names the FKL commit it was measured at. The pin of this repository was c8fcbe8 until 2026-11-07; since then it is 64ad9195, the final library version (c8fcbe8 plus #422, #426, #423 and #427; `../rtx4090/final-checks/README.md`). The device code (gfx1200) of every HIP program of this repository, built from the same sources (0fb1f9f97), is the same at c8fcbe8 and at 64ad9195, 625 of 625 functions (`pin-move-devcode-c8fcbe8-64ad9195/`); only the host code differs (the chain checks of #423, the crop checks of #427). The CUDA programs were compared on the RTX 4090 (`../rtx4090/fkl-pr423-check/`, `../rtx4090/fkl-pr427-check/`); the CPU builds were not compared, as the CPU results are kept in the repository only.
 
 ## Machine and software (read on 2026-11-01)
 
