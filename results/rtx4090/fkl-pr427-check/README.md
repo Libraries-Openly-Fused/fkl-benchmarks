@@ -1,0 +1,43 @@
+# FKL PR #427 (issue #19, the crop fix) at its head 14512602: compile and kernel checks on the RTX 4090 machine (2026-11-06 23:23:05 to 2026-11-07 00:16:56; CPU only, nothing here ran on the GPU)
+
+Requested by the coordinator for AMD's library PR `FusedKernelLibrary` #427: base LTS-C++17 at 7b2deb66 (the merge of #423, which came after #426), branch `LTS-C++17-crop-parent-strides`, **head `14512602de7f703c4d010f5f348069404e5d87b5`**, 4 commits: 10ec4d0 `Ptr::crop`: the strides of the view always come from the parent; 36dcb86 tests of `Ptr::crop` (`Rect`, strides of the parent, throws, `DeviceAndPinned`); 123dd65 `basic_test`: the crop test reads non-constant data; 1451260 comments only (6 lines in, 3 out, all of them comment lines). Against 7b2deb66: `include/fused_kernel/core/data/ptr_nd.h` +181 -10, `tests/data/test_ptr_nd.h` +399 -1, `tests/data/basic_test.h` +15 -3. PR #427 was merged into LTS-C++17 on 2026-11-06 as `64ad9195cd785d0c93a70b35e02d5a6c7c4a5048` (parents 7b2deb66 and 14512602); the merged tree (`7c35e151`) is the tree of 14512602, no file differs, so the results of this folder apply unchanged to the merged commit.
+
+The head was fetched from `refs/pull/427/head` into a local clone of the pinned `external/fkl` (scratch, detached checkout, no local changes); the script stops if the PR head is not the SHA it was given. The pin of this repository (`external/fkl` at c8fcbe8) and the repository were not changed. Everything ran from `scripts-used/pr427-step1.sh`, approved by the coordinator: compile only, no measurement, so no quiet window (the coordinator was told when it started and ended and scheduled nothing on the machine in between). The GPU tests of the head are a separate window: `../fkl-ctest-pr427-14512602/`.
+
+## Result
+* **0 regressions against the run at the head of #423** (`compile-check/compare-with-pr423-head.txt`; the base of #427, 7b2deb66, has the `include/`, `tests/` and `utests/` of that head, `../fkl-pr423-check/`): the same targets in all four groups, all of them compiled: the 40 programs of this repository, the 16 test programs of cvGPUSpeedup, the 2 of FastNPP and FKL's own 141 targets (129 compile; 12 are compile-fail targets, and each of the 12 is rejected with the message of the check and with no other error: ctest `_rejected`, 12 of 12 passed). No target was added or removed.
+* **0 regressions against the baseline at c8fcbe8** (`compile-check/compare-with-c8fcbe8-baseline.txt`): the 125 FKL targets of c8fcbe8 compile; the 16 that exist only at the head are the ones of #423 (`utest_chain_check_*`, with the 12 rejections) and `utest_flash_attention_mma_cu` (the E16 utest of #422).
+* cvGPUSpeedup and FastNPP configured a second time with `ENABLE_BENCHMARK=ON`, for the GPU window: configure and build without error (cvGPUSpeedup every target in 157 s, FastNPP in 4.5 s).
+* FKL's CPU tests (`ctest -R '_cpp$' -j8`): **45 of 45 passed**, 1.13 s (`ctest-cpu.log`).
+* **Device code: the 35 CUDA programs of this repository are instruction for instruction the same as at the head of #423: 1,685 of 1,685 kernels identical**, 0 different, 0 in one build only (`sass-bench-pr427-vs-9e20bd4e.txt`). With `../fkl-pr423-check/` (1,685 of 1,685 identical between c8fcbe8 and 9e20bd4e), the device code of every CUDA program of this repository is the same at c8fcbe8, at 9e20bd4e and at 14512602 (the tree of the merged 64ad9195).
+
+## Setup
+- nvcc 13.4.92 (CUDA 13.4.3), g++ 15.2.0, OpenCV 4.14 with CUDA; cvGPUSpeedup 6d26c65 and FastNPP a1b5e24 (the pins of this repository); fkl-benchmarks 0fb1f9f. A fresh clone of FKL has no thread-pool submodule: the pinned thread-pool of `external/fkl` (27e733f) was linked in through a link overlay of the tree (the tree itself not touched), as for #423.
+- `scripts/check_fkl_tree.sh <clone> --only bench,cvgs,fastnpp,fkltests` with its defaults (12 jobs on cores 8-15,24-31), unchanged since the #423 check: every compiled target of FKL's tree through the CMake file API; a target with a ctest test `<target>_rejected` is judged by that test.
+- The second configure of cvGPUSpeedup and FastNPP: from the same clones as the check (their `fkl/` is a link to the tree under test), with the CMake arguments of the check (`-G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release`, nvcc of CUDA 13.4.3, `-DCMAKE_CUDA_ARCHITECTURES=89`; for cvGPUSpeedup `-DOPENCV_DIR`) and `-DENABLE_BENCHMARK=ON`, every target. The check itself configures both with their default `ENABLE_BENCHMARK=OFF`, which registers only 16 and 2 tests; `ON`, as for the runs of FKL PRs #409 to #416, adds cvGPUSpeedup's benchmarks to its tests and compiles the test programs with `ENABLE_BENCHMARK` defined.
+- SASS: `scripts/sass_compare_builds.py <bench build of the #423 check> <bench build of this check> --arch sm_89 --glob '*_cu'`: per kernel, by mangled name, after normalisation. Both sides were dumped with the cuobjdump of CUDA 13.4.3 (the #423 comparison used the one of CUDA 13.3; in each comparison both sides use the same tool).
+
+## Compile check (`compile-check/`)
+
+| group | targets | compiled | expected rejections held | failed | not built | build time |
+|---|--:|--:|--:|--:|--:|--:|
+| bench (this repository) | 40 | 40 | | 0 | 0 | 2,131 s |
+| cvgs (cvGPUSpeedup tests) | 16 | 16 | | 0 | 0 | 131 s |
+| fastnpp (FastNPP tests) | 2 | 2 | | 0 | 0 | 7 s |
+| fkltests (FKL's own targets) | 141 | 129 | 12 of 12 | 0 | 0 | 340 s, and 20 s for the 12 rejection tests |
+
+## The test lists of the GPU window (`window-list-*.txt`, `ctest -N`)
+- FKL, `-R '_cu$'`: 48 tests, the 48 of the #423 window by name.
+- cvGPUSpeedup (`ENABLE_BENCHMARK=ON`): 26 tests registered. The window runs 25 of them, without `benchmark_image_resolution_MAD_loop` (the full loop of 60 experiments), as the runs of #409 to #416 did (`ctest -E benchmark_image_resolution_MAD_loop`). The 25 are the 25 of the #416 run by name.
+- FastNPP: 2 tests, `fastNPP_basic_test` and `fastNPP_resize_vs_npp_test`. This is not the set of #416: FastNPP #44 moved its two benchmarks into this repository (`npp/`), and #45 added the resize test.
+
+## What this says and what not
+At the head of PR #427, which is the tree of the merged LTS-C++17 64ad9195, every program and test that built at the head of #423 and at c8fcbe8 still builds, the expected rejections hold, the CPU tests pass, and the device code of every CUDA program of this repository is the same as at 9e20bd4e and at c8fcbe8. The change of #427 is in host code (`Ptr::crop` checks the request on the host, throws `std::runtime_error` for an invalid one, and gives the view the strides of its parent), which a SASS comparison does not see. It says nothing about run time (the GPU tests are in the window folder; no timing was taken) and nothing about AMD.
+By reading the sources (not run): this repository calls `crop` / `crop2D` in 16 places. 13 of them pass the parent's own pitch, which #427 accepts. The other 3, in `npp/batchresize/benchmark_npp_batchresize_x_split3D.cu` (two) and `npp/CPU/benchmark_CPU_NPP_vs_FastNPP.cu`, pass pitch 0, which #427 reads as the pitch of the parent; their result (`d_crop_fk`) is not used anywhere. cvGPUSpeedup and FastNPP do not call `crop` outside their `fkl/` submodule.
+
+## Files
+- `scripts-used/pr427-step1.sh` (the script that ran) and `step1-console.txt` (its complete output).
+- `compile-check/`: per group (`bench`, `cvgs`, `fastnpp`, `fkltests`), `<group>-report.csv` (target, status, first error line), `<group>-targets.txt` (the targets listed), `<group>-targets-built.txt` (the ones given to make), `<group>-time.txt` and `<group>-configure.log`; `report.txt` (the report of `check_fkl_tree.sh`, the same text as in the console); `fkltests-rejected-targets.txt` and `fkltests-rejected.log` (the output of `ctest -V -R '_rejected$'`); `compare-with-pr423-head.txt` and `compare-with-c8fcbe8-baseline.txt` (`scripts/check_fkl_tree_compare.py`); `cvgs-bench-configure.log`, `cvgs-bench-time.txt`, `fastnpp-bench-configure.log`, `fastnpp-bench-time.txt` (the builds with `ENABLE_BENCHMARK=ON`).
+- `ctest-cpu.log`, `window-list-fkl-cuda.txt`, `window-list-cvGPUSpeedup.txt`, `window-list-FastNPP.txt`, `sass-bench-pr427-vs-9e20bd4e.txt`.
+- Left out: the build logs (`bench-build.log` 16.5 MiB, `cvgs-bench-build.log` 1.6 MiB, `fkltests-build.log` 1.2 MiB, `cvgs-build.log` 0.4 MiB, `fastnpp-build.log` and `fastnpp-bench-build.log` 51 KiB each) and the three empty `<group>-rejected-targets.txt` of the groups without rejections. They stay in `scratch/pr427/check/` on this machine.
+- Every file here is the complete output of the program named; nothing was filtered.

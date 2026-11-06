@@ -1,0 +1,263 @@
+# 2026-11-06T23:23:05+01:00 step 1 for FKL PR #427, head 14512602de7f703c4d010f5f348069404e5d87b5, starts; load 0.26 0.15 0.08
+clone at 14512602de7f703c4d010f5f348069404e5d87b5, local changes 0; merge-base with 7b2deb6660921106e524a12cd5fca376feb0d544: 7b2deb6660921106e524a12cd5fca376feb0d544
+1451260 Oscar Amoros Huguet 2026-11-06T23:01:59+01:00 Ptr::crop: say in the comments which pitch a caller's pitch is compared with
+123dd65 Oscar Amoros Huguet 2026-11-06T22:53:26+01:00 basic_test: the crop test reads non constant data
+36dcb86 Oscar Amoros Huguet 2026-11-06T22:53:26+01:00 Tests of Ptr::crop: Rect, strides of the parent, throws, DeviceAndPinned
+10ec4d0 Oscar Amoros Huguet 2026-11-06T22:53:26+01:00 Ptr::crop: the strides of the view always come from the parent
+ include/fused_kernel/core/data/ptr_nd.h | 191 ++++++++++++++-
+ tests/data/basic_test.h                 |  18 +-
+ tests/data/test_ptr_nd.h                | 400 +++++++++++++++++++++++++++++++-
+ 3 files changed, 595 insertions(+), 14 deletions(-)
+check_fkl_tree: FKL tree /home/oscar/tfkl-bench/scratch/pr427/fkl-head (14512602de7f703c4d010f5f348069404e5d87b5), 2026-11-06T23:23:06+01:00, jobs 12, cores 8-15,24-31, groups bench,cvgs,fastnpp,fkltests
+note: thread-pool of the tree under test is missing: the pinned thread-pool of external/fkl (27e733f) is linked in (overlay /home/oscar/tfkl-bench/scratch/pr427/check/fkl-overlay)
+nvcc: Cuda compilation tools, release 13.4, V13.4.92  c++: c++ (Ubuntu 15.2.0-16ubuntu1) 15.2.0  OpenCV: /home/oscar/tfkl-bench/deps/opencv-4.14-cuda13.4/install
+fkl-benchmarks HEAD 0fb1f9f; cvGPUSpeedup 6d26c65; FastNPP a1b5e24; the repository itself is not changed
+
+== bench: configure (/home/oscar/tfkl-bench/scratch/pr427/check/bench-src)
+bench: 40 targets: batch_build_compilation_time_cpp batch_build_compilation_time_cu benchmark_CPU_NPP_vs_FastNPP_ctxfix_cu benchmark_CPU_NPP_vs_FastNPP_cu benchmark_CPU_OpenCV_vs_cvGS_cu benchmark_CPUandGPU_cvGS_vs_fk_cu benchmark_batched_preprocessing_cu benchmark_data_type_cu benchmark_horizontal_fusion_cpp benchmark_horizontal_fusion_cu benchmark_image_resolution_MAD_loop_cu benchmark_image_resolution_MAD_loop_mul4_cu benchmark_latency_hiding_cpp benchmark_latency_hiding_cu benchmark_npp_batchresize_x_split3D_ctxfix_cu benchmark_npp_batchresize_x_split3D_cu benchmark_numinstructions_x_operation_cpp benchmark_
+bench: build finished after 2131 s (2130.69 s wall, largest resident set of one process 2507876 KiB)
+OK            batch_build_compilation_time_cpp
+OK            batch_build_compilation_time_cu
+OK            benchmark_CPU_NPP_vs_FastNPP_ctxfix_cu
+OK            benchmark_CPU_NPP_vs_FastNPP_cu
+OK            benchmark_CPU_OpenCV_vs_cvGS_cu
+OK            benchmark_CPUandGPU_cvGS_vs_fk_cu
+OK            benchmark_batched_preprocessing_cu
+OK            benchmark_data_type_cu
+OK            benchmark_horizontal_fusion_cpp
+OK            benchmark_horizontal_fusion_cu
+OK            benchmark_image_resolution_MAD_loop_cu
+OK            benchmark_image_resolution_MAD_loop_mul4_cu
+OK            benchmark_latency_hiding_cpp
+OK            benchmark_latency_hiding_cu
+OK            benchmark_npp_batchresize_x_split3D_ctxfix_cu
+OK            benchmark_npp_batchresize_x_split3D_cu
+OK            benchmark_numinstructions_x_operation_cpp
+OK            benchmark_numinstructions_x_operation_cu
+OK            benchmark_thread_fusion_cpp
+OK            benchmark_thread_fusion_cu
+OK            benchmark_vertical_fusionCompareMul1_cu
+OK            benchmark_vertical_fusionCompareMulAdd1_cu
+OK            benchmark_vertical_fusionCompareMulAdd_cu
+OK            e16_attention_cu
+OK            e16_query_tile_cu
+OK            e1_hf_batch_cu
+OK            e1_preproc_cu
+OK            e1_vf_chain_cu
+OK            e2_fkl_chain_cu
+OK            e4_preprocessing_cu
+OK            e6_fused_vs_unfused_cu
+OK            e9_cross_library_cu
+OK            graph_instantiate_time_cu
+OK            graph_structure_probe_cu
+OK            hf_fused_time_probe_cu
+OK            hf_graph_structure_probe_cu
+OK            opencv_parity_probe_cu
+OK            pcie_bandwidth_cu
+OK            resize_convention_cu
+OK            vf_fused_time_probe_cu
+bench: 40 targets, 40 compiled, 0 failed, 0 not built
+
+== cvgs: configure (/home/oscar/tfkl-bench/scratch/pr427/check/cvgs-src)
+cvgs: 16 targets: testOpenCVInstallation test_batchread_x_write3D test_batchresize_aspectratio_x_split3D test_batchresize_x_split3D test_circularbatchread_x_write3D test_convertTo test_cvtColor test_fused_resize test_read_x_split test_read_x_write test_resize_CPUvsGPUresults test_resize_write test_resize_x_split test_saturate_cast test_split test_warping_opencv 
+cvgs: build finished after 131 s (131.51 s wall, largest resident set of one process 802328 KiB)
+OK            testOpenCVInstallation
+OK            test_batchread_x_write3D
+OK            test_batchresize_aspectratio_x_split3D
+OK            test_batchresize_x_split3D
+OK            test_circularbatchread_x_write3D
+OK            test_convertTo
+OK            test_cvtColor
+OK            test_fused_resize
+OK            test_read_x_split
+OK            test_read_x_write
+OK            test_resize_CPUvsGPUresults
+OK            test_resize_write
+OK            test_resize_x_split
+OK            test_saturate_cast
+OK            test_split
+OK            test_warping_opencv
+cvgs: 16 targets, 16 compiled, 0 failed, 0 not built
+
+== fastnpp: configure (/home/oscar/tfkl-bench/scratch/pr427/check/fastnpp-src)
+fastnpp: 2 targets: fastNPP_basic_test fastNPP_resize_vs_npp_test 
+fastnpp: build finished after 7 s (7.13 s wall, largest resident set of one process 421996 KiB)
+OK            fastNPP_basic_test
+OK            fastNPP_resize_vs_npp_test
+fastnpp: 2 targets, 2 compiled, 0 failed, 0 not built
+
+== fkltests: configure (/home/oscar/tfkl-bench/scratch/pr427/check/fkl-overlay)
+fkltests: 141 targets: basic_test_cpp basic_test_cu batch_build_compilation_time_cpp batch_build_compilation_time_cu compiler_explorer_example_cpp compiler_explorer_example_cu inlining_and_LDL_STL_cu readme_test_code_cpp readme_test_code_cu test_IOps_to_string_cpp test_IOps_to_string_cu test_batchresize_build_cpp test_batchresize_build_cu test_border_reader_cpp test_border_reader_cu test_circular_tensor_cu test_crop_cpp test_crop_cu test_deinterlace_cpp test_deinterlace_cu test_divergent_hf_executor_cu test_filtered_index_sequence_cpp test_filtered_index_sequence_cu test_fk_string_cpp test_fk_string_cu test_fused_op
+fkltests: 12 of them are expected rejections (a ctest test <target>_rejected builds the target and passes only if the build fails with the message of the check and no other error): not built by make, judged by that test
+fkltests: build finished after 340 s (340.18 s wall, largest resident set of one process 2034700 KiB)
+fkltests: the rejection tests finished after 20 s (100% tests passed, 0 tests failed out of 12)
+OK            basic_test_cpp
+OK            basic_test_cu
+OK            batch_build_compilation_time_cpp
+OK            batch_build_compilation_time_cu
+OK            compiler_explorer_example_cpp
+OK            compiler_explorer_example_cu
+OK            inlining_and_LDL_STL_cu
+OK            readme_test_code_cpp
+OK            readme_test_code_cu
+OK            test_IOps_to_string_cpp
+OK            test_IOps_to_string_cu
+OK            test_batchresize_build_cpp
+OK            test_batchresize_build_cu
+OK            test_border_reader_cpp
+OK            test_border_reader_cu
+OK            test_circular_tensor_cu
+OK            test_crop_cpp
+OK            test_crop_cu
+OK            test_deinterlace_cpp
+OK            test_deinterlace_cu
+OK            test_divergent_hf_executor_cu
+OK            test_filtered_index_sequence_cpp
+OK            test_filtered_index_sequence_cu
+OK            test_fk_string_cpp
+OK            test_fk_string_cu
+OK            test_fused_operation_cpp
+OK            test_fused_operation_cu
+OK            test_instantiable_operations_cpp
+OK            test_instantiable_operations_cu
+OK            test_large_grids_cpp
+OK            test_large_grids_cu
+OK            test_literal_to_string_cpp
+OK            test_literal_to_string_cu
+OK            test_nvcc124_126_BugReproducer_cu
+OK            test_nvcc1281_129_BugReproducer_cu
+OK            test_nvcc131_BugReproducer_cpp
+OK            test_nvcc131_BugReproducer_cu
+OK            test_operation_fuser_cpp
+OK            test_operation_fuser_cu
+OK            test_operation_tuple_cpp
+OK            test_operation_tuple_cu
+OK            test_operation_types_cpp
+OK            test_operation_types_cu
+OK            test_ptr_nd_cpp
+OK            test_ptr_nd_cu
+OK            test_raw_image_types_cpp
+OK            test_raw_image_types_cu
+OK            test_rect_cpp
+OK            test_rect_cu
+OK            test_struct_to_string_cpp
+OK            test_struct_to_string_cu
+OK            test_thread_fusion_alignment_cpp
+OK            test_thread_fusion_alignment_cu
+OK            test_thread_fusion_cpp
+OK            test_thread_fusion_cu
+OK            test_tuple_cpp
+OK            test_tuple_cu
+OK            test_typelist_cpp
+OK            test_typelist_cu
+OK            test_warp_cpp
+OK            test_warp_cu
+OK            utest_VBase_cpp
+OK            utest_VBase_cu
+OK            utest_chain_check_cpp
+OK            utest_chain_check_cpu_mt_cpp
+OK            utest_chain_check_cu
+REJECTED_OK   utest_chain_check_wrong1_cpp  utest_chain_check_wrong1_cpp: rejected with the message of the check and no other error
+REJECTED_OK   utest_chain_check_wrong1_cpu_mt  utest_chain_check_wrong1_cpu_mt: rejected with the message of the check and no other error
+REJECTED_OK   utest_chain_check_wrong1_cu  utest_chain_check_wrong1_cu: rejected with the message of the check and no other error
+REJECTED_OK   utest_chain_check_wrong2_cpp  utest_chain_check_wrong2_cpp: rejected with the message of the check and no other error
+REJECTED_OK   utest_chain_check_wrong2_cpu_mt  utest_chain_check_wrong2_cpu_mt: rejected with the message of the check and no other error
+REJECTED_OK   utest_chain_check_wrong2_cu  utest_chain_check_wrong2_cu: rejected with the message of the check and no other error
+REJECTED_OK   utest_chain_check_wrong3_cpp  utest_chain_check_wrong3_cpp: rejected with the message of the check and no other error
+REJECTED_OK   utest_chain_check_wrong3_cpu_mt  utest_chain_check_wrong3_cpu_mt: rejected with the message of the check and no other error
+REJECTED_OK   utest_chain_check_wrong3_cu  utest_chain_check_wrong3_cu: rejected with the message of the check and no other error
+REJECTED_OK   utest_chain_check_wrong4_cpp  utest_chain_check_wrong4_cpp: rejected with the message of the check and no other error
+REJECTED_OK   utest_chain_check_wrong4_cpu_mt  utest_chain_check_wrong4_cpu_mt: rejected with the message of the check and no other error
+REJECTED_OK   utest_chain_check_wrong4_cu  utest_chain_check_wrong4_cu: rejected with the message of the check and no other error
+OK            utest_color_conversion_cpp
+OK            utest_color_conversion_cu
+OK            utest_constexpr_cmath_cpp
+OK            utest_constexpr_cmath_cu
+OK            utest_cpu_multithread_bit_identity_cpp
+OK            utest_cpu_multithread_cpp
+OK            utest_cuda_vector_utils_char_cpp
+OK            utest_cuda_vector_utils_cpp
+OK            utest_cuda_vector_utils_double_cpp
+OK            utest_cuda_vector_utils_float_cpp
+OK            utest_cuda_vector_utils_int_cpp
+OK            utest_cuda_vector_utils_long_cpp
+OK            utest_cuda_vector_utils_longlong_cpp
+OK            utest_cuda_vector_utils_short_cpp
+OK            utest_cuda_vector_utils_uchar_cpp
+OK            utest_cuda_vector_utils_uint_cpp
+OK            utest_cuda_vector_utils_ulong_cpp
+OK            utest_cuda_vector_utils_ulonglong_cpp
+OK            utest_cuda_vector_utils_ushort_cpp
+OK            utest_deinterlace_cpp
+OK            utest_deinterlace_cu
+OK            utest_executors_cpp
+OK            utest_executors_cu
+OK            utest_flash_attention_cu
+OK            utest_flash_attention_mma_cu
+OK            utest_get_arg_large_pack_cpp
+OK            utest_get_arg_large_pack_cu
+OK            utest_nearbyint_host_cpp
+OK            utest_resize_sampling_cpp
+OK            utest_resize_sampling_cu
+OK            utest_saturate_cast_host_cpp
+OK            utest_saturate_char_cpp
+OK            utest_saturate_char_cu
+OK            utest_saturate_cpp
+OK            utest_saturate_cu
+OK            utest_saturate_double_cpp
+OK            utest_saturate_double_cu
+OK            utest_saturate_float_cpp
+OK            utest_saturate_float_cu
+OK            utest_saturate_int_cpp
+OK            utest_saturate_int_cu
+OK            utest_saturate_long_cpp
+OK            utest_saturate_long_cu
+OK            utest_saturate_longlong_cpp
+OK            utest_saturate_longlong_cu
+OK            utest_saturate_short_cpp
+OK            utest_saturate_short_cu
+OK            utest_saturate_uchar_cpp
+OK            utest_saturate_uchar_cu
+OK            utest_saturate_uint_cpp
+OK            utest_saturate_uint_cu
+OK            utest_saturate_ulong_cpp
+OK            utest_saturate_ulong_cu
+OK            utest_saturate_ulonglong_cpp
+OK            utest_saturate_ulonglong_cu
+OK            utest_saturate_ushort_cpp
+OK            utest_saturate_ushort_cu
+OK            utest_softmax_cu
+OK            utest_stream_ownership_cu
+OK            utest_stream_ref_counts_cpp
+OK            utest_stream_ref_counts_cu
+OK            utest_yuv_to_rgb_matrices_cpp
+OK            utest_yuv_to_rgb_matrices_cu
+fkltests: 141 targets, 129 compiled, 0 failed, 0 not built; 12 of 12 expected rejections held (the ctest test <target>_rejected passed), 0 did not
+
+check_fkl_tree: done 2026-11-07T00:07:05+01:00, exit status 0 (0 = every target of every group compiled and every expected rejection held)
+# 2026-11-07T00:07:05+01:00 check_fkl_tree.sh exit 0
+# 2026-11-07T00:07:06+01:00 cvgs with ENABLE_BENCHMARK=ON: configure exit 0
+# 2026-11-07T00:09:43+01:00 cvgs with ENABLE_BENCHMARK=ON: build exit 0 (156.88 s wall, largest resident set of one process 2506516 KiB); errors: 0
+# 2026-11-07T00:09:45+01:00 fastnpp with ENABLE_BENCHMARK=ON: configure exit 0
+# 2026-11-07T00:09:50+01:00 fastnpp with ENABLE_BENCHMARK=ON: build exit 0 (4.45 s wall, largest resident set of one process 421804 KiB); errors: 0
+# 2026-11-07T00:09:51+01:00 CPU ctest exit 0
+100% tests passed, 0 tests failed out of 45
+Total Test time (real) =   1.13 sec
+window suite fkl-cuda: Total Tests: 48
+window suite cvGPUSpeedup: Total Tests: 26
+window suite FastNPP: Total Tests: 2
+-rwxrwxr-x 1 oscar oscar 1426184 Nov  6 23:23 /home/oscar/tfkl-bench/scratch/pr427/check/bench-build/bin/benchmark_CPU_NPP_vs_FastNPP_cu
+-rwxrwxr-x 1 oscar oscar 1656248 Nov  6 23:29 /home/oscar/tfkl-bench/scratch/pr427/check/bench-build/bin/benchmark_npp_batchresize_x_split3D_cu
+# 2026-11-07T00:09:51+01:00 compare with the #423 head run: exit 0 (1 = a regression)
+# 2026-11-07T00:09:51+01:00 compare with the c8fcbe8 baseline: exit 0
+== bench: baseline 40 targets (40 OK), candidate 40 targets (40 OK); in both 40
+== cvgs: baseline 16 targets (16 OK), candidate 16 targets (16 OK); in both 16
+== fastnpp: baseline 2 targets (2 OK), candidate 2 targets (2 OK); in both 2
+== fkltests: baseline 141 targets (141 OK), candidate 141 targets (141 OK); in both 141
+# 2026-11-07T00:16:56+01:00 SASS comparison exit 0
+A = /home/oscar/tfkl-bench/scratch/pr423/check-bench/bench-build/bin
+B = /home/oscar/tfkl-bench/scratch/pr427/check/bench-build/bin
+arch sm_89, executables in both: 35, only in A: [], only in B: []
+cuobjdump: /home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/cuobjdump  (Build cuda_13.4.r13.4/compiler.38855100_0)
+kernels identical: 1685, different: 0, only in A: 0, only in B: 0
+# 2026-11-07T00:16:56+01:00 step 1 ended; load 1.02 1.78 3.91
