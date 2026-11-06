@@ -21,7 +21,7 @@ three programs are those of the base: `git diff e7f28e2 1be0f5e -- fkl-self comm
 (a spin of zero seconds); `FKLB_GPU_SPIN_SECONDS` of this pull request is the version of that patch that is kept.
 
 The device code of the three binaries is identical function by function at FKL `38c4f32` and `c8fcbe8` (372, 124 and 246 functions, 0 different: `../clock-ramp/`), so the results of the
-older pin hold for the final pin.
+older pin hold for c8fcbe8 (the pin until 2026-11-07).
 
 ## Latency hiding (the one that changed)
 

@@ -9,13 +9,13 @@ the 22 percent does not follow from these two figures (22.5 percent is the ratio
 ## 1. Five pins of FKL, three rounds, alternating (`five-pins-three-rounds/`)
 
 The same benchmark source (fkl-benchmarks `e7f28e2`), the same flags, five builds that differ only in `external/fkl`: `38` = 38c4f32 (the pin of the first run; #409 is in it), `b44725e` = the
-merge of #411, `d776713` = #414, `bbc5a7b` = #416, `c8` = c8fcbe8 (#417, the final pin). `r<round>_<pin>/` has the timing CSV of pipeline (a) of that run; the pins alternate in every round;
+merge of #411, `d776713` = #414, `bbc5a7b` = #416, `c8` = c8fcbe8 (#417, the pin until 2026-11-07). `r<round>_<pin>/` has the timing CSV of pipeline (a) of that run; the pins alternate in every round;
 no CI job ran during any of the 15 runs. `summary.txt`: median ms of `fkl_fused`, `fkl_fused_halfpixel`, `fkl_perop_batch` and `rpp_fused_api` at the batches 100, 200 and 300 in each round.
 `fkl_fused` (default resize), mean of the three rounds: batch 100: 0.0623 to 0.0624 ms at all pins; batch 200: 0.1094, 0.1107, 0.1109, 0.1114, 0.1097; batch 300: 0.1508, 0.1510, 0.1499, 0.1506, 0.1505.
 The build of 38c4f32 made today is as slow as the one of c8fcbe8, and no step between them changes anything: no FKL commit is responsible. The HALF_PIXEL variant and RPP are flat at all pins to 1.5 percent; the per-op batch is not (below).
 *Correction: an earlier version said that these variants were flat at all pins, and `../README.md` said that the times are the same at the five pins within 1 percent. Recomputed from the CSVs of `five-pins-three-rounds/`
 (`five-pins-spread.py`, output `five-pins-spread.txt`; spread = (max - min) / median of the five pin means, each the mean of three rounds): `fkl_fused` differs between the pins by 0.2 to 2.5 percent over the 30 batches (6 of the
-30 above 1 percent; 0.16, 1.74 and 0.74 percent at the batches 100, 200 and 300; the final pin against the first: -0.14, +0.27 and -0.14 percent), `fkl_fused_halfpixel` by up to 1.5 percent, `rpp_fused_api` by up to 1.1 percent and
+30 above 1 percent; 0.16, 1.74 and 0.74 percent at the batches 100, 200 and 300; c8fcbe8 against 38c4f32: -0.14, +0.27 and -0.14 percent), `fkl_fused_halfpixel` by up to 1.5 percent, `rpp_fused_api` by up to 1.1 percent and
 `fkl_perop_batch` by up to 8.3 percent (batch 180; 16 of its 30 batches above 1 percent). Over the 120 cells of pipeline (a), 25 are above 1 percent, 6 above 2 and 1 above 5. There is no order by pin, so the conclusion above stands.*
 
 ## 2. The device code is the same (`device-code-identical-at-five-pins.txt`)

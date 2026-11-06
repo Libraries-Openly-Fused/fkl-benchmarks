@@ -7,7 +7,7 @@ the RTX 4090 machine repeats it with the same script. Machine: Ryzen 7 5800X3D. 
 version of every chain (no `-DE11_WRONG`) compiles in all 36 cells. Compile only: the three programs are never run (the batch of 50 and 60 has a fourth program that is run, last point of section 1). The wall times (median of 5) are 0.26 to 2.71 s and the same with and without the
 limit of one error: all the errors are in the front end, so they say nothing here and are in the CSV only.
 
-## 1. The library as it is (FKL c8fcbe8, the final pin)
+## 1. The library at FKL c8fcbe8 (the pin until 2026-11-07)
 
 | mistake | g++ 13.4 | clang++ 23.1.5 | amdclang++ 24.0.0 (gfx1200) | nvcc 13.4.92 |
 |---|---|---|---|---|

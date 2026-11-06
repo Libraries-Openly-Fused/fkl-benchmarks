@@ -1,4 +1,4 @@
-# E3 controlled compile repeat at the final pin (external/fkl at c8fcbe8), 2026-11-02
+# E3 controlled compile repeat at external/fkl c8fcbe8 (the pin until 2026-11-07), 2026-11-02
 
 One window (2026-11-02, 13:00:00 to 13:58:42 by the machine's clock; the requested set was done at 13:50:24), one compile at a time, nothing else of mine running and the other agents asked to run nothing on the machine (compile only: no GPU program ran). It gives the paper one consistent set of compile times, memory, phase times and cubin sizes at the pin it uses; nothing in this folder comes from another compile. The values the paper quoted before the repeat are in `paper-values-before.csv` and compared in `e3_repeat_vs_paper.md`.
 

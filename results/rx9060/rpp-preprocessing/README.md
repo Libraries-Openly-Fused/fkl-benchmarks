@@ -1,7 +1,7 @@
 # FKL (HIP) against AMD RPP on the pre-processing pipeline (a): RX 9060 (gfx1200), ROCm 10.1, RPP 3.2.0, FKL c8fcbe8
 
-`benchmark_rpp_preprocessing_hip` (`rpp/benchmark_rpp_preprocessing.h`, build with `-DFKLB_BUILD_RPP=ON`) at fkl-benchmarks `534fca7` and FKL `c8fcbe8` (the final pin of
-LTS-C++17). RPP is the ROCm package `amdrocm-rpp10.1` 10.1.0-3 (`librpp.so.3.2.0`), the `rppt_*` tensor API with the HIP back-end. Wall clock of one run including the
+`benchmark_rpp_preprocessing_hip` (`rpp/benchmark_rpp_preprocessing.h`, build with `-DFKLB_BUILD_RPP=ON`) at fkl-benchmarks `534fca7` and FKL `c8fcbe8` (the pin of this repository until
+2026-11-07, on LTS-C++17). RPP is the ROCm package `amdrocm-rpp10.1` 10.1.0-3 (`librpp.so.3.2.0`), the `rppt_*` tensor API with the HIP back-end. Wall clock of one run including the
 synchronisation of the stream; 3 warm-up runs, then a warm-up of at least 2 s and until the mean time of two consecutive windows of 0.25 s differs by at most 2 percent
 (the GPU clock of the RX 9060 needs about 1 s of continuous work to reach its working value: see `../README.md`); 30 timed runs per variant, median/min/max/mean;
 **three repetitions of the whole run with the variants in a rotated order** (`E5_ROTATE_OFFSET` = 0, 1, 2; the first variant of a point is variant

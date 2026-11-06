@@ -1,6 +1,6 @@
-# E5, pipeline (a) on the CPU at the final pin: FKL c8fcbe8 against OpenCV, Ryzen 7 5800X3D
+# E5, pipeline (a) on the CPU at FKL c8fcbe8 (the pin until 2026-11-07) against OpenCV, Ryzen 7 5800X3D
 
-The rows of `../e5-preprocessing-a/` (FKL `fb9ac3a`, the merge of #406: before #407, #409, #405, #411, #412, #414, #416 and #417) run again with FKL `c8fcbe8`, the final pin of LTS-C++17; the old rows stay as they were. Same benchmark
+The rows of `../e5-preprocessing-a/` (FKL `fb9ac3a`, the merge of #406: before #407, #409, #405, #411, #412, #414, #416 and #417) run again with FKL `c8fcbe8`, the pin of this repository until 2026-11-07; the old rows stay as they were. Same benchmark
 (`opencv-cpu/preprocessing/bench_preproc_a.cpp`, target `e5_preprocessing_a_cpp`; the source and `e5_common.h` are identical at fkl-benchmarks `f796f9f`, which made the old rows, and at `1be0f5e`; only the lines of the CSV header differ),
 same protocol (3 warm-up and 30 timed runs per point and variant, wall clock, median/min/max/mean; seeded noise image; batch 10 to 300 step 10; FKL `ParArch::CPU` with 1 thread and `CPU_MULTITHREAD` with 16 threads; OpenCV 4.14.0 with IPP, 1 thread and 16
 threads), built at fkl-benchmarks `1be0f5e` (clean) with g++ 13.4.0 and clang++ 23.1.5, `-O3 -march=native`. The FKL commit and the fkl-benchmarks commit are in the header of every CSV. Governor `powersave` (amd-pstate-epp, EPP balance_performance, boost on), as for the old

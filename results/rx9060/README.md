@@ -4,6 +4,8 @@ Machine: Ryzen 7 5800X3D, 60 GiB, AMD Radeon RX 9060 (gfx1200, 28 CUs, wave32, 8
 CPU governor `powersave` (amd-pstate-epp, EPP balance_performance, boost on); the machine is also the self-hosted ROCm CI runner, so every run waits for the
 runner to be idle (no `Runner.Worker`, load average below 0.8).
 
+Pins: each folder names the FKL commit it was measured at. The pin of this repository was c8fcbe8 until 2026-11-07; since then it is 64ad9195, the final library version (c8fcbe8 plus #422, #426, #423 and #427; `../rtx4090/final-checks/README.md`). The device-code comparisons of c8fcbe8, 9e20bd4e and 64ad9195 (`../rtx4090/fkl-pr423-check/`, `../rtx4090/fkl-pr427-check/`) cover the CUDA programs on the RTX 4090 only, not the HIP and CPU builds of this folder.
+
 ## Machine and software (read on 2026-11-01)
 
 The results of this folder were committed from 2026-10-30 to 2026-11-01. The machine has been in one boot since 2026-10-26 18:39 CET (the boot before ran the same kernel), and the software state read on 2026-11-01 is:
@@ -53,7 +55,7 @@ before its timed runs. The variable is implemented in fkl-benchmarks #7 (`fkl-se
 
 ## Folders
 
-- `rpp-preprocessing/`: FKL against RPP 3.2.0, pipeline (a), at the final pin c8fcbe8 with the rule above (replaces the first run, which used a warm-up of 0.5 s
+- `rpp-preprocessing/`: FKL against RPP 3.2.0, pipeline (a), at c8fcbe8 (the pin until 2026-11-07) with the rule above (replaces the first run, which used a warm-up of 0.5 s
   at the pin 38c4f32 and is in the history of the branch).
 - Removed: the NV12 video pipeline (pipeline (b), experiment E4b: the folders `e4b-nv12/` and `e4b-nv12-steady-clock/` and the pipeline (b) files of `rpp-preprocessing/` and `clock-ramp/`) is not in the paper.
   Its code and results are in the git history up to `341ecd1`, for example `git show 341ecd1:results/rx9060/e4b-nv12-steady-clock/README.md`.

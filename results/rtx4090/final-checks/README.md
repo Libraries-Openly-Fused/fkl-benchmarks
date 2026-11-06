@@ -1,7 +1,11 @@
 # Final checks of the library pin (RTX 4090, CUDA 13.4.3) and of the E16 test
 
-## The final pin: LTS-C++17 c8fcbe8 (merge of PR #417)
-`external/fkl` of fkl-benchmarks points at c8fcbe816d629377886cbdd19c83527f37ccfc04 (since fkl-benchmarks e9e599d): 18 commits over the pin 38c4f32 that carried the numbers of E0 to E2 (#411, #412, #414, #405, #416 and #417). The attention headers are unchanged since d776713.
+## The final pin, since 2026-11-07: 64ad9195
+`external/fkl` of fkl-benchmarks points at 64ad9195cd785d0c93a70b35e02d5a6c7c4a5048 (`Beta-0.1.14-LTS-218-g64ad919`, the merge of #427 into LTS-C++17), the final library version. It is c8fcbe8 plus four merges: #422 (the E16 utest), #426 (a fix of the ROCm CI), #423 (the chain check of the executors) and #427 (the crop fix of issue #19). 14 files differ; the thread-pool submodule is the same (27e733f).
+The device code of the 35 CUDA programs of this repository is the same at c8fcbe8, at 9e20bd4e (the head of #423) and at 14512602 (the head of #427, the tree of 64ad9195): 1,685 of 1,685 kernels identical in each of the two comparisons (`../fkl-pr423-check/`, `../fkl-pr427-check/`; sm_89). So the GPU results these programs gave at c8fcbe8 or at 9e20bd4e stand for 64ad9195 as far as the device code goes. The host code was not compared, and the HIP and CPU builds were not part of these comparisons. The checks of 64ad9195 (compile check, CPU tests, FKL's CUDA tests, the cvGPUSpeedup and FastNPP suites) are in `../fkl-pr427-check/` and `../fkl-ctest-pr427-14512602/`.
+
+## The pin until 2026-11-07: LTS-C++17 c8fcbe8 (merge of PR #417)
+`external/fkl` of fkl-benchmarks pointed at c8fcbe816d629377886cbdd19c83527f37ccfc04 from fkl-benchmarks e9e599d until 2026-11-07: 18 commits over the pin 38c4f32 that carried the numbers of E0 to E2 (#411, #412, #414, #405, #416 and #417). The attention headers are unchanged since d776713.
 
 **Full ctest at c8fcbe8** (`ctest-c8fcbe8-rtx4090.log`, `ctest-c8fcbe8-list.txt`): a clean checkout of c8fcbe8 (no modified file; the only untracked entries are the two build directories; the `thread-pool` submodule of the worktree is a link to a checkout at the same commit, 27e733f),
 configured with `-DENABLE_CUDA=ON -DENABLE_CPU=ON -DENABLE_CPU_MULTITHREAD=ON -DCUDA_ARCH=89 -DCMAKE_BUILD_TYPE=Release`, nvcc 13.4.92, g++ 15.2, `ctest -j4` on the RTX 4090 (CUDA tests) and the Ryzen 9 5950X (CPU tests):

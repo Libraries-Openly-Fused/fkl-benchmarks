@@ -2,10 +2,12 @@
 
 Results of the CPU back-end of FKL (`ParArch::CPU` and `CPU_MULTITHREAD`) against OpenCV on the Ryzen 7 5800X3D (8 cores, 16 threads, 60 GiB), g++ 13.4.0 and clang++ 23.1.5, OpenCV 4.14.0 with IPP:
 
-- `e5-preprocessing-a/`: pipeline (a) with FKL `fb9ac3a` (before #414 and #416); `e5-preprocessing-a-c8fcbe8/`: the same with FKL `c8fcbe8`, the final pin of LTS-C++17 (the README of that folder says which rows to cite); `e5-preprocessing-c/`: the resolution sweep (c).
+- `e5-preprocessing-a/`: pipeline (a) with FKL `fb9ac3a` (before #414 and #416); `e5-preprocessing-a-c8fcbe8/`: the same with FKL `c8fcbe8`, the pin of this repository until 2026-11-07 (the README of that folder says which rows to cite); `e5-preprocessing-c/`: the resolution sweep (c).
   The comparison names of the agreement CSVs of pipelines (a) and (c) that have a comma are in double quotes: the files written before the benchmarks quoted them were repaired afterwards, and nothing else in them changed (`agreement-csv-quoting.txt` lists the files with the sha256 of each before and after; read them with `skipinitialspace=True`, the fields are separated by a comma and a space).
 - Removed: the NV12 video pipeline (pipeline (b): the folders `e4b-nv12-portable/`, `e5-preprocessing-b/`, `e5-preprocessing-b-c8fcbe8/` and `e5-preprocessing-b-c8fcbe8-repeats/`) is not in the paper.
   Its code and results are in the git history up to `341ecd1`, for example `git show 341ecd1:results/cpu-5800x3d/e5-preprocessing-b-c8fcbe8/README.md`.
+
+Pins: each folder names the FKL commit it was measured at. The pin of this repository was c8fcbe8 until 2026-11-07; since then it is 64ad9195, the final library version (c8fcbe8 plus #422, #426, #423 and #427; `../rtx4090/final-checks/README.md`). The device-code comparisons of c8fcbe8, 9e20bd4e and 64ad9195 (`../rtx4090/fkl-pr423-check/`, `../rtx4090/fkl-pr427-check/`) cover the CUDA programs on the RTX 4090 only, not the CPU builds of this folder.
 
 ## Machine and software (read on 2026-11-01)
 
