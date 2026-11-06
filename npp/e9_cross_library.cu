@@ -65,12 +65,14 @@
         }                                                                                                                    \
     }
 
-// ---- SHORT LISTING (for the paper): the user's operation in 5 lines, the same operation as ::Gamma below under the name used in the paper ----
+// ---- SHORT LISTING (for the paper): the user's operation in 7 lines, the same operation as ::Gamma below under the name used in the paper ----
 namespace short_listing {
 struct Gamma {
     using Parent = fk::BinaryOperation<float3, float, float3, Gamma>;
     DECLARE_BINARY_PARENT
-    FK_HOST_DEVICE_FUSE float3 exec(float3 i, float g) { return {powf(i.x, g), powf(i.y, g), powf(i.z, g)}; }
+    FK_HOST_DEVICE_FUSE float3 exec(float3 i, float g) {
+        return {powf(i.x, g), powf(i.y, g), powf(i.z, g)};
+    }
 };
 }  // namespace short_listing
 // ---- END SHORT LISTING (user operation) ----
