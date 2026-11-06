@@ -1,0 +1,27 @@
+e4_pipeline_2series_r2.pdf: drawn by scripts/plot_e4.py
+size: 3.40 x 2.00 in (the printed width)
+csv: results/rtx4090/e4-preprocessing/quiet-run1/e4_preprocessing.csv
+  results commit that last changed it: 1be43e62d4933778bd49ab95d4f19c7724848fed
+  produced by repo: fkl-benchmarks 51fa9e6b9dadc0e1a034f6f8bfe37712cf84fcd2
+  produced by fkl: c8fcbe816d629377886cbdd19c83527f37ccfc04
+  produced by nvcc: 13.4.92 (/home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/nvcc), architectures 89, -fmad on, -lineinfo on
+  produced by gpu: NVIDIA GeForce RTX 4090, cc 8.9, 128 SMs, 24106 MiB, PCI 0000:09:00.0
+csv: results/rtx4090/e4-preprocessing/quiet-run2/e4_preprocessing.csv
+  results commit that last changed it: 1be43e62d4933778bd49ab95d4f19c7724848fed
+  produced by repo: fkl-benchmarks 51fa9e6b9dadc0e1a034f6f8bfe37712cf84fcd2
+  produced by fkl: c8fcbe816d629377886cbdd19c83527f37ccfc04
+  produced by nvcc: 13.4.92 (/home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/nvcc), architectures 89, -fmad on, -lineinfo on
+  produced by gpu: NVIDIA GeForce RTX 4090, cc 8.9, 128 SMs, 24106 MiB, PCI 0000:09:00.0
+csv: results/rtx4090/e4-preprocessing/quiet-run3/e4_preprocessing.csv
+  results commit that last changed it: 1be43e62d4933778bd49ab95d4f19c7724848fed
+  produced by repo: fkl-benchmarks 51fa9e6b9dadc0e1a034f6f8bfe37712cf84fcd2
+  produced by fkl: c8fcbe816d629377886cbdd19c83527f37ccfc04
+  produced by nvcc: 13.4.92 (/home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/nvcc), architectures 89, -fmad on, -lineinfo on
+  produced by gpu: NVIDIA GeForce RTX 4090, cc 8.9, 128 SMs, 24106 MiB, PCI 0000:09:00.0
+vs OpenCV-CUDA (per crop): 30 points, batch 10 to 300; speedup 36.4x at batch 10, 205.6x at batch 300; largest run-to-run range of a point (smallest to largest of the three runs) 4.4 % of the median
+vs NPP: 30 points, batch 10 to 300; speedup 36.9x at batch 10, 208.2x at batch 300; largest run-to-run range of a point (smallest to largest of the three runs) 34.2 % of the median
+for the text, vs OpenCV-CUDA (per crop) (opencv_percrop): batch 10: 36.42x (runs 35.82 to 37.00); batch 300: 205.56x (runs 205.29 to 208.18)
+for the text, vs NPP (npp): batch 10: 36.88x (runs 25.25 to 37.87); batch 300: 208.17x (runs 208.14 to 213.33)
+not drawn (series of the same tables, e4_speedups.csv and e4_summary.csv): opencv_batch (vs OpenCV-CUDA (batched)); the batched OpenCV-CUDA formulation stacks the crops by hand into one GpuMat and calls OpenCV-CUDA once per operation
+FKL sampling: ASYMMETRIC against OpenCV-CUDA (the convention of cv::cuda::resize), HALF_PIXEL against NPP (its convention)
+the three quiet runs read: results/rtx4090/e4-preprocessing/quiet-run1/e4_preprocessing.csv, results/rtx4090/e4-preprocessing/quiet-run2/e4_preprocessing.csv, results/rtx4090/e4-preprocessing/quiet-run3/e4_preprocessing.csv (median over the runs of the per-run ratio; no other process was running)
