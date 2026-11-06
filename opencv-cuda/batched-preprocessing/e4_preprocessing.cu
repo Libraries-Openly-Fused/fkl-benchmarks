@@ -23,8 +23,9 @@
 // Every implementation starts from the same bytes at the same pitch (the source is uploaded once to a device image that FKL, OpenCV-CUDA and NPP all read,
 // the crops are ROIs of it: one RawPtr2D / GpuMat ROI / pointer per crop, never a Crop operation followed by a Resize):
 //   opencv_percrop      OpenCV-CUDA, every operation per crop: convertTo, resize, multiply, cvtColor, subtract, divide, split (7 calls per crop)
-//   opencv_batch        OpenCV-CUDA, the strongest baseline an expert writes (the "OCVBatch" of cvGPUSpeedup's test): convertTo and resize per crop into a stacked
-//                       buffer, then ONE multiply, cvtColor, subtract and divide for the whole stack, then split per crop (not run for batch 1: same as opencv_percrop)
+//   opencv_batch        OpenCV-CUDA with the crops stacked by hand into one GpuMat (the "OCVBatch" of cvGPUSpeedup's test): convertTo and resize per crop into a stacked
+//                       buffer, then ONE multiply, cvtColor, subtract and divide for the whole stack, then split per crop (not run for batch 1: same as opencv_percrop).
+//                       The paper compares with opencv_percrop: OpenCV-CUDA has no batched interface and this formulation needs pointer-level work at a different level of abstraction
 //   npp                 NPP: nppiConvert_8u32f per crop, ONE nppiResizeBatch_32f_C3R_Advanced for the batch (nppiResize_32f_C3R for a single frame: the batched call needs more than one image), then per crop SwapChannels, MulC, SubC, DivC and
 //                       Copy_32f_C3P3R into the tensor; the intermediates ping-pong between two stacks (fewer than a buffer per step)
 //   npp_ctx_as_tests    (only when named in E4_ONLY) the same NPP calls with the stream context built as FastNPP's tests do (major and minor swapped: see makeNppContext)

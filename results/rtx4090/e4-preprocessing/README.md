@@ -5,7 +5,7 @@ divide by {3.2, 0.6, 11.8}, split into one NCHW float tensor. E4a: BATCH crops o
 3840 x 2160, output 768 x 512, 2048 x 1152, 4096 x 2304. Thread fusion off. Timing: CUDA events around one launch of the whole implementation (including the host calls that enqueue it), 100 launches after one warm-up (`gpu_mean_ms`).
 Host time of one call, two ways (`host_enqueue_us`: the launch function returns, stream idle before each of 100 calls; `host_launch_us`: 100 calls back to back, wall time per call, the definition of the E2 script).
 Built from fkl-benchmarks 51fa9e6 with the library at c8fcbe8 (header lines `# repo`, `# fkl`), FastNPP 9dfc4f4 (the stream-context swap of its tests is not used here: no measurable effect, `../npp-context/`).
-`opencv_percrop`: 7 OpenCV-CUDA calls per crop; `opencv_batch`: the strongest OpenCV baseline (convertTo and resize per crop into a stacked buffer, one multiply/cvtColor/subtract/divide for the stack, split per crop);
+`opencv_percrop`: 7 OpenCV-CUDA calls per crop; `opencv_batch`: OpenCV-CUDA with the crops stacked by hand into one GpuMat and one OpenCV-CUDA call per operation (convertTo and resize per crop into a stacked buffer, one multiply/cvtColor/subtract/divide call for the stack, split per crop); **the paper compares with the per-crop OpenCV-CUDA calls (`opencv_percrop`), because OpenCV-CUDA has no batched interface and the batched formulation needs pointer-level work at a different level of abstraction (Oscar's reason); the batched series stays in the tables below, it is not what the paper's figure draws**;
 `npp`: per-crop conversion, one batched resize (single-image resize for E4c), per-crop arithmetic; `fkl_fused`: one kernel (ASYMMETRIC sampling, FKL's default and OpenCV's); `fkl_fused_half_pixel`: the same with
 `ResizeSampling::HALF_PIXEL`, the convention of NPP. Each output is checked against the scalar double-precision reference of its own convention (`quiet-run*/e4_preprocessing_agreement.csv`): 486 rows, ok_own = 1 in all of them,
 largest error 5.4e-6 (tolerance 1e-4).
@@ -33,7 +33,7 @@ The two earlier sweeps, taken while compile jobs ran on the other cores, are in 
 | E4c 3840 x 2160 | 1.605 (0.0 %) | - | 1.849 (0.1 %) | 0.1567 (0.0 %) | 0.1566 (0.1 %) |
 
 Speedup of the fused kernel (median over the runs of the per-run ratio; FKL with ASYMMETRIC sampling against the OpenCV versions, FKL with HALF_PIXEL against NPP): E4a, batch 10 to 300: against `opencv_percrop` 36.4x to 205.6x,
-against `opencv_batch` (the strongest OpenCV baseline) 16.9x to 86.2x, against NPP 36.9x to 208.2x; at batch 100: 154.9x, 64.5x, 158.2x; at batch 300: 205.6x, 86.2x, 208.2x. E4c (720p, 1080p, 4K): against `opencv_percrop`
+against `opencv_batch` (the batched formulation described above) 16.9x to 86.2x, against NPP 36.9x to 208.2x; at batch 100: 154.9x, 64.5x, 158.2x; at batch 300: 205.6x, 86.2x, 208.2x. E4c (720p, 1080p, 4K): against `opencv_percrop`
 5.3x, 11.1x, 10.2x; against NPP 6.8x, 9.8x, 11.8x. The per-point ratios with their smallest and largest run are in `e4_speedups.csv`.
 
 ## Host time of one call (median over the runs, microseconds: `host_enqueue_us` / `host_launch_us`)
