@@ -161,11 +161,11 @@ def main():
     panel(ax, a, "CPU-time speedup", "upper left")
     pc.save(fig, os.path.join(args.out_dir, f"cputime_r2{args.suffix}.pdf"), [p_cv, p_cn], "plot_pipelines.py", notes_a + cpu)
     fig, ax = plt.subplots(figsize=(args.width, 2.0), constrained_layout=True)
-    panel(ax, b, "GPU speedup of FastNPP vs NPP", "lower right")
+    panel(ax, b, "GPU speedup vs NPP", "lower right")
     pc.save(fig, os.path.join(args.out_dir, f"npp_r2{args.suffix}.pdf"), [p_without, p_with], "plot_pipelines.py", notes)
     fig, axes = plt.subplots(1, 2, figsize=(7.1, 2.0), constrained_layout=True)
     panel(axes[0], a, "CPU-time speedup", "upper left")
-    panel(axes[1], b, "GPU speedup of FastNPP vs NPP", "lower right")
+    panel(axes[1], b, "GPU speedup vs NPP", "lower right")
     pc.save(fig, os.path.join(args.out_dir, f"pipelines_r2{args.suffix}.pdf"), [p_cv, p_cn, p_without, p_with], "plot_pipelines.py", notes + cpu)
 
 

@@ -1,0 +1,22 @@
+npp_r2_after45.pdf: drawn by scripts/plot_pipelines.py
+size: 3.40 x 2.00 in (the printed width)
+csv: results/rtx4090/e0-npp-after45/run1/test_npp_batchresize_x_split3D_No_CPU_Overhead.csv
+  results commit that last changed it: 1224bf310f843ca69569716e0a547d05ca6d525e
+  produced by repo: fkl-benchmarks 9bf0ca92cb158a0bd94bd11276624386fc854d1a
+  produced by fkl: c8fcbe816d629377886cbdd19c83527f37ccfc04
+  produced by nvcc: 13.4.92 (/home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/nvcc), architectures 89, -fmad on, -lineinfo on
+  produced by gpu: NVIDIA GeForce RTX 4090, cc 8.9, 128 SMs, 24106 MiB, PCI 0000:09:00.0
+csv: results/rtx4090/e0-npp-after45/run1/test_npp_batchresize_x_split3D.csv
+  results commit that last changed it: 1224bf310f843ca69569716e0a547d05ca6d525e
+  produced by repo: fkl-benchmarks 9bf0ca92cb158a0bd94bd11276624386fc854d1a
+  produced by fkl: c8fcbe816d629377886cbdd19c83527f37ccfc04
+  produced by nvcc: 13.4.92 (/home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/nvcc), architectures 89, -fmad on, -lineinfo on
+  produced by gpu: NVIDIA GeForce RTX 4090, cc 8.9, 128 SMs, 24106 MiB, PCI 0000:09:00.0
+(a) cvGS vs OpenCV-CUDA: 16 points, batch 2 to 152; first 14.30x, maximum 419.54x at batch 142; last 411.55x
+(a) cvGS vs OpenCV-CUDA, for the text: minimum 14.3x at batch 2, maximum 419.5x at batch 142; at the first batch (2) 14.3x, at the last batch (152) 411.5x
+(a) FastNPP vs NPP: 16 points, batch 2 to 152; first 14.66x, maximum 288.19x at batch 142; last 287.02x
+(a) FastNPP vs NPP, for the text: minimum 14.7x at batch 2, maximum 288.2x at batch 142; at the first batch (2) 14.7x, at the last batch (152) 287.0x
+(b) without CPU overhead: 15 points, batch 10 to 150; first 35.56x, maximum 141.77x at batch 140; last 140.91x
+(b) without CPU overhead, for the text: minimum 35.6x at batch 10, maximum 141.8x at batch 140; at the first batch (10) 35.6x, at the last batch (150) 140.9x
+(b) with CPU overhead: 15 points, batch 10 to 150; first 29.99x, maximum 109.73x at batch 150; last 109.73x
+(b) with CPU overhead, for the text: minimum 30.0x at batch 10, maximum 109.7x at batch 150; at the first batch (10) 30.0x, at the last batch (150) 109.7x

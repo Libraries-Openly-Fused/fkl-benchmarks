@@ -1,0 +1,26 @@
+cputime_r2_after45.pdf: drawn by scripts/plot_pipelines.py
+size: 3.40 x 2.00 in (the printed width)
+csv: results/rtx4090/e0-cpu-time-opencv/test_cpu_batchresize_x_split3D.csv
+  results commit that last changed it: 645c631ab9e5892a6681eca6f564a124035a69e8
+  produced by repo: fkl-benchmarks 269d229c220e00d4c7f04a7dd61d5542cbe318e6
+  produced by fkl: fb9ac3ad4a64aad40ae3122e14143f03814f2cc0
+  produced by nvcc: 13.4.92 (/home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/nvcc), architectures 89, -fmad on, -lineinfo on
+  produced by gpu: NVIDIA GeForce RTX 4090, cc 8.9, 128 SMs, 24106 MiB, PCI 0000:09:00.0
+csv: results/rtx4090/e0-cpu-time-npp-after45/run1/test_NPP_cpu_batchresize_x_split3D.csv
+  results commit that last changed it: 1224bf310f843ca69569716e0a547d05ca6d525e
+  produced by repo: fkl-benchmarks 9bf0ca92cb158a0bd94bd11276624386fc854d1a
+  produced by fkl: c8fcbe816d629377886cbdd19c83527f37ccfc04
+  produced by nvcc: 13.4.92 (/home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/nvcc), architectures 89, -fmad on, -lineinfo on
+  produced by gpu: NVIDIA GeForce RTX 4090, cc 8.9, 128 SMs, 24106 MiB, PCI 0000:09:00.0
+(a) cvGS vs OpenCV-CUDA: 16 points, batch 2 to 152; first 14.30x, maximum 419.54x at batch 142; last 411.55x
+(a) cvGS vs OpenCV-CUDA, for the text: minimum 14.3x at batch 2, maximum 419.5x at batch 142; at the first batch (2) 14.3x, at the last batch (152) 411.5x
+(a) FastNPP vs NPP: 16 points, batch 2 to 152; first 14.66x, maximum 288.19x at batch 142; last 287.02x
+(a) FastNPP vs NPP, for the text: minimum 14.7x at batch 2, maximum 288.2x at batch 142; at the first batch (2) 14.7x, at the last batch (152) 287.0x
+what is measured: host time, not GPU time. The time the CPU spends in the calls that enqueue the work (std::chrono::steady_clock around the OpenCV-CUDA calls of one iteration and around the one cvGS::executeOperations call of the same iteration, no synchronisation inside the timed region), 100 iterations after a warm-up pass. It measures the launch cost of the GPU pipelines; it is not the CPU back-end of the library
+speedup = host time of the baseline / host time of the fused call: the column 'Mean Speedup', the mean over the 100 iterations of the per-iteration ratio; the ratio of the two mean times is lower by 0.5 % to 2.7 % over the batch sizes
+the OpenCV-CUDA side of this experiment is the per-crop loop: for each crop on one stream convertTo, resize, multiply, cvtColor (3 channels), subtract, divide, split = 7 enqueued calls per crop, 7 x batch in total (benchmark_CPU_OpenCV_vs_cvGS.cu); it is not the stacked 'opencv_batch' formulation of E4, which runs 3 x batch + 4 calls (e4_preprocessing.cu) and is not in this experiment
+the FastNPP vs NPP series is RUN 1 of the re-run after the FastNPP resize-convention change (PR #45 merged; FastNPP a1b5e245, FKL c8fcbe8): results/rtx4090/e0-cpu-time-npp-after45/run1/test_NPP_cpu_batchresize_x_split3D.csv; window of 2026-11-06 15:30:00 to 15:31:16 (results/rtx4090/e9-cross-library/window-console.txt and load.log: load 0.03 before, no other job); it is not part of the A/B above; the cvGS vs OpenCV-CUDA series is the older single run of e0-cpu-time-opencv
+load audit: e0-cpu-time-opencv ran 2026-10-30 08:56:19-08:56:22 (3 s); seconds with a loaded core on the E0 cores / the other cores of its CCD / CCD1 / unpinned: 0 / 0 / 0 / 0; maximum parallel jobs 0
+load audit: rows of these experiments in overlaps.csv: 0, in irregular_points.csv: 0; no row of the CSVs read here is flagged
+frozen-vs-rebuilt host-time A/B of this experiment (results/rtx4090/e0-pin-transfer/host-check): the binary that made the numbers of this figure (fkl-benchmarks 269d229, FKL fb9ac3a) against the rebuild against the FKL pin c8fcbe8, 10 rounds, alternating order, 16 batch sizes; rebuilt / frozen mean host time of the cvGS call, per round the median over the batch sizes: median 0.999, smallest 0.988, largest 1.009; same ratio of the OpenCV-CUDA calls (the control, which does not depend on the library): median 0.999, smallest 0.980, largest 1.012; the host times of this figure hold at c8fcbe8 within the run-to-run spread
+the plotted file against the median of the 10 frozen-binary runs of the A/B (speedup per batch size, plotted / median): median 1.003, smallest 0.975 at batch 112, largest 1.060 at batch 122 (plotted 400.3x, A/B median 377.6x, A/B range 368.7x to 387.7x); the plotted run is one of the samples, the figure is not redrawn from the A/B
