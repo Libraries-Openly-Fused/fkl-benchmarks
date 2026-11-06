@@ -21,6 +21,9 @@
      the same figure from the controlled repeat at the final pin (scripts/e3_repeat_table.py writes its tables): no time-out marker (the 6,000-operation time-out is not part of that set), the dotted line at
      N = 3,848 is kept (it comes from the committed sweeps of variant B and the sidecar says so). --trees: the tree labels of the distinct-operations series in e3_table_chains.csv; --provenance: the CSV files whose header
      (repo, fkl, nvcc, gpu) and last commit are written to the sidecar (the first one names the pin); --note: one more line for the sidecar (repeatable).
+  python scripts/plot_compiletime.py --csv results/rtx4090/e3-compile/repeat-c8fcbe8 --trees c8fcbe8 --no-staticloop --xlim 1,1e4 --ylim 1,1e3 --out figures/compiletime_distinct_only_r2_c8fcbe8.pdf --provenance ... --note ...
+     --no-staticloop: the StaticLoop series is not drawn (the distinct-operations series is then the first series: first colour, circles; the table e3_table_staticloop.csv is unchanged); --xlim / --ylim: LO,HI of the axes
+     (x: number of fused operations, y: nvcc wall time in seconds; the defaults are 1,3e4 and 1,1e4); the sidecar lists the distinct-operations values for the text.
 
 Paper-facing default (the paper describes the library as it is now): two series on a log-log plot, nvcc wall time (one core, nvcc 13.4.92, -O3, -std=c++17,
 sm_89 + PTX):
@@ -74,6 +77,9 @@ def main():
     ap.add_argument("--trees", default=",".join(CURRENT_TREES), help="tree labels of the distinct-operations series in e3_table_chains.csv (default: the PR #417 branch and the copy of the pin)")
     ap.add_argument("--provenance", nargs="*", default=[], help="more CSV files (the sweeps the tables were made from) whose header and last commit are written to the sidecar")
     ap.add_argument("--note", action="append", default=[], help="one more line for the sidecar of a figure drawn with --trees (repeatable)")
+    ap.add_argument("--no-staticloop", action="store_true", help="do not draw the StaticLoop series (the distinct-operations series takes the first colour and circles)")
+    ap.add_argument("--xlim", default="1,3e4", help="LO,HI of the x axis (default 1,3e4)")
+    ap.add_argument("--ylim", default="1,1e4", help="LO,HI of the nvcc time axis (default 1,1e4)")
     args = ap.parse_args()
     chains = pc.resolve(args.csv, "e3_table_chains.csv")
     loops = pc.resolve(args.csv, "e3_table_staticloop.csv")
@@ -91,24 +97,30 @@ def main():
         fig, ax_t = plt.subplots(figsize=(3.4, 2.1), constrained_layout=True)
         ax_m = None
     c_sl, c_a = pc.SERIES_COLORS[0], pc.SERIES_COLORS[1]
+    mk_a, mks_a = "s", 2.4
+    xlo, xhi = (float(v) for v in args.xlim.split(","))
+    ylo, yhi = (float(v) for v in args.ylim.split(","))
+    if args.no_staticloop:
+        c_a, mk_a, mks_a = pc.SERIES_COLORS[0], "o", 3.0      # the only series: the first colour and circles
 
     def draw(ax, key, scale, with_labels):
-        ax.plot(sl_n, [float(r[key]) * scale for r in sl], color=c_sl, marker="o", markersize=3.0, linewidth=1.0, label="StaticLoop (identical operations)" if with_labels else None)
+        if not args.no_staticloop:
+            ax.plot(sl_n, [float(r[key]) * scale for r in sl], color=c_sl, marker="o", markersize=3.0, linewidth=1.0, label="StaticLoop (identical operations)" if with_labels else None)
         if args.history:
             ax.plot(list(hist), [float(r[key]) * scale for r in hist.values()], color=c_a, linestyle=(0, (1.5, 2.0)), marker="s", markersize=3.6, markerfacecolor="white",
                     markeredgewidth=0.8, linewidth=1.0, label="distinct operations, before the change" if with_labels else None)
-        ax.plot(list(cur), [float(r[key]) * scale for r in cur.values()], color=c_a, marker="s", markersize=2.4, linewidth=1.0,
+        ax.plot(list(cur), [float(r[key]) * scale for r in cur.values()], color=c_a, marker=mk_a, markersize=mks_a, linewidth=1.0,
                 label=("distinct operations, after the change" if args.history else "distinct operations") if with_labels else None)
         ax.set_xscale("log")
         ax.set_yscale("log")
-        ax.set_xlim(1, 3e4)
+        ax.set_xlim(xlo, xhi)
         ax.axvline(3848, color=pc.INK, linestyle=(0, (1.5, 2.5)), linewidth=0.8, label="float3 parameters fail at N = 3,848" if with_labels else None)
         ax.grid(False, which="minor")
         ax.set_xlabel("Number of fused operations")
 
     draw(ax_t, "nvcc_s", 1.0, True)
     ax_t.set_ylabel("nvcc wall time (s)")
-    ax_t.set_ylim(1, 1e4)
+    ax_t.set_ylim(ylo, yhi)
     for n, r in to_cur.items():
         ax_t.plot([n], [float(r["nvcc_s"])], color=c_a, marker="^", markersize=4.2, markeredgewidth=0.8, linestyle="none")
         ax_t.text(n * 1.25, float(r["nvcc_s"]), "timeout", ha="left", va="center")
@@ -143,7 +155,11 @@ def main():
                  "sweeps results/rtx4090/e3-compile/e3_limit_B_3847.csv and e3_limit_B_3848.csv, NOT from the repeat. There is no time-out marker: the 6,000-operation time-out is not part of this set",
                  "toolchain: CUDA 13.4.3, nvcc 13.4.92, g++ 15.2, one core, --threads 1, -O3 -DNDEBUG -std=c++17, sm_89 + PTX",
                  f"tables: {chains}, {loops}"]
-    pc.save(fig, args.out, [chains, loops] + args.provenance, "plot_compiletime.py", notes)
+    if args.no_staticloop:
+        notes = ["StaticLoop series: NOT drawn in this figure (e3_table_staticloop.csv is unchanged and still holds it); the distinct-operations series is the first series (first colour, circles)",
+                 f"axes: x {args.xlim}, y {args.ylim} s",
+                 "for the text, distinct operations (variant A, median of three compiles), nvcc wall time: " + ", ".join(f"N = {n:,}: {float(r['nvcc_s']):.3f} s" for n, r in cur.items())] + notes
+    pc.save(fig, args.out, [chains] + ([] if args.no_staticloop else [loops]) + args.provenance, "plot_compiletime.py", notes)
 
 
 if __name__ == "__main__":

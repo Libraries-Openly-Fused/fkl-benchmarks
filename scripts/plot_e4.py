@@ -14,7 +14,11 @@
 # limitations under the License.
 """E4a figure and the compact CSVs of E4c and E4d, from the three quiet runs of the pre-processing program (results/rtx4090/e4-preprocessing).
 
-  python scripts/plot_e4.py --csv results/rtx4090/e4-preprocessing [--out figures/e4_pipeline_r2.pdf]
+  python scripts/plot_e4.py --csv results/rtx4090/e4-preprocessing [--out figures/e4_pipeline_r2.pdf] [--series opencv_batch,opencv_percrop,npp]
+  python scripts/plot_e4.py --csv results/rtx4090/e4-preprocessing --series opencv_percrop,npp --out figures/e4_pipeline_2series_r2.pdf
+     --series selects the series that are DRAWN (the others stay in e4_speedups.csv and e4_summary.csv): the paper compares with the per-crop OpenCV-CUDA calls and with NPP; the batched OpenCV-CUDA formulation
+     (the crops stacked by hand into one GpuMat, one OpenCV-CUDA call per operation) is not drawn. With a custom list the colours and markers follow the position in the list (the first series is blue) and the
+     two compact CSVs are not written again.
 
 Figure (3.4 x 2.0 in, one column): speedup of the fused pre-processing kernel (FKL, one launch) against OpenCV-CUDA with one batched call per operation, OpenCV-CUDA per crop and NPP, against the
 number of crops (10 to 300); the median over the three runs of the per-run ratio (`e4_speedups.csv`). FKL uses the sampling convention of its baseline: ASYMMETRIC against OpenCV-CUDA, HALF_PIXEL against NPP.
@@ -39,7 +43,12 @@ def rd(path):
 
 def main():
     ap = pc.arg_parser(__doc__, "e4_pipeline_r2.pdf")
+    ap.add_argument("--series", default=",".join(b for b, _ in SERIES), help="baselines to draw, comma separated, in drawing order (default: all three)")
     args = ap.parse_args()
+    wanted = args.series.split(",")
+    labels = dict(SERIES)
+    assert all(w in labels for w in wanted), f"--series: unknown baseline in {wanted}; known: {list(labels)}"
+    custom = wanted != [b for b, _ in SERIES]
     d = args.csv if os.path.isdir(args.csv) else os.path.dirname(args.csv)
     runs = sorted(glob.glob(os.path.join(d, "quiet-run*", "e4_preprocessing.csv")))
     speed = rd(os.path.join(d, "e4_speedups.csv"))
@@ -48,12 +57,14 @@ def main():
     pc.apply_style()
     fig, ax = plt.subplots(figsize=(3.4, 2.0), constrained_layout=True)
     notes = []
-    for i, (base, label) in enumerate(SERIES):
+    for i, base in enumerate(wanted):
+        label = labels[base]
+        ci = i if custom else [b for b, _ in SERIES].index(base)       # custom list: colour and marker by position, the default list keeps its fixed assignment
         pts = sorted((int(r["batch"]), float(r["speedup_median"]), float(r["speedup_smallest_run"]), float(r["speedup_largest_run"])) for r in speed if r["experiment"] == "E4a" and r["baseline"] == base)
         x, y = [p[0] for p in pts], [p[1] for p in pts]
-        mk = pc.SERIES_MARKERS[i]
-        ax.plot(x, y, color=pc.SERIES_COLORS[i], marker=mk, markersize=2.6, markevery=3, linewidth=1.0, label=label, clip_on=False,
-                markerfacecolor="white" if base == "opencv_percrop" else pc.SERIES_COLORS[i], markeredgewidth=0.7)
+        mk = pc.SERIES_MARKERS[ci]
+        ax.plot(x, y, color=pc.SERIES_COLORS[ci], marker=mk, markersize=2.6, markevery=3, linewidth=1.0, label=label, clip_on=False,
+                markerfacecolor="white" if base == "opencv_percrop" else pc.SERIES_COLORS[ci], markeredgewidth=0.7)
         notes.append(f"{label}: {len(x)} points, batch {x[0]} to {x[-1]}; speedup {y[0]:.1f}x at batch {x[0]}, {y[-1]:.1f}x at batch {x[-1]}; largest run-to-run range of a point (smallest to largest of the three runs) "
                      f"{max(100 * (p[3] - p[2]) / p[1] for p in pts):.1f} % of the median")
     ax.set_xlim(0, 310)
@@ -62,10 +73,22 @@ def main():
     ax.set_xlabel("Number of crops (batch)")
     ax.set_ylabel("Speedup of the fused\nkernel")
     ax.legend(loc="lower right")
+    # the numbers a text quotes: the median and the range of the three runs at the two ends, per drawn series
+    for base in wanted:
+        ends = []
+        for b in (10, 300):
+            r = next(r for r in speed if r["experiment"] == "E4a" and r["baseline"] == base and int(r["batch"]) == b)
+            ends.append(f"batch {b}: {float(r['speedup_median']):.2f}x (runs {float(r['speedup_smallest_run']):.2f} to {float(r['speedup_largest_run']):.2f})")
+        notes.append(f"for the text, {labels[base]} ({base}): " + "; ".join(ends))
+    if custom:
+        notes.append("not drawn (series of the same tables, e4_speedups.csv and e4_summary.csv): " + ", ".join(f"{b} ({l})" for b, l in SERIES if b not in wanted) +
+                     "; the batched OpenCV-CUDA formulation stacks the crops by hand into one GpuMat and calls OpenCV-CUDA once per operation")
     notes.append("FKL sampling: ASYMMETRIC against OpenCV-CUDA (the convention of cv::cuda::resize), HALF_PIXEL against NPP (its convention)")
     notes.append("the three quiet runs read: " + ", ".join(os.path.relpath(p, pc.REPO) for p in runs) + " (median over the runs of the per-run ratio; no other process was running)")
     pc.save(fig, args.out, runs, "plot_e4.py", notes)
 
+    if custom:
+        return
     # E4c compact CSV: the three whole frames
     rows = []
     for w, name in FRAMES.items():
