@@ -2,7 +2,7 @@
 
 Window A approved by the coordinator as a control before the head of the library-checks PR exists. Build: `scratch/fkl-check-baseline-fkltests-c8fcbe8/fkltests-build` (FKL c8fcbe8, compiled by `scripts/check_fkl_tree.sh --only fkltests`, 125 of 125 executables, sm_89, nvcc 13.4.92, g++ 15.2; the binaries' sha256 are in `binary-sha256.txt`). Command: `ctest -R '_cu$' --timeout 600 -j1 --output-on-failure --no-compress-output -T Test`, `CUDA_VISIBLE_DEVICES=1` (the RTX 4090, the desktop session running on it), pinned to cores 0-3,16-19, one test at a time. The tests are functional tests, not measurements: pass / fail per test, no timing claim (the times below are ctest's wall times of one run). Load before 0.00 0.25 1.99, after 0.23 0.29 1.98 (`environment-before.txt`, `environment-after.txt`, `load.log` every 5 s).
 
-**Result: 46 of 46 passed, 0 failed, 0 timeouts, 0 not run; ctest exit 0; total test time (real) 7.11 s; the ctest process ran 16:50:01 to 16:50:08.** The slowest test is `utest_saturate_cu` (1.21 s), the next ones are below 0.6 s; 23 tests report 0.00 s (they have little or no run-time work: compile-time and bookkeeping checks). Nothing at the baseline fails, so there is no pre-existing failure of c8fcbe8 to explain.
+**Result: 46 of 46 passed, 0 failed, 0 timeouts, 0 not run; ctest exit 0; total test time (real) 7.11 s; the ctest process ran 16:50:01 to 16:50:08.** The slowest test is `utest_saturate_cu` (1.21 s), the next ones are below 0.6 s; 23 tests report 0.00 s (ctest rounds to 10 ms; I did not look at what each of them does at run time). Nothing at the baseline fails, so there is no pre-existing failure of c8fcbe8 to explain.
 
 | # | test | result | ctest time (s) |
 |--:|---|---|--:|
