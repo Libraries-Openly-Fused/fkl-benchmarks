@@ -198,8 +198,8 @@ int launch() {
     fklb::CsvWriter agree("e9_agreement.csv", "E9 cross-library kernels: agreement of the outputs", {"seed", "comparison", "n", "identical", "differing", "max_abs_difference", "nan_a", "nan_b"},
                           "seeded noise 3840 x 2160 uchar3, 50 crops 60 x 120 -> 64 x 128 float3, tensor (crop, channel, y, x); identical = memcmp of the bit patterns; M1 = cvGS resize + FastNPP + cvGS + user gamma, M2 = FastNPP resize + cvGS + FastNPP + user gamma, "
                           "R1 = cvGS only, R2 = FastNPP only (each with the same user gamma)");
-    fklb::CsvWriter timing("e9_timing.csv", "E9 cross-library kernels: time per call and launches", {"run", "variant", "position", "kernels_per_call", "time_ms_median", "time_ms_min", "time_ms_max"},
-                           "kernels_per_call = kernel nodes of one call captured into a CUDA graph; time per call from blocks of back-to-back calls between two CUDA events, after a warm-up of at least 300 ms; the order of the variants is rotated by E9_RUN");
+    fklb::CsvWriter timing("e9_timing.csv", "E9 cross-library kernels: time per call and launches", {"run", "variant", "position", "kernels_per_call", "launch_ms_median", "launch_ms_min", "launch_ms_max", "graph_ms_median", "graph_ms_min", "graph_ms_max", "calls_per_graph"},
+                           "kernels_per_call = kernel nodes of one call captured into a CUDA graph; launch_ms = time per call of plain back-to-back launches (host and GPU), graph_ms = GPU time per call from a CUDA graph of calls_per_graph calls (no launch overhead; the standing GPU-bound time); blocks between two CUDA events, warm-up of at least 300 ms; the order of the variants is rotated by E9_RUN");
     for (int seed = 0; seed < seeds; ++seed) {
         Setup s;
         makeSetup(s, seed);
@@ -303,11 +303,27 @@ int launch() {
             std::vector<size_t> rot = {0, 1, 2, 3};
             std::rotate(rot.begin(), rot.begin() + (run % 4), rot.end());
             int position = 0;
+            const int callsPerGraph = 100;
+            // GPU time per call: callsPerGraph calls captured into one graph and replayed, so that the launch overhead of the host does not enter (a call is about 6 us of GPU time)
+            auto timeGraph = [&](const std::function<void()>& call) -> Timing {
+                cudaGraph_t graph{};
+                cudaGraphExec_t exec{};
+                E9_CHECK(cudaStreamBeginCapture(cs, cudaStreamCaptureModeThreadLocal));
+                for (int i = 0; i < callsPerGraph; ++i) call();
+                E9_CHECK(cudaStreamEndCapture(cs, &graph));
+                E9_CHECK(cudaGraphInstantiate(&exec, graph, 0));
+                const std::function<void()> replay = [&] { E9_CHECK(cudaGraphLaunch(exec, cs)); };
+                Timing t = timeCall(cs, replay, blocks, blockMs);
+                t.median /= callsPerGraph; t.min /= callsPerGraph; t.max /= callsPerGraph;
+                E9_CHECK(cudaGraphExecDestroy(exec)); E9_CHECK(cudaGraphDestroy(graph));
+                return t;
+            };
             for (const size_t v : rot) {
                 const Timing t = timeCall(cs, variants[v].call, blocks, blockMs);
-                timing.row(run, variants[v].name, ++position, kernels[v], t.median, t.min, t.max);
+                const Timing g = timeGraph(variants[v].call);
+                timing.row(run, variants[v].name, ++position, kernels[v], t.median, t.min, t.max, g.median, g.min, g.max, callsPerGraph);
                 timing.flush();
-                std::cout << variants[v].name << ": " << kernels[v] << " kernel(s) per call, " << t.median << " ms (min " << t.min << ", max " << t.max << ")" << std::endl;
+                std::cout << variants[v].name << ": " << kernels[v] << " kernel(s) per call, launch loop " << t.median << " ms (min " << t.min << ", max " << t.max << "), graph " << g.median << " ms (min " << g.min << ", max " << g.max << ")" << std::endl;
             }
         }
     }
