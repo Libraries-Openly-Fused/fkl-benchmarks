@@ -1,0 +1,19 @@
+# experiment: E3 compile-time sweep
+# notes: one core (8), nvcc --threads 1, -O3 -DNDEBUG -std=c++17 sm_89 +PTX -ftemplate-depth=1000 -lineinfo; GNU time for the peak RSS; timeout 3600 s per compile; the programs are not executed; fkl include /home/oscar/tfkl-bench/scratch/pr423/fkl-head/include
+# repo: c6d322d99850fd0c3af60c42c87ba6357f724b70-dirty
+# fkl: 9e20bd4e5286be70fbeb0f79a19b96f00c81a06f
+# cvGPUSpeedup: 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c
+# FastNPP: a1b5e245d7dd70fba23dcb51a0aea80495dbc61d
+# fkl tree (FKLB_FKL_TREE, not the pin external/fkl of this repository): /home/oscar/tfkl-bench/scratch/pr423/fkl-head
+# python: 3.12.13, torch: 2.14.1+cu130, torch.version.cuda: 13.0
+# triton: 3.8.0; ptxas /home/oscar/tfkl-bench/venv-torch/lib/python3.12/site-packages/triton/backends/nvidia/bin/ptxas (release 12.9); ptxas_blackwell /home/oscar/tfkl-bench/venv-torch/lib/python3.12/site-packages/triton/backends/nvidia/bin/ptxas-blackwell (release 13.3); cuobjdump /home/oscar/tfkl-bench/venv-torch/lib/python3.12/site-packages/triton/backends/nvidia/bin/cuobjdump (release 13.1); nvdisasm /home/oscar/tfkl-bench/venv-torch/lib/python3.12/site-packages/triton/backends/nvidia/bin/nvdisasm (release 13.1)
+# flash_attn: 2.8.3.post2
+# os: Ubuntu 26.04.1 LTS
+# kernel: Linux 7.0.0-38-generic
+# gpu: NVIDIA GeForce RTX 4090, cc 8.9, 128 SMs, 24106 MiB
+# cuda_visible_devices: 1 (device 0, pci 00000000:05:00.0)
+# nvidia-smi driver: 610.43.02
+# clocks (sm, mem, max sm, max mem, MHz): 180 MHz, 405 MHz, 3090 MHz, 10001 MHz
+# power limit, temperature at start: 130.00 W, 28
+tree,variant,n,rep,status,why,cuda_wall_s,cuda_user_s,cuda_sys_s,cuda_peak_rss_mb,phase_cudafe_s,phase_cicc_s,phase_ptxas_s,phase_gcc_s,phase_other_s,registers,spill_stores,spill_loads,stack_bytes,cmem0_bytes,sass_instructions,text_bytes,cubin_bytes,host_status,host_wall_s,host_peak_rss_mb
+9e20bd4e,A,2000,0,ok,,96.599,91.970,4.610,4073,0.866,66.558,1.664,27.014,0.435,17,0,0,0,14840,7136,114176,50521760,,,
