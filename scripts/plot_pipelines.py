@@ -14,7 +14,10 @@
 # limitations under the License.
 """F5, fig:pipelines: the application pipeline (batched resize, crop, normalise, split) against OpenCV-CUDA and against NPP, two panels.
 
-  python scripts/plot_pipelines.py --csv results/rtx4090 [--cpu-opencv DIR] [--cpu-npp DIR] [--npp DIR] [--width 3.4] [--out-dir figures]
+  python scripts/plot_pipelines.py --csv results/rtx4090 [--cpu-opencv DIR] [--cpu-npp DIR] [--npp DIR] [--width 3.4] [--out-dir figures] [--suffix _after45]
+
+  --suffix is appended to the three file names (cputime_r2<suffix>.pdf, ...), so that a re-drawn figure does not overwrite the existing one. With a --cpu-npp / --npp folder whose path contains 'after45' (the re-run after
+  FastNPP #45: results/rtx4090/{e0-cpu-time-npp,e0-npp}-after45/run1) the sidecar says that the FastNPP vs NPP series is that run and not the older one.
 
   cputime_r2.pdf    (a) CPU-time speedup against the batch size (2 to 152): "cvGS vs OpenCV-CUDA" (e0-cpu-time-opencv) and "FastNPP vs NPP" (e0-cpu-time-npp)
   npp_r2.pdf        (b) GPU speedup of FastNPP against NPP (batch 10 to 150): "without CPU overhead" and "with CPU overhead" (the two files of e0-npp)
@@ -89,7 +92,7 @@ def host_check_notes(results, p_cv):
     return out
 
 
-def cpu_notes(results, p_cv, p_cn):
+def cpu_notes(results, p_cv, p_cn, after45=False):
     _, blocks = pc.read_blocks(p_cv)
     b = blocks[0]
     col, ocv, cvgs = pc.column(b, "Mean Speedup"), pc.column(b, "OpenCV MeanTime"), pc.column(b, "cvGS MeanTime")
@@ -100,8 +103,14 @@ def cpu_notes(results, p_cv, p_cn):
            f"{min(dev):.1f} % to {max(dev):.1f} % over the batch sizes",
            "the OpenCV-CUDA side of this experiment is the per-crop loop: for each crop on one stream convertTo, resize, multiply, cvtColor (3 channels), subtract, divide, split = 7 enqueued calls per crop, 7 x batch in total "
            "(benchmark_CPU_OpenCV_vs_cvGS.cu); it is not the stacked 'opencv_batch' formulation of E4, which runs 3 x batch + 4 calls (e4_preprocessing.cu) and is not in this experiment",
-           "the FastNPP vs NPP series is from the run made before the FastNPP resize-convention change (PR #45): it is to be re-run after #45 is merged and the submodule is moved, and it is not part of the A/B above"]
-    out += audit_notes(results, ("e0-cpu-time-opencv", "e0-cpu-time-npp"))
+           ]
+    if after45:
+        out.append(f"the FastNPP vs NPP series is RUN 1 of the re-run after the FastNPP resize-convention change (PR #45 merged; FastNPP a1b5e245, FKL c8fcbe8): {p_cn}; window of 2026-11-06 15:30:00 to 15:31:16 "
+                   "(results/rtx4090/e9-cross-library/window-console.txt and load.log: load 0.03 before, no other job); it is not part of the A/B above; the cvGS vs OpenCV-CUDA series is the older single run of e0-cpu-time-opencv")
+        out += audit_notes(results, ("e0-cpu-time-opencv",))
+    else:
+        out.append("the FastNPP vs NPP series is from the run made before the FastNPP resize-convention change (PR #45): it is to be re-run after #45 is merged and the submodule is moved, and it is not part of the A/B above")
+        out += audit_notes(results, ("e0-cpu-time-opencv", "e0-cpu-time-npp"))
     out += host_check_notes(results, p_cv)
     return out
 
@@ -125,6 +134,7 @@ def main():
     ap.add_argument("--cpu-opencv", default=None)
     ap.add_argument("--cpu-npp", default=None)
     ap.add_argument("--npp", default=None)
+    ap.add_argument("--suffix", default="", help="appended to the output file names, e.g. _after45")
     args = ap.parse_args()
     d_cv = args.cpu_opencv or os.path.join(args.csv, "e0-cpu-time-opencv")
     d_cn = args.cpu_npp or os.path.join(args.csv, "e0-cpu-time-npp")
@@ -134,24 +144,29 @@ def main():
 
     a = [("cvGS vs OpenCV-CUDA", load(p_cv)), ("FastNPP vs NPP", load(p_cn))]
     b = [("without CPU overhead", load(p_without)), ("with CPU overhead", load(p_with))]
-    notes = []
+    notes, notes_a = [], []
     for label, curves in (("a", a), ("b", b)):
         for name, (x, y) in curves:
-            j = y.index(max(y))
-            notes.append(f"({label}) {name}: {len(x)} points, batch {x[0]:.0f} to {x[-1]:.0f}; first {y[0]:.2f}x, maximum {max(y):.2f}x at batch {x[j]:.0f}; last {y[-1]:.2f}x")
+            j, jmin = y.index(max(y)), y.index(min(y))
+            lines = [f"({label}) {name}: {len(x)} points, batch {x[0]:.0f} to {x[-1]:.0f}; first {y[0]:.2f}x, maximum {max(y):.2f}x at batch {x[j]:.0f}; last {y[-1]:.2f}x",
+                     f"({label}) {name}, for the text: minimum {min(y):.1f}x at batch {x[jmin]:.0f}, maximum {max(y):.1f}x at batch {x[j]:.0f}; at the first batch ({x[0]:.0f}) {y[0]:.1f}x, at the last batch ({x[-1]:.0f}) {y[-1]:.1f}x"]
+            notes += lines
+            if label == "a":
+                notes_a += lines
 
-    cpu = cpu_notes(args.csv, p_cv, p_cn)
+    after45 = "after45" in (p_cn + p_without + p_with)
+    cpu = cpu_notes(args.csv, p_cv, p_cn, after45)
     pc.apply_style()
     fig, ax = plt.subplots(figsize=(args.width, 2.0), constrained_layout=True)
     panel(ax, a, "CPU-time speedup", "upper left")
-    pc.save(fig, os.path.join(args.out_dir, "cputime_r2.pdf"), [p_cv, p_cn], "plot_pipelines.py", notes[:len(a)] + cpu)
+    pc.save(fig, os.path.join(args.out_dir, f"cputime_r2{args.suffix}.pdf"), [p_cv, p_cn], "plot_pipelines.py", notes_a + cpu)
     fig, ax = plt.subplots(figsize=(args.width, 2.0), constrained_layout=True)
     panel(ax, b, "GPU speedup of FastNPP vs NPP", "lower right")
-    pc.save(fig, os.path.join(args.out_dir, "npp_r2.pdf"), [p_without, p_with], "plot_pipelines.py", notes)
+    pc.save(fig, os.path.join(args.out_dir, f"npp_r2{args.suffix}.pdf"), [p_without, p_with], "plot_pipelines.py", notes)
     fig, axes = plt.subplots(1, 2, figsize=(7.1, 2.0), constrained_layout=True)
     panel(axes[0], a, "CPU-time speedup", "upper left")
     panel(axes[1], b, "GPU speedup of FastNPP vs NPP", "lower right")
-    pc.save(fig, os.path.join(args.out_dir, "pipelines_r2.pdf"), [p_cv, p_cn, p_without, p_with], "plot_pipelines.py", notes + cpu)
+    pc.save(fig, os.path.join(args.out_dir, f"pipelines_r2{args.suffix}.pdf"), [p_cv, p_cn, p_without, p_with], "plot_pipelines.py", notes + cpu)
 
 
 if __name__ == "__main__":
