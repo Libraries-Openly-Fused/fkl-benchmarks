@@ -65,6 +65,16 @@
         }                                                                                                                    \
     }
 
+// ---- SHORT LISTING (for the paper): the user's operation in 5 lines, the same operation as ::Gamma below under the name used in the paper ----
+namespace short_listing {
+struct Gamma {
+    using Parent = fk::BinaryOperation<float3, float, float3, Gamma>;
+    DECLARE_BINARY_PARENT
+    FK_HOST_DEVICE_FUSE float3 exec(float3 i, float g) { return {powf(i.x, g), powf(i.y, g), powf(i.z, g)}; }
+};
+}  // namespace short_listing
+// ---- END SHORT LISTING (user operation) ----
+
 namespace {
 constexpr int SRC_W = 3840, SRC_H = 2160, CROP_W = 60, CROP_H = 120, OUT_W = 64, OUT_H = 128, BATCH = 50;
 constexpr float GAMMA = 1.f / 2.2f;
@@ -235,6 +245,20 @@ int launch() {
                 cvGS::divide<CV_32FC3>(sd),                                                         // cvGPUSpeedup
                 cvGS::split<CV_32FC3>(t2.ptr()));                                                   // cvGPUSpeedup
         };
+        // ---- SHORT LISTING (for the paper): the same call as THE LISTING with plain names; compared with M1 in the window ----
+        fk::Tensor<float> t6(OUT_W, OUT_H, BATCH, 3);
+        using short_listing::Gamma;
+        const auto shortListing = [&, crops = s.crops, size = cv::Size(OUT_W, OUT_H), scale = sc, stddev = sd, gamma = GAMMA, output = t6.ptr()] {
+            fk::executeOperations<fk::TransformDPP<>>(stream,
+                cvGS::resize<CV_8UC3, cv::INTER_LINEAR>(crops, size, BATCH), // cvGS
+                fastNPP::SwapChannels_32f_C3R_Ctx(order),                    // FastNPP
+                cvGS::multiply<CV_32FC3>(scale),                             // cvGS
+                Gamma::build(gamma),                                         // user
+                fastNPP::SubC_32f_C3R_Ctx(mean),                             // FastNPP
+                cvGS::divide<CV_32FC3>(stddev),                              // cvGS
+                cvGS::split<CV_32FC3>(output));                              // cvGS
+        };
+        // ---- END SHORT LISTING (call) ----
         std::vector<std::vector<float>> out(4);
         for (size_t v = 0; v < variants.size(); ++v) {
             E9_CHECK(cudaMemsetAsync(variants[v].out, 0xff, total * 4, cs));   // NaN pattern: an unwritten element shows up as NaN
@@ -255,6 +279,11 @@ int launch() {
             std::vector<float> l(total);
             E9_CHECK(cudaMemcpy(l.data(), t2.ptr().data, total * 4, cudaMemcpyDeviceToHost));
             row("M1listing_vs_M1", l, out[0]);
+            E9_CHECK(cudaMemsetAsync(t6.ptr().data, 0xff, total * 4, cs));
+            shortListing();
+            E9_CHECK(cudaStreamSynchronize(cs));
+            E9_CHECK(cudaMemcpy(l.data(), t6.ptr().data, total * 4, cudaMemcpyDeviceToHost));
+            row("M1shortlisting_vs_M1", l, out[0]);
         }
         row("M1_vs_R1", out[0], out[2]); row("M2_vs_R2", out[1], out[3]); row("R1_vs_R2", out[2], out[3]); row("M1_vs_M2", out[0], out[1]);
         agree.flush();
