@@ -29,7 +29,7 @@
 // needed a wrapper change would be a finding to report; the libraries are not changed.
 // NOTE 2026-11-06 (compile): prediction (2) was found FALSE at compile time. cuobjdump sm_89: M1 34 registers / 552 SASS lines, R1 32 / 544, M2 33 / 544, R2 32 / 560; stack, shared and local memory 0 for all four.
 // Reason: the swap of FastNPP is VectorReorderRT (run-time index vector), that of cvGS is the compile-time RGB2BGR ColorConversion, and SubC / DivC of FastNPP are not the same FKL types as cvGS subtract / divide, so the mixed
-// kernels contain different ops than their references (same results). The SASS comparison is reported as a size comparison, not as an identity test, and the time comparison M against R contains that difference too.
+// kernels contain different ops than their references (same results). The SASS comparison is reported as a size comparison, not as an identity test, and the time comparison M against R contains that difference too. CORRECTION 2026-11-06 (after the window, comment only, the binaries are of commit 9bf0ca9): the comparison of the demangled kernel types shows that the swap is the ONLY differing operation: FastNPP's SwapChannels is VectorReorderRT, the cvGS cvtColor RGB2BGR is VectorReorder<float3, 2, 1, 0>; SubC / DivC and subtract / divide are the SAME FKL types (the clause on them above is wrong).
 // Environment: E9_NSYS (one call of each variant and of the two listings in a cudaProfilerStart/Stop range, then exit; for nsys), E9_RUN (0, 1, 2: the order of the four variants is rotated by it), E9_SEEDS (3), E9_BLOCK_MS (20), E9_BLOCKS (15).
 #include <common/main.h>
 #include <common/csv_writer.h>

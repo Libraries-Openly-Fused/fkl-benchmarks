@@ -1,0 +1,49 @@
+# experiment: test_npp_batchresize_x_split3D agreement
+# notes: source: seeded uniform noise (std::mt19937_64 seed 20261030); references in double precision for the whole pipeline; each implementation must match one convention within 1e-3, the difference between them is informational
+# repo: fkl-benchmarks 9bf0ca92cb158a0bd94bd11276624386fc854d1a
+# fkl: c8fcbe816d629377886cbdd19c83527f37ccfc04
+# cvGPUSpeedup: 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c
+# FastNPP: a1b5e245d7dd70fba23dcb51a0aea80495dbc61d
+# nvcc: 13.4.92 (/home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/nvcc), architectures 89, -fmad on, -lineinfo on
+# hip: none (none), architectures none
+# host compiler: GNU 15.2.0, Release, -march=native, -ftemplate-depth=1000
+# opencv: 4.14.0
+# cpu: AMD Ryzen 9 5950X 16-Core Processor
+# os: Ubuntu 26.04.1 LTS
+# kernel: Linux 7.0.0-38-generic
+# gpu: NVIDIA GeForce RTX 4090, cc 8.9, 128 SMs, 24106 MiB, PCI 0000:09:00.0
+# cuda driver api: 13.3, cuda runtime: 13.4
+# nvidia-smi driver: 610.43.02
+# clocks (sm, mem, max sm, max mem, MHz): 2685 MHz, 10251 MHz, 3105 MHz, 10501 MHz
+# power limit, temperature at start: 450.00 W, 44
+batch,FastNPP_follows,NPP_follows,FastNPP_vs_ref_FKL_max,FastNPP_vs_ref_pixel_centre_max,NPP_vs_ref_FKL_max,NPP_vs_ref_pixel_centre_max,FastNPP_vs_NPP_max,FastNPP_vs_NPP_mean
+10,pixel-centre,pixel-centre,4.13643,3.52063e-06,4.13643,3.56033e-06,3.8147e-06,8.46887e-08
+20,pixel-centre,pixel-centre,4.13643,3.52063e-06,4.13643,3.56033e-06,3.8147e-06,8.45376e-08
+30,pixel-centre,pixel-centre,4.13643,3.52063e-06,4.13643,3.56033e-06,3.8147e-06,8.41741e-08
+40,pixel-centre,pixel-centre,4.13643,3.52063e-06,4.13643,3.56033e-06,3.8147e-06,8.42849e-08
+50,pixel-centre,pixel-centre,4.13643,3.52063e-06,4.13643,3.56033e-06,3.8147e-06,8.42433e-08
+60,pixel-centre,pixel-centre,4.13643,3.52063e-06,4.13643,3.56033e-06,3.8147e-06,8.41994e-08
+70,pixel-centre,pixel-centre,4.13643,3.52063e-06,4.13643,3.56033e-06,3.8147e-06,8.41362e-08
+80,pixel-centre,pixel-centre,4.13643,3.52063e-06,4.13643,3.56033e-06,3.8147e-06,8.41163e-08
+90,pixel-centre,pixel-centre,4.13643,3.52063e-06,4.13643,3.56033e-06,3.8147e-06,8.40904e-08
+100,pixel-centre,pixel-centre,4.1455,3.52063e-06,4.1455,3.56033e-06,3.8147e-06,8.41846e-08
+110,pixel-centre,pixel-centre,4.1455,3.52063e-06,4.1455,3.56033e-06,3.8147e-06,8.41435e-08
+120,pixel-centre,pixel-centre,4.1455,3.52063e-06,4.1455,3.56033e-06,3.8147e-06,8.40663e-08
+130,pixel-centre,pixel-centre,4.1455,3.52063e-06,4.1455,3.56033e-06,3.8147e-06,8.41247e-08
+140,pixel-centre,pixel-centre,4.1455,3.52063e-06,4.1455,3.56033e-06,3.8147e-06,8.40953e-08
+150,pixel-centre,pixel-centre,4.26533,3.52063e-06,4.26533,3.56033e-06,3.8147e-06,8.41173e-08
+10,pixel-centre,pixel-centre,4.13643,3.52063e-06,4.13643,3.56033e-06,3.8147e-06,8.46887e-08
+20,pixel-centre,pixel-centre,4.13643,3.52063e-06,4.13643,3.56033e-06,3.8147e-06,8.45376e-08
+30,pixel-centre,pixel-centre,4.13643,3.52063e-06,4.13643,3.56033e-06,3.8147e-06,8.41741e-08
+40,pixel-centre,pixel-centre,4.13643,3.52063e-06,4.13643,3.56033e-06,3.8147e-06,8.42849e-08
+50,pixel-centre,pixel-centre,4.13643,3.52063e-06,4.13643,3.56033e-06,3.8147e-06,8.42433e-08
+60,pixel-centre,pixel-centre,4.13643,3.52063e-06,4.13643,3.56033e-06,3.8147e-06,8.41994e-08
+70,pixel-centre,pixel-centre,4.13643,3.52063e-06,4.13643,3.56033e-06,3.8147e-06,8.41362e-08
+80,pixel-centre,pixel-centre,4.13643,3.52063e-06,4.13643,3.56033e-06,3.8147e-06,8.41163e-08
+90,pixel-centre,pixel-centre,4.13643,3.52063e-06,4.13643,3.56033e-06,3.8147e-06,8.40904e-08
+100,pixel-centre,pixel-centre,4.1455,3.52063e-06,4.1455,3.56033e-06,3.8147e-06,8.41846e-08
+110,pixel-centre,pixel-centre,4.1455,3.52063e-06,4.1455,3.56033e-06,3.8147e-06,8.41435e-08
+120,pixel-centre,pixel-centre,4.1455,3.52063e-06,4.1455,3.56033e-06,3.8147e-06,8.40663e-08
+130,pixel-centre,pixel-centre,4.1455,3.52063e-06,4.1455,3.56033e-06,3.8147e-06,8.41247e-08
+140,pixel-centre,pixel-centre,4.1455,3.52063e-06,4.1455,3.56033e-06,3.8147e-06,8.40953e-08
+150,pixel-centre,pixel-centre,4.26533,3.52063e-06,4.26533,3.56033e-06,3.8147e-06,8.41173e-08

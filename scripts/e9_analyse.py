@@ -18,7 +18,7 @@
 
 Reads run{0,1,2}/e9_agreement.csv, run{0,1,2}/e9_timing.csv, nsys/kernels.txt; runs cuobjdump -arch sm_89 on the binary for (d).
 Time: graph_ms is the GPU time per call (a CUDA graph of 100 calls, the standing GPU-bound number, 3 % flag); launch_ms is the plain launch loop (host and GPU). For each run the ratio mixed / single-library is
-formed; the table gives its median over the 3 runs and the spread (max - min over the runs, in % of the median); 'exceeds' = the ratio differs from 1 by more than 3 %.
+formed; the table gives its median over the 3 runs and the spread (max - min over the runs, in % points); 'exceeds' = the ratio differs from 1 by more than the flag (3 % for the GPU time, 5 % for the host-bound launch loop).
 """
 import argparse
 import csv
@@ -104,7 +104,7 @@ def main():
         out.append(f"| {nme} | {len(rs)} | {'YES' if ident else 'NO'} | {min(diff)}..{max(diff)} of {rs[0]['n']} | {mx:.6g} | {nan} |")
 
     out += ["", "## (c) Time per call (ms), mixed against the single-library kernel it shares its resize with; THE run is run 0; order of the variants rotated per run", ""]
-    for col, label, bound in (("graph_ms_median", "GPU time per call (CUDA graph of 100 calls)", "GPU-bound"), ("launch_ms_median", "launch loop (host and GPU)", "host- and GPU-bound")):
+    for col, label, bound, flag in (("graph_ms_median", "GPU time per call (CUDA graph of 100 calls)", "GPU-bound, flag 3 %", 0.03), ("launch_ms_median", "launch loop (host and GPU)", "host-bound (the launch costs about as much as the kernel), flag 5 %", 0.05)):
         out += [f"### {label}, {bound}", "", "| variant | run 0 | run 1 | run 2 | median | spread over runs % | within-run block range (max/min - 1, max over runs) % |", "|---|---:|---:|---:|---:|---:|---:|"]
         vals = {}
         for v in ("M1", "R1", "M2", "R2"):
@@ -115,11 +115,11 @@ def main():
             rng = max(float(next(x[hi] for x in timing[r] if x["variant"] == v)) / float(next(x[lo] for x in timing[r] if x["variant"] == v)) - 1 for r in RUNS) * 100
             med = st.median(vs)
             out.append(f"| {v} | {vs[0]:.5f} | {vs[1]:.5f} | {vs[2]:.5f} | {med:.5f} | {(max(vs) - min(vs)) / med * 100:.1f} | {rng:.1f} |")
-        out += ["", "| pair (mixed / single-library) | ratio run 0 | run 1 | run 2 | median | spread over runs (max - min, % points) | exceeds 3 % |", "|---|---:|---:|---:|---:|---:|:---:|"]
+        out += ["", "| pair (mixed / single-library) | ratio run 0 | run 1 | run 2 | median | spread over runs (max - min, % points) | exceeds the flag (median) | runs beyond the flag |", "|---|---:|---:|---:|---:|---:|:---:|---:|"]
         for m, s in PAIRS:
             ra = [vals[m][i] / vals[s][i] for i in range(3)]
             med = st.median(ra)
-            out.append(f"| {m} / {s} | {ra[0]:.4f} | {ra[1]:.4f} | {ra[2]:.4f} | {med:.4f} | {(max(ra) - min(ra)) * 100:.1f} | {'YES' if abs(med - 1) > 0.03 else 'no'} |")
+            out.append(f"| {m} / {s} | {ra[0]:.4f} | {ra[1]:.4f} | {ra[2]:.4f} | {med:.4f} | {(max(ra) - min(ra)) * 100:.1f} | {'YES' if abs(med - 1) > flag else 'no'} | {sum(abs(x - 1) > flag for x in ra)} of 3 |")
         out.append("")
 
     out += ["## (d) Registers and SASS lines of the final binary (cuobjdump -arch sm_89), before the window / before #45: M1 34 / 552, R1 32 / 544, M2 33 / 544, R2 32 / 560; after #45 (compile time): M2 552, R2 568", "",

@@ -1,0 +1,23 @@
+# experiment: E9 cross-library kernels: time per call and launches
+# notes: kernels_per_call = kernel nodes of one call captured into a CUDA graph; launch_ms = time per call of plain back-to-back launches (host and GPU), graph_ms = GPU time per call from a CUDA graph of calls_per_graph calls (no launch overhead; the standing GPU-bound time); blocks between two CUDA events, warm-up of at least 300 ms; the order of the variants is rotated by E9_RUN
+# repo: fkl-benchmarks 9bf0ca92cb158a0bd94bd11276624386fc854d1a
+# fkl: c8fcbe816d629377886cbdd19c83527f37ccfc04
+# cvGPUSpeedup: 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c
+# FastNPP: a1b5e245d7dd70fba23dcb51a0aea80495dbc61d
+# nvcc: 13.4.92 (/home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/nvcc), architectures 89, -fmad on, -lineinfo on
+# hip: none (none), architectures none
+# host compiler: GNU 15.2.0, Release, -march=native, -ftemplate-depth=1000
+# opencv: 4.14.0
+# cpu: AMD Ryzen 9 5950X 16-Core Processor
+# os: Ubuntu 26.04.1 LTS
+# kernel: Linux 7.0.0-38-generic
+# gpu: NVIDIA GeForce RTX 4090, cc 8.9, 128 SMs, 24106 MiB, PCI 0000:09:00.0
+# cuda driver api: 13.3, cuda runtime: 13.4
+# nvidia-smi driver: 610.43.02
+# clocks (sm, mem, max sm, max mem, MHz): 2685 MHz, 10251 MHz, 3105 MHz, 10501 MHz
+# power limit, temperature at start: 450.00 W, 49
+run,variant,position,kernels_per_call,launch_ms_median,launch_ms_min,launch_ms_max,graph_ms_median,graph_ms_min,graph_ms_max,calls_per_graph
+1,M2,1,1,0.00642290665,0.00641543884,0.00642726989,0.00595295072,0.00593685985,0.00595402956,100
+1,R1,2,1,0.0062406864,0.00624004239,0.00624139514,0.00574375093,0.00571761787,0.00580095112,100
+1,R2,3,1,0.00664848136,0.00664748484,0.00664891349,0.00606057405,0.00602352917,0.00607201874,100
+1,M1,4,1,0.00639338698,0.00638795551,0.00642692205,0.00589824021,0.005897035,0.00590095043,100
