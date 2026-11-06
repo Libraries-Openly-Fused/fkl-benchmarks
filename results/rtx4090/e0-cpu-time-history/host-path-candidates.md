@@ -24,7 +24,7 @@ The timed call (the same source in both states, `benchmarks/benchmark_CPU_OpenCV
 ## Corrections of what was reported before
 - `results/rtx4090/e0-cpu-time-history/README.md` says the cvGS batched-resize wrapper is 'the same code from Alpha-0.0.20 to 6d26c65 (enum renames only)'. That is wrong for its last statement: until 2025-09-18 (cvGPUSpeedup `e9958c5` 'Some more fixes') the wrapper ended with `Resize::build_batch(readOP, sizeArr)` and `fk::BatchRead<NPtr, fk::CONDITIONAL_WITH_DEFAULT>::build(resizeDFs, usedPlanes, backgroundValue)` (002f0f1d:239-245); now it ends with `fk::Resize<IType, AR>::build(usedPlanes, backgroundValue, readOP, sizeArr)` (6d26c65). The front part (`gpuMat2RawPtr2D_arr`, `PixelReadOp::build_batch(fk_input)`, `make_set_std_array`) is unchanged. The cvGS `executeOperations` also changed on the same occasion (`fk::Stream fk_stream(cu_stream)` per call, an explicit `TransformDPP<defaultParArch, TFOPT>`).
 
-## TEST A: reading of the 2025 figure by the coordinator, NOT data (added 2026-11-06)
+## TEST A: reading of the 2025 figure by the coordinator, accuracy about +-1 to +-2, NOT data (added 2026-11-06)
 The coordinator rendered the 2025 CPU-time figure (`old-figures/test_cpu_batchresize_x_split3D.pdf`, 300 dpi) and read its left end (accuracy about +-1 at batch 2, +-2 elsewhere). Speedups at batches 2 / 12 / 22 / 32 / 42:
 - 2025, read from the figure: cvGS against OpenCV-CUDA about 12 / 56 / 84 / 100.5 / 112; FastNPP against NPP about 12 / 43 / 60 / 70 / 74.5.
 - 2026, from the CSVs: cvGS 14.3 / 72.6 / 125.6 / 164.5 / 207.6; FastNPP (run 1 after #45) 14.7 / 57.7 / 104.9 / 139.3 / 163.5.
