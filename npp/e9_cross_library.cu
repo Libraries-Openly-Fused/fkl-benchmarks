@@ -30,7 +30,7 @@
 // NOTE 2026-11-06 (compile): prediction (2) was found FALSE at compile time. cuobjdump sm_89: M1 34 registers / 552 SASS lines, R1 32 / 544, M2 33 / 544, R2 32 / 560; stack, shared and local memory 0 for all four.
 // Reason: the swap of FastNPP is VectorReorderRT (run-time index vector), that of cvGS is the compile-time RGB2BGR ColorConversion, and SubC / DivC of FastNPP are not the same FKL types as cvGS subtract / divide, so the mixed
 // kernels contain different ops than their references (same results). The SASS comparison is reported as a size comparison, not as an identity test, and the time comparison M against R contains that difference too.
-// Environment: E9_RUN (0, 1, 2: the order of the four variants is rotated by it), E9_SEEDS (3), E9_BLOCK_MS (20), E9_BLOCKS (15).
+// Environment: E9_NSYS (one call of each variant and of the two listings in a cudaProfilerStart/Stop range, then exit; for nsys), E9_RUN (0, 1, 2: the order of the four variants is rotated by it), E9_SEEDS (3), E9_BLOCK_MS (20), E9_BLOCKS (15).
 #include <common/main.h>
 #include <common/csv_writer.h>
 
@@ -46,7 +46,7 @@
 
 #include <algorithm>
 #include <array>
-#include <chrono>
+#include <cuda_profiler_api.h>
 #include <cmath>
 #include <cstdlib>
 #include <cstring>
@@ -289,6 +289,14 @@ int launch() {
         }
         row("M1_vs_R1", out[0], out[2]); row("M2_vs_R2", out[1], out[3]); row("R1_vs_R2", out[2], out[3]); row("M1_vs_M2", out[0], out[1]);
         agree.flush();
+        if (seed == 0 && std::getenv("E9_NSYS") != nullptr) {   // nsys cross-check of the launch count: ONE call of each variant inside the profiler range (nsys --capture-range=cudaProfilerApi); the kernels of the range are counted by nsys
+            E9_CHECK(cudaProfilerStart());
+            for (size_t v = 0; v < variants.size(); ++v) { variants[v].call(); E9_CHECK(cudaStreamSynchronize(cs)); }
+            listing(); E9_CHECK(cudaStreamSynchronize(cs));
+            shortListing(); E9_CHECK(cudaStreamSynchronize(cs));
+            E9_CHECK(cudaProfilerStop());
+            return 0;
+        }
         if (seed == 0) {   // launches and times once (seed 0)
             int kernels[4];
             for (size_t v = 0; v < variants.size(); ++v) kernels[v] = kernelNodes(cs, variants[v].call);
