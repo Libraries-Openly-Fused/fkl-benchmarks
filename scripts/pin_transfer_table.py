@@ -15,7 +15,7 @@
 """The table of results/rtx4090/e0-pin-transfer: every binary that was compared, the results it produced and the kernel counts, from the sass_<group>[_demangled].txt files that
 scripts/pin_transfer.sh wrote.
 
-  python scripts/pin_transfer_table.py results/rtx4090/e0-pin-transfer
+  python scripts/pin_transfer_table.py results/rtx4090/e0-pin-transfer [NEW_TREE_NAME]
 
 Writes transfer_table.md and transfer_table.csv. A group is read from its _demangled file when the mangled-name comparison left kernels on one side only (the names then differ for a reason that is
 not the code: the defaulted ResizeSampling template argument of resize kernels, which the library gained between fb9ac3a and 38c4f32, and the per-compile hash of kernels in an anonymous namespace).
@@ -54,6 +54,7 @@ def read(path):
 
 def main():
     d = sys.argv[1] if len(sys.argv) > 1 else "results/rtx4090/e0-pin-transfer"
+    new = sys.argv[2] if len(sys.argv) > 2 else "c8fcbe8"      # the name of the new tree in the header of the table
     rows = []
     for tag, sha, lib, what, bins in GROUPS:
         dem = os.path.join(d, f"sass_{tag}_demangled.txt")
@@ -74,7 +75,7 @@ def main():
         w = csv.DictWriter(f, fieldnames=list(rows[0]))
         w.writeheader()
         w.writerows(rows)
-    lines = ["| group | benchmarks commit | baseline (library) | binary | results it produced | kernels in baseline | in c8fcbe8 build | identical | different | only on one side | matched by |", "|---|---|---|---|---|--:|--:|--:|--:|--:|---|"]
+    lines = [f"| group | benchmarks commit | baseline (library) | binary | results it produced | kernels in baseline | in {new} build | identical | different | only on one side | matched by |", "|---|---|---|---|---|--:|--:|--:|--:|--:|---|"]
     for r in rows:
         lines.append(f"| {r['group']} | {r['benchmarks_commit']} | {r['baseline']} ({r['baseline_library']}) | `{r['binary']}` | {r['results']} | {r['kernels_baseline']} | {r['kernels_new']} | {r['identical']} | {r['different']} | {r['only_baseline'] + r['only_new']} | {r['matched_by']} |")
     tot = lambda key: sum(r[key] for r in rows)

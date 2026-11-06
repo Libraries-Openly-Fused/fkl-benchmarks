@@ -1,0 +1,176 @@
+check_fkl_tree: FKL tree /home/oscar/tfkl-bench/scratch/pr423/fkl-head (9e20bd4e5286be70fbeb0f79a19b96f00c81a06f), 2026-11-06T17:43:50+01:00, jobs 8, cores 4-7,20-23, groups fastnpp,cvgs,fkltests
+note: thread-pool of the tree under test is missing: the pinned thread-pool of external/fkl (27e733f) is linked in (overlay /home/oscar/tfkl-bench/scratch/pr423/check-fast/fkl-overlay)
+nvcc: Cuda compilation tools, release 13.4, V13.4.92  c++: c++ (Ubuntu 15.2.0-16ubuntu1) 15.2.0  OpenCV: /home/oscar/tfkl-bench/deps/opencv-4.14-cuda13.4/install
+fkl-benchmarks HEAD 042a5fc; cvGPUSpeedup 6d26c65; FastNPP a1b5e24; the repository itself is not changed
+
+== fastnpp: configure (/home/oscar/tfkl-bench/scratch/pr423/check-fast/fastnpp-src)
+fastnpp: 2 targets: fastNPP_basic_test fastNPP_resize_vs_npp_test 
+fastnpp: build finished after 7 s (7.21 s wall, largest resident set of one process 418824 KiB)
+OK        fastNPP_basic_test
+OK        fastNPP_resize_vs_npp_test
+fastnpp: 2 targets, 2 compiled, 0 failed, 0 not built
+
+== cvgs: configure (/home/oscar/tfkl-bench/scratch/pr423/check-fast/cvgs-src)
+cvgs: 16 targets: testOpenCVInstallation test_batchread_x_write3D test_batchresize_aspectratio_x_split3D test_batchresize_x_split3D test_circularbatchread_x_write3D test_convertTo test_cvtColor test_fused_resize test_read_x_split test_read_x_write test_resize_CPUvsGPUresults test_resize_write test_resize_x_split test_saturate_cast test_split test_warping_opencv 
+cvgs: build finished after 133 s (133.00 s wall, largest resident set of one process 797672 KiB)
+OK        testOpenCVInstallation
+OK        test_batchread_x_write3D
+OK        test_batchresize_aspectratio_x_split3D
+OK        test_batchresize_x_split3D
+OK        test_circularbatchread_x_write3D
+OK        test_convertTo
+OK        test_cvtColor
+OK        test_fused_resize
+OK        test_read_x_split
+OK        test_read_x_write
+OK        test_resize_CPUvsGPUresults
+OK        test_resize_write
+OK        test_resize_x_split
+OK        test_saturate_cast
+OK        test_split
+OK        test_warping_opencv
+cvgs: 16 targets, 16 compiled, 0 failed, 0 not built
+
+== fkltests: configure (/home/oscar/tfkl-bench/scratch/pr423/check-fast/fkl-overlay)
+fkltests: 137 targets: basic_test_cpp basic_test_cu batch_build_compilation_time_cpp batch_build_compilation_time_cu compiler_explorer_example_cpp compiler_explorer_example_cu inlining_and_LDL_STL_cu readme_test_code_cpp readme_test_code_cu test_IOps_to_string_cpp test_IOps_to_string_cu test_batchresize_build_cpp test_batchresize_build_cu test_border_reader_cpp test_border_reader_cu test_circular_tensor_cu test_crop_cpp test_crop_cu test_deinterlace_cpp test_deinterlace_cu test_divergent_hf_executor_cu test_filtered_index_sequence_cpp test_filtered_index_sequence_cu test_fk_string_cpp test_fk_string_cu test_fused_op
+fkltests: build finished after 385 s (384.62 s wall, largest resident set of one process 2030012 KiB)
+OK        basic_test_cpp
+OK        basic_test_cu
+OK        batch_build_compilation_time_cpp
+OK        batch_build_compilation_time_cu
+OK        compiler_explorer_example_cpp
+OK        compiler_explorer_example_cu
+OK        inlining_and_LDL_STL_cu
+OK        readme_test_code_cpp
+OK        readme_test_code_cu
+OK        test_IOps_to_string_cpp
+OK        test_IOps_to_string_cu
+OK        test_batchresize_build_cpp
+OK        test_batchresize_build_cu
+OK        test_border_reader_cpp
+OK        test_border_reader_cu
+OK        test_circular_tensor_cu
+OK        test_crop_cpp
+OK        test_crop_cu
+OK        test_deinterlace_cpp
+OK        test_deinterlace_cu
+OK        test_divergent_hf_executor_cu
+OK        test_filtered_index_sequence_cpp
+OK        test_filtered_index_sequence_cu
+OK        test_fk_string_cpp
+OK        test_fk_string_cu
+OK        test_fused_operation_cpp
+OK        test_fused_operation_cu
+OK        test_instantiable_operations_cpp
+OK        test_instantiable_operations_cu
+OK        test_large_grids_cpp
+OK        test_large_grids_cu
+OK        test_literal_to_string_cpp
+OK        test_literal_to_string_cu
+OK        test_nvcc124_126_BugReproducer_cu
+OK        test_nvcc1281_129_BugReproducer_cu
+OK        test_nvcc131_BugReproducer_cpp
+OK        test_nvcc131_BugReproducer_cu
+OK        test_operation_fuser_cpp
+OK        test_operation_fuser_cu
+OK        test_operation_tuple_cpp
+OK        test_operation_tuple_cu
+OK        test_operation_types_cpp
+OK        test_operation_types_cu
+OK        test_ptr_nd_cpp
+OK        test_ptr_nd_cu
+OK        test_raw_image_types_cpp
+OK        test_raw_image_types_cu
+OK        test_rect_cpp
+OK        test_rect_cu
+OK        test_struct_to_string_cpp
+OK        test_struct_to_string_cu
+OK        test_thread_fusion_alignment_cpp
+OK        test_thread_fusion_alignment_cu
+OK        test_thread_fusion_cpp
+OK        test_thread_fusion_cu
+OK        test_tuple_cpp
+OK        test_tuple_cu
+OK        test_typelist_cpp
+OK        test_typelist_cu
+OK        test_warp_cpp
+OK        test_warp_cu
+OK        utest_VBase_cpp
+OK        utest_VBase_cu
+OK        utest_chain_check_cpp
+OK        utest_chain_check_cpu_mt_cpp
+OK        utest_chain_check_cu
+FAIL      utest_chain_check_wrong1_cpp  /home/oscar/tfkl-bench/scratch/pr423/check-fast/fkl-overlay/include/fused_kernel/core/execution_model/operation_model/chain_check.h:115:57: error: static assertion failed: FKL: the OutputType of the previous Op is not convertible to the InputType of the next Op
+FAIL      utest_chain_check_wrong1_cu  /home/oscar/tfkl-bench/scratch/pr423/check-fast/fkl-overlay/include/fused_kernel/core/execution_model/operation_model/chain_check.h(115): error: static assertion failed with "FKL: the OutputType of the previous Op is not convertible to the InputType of the next Op"
+FAIL      utest_chain_check_wrong2_cpp  /home/oscar/tfkl-bench/scratch/pr423/check-fast/fkl-overlay/include/fused_kernel/core/execution_model/operation_model/chain_check.h:143:24: error: static assertion failed: FKL: Complete Read Operations as continuations are not allowed. It has to be an IncompleteReadBackOperation.
+FAIL      utest_chain_check_wrong2_cu  /home/oscar/tfkl-bench/scratch/pr423/check-fast/fkl-overlay/include/fused_kernel/core/execution_model/operation_model/chain_check.h(143): error: static assertion failed with "FKL: Complete Read Operations as continuations are not allowed. It has to be an IncompleteReadBackOperation."
+FAIL      utest_chain_check_wrong3_cpp  /home/oscar/tfkl-bench/scratch/pr423/check-fast/fkl-overlay/include/fused_kernel/core/execution_model/operation_model/chain_check.h:195:23: error: static assertion failed: FKL: Fusing two batch operations of different BATCH size is not allowed.
+FAIL      utest_chain_check_wrong3_cu  /home/oscar/tfkl-bench/scratch/pr423/check-fast/fkl-overlay/include/fused_kernel/core/execution_model/operation_model/chain_check.h(195): error: static assertion failed with "FKL: Fusing two batch operations of different BATCH size is not allowed."
+FAIL      utest_chain_check_wrong4_cpp  /home/oscar/tfkl-bench/scratch/pr423/check-fast/fkl-overlay/include/fused_kernel/core/execution_model/operation_model/chain_check.h:115:57: error: static assertion failed: FKL: the OutputType of the previous Op is not convertible to the InputType of the next Op
+FAIL      utest_chain_check_wrong4_cu  /home/oscar/tfkl-bench/scratch/pr423/check-fast/fkl-overlay/include/fused_kernel/core/execution_model/operation_model/chain_check.h(115): error: static assertion failed with "FKL: the OutputType of the previous Op is not convertible to the InputType of the next Op"
+OK        utest_color_conversion_cpp
+OK        utest_color_conversion_cu
+OK        utest_constexpr_cmath_cpp
+OK        utest_constexpr_cmath_cu
+OK        utest_cpu_multithread_bit_identity_cpp
+OK        utest_cpu_multithread_cpp
+OK        utest_cuda_vector_utils_char_cpp
+OK        utest_cuda_vector_utils_cpp
+OK        utest_cuda_vector_utils_double_cpp
+OK        utest_cuda_vector_utils_float_cpp
+OK        utest_cuda_vector_utils_int_cpp
+OK        utest_cuda_vector_utils_long_cpp
+OK        utest_cuda_vector_utils_longlong_cpp
+OK        utest_cuda_vector_utils_short_cpp
+OK        utest_cuda_vector_utils_uchar_cpp
+OK        utest_cuda_vector_utils_uint_cpp
+OK        utest_cuda_vector_utils_ulong_cpp
+OK        utest_cuda_vector_utils_ulonglong_cpp
+OK        utest_cuda_vector_utils_ushort_cpp
+OK        utest_deinterlace_cpp
+OK        utest_deinterlace_cu
+OK        utest_executors_cpp
+OK        utest_executors_cu
+OK        utest_flash_attention_cu
+OK        utest_flash_attention_mma_cu
+OK        utest_get_arg_large_pack_cpp
+OK        utest_get_arg_large_pack_cu
+OK        utest_nearbyint_host_cpp
+OK        utest_resize_sampling_cpp
+OK        utest_resize_sampling_cu
+OK        utest_saturate_cast_host_cpp
+OK        utest_saturate_char_cpp
+OK        utest_saturate_char_cu
+OK        utest_saturate_cpp
+OK        utest_saturate_cu
+OK        utest_saturate_double_cpp
+OK        utest_saturate_double_cu
+OK        utest_saturate_float_cpp
+OK        utest_saturate_float_cu
+OK        utest_saturate_int_cpp
+OK        utest_saturate_int_cu
+OK        utest_saturate_long_cpp
+OK        utest_saturate_long_cu
+OK        utest_saturate_longlong_cpp
+OK        utest_saturate_longlong_cu
+OK        utest_saturate_short_cpp
+OK        utest_saturate_short_cu
+OK        utest_saturate_uchar_cpp
+OK        utest_saturate_uchar_cu
+OK        utest_saturate_uint_cpp
+OK        utest_saturate_uint_cu
+OK        utest_saturate_ulong_cpp
+OK        utest_saturate_ulong_cu
+OK        utest_saturate_ulonglong_cpp
+OK        utest_saturate_ulonglong_cu
+OK        utest_saturate_ushort_cpp
+OK        utest_saturate_ushort_cu
+OK        utest_softmax_cu
+OK        utest_stream_ownership_cu
+OK        utest_stream_ref_counts_cpp
+OK        utest_stream_ref_counts_cu
+OK        utest_yuv_to_rgb_matrices_cpp
+OK        utest_yuv_to_rgb_matrices_cu
+fkltests: 137 targets, 129 compiled, 8 failed, 0 not built
+
+check_fkl_tree: done 2026-11-06T17:52:42+01:00, exit status 1 (0 = every target of every group compiled)
