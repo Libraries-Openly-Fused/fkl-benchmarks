@@ -53,4 +53,6 @@ Window A approved by the coordinator as a control before the head of the library
 | 86 | `utest_get_arg_large_pack_cu` | Passed | 0.21 |
 | 88 | `utest_saturate_cu` | Passed | 1.21 |
 
-Files: `ctest-stdout.txt` (the console of ctest), `ctest-output.log`, `LastTest.log`, `Test.xml` (the output of every test), `test-list.txt`, `binary-sha256.txt`, `gpu-info.csv`, `gpu-after.csv`, `window-console.txt`, `window-script.sh`.
+Files: `ctest-stdout.txt` (the console of ctest), `ctest-output.log` (written by `--output-log`: the same text as `ctest-stdout.txt`), `LastTest_20261106-1550.log` (ctest's own log of the run, with the command, the output and the result of every test; the date in its name is UTC), `Test.xml` (the record of `-T Test`: status, time and output of every test), `test-list.txt`, `binary-sha256.txt`, `gpu-info.csv`, `gpu-after.csv`, `window-console.txt`, `window-script.sh`.
+
+*Correction (2026-11-07): an earlier version of this folder had a `LastTest.log` of 121 bytes with no test in it. It was the log of the `ctest -N` listing that the window script ran before the tests: the script copied that name, but ctest writes the log of a `-T Test` run as `LastTest_<date>.log`. It is replaced by the log of the run, `LastTest_20261106-1550.log`, copied from the build directory (`scratch/fkl-check-baseline-fkltests-c8fcbe8/fkltests-build`; written at 16:50:08; 46 tests, all passed). The earlier version also did not say that `ctest-output.log` is the same text as `ctest-stdout.txt`. No result changes.*
