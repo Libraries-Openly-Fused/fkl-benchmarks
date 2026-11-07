@@ -97,10 +97,10 @@ def tile(row):
 
 def global_bytes(work, form, tokens, d):
     """COMPUTED, not measured: the compulsory global traffic of one call in bytes, every element counted once (K and V for the prologue pairs, the output O for the epilogue pair); what the kernels re-read from L2 or DRAM
-    across query tiles is not in it. t = tokens = BH x S, a token has d elements; scales are fp32 per token (4 B) for the FKL kernels and bf16 (2 B) for the PyTorch composition.
+    across query tiles is not in it. t = tokens = BH x S, a token has d elements; scales are fp32 per token (4 B), in the FKL kernels and in the PyTorch composition (the same input file).
       prologue, fused:      int8 or e4m3 K and V read once                                  = 2 t d + 2 t 4
       prologue, unfused:    dequantisation kernel reads them and writes bf16, attention reads bf16 = (2 t d + 2 t 4) + 4 t d + 4 t d
-      prologue, PyTorch:    two elementwise kernels read int8 and bf16 scales, write bf16, flash reads bf16 = 2 (t d + 2 t) + 4 t d + 4 t d
+      prologue, PyTorch:    two elementwise kernels read int8 and fp32 scales, write bf16, flash reads bf16 = 2 (t d + 4 t) + 4 t d + 4 t d = 10 t d + 8 t
       raw bf16 (reference): K and V bf16 read once                                          = 4 t d
       epilogue, fused:      the output written once                                          = 2 t d
       epilogue, separate:   the output written by the attention kernel, read and written by the elementwise kernel = 2 t d + 2 t d + 2 t d
@@ -113,7 +113,7 @@ def global_bytes(work, form, tokens, d):
     if form == "separate":
         return (2 * t * d + 8 * t) + 8 * t * d
     if form == "pytorch":
-        return 2 * (t * d + 2 * t) + 8 * t * d
+        return 2 * (t * d + 4 * t) + 8 * t * d
     return 4 * t * d
 
 
@@ -301,7 +301,7 @@ def main():
                     text.append(f"  {label}, D={d}, {'causal' if c else 'non-causal'}: " + "; ".join(
                         f"S={r['seq']}: {float(r['fkl_separate_over_fused_median']):.3f} [{float(r['fkl_separate_over_fused_min']):.3f}-{float(r['fkl_separate_over_fused_max']):.3f}] {r['verdict']}" for r in g))
     text.append("Global bytes of one call, COMPUTED from the sizes and not measured (compulsory traffic, every element once; re-reads across query tiles are not counted); t = BH x S tokens, d = head dimension: "
-                "prologue fused (int8 or e4m3 K and V read once, fp32 scales) 2 t d + 8 t; prologue unfused (dequantisation kernel reads them, writes bf16; attention reads bf16) 10 t d + 8 t; PyTorch composition (int8 and bf16 scales read, bf16 written, flash reads bf16) 10 t d + 4 t; "
+                "prologue fused (int8 or e4m3 K and V read once, fp32 scales) 2 t d + 8 t; prologue unfused (dequantisation kernel reads them, writes bf16; attention reads bf16) 10 t d + 8 t; PyTorch composition (int8 and fp32 scales read, bf16 written, flash reads bf16) 10 t d + 8 t; "
                 "raw bf16 K and V 4 t d; epilogue (output O): fused 2 t d (written once), separate 6 t d (written, read, written). Per configuration in the columns *_global_bytes_computed of e16_summary_fusion.csv.")
     flagged = [r for r in fusion if r.get("different_clocks")]
     text.append(f"SM clock check: {sum(1 for r in fusion if 'clock_diff_percent_largest' in r)} fused/separate comparisons have the SM clock of both members from the sampler; {len(flagged)} of them differ by more than {CLOCK_TOLERANCE:.0f} % and are marked 'DIFFERENT CLOCKS' "

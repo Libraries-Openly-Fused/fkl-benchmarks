@@ -17,13 +17,14 @@
   CUDA_DEVICE_ORDER=PCI_BUS_ID CUDA_VISIBLE_DEVICES=1 python pytorch-attention/e16_baselines.py --out e16_baselines.csv --input-dir DIR
       [--dims 64,128] [--seqs 512,1024,2048,4096,8192] [--tokens 262144] [--bh 0] [--causal 0,1] [--backends flash,cudnn,efficient,math,flash_attn,triton,dequant_flash,dequant_compiled_flash,epilogue_flash]
 
-The same configurations and the same input bytes as the C++ program: the file e16_input_d<D>_s<S>_bh<BH>.bin of --input-dir, written by fkl-self/attention/e16_attention.cu (Q, K, V in bf16, then K and V
+The same configurations and the same input bytes as the C++ program: the file e16_input_d<D>_s<S>_bh<BH>.bin of --input-dir, written by whichever FKL program runs first (fkl-self/attention/
+e16_attention.cu or e16_query_tile.cu; raw bytes in the native little-endian order: Q, K, V in bf16, then K and V
 in int8, each followed by its fp32 per-token scales, then K and V in e4m3 with their scales; the e4m3 data is not used here). bf16 Q, K, V of shape (BH, S, D) (contiguous, the memory layout of the FKL program;
 PyTorch sees them as (1, BH, S, D), flash-attn as the view (1, S, BH, D)),
 BH = max(min_bh, tokens / S) heads so that BH x S is the same for every S (or --bh heads for every S), causal or not, fp32 accumulation inside every kernel. Per variant and configuration: the time per call from
 `--iters` blocks of back-to-back calls between two CUDA events (each block about `--block-ms` long: the GPU time of the call, with no gap for the host between calls) and the median of `--iters` single synchronised
 calls (the launch latency of the call is in it), TFLOP/s = 4 BH S^2 D (halved for causal) / time, the largest and mean absolute error of the output against an fp32 attention of the same inputs on the same GPU (the
-math backend in fp32, for `--error-heads` heads: the first ones), and the kernels of one call (CUPTI, one extra untimed call under torch.profiler). Variants:
+math backend in fp32, for the first and the last head, the heads the FKL program checks), and the kernels of one call (CUPTI, one extra untimed call under torch.profiler). Variants:
   flash           torch.nn.functional.scaled_dot_product_attention with SDPBackend.FLASH_ATTENTION (FlashAttention-2)
   cudnn           the same with SDPBackend.CUDNN_ATTENTION
   efficient       the same with SDPBackend.EFFICIENT_ATTENTION
@@ -42,6 +43,7 @@ Preparation: none (column prep_us_per_call = "none"). The tensors exist before t
 import argparse
 import csv
 import datetime
+import hashlib
 import math
 import os
 import platform
@@ -112,13 +114,13 @@ def _sdpa_call(backend, q, k, v, causal):
 
 
 def reference(q, k, v, causal, heads):
-    """fp32 attention of the first `heads` heads from the bf16 inputs (the math backend, fp32)."""
+    """fp32 attention of the heads `heads` (a list of indices) from the bf16 inputs (the math backend, fp32)."""
     with sdpa_kernel(SDPBackend.MATH):
-        return F.scaled_dot_product_attention(q[:, :heads].float(), k[:, :heads].float(), v[:, :heads].float(), is_causal=causal)
+        return F.scaled_dot_product_attention(q[:, heads].float(), k[:, heads].float(), v[:, heads].float(), is_causal=causal)
 
 
 def errors(out, ref, heads):
-    diff = (out[:, :heads].float() - ref).abs()
+    diff = (out[:, heads].float() - ref).abs()
     return diff.max().item(), diff.mean().item()
 
 
@@ -164,7 +166,15 @@ def os_kernel_lines():
     return [f"# os: {name}", f"# kernel: {u.sysname} {u.release}"]
 
 
-def header_lines(probes, unavailable):
+def file_sha256(path):
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(1 << 20), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def header_lines(probes, unavailable, inputs):
     lines = ["# experiment: E16 forward attention baselines (PyTorch SDPA backends, flash-attn, Triton)", f"# date: {datetime.datetime.now().isoformat(timespec='seconds')}"]
     props = torch.cuda.get_device_properties(0)
     lines += os_kernel_lines()
@@ -193,9 +203,11 @@ def header_lines(probes, unavailable):
         lines.append(f"# unavailable {name}: {why}")
     lines.append("# note: dequant_flash, dequant_compiled_flash and epilogue_flash are compositions of off-the-shelf PyTorch pieces that a user has today (elementwise kernels around the flash kernel); they are not a hand-fused "
                  "quantised-cache attention kernel such as the ones in serving systems, and not the best that could be written for these two cases")
-    lines.append("# input: the files e16_input_d<D>_s<S>_bh<BH>.bin written by fkl-self/attention/e16_attention.cu (the bytes of the FKL program: bf16 Q, K, V, int8 K and V with fp32 per-token scales); "
+    lines.append("# input: the files e16_input_d<D>_s<S>_bh<BH>.bin written by whichever FKL program runs first (the bytes of the FKL program: bf16 Q, K, V, int8 K and V with fp32 per-token scales); "
                  "layout (BH, S, D) contiguous; time = per call from blocks of back-to-back calls between two CUDA events, single = one synchronised call; warm-up before; fp32 accumulation inside the kernels")
     lines.append("# preparation: none (prep_us_per_call = none): the tensors exist before timing, and torch.compile and Triton's autotuner run once before timing")
+    for path, size, digest in inputs:
+        lines.append(f"# input file: {path} {size} bytes sha256 {digest}")
     return lines
 
 
@@ -214,7 +226,6 @@ def main():
     ap.add_argument("--warmup", type=int, default=10)
     ap.add_argument("--warmup-ms", type=float, default=300.0, help="the warm-up lasts at least this much GPU time")
     ap.add_argument("--rotate", type=int, default=0, help="offset of the order of the groups of variants (the long runs use 0, 1, 2)")
-    ap.add_argument("--error-heads", type=int, default=2)
     ap.add_argument("--max-math-gb", type=float, default=2.0)
     ap.add_argument("--epi-a", type=float, default=1.25)
     ap.add_argument("--epi-b", type=float, default=0.5)
@@ -257,11 +268,21 @@ def main():
     if deq_compiled is not None:
         calls["dequant_compiled_flash"] = lambda q, k, v, c: deq_compiled(torch.ones_like(k, dtype=torch.int8), torch.ones(k.shape[:-1], device=k.device, dtype=torch.float32),
                                                                              torch.ones_like(v, dtype=torch.int8), torch.ones(v.shape[:-1], device=v.device, dtype=torch.float32))
+    # every configuration's input file is checked and hashed before the CSV is opened: a missing file must not leave a partial CSV
+    inputs = []
+    for d in [int(x) for x in a.dims.split(",")]:
+        for seq in [int(x) for x in a.seqs.split(",")]:
+            bh = a.bh if a.bh > 0 else max(a.min_bh, a.tokens // seq)
+            path = os.path.join(a.input_dir, f"e16_input_d{d}_s{seq}_bh{bh}.bin")
+            size = 10 * bh * seq * d + 16 * bh * seq
+            if not os.path.isfile(path) or os.path.getsize(path) != size:
+                raise SystemExit(f"{path}: missing or not {size} bytes (run an FKL E16 program with E16_INPUT_DIR={a.input_dir} first)")
+            inputs.append((path, size, file_sha256(path)))
     probes = probe(dev, calls)
     for name, result in probes.items():
         print(f"probe {name}: {result}", flush=True)
     with open(a.out, "w", newline="") as f:
-        for line in header_lines(probes, unavailable):
+        for line in header_lines(probes, unavailable, inputs):
             f.write(line + "\n")
         w = csv.writer(f)
         w.writerow(COLUMNS)
@@ -272,8 +293,6 @@ def main():
                 # the inputs of the FKL program: Q, K, V (bf16) and K and V in int8 with their fp32 per-token scales, read from its file (the layout is in the docstring)
                 path = os.path.join(a.input_dir, f"e16_input_d{d}_s{seq}_bh{bh}.bin")
                 n, tokens = bh * seq * d, bh * seq
-                if not os.path.isfile(path) or os.path.getsize(path) != 10 * n + 16 * tokens:
-                    raise SystemExit(f"{path}: missing or not {10 * n + 16 * tokens} bytes (run fkl-self/attention/e16_attention.cu with E16_INPUT_DIR={a.input_dir} first)")
                 raw = torch.from_file(path, shared=False, size=10 * n + 16 * tokens, dtype=torch.uint8)
                 offsets = {}
                 at = 0
@@ -293,14 +312,14 @@ def main():
                 epi_a = torch.tensor(a.epi_a, device=dev, dtype=torch.bfloat16)
                 epi_b = torch.tensor(a.epi_b, device=dev, dtype=torch.bfloat16)
                 for causal in [bool(int(x)) for x in a.causal.split(",")]:
-                    heads = min(a.error_heads, bh)
+                    heads = [0, bh - 1] if bh > 1 else [0]   # the first and the last head, as the FKL program
                     ref = reference(q, k, v, causal, heads)
                     ref_deq = ref_epi = None
                     if "dequant_flash" in backends or deq_compiled is not None:
-                        kd32 = k8[:, :heads].float() * ks[:, :heads, :, None]
-                        vd32 = v8[:, :heads].float() * vs[:, :heads, :, None]
+                        kd32 = k8[:, heads].float() * ks[:, heads, :, None]
+                        vd32 = v8[:, heads].float() * vs[:, heads, :, None]
                         with sdpa_kernel(SDPBackend.MATH):
-                            ref_deq = F.scaled_dot_product_attention(q[:, :heads].float(), kd32, vd32, is_causal=causal)
+                            ref_deq = F.scaled_dot_product_attention(q[:, heads].float(), kd32, vd32, is_causal=causal)
                     if "epilogue_flash" in backends:
                         ref_epi = ref * a.epi_a + a.epi_b
 

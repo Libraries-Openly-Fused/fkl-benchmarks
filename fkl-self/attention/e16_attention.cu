@@ -14,8 +14,9 @@
 
 // E16, forward attention with FKL: the tensor-core DPP (FlashAttentionMmaDPP, fused/raw prologue, fused epilogue) and the SIMT DPP (FlashAttentionDPP), against their unfused alternatives.
 // bf16 Q, K, V of shape (BH, S, D) contiguous, fp32 accumulation, bf16 output; D = 64 and 128; BH = max(minBH, tokens / S), so BH x S is the same for every S; causal and not causal.
-// Inputs: the file e16_input_d<D>_s<S>_bh<BH>.bin of E16_INPUT_DIR (see readOrWriteInputs), written by this program when it does not exist and read by pytorch-attention/e16_baselines.py,
-// so that both compute on the same bytes: Q, K, V and the int8 and e4m3 K and V with their fp32 per-token scales, generated on the host.
+// Inputs: the file e16_input_d<D>_s<S>_bh<BH>.bin of E16_INPUT_DIR (see readInputs), written by whichever FKL program runs first and read by pytorch-attention/e16_baselines.py,
+// so that both compute on the same bytes: Q, K, V and the int8 and e4m3 K and V with their fp32 per-token scales, generated on the host. The notes of the CSV record
+// the size and SHA-256 of every input file.
 // Variants (all with the library as it is: no tuning, the tile sizes are the ones the library picks):
 //   mma_raw                  FlashAttentionMmaDPP, Q, K, V as raw bf16 reads (the bf16 cp.async schedule)
 //   mma_int8kv_fused         K and V as int8 with one fp32 scale per token, dequantised inside the kernel: the library's quantised schedule copies the raw bytes with cp.async and dequantises shared memory to shared memory
@@ -36,6 +37,7 @@
 #include <common/csv_writer.h>
 #include <common/cuda_timing.h>
 #include <common/nan_safe.h>
+#include <common/sha256.h>
 #include <common/status_check.h>
 
 #include <fused_kernel/fused_kernel.h>
@@ -57,6 +59,7 @@
 #include <cstdlib>
 #include <fstream>
 #include <functional>
+#include <iomanip>
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
@@ -109,29 +112,27 @@ struct Inputs {
 };
 
 // The input file of a configuration, in this order: Q, K, V (bf16, BH x S x D each), then K and V in int8, each followed by its fp32 scales (BH x S), then K and V in e4m3, each
-// followed by its scales. Raw bytes, no header; its size is 10 n + 16 BH S bytes for n = BH S D. Written when it does not exist, read otherwise; a file of another size stops the program.
-Inputs readOrWriteInputs(const int d, const int seq, const int bh, std::string& path, bool& written) {
+// followed by its scales. Raw bytes in the native little-endian order, no header; its size is 10 n + 16 BH S bytes for n = BH S D. Whichever program runs first
+// (e16_attention.cu or e16_query_tile.cu) writes it, with the generator above; both read it, and so does pytorch-attention/e16_baselines.py.
+std::string inputDir() { return std::getenv("E16_INPUT_DIR") ? std::getenv("E16_INPUT_DIR") : "."; }
+std::string inputName(const int d, const int seq, const int bh) {
+    return "e16_input_d" + std::to_string(d) + "_s" + std::to_string(seq) + "_bh" + std::to_string(bh) + ".bin";
+}
+
+// the vectors of the inputs, sized for the configuration, and the byte ranges of the file in its order
+std::vector<std::pair<char*, std::streamsize>> sizedParts(Inputs& in, const int d, const int seq, const int bh) {
     const size_t n = static_cast<size_t>(bh) * seq * d, tokens = static_cast<size_t>(bh) * seq;
-    const char* dir = std::getenv("E16_INPUT_DIR");
-    path = std::string(dir ? dir : ".") + "/e16_input_d" + std::to_string(d) + "_s" + std::to_string(seq) + "_bh" + std::to_string(bh) + ".bin";
-    const size_t expected = 10 * n + 16 * tokens;
-    Inputs in;
     in.q.resize(n); in.k.resize(n); in.v.resize(n);
     in.k8.resize(n); in.v8.resize(n); in.kf8.resize(n); in.vf8.resize(n);
     in.k8s.resize(tokens); in.v8s.resize(tokens); in.kf8s.resize(tokens); in.vf8s.resize(tokens);
     const auto bytesOf = [](auto& vec) { return std::make_pair(reinterpret_cast<char*>(vec.data()), static_cast<std::streamsize>(vec.size() * sizeof(vec[0]))); };
-    const std::vector<std::pair<char*, std::streamsize>> parts = {bytesOf(in.q), bytesOf(in.k), bytesOf(in.v), bytesOf(in.k8), bytesOf(in.k8s), bytesOf(in.v8), bytesOf(in.v8s),
-                                                                  bytesOf(in.kf8), bytesOf(in.kf8s), bytesOf(in.vf8), bytesOf(in.vf8s)};
-    std::ifstream f(path, std::ios::binary | std::ios::ate);
-    if (f) {
-        const size_t size = static_cast<size_t>(f.tellg());
-        if (size != expected) throw std::runtime_error(path + " has " + std::to_string(size) + " bytes, " + std::to_string(expected) + " expected");
-        f.seekg(0);
-        for (const auto& part : parts) f.read(part.first, part.second);
-        if (!f) throw std::runtime_error("cannot read " + path);
-        written = false;
-        return in;
-    }
+    return {bytesOf(in.q), bytesOf(in.k), bytesOf(in.v), bytesOf(in.k8), bytesOf(in.k8s), bytesOf(in.v8), bytesOf(in.v8s),
+            bytesOf(in.kf8), bytesOf(in.kf8s), bytesOf(in.vf8), bytesOf(in.vf8s)};
+}
+
+void writeInputs(const int d, const int seq, const int bh, const std::string& path) {
+    Inputs in;
+    const auto parts = sizedParts(in, d, seq, bh);
     const uint64_t base = 1000ull * d + seq;
     fillNormal(in.q, 11 + base);
     fillNormal(in.k, 22 + base);
@@ -142,9 +143,47 @@ Inputs readOrWriteInputs(const int d, const int seq, const int bh, std::string& 
     quantizeTokens(in.v, d, true, in.vf8, in.vf8s);
     std::ofstream out(path, std::ios::binary);
     for (const auto& part : parts) out.write(part.first, part.second);
+    out.close();
     if (!out) throw std::runtime_error("cannot write " + path);
-    written = true;
+}
+
+// a file of another size stops the program
+Inputs readInputs(const int d, const int seq, const int bh, const std::string& path) {
+    Inputs in;
+    const auto parts = sizedParts(in, d, seq, bh);
+    const size_t expected = 10 * static_cast<size_t>(bh) * seq * d + 16 * static_cast<size_t>(bh) * seq;
+    std::ifstream f(path, std::ios::binary | std::ios::ate);
+    if (!f) throw std::runtime_error("cannot read " + path);
+    const size_t size = static_cast<size_t>(f.tellg());
+    if (size != expected) throw std::runtime_error(path + " has " + std::to_string(size) + " bytes, " + std::to_string(expected) + " expected");
+    f.seekg(0);
+    for (const auto& part : parts) f.read(part.first, part.second);
+    if (!f) throw std::runtime_error("cannot read " + path);
     return in;
+}
+
+// The input file of every configuration of this run, written when it does not exist, then hashed: the notes of the CSV get the folder and the size and
+// SHA-256 of every file, because the files are deleted after a window.
+std::string prepareInputFiles(const std::vector<int>& dims, const std::vector<int>& seqs, const int tokens, const int minBh, const int fixedBh) {
+    std::string notes = "; input files in " + inputDir() + ":";
+    for (const int d : dims) {
+        for (const int seq : seqs) {
+            const int bh = fixedBh > 0 ? fixedBh : std::max(minBh, tokens / seq);
+            const std::string path = inputDir() + "/" + inputName(d, seq, bh);
+            bool exists = false;
+            {
+                std::ifstream probe(path, std::ios::binary);
+                exists = static_cast<bool>(probe);
+            }
+            if (!exists) writeInputs(d, seq, bh, path);
+            std::ifstream f(path, std::ios::binary | std::ios::ate);
+            const long long bytes = f ? static_cast<long long>(f.tellg()) : -1;
+            const std::string hash = fklb::sha256File(path);
+            std::cout << "input " << path << (exists ? " (read)" : " (written)") << ": " << bytes << " bytes, sha256 " << hash << std::endl;
+            notes += " " + inputName(d, seq, bh) + " " + std::to_string(bytes) + " bytes sha256 " + hash + (exists ? "" : " (written by this run)") + ";";
+        }
+    }
+    return notes;
 }
 
 // the unfused prologue: K and V (z = 0, 1) dequantised to bf16 buffers, one kernel
@@ -475,7 +514,7 @@ struct Runner {
         meanErr = sum / static_cast<double>(hRef.size());
     }
 
-    static std::string clean(std::string text) {   // the CSV has no quoting
+    static std::string clean(std::string text) {   // commas and line breaks become ';', so that the text stays one field for readers that split lines on commas
         for (char& c : text) { if (c == ',' || c == '\n' || c == '\r') { c = ';'; } }
         return text;
     }
@@ -483,7 +522,9 @@ struct Runner {
     void row(const Point& pt, const std::string& variant, const int position, const int iters_, const Timing& t, const double maxErr, const double meanErr, const KernelFacts& kf, const std::string& note) {
         const double flops = 4.0 * pt.bh * static_cast<double>(pt.seq) * pt.seq * pt.d * (pt.causal ? 0.5 : 1.0);
         const double tflops = t.median > 0 ? flops / (t.median * 1e-3) / 1e12 : 0.0;
-        csv.row(gpu, variant, pt.d, pt.seq, pt.bh, pt.causal ? 1 : 0, position, iters_, t.reps, t.tStartMs, t.tEndMs, t.median, t.min, t.max, t.single, tflops, maxErr, meanErr, kf.kernels, kf.schedule, kf.blockQ, kf.blockKV, kf.numWarps, kf.splitKV, clean(kf.text), clean(note), t.prepUs);
+        std::ostringstream prep;   // empty in profile mode (reps = 0), where nothing is timed
+        if (t.reps > 0) prep << std::setprecision(9) << t.prepUs;
+        csv.row(gpu, variant, pt.d, pt.seq, pt.bh, pt.causal ? 1 : 0, position, iters_, t.reps, t.tStartMs, t.tEndMs, t.median, t.min, t.max, t.single, tflops, maxErr, meanErr, kf.kernels, kf.schedule, kf.blockQ, kf.blockKV, kf.numWarps, kf.splitKV, clean(kf.text), clean(note), prep.str());
         csv.flush();
         std::cout << variant << " D=" << pt.d << " S=" << pt.seq << " BH=" << pt.bh << " causal=" << pt.causal << ": " << t.median << " ms (" << t.reps << " calls per block), single " << t.single << " ms, " << tflops
                   << " TFLOP/s, preparation " << t.prepUs << " us per call, max err " << maxErr << ", kernels " << kf.kernels << (note.empty() ? "" : " | " + note) << std::endl;
@@ -492,10 +533,7 @@ struct Runner {
     void run(const Point& pt) {
         const size_t n = static_cast<size_t>(pt.bh) * pt.seq * D;
         const long tokens = static_cast<long>(pt.bh) * pt.seq;
-        std::string inputPath;
-        bool written = false;
-        const Inputs in = readOrWriteInputs(D, pt.seq, pt.bh, inputPath, written);
-        std::cout << "D=" << D << " S=" << pt.seq << " BH=" << pt.bh << ": inputs " << inputPath << (written ? " (written)" : " (read)") << std::endl;
+        const Inputs in = readInputs(D, pt.seq, pt.bh, inputDir() + "/" + inputName(D, pt.seq, pt.bh));
         // the device copies of the inputs, the output and the bf16 K and V of the unfused prologues
         __nv_bfloat16 *q = nullptr, *k = nullptr, *v = nullptr, *o = nullptr, *kd = nullptr, *vd = nullptr;
         int8_t *k8 = nullptr, *v8 = nullptr, *kf8 = nullptr, *vf8 = nullptr;
@@ -531,7 +569,6 @@ struct Runner {
         FKLB_CUDA_CHECK(cudaGetLastError());
         FKLB_CUDA_CHECK(cudaDeviceSynchronize());
 
-        const __nv_bfloat16 *qc = q, *kc = k, *vc = v, *kdc = kd, *vdc = vd;
         const dim3 dqGrid((tokens * D + 255) / 256, 1, 2);
 
         // The variants: each builds the argument set of one call (prepare: the operations it launches) and launches it (launch: the library call written out).
@@ -553,57 +590,57 @@ struct Runner {
         };
         const int simtIters = std::max(3, iters / 6);
         add("mma_raw",
-            [&] { return std::make_tuple(fk::makeAttentionRead(qc, pt.bh, pt.seq, D), fk::makeAttentionRead(kc, pt.bh, pt.seq, D), fk::makeAttentionRead(vc, pt.bh, pt.seq, D)); },
+            [&] { return std::make_tuple(fk::makeAttentionRead(q, pt.bh, pt.seq, D), fk::makeAttentionRead(k, pt.bh, pt.seq, D), fk::makeAttentionRead(v, pt.bh, pt.seq, D)); },
             [&](const auto& set) {
                 const auto& [qr, kr, vr] = set;
-                fk::executeFlashAttentionMma<D, 0, 0, 4, __nv_bfloat16>(qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal, stream);
+                fk::executeFlashAttentionMma<D>(qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal, stream);
             }, kRef, vRef, 1.f, 0.f, iters, 0);
         add("mma_int8kv_fused",
-            [&] { return std::make_tuple(fk::makeAttentionRead(qc, pt.bh, pt.seq, D), fk::makeInt8KVRead(k8, k8s, pt.bh, pt.seq, D), fk::makeInt8KVRead(v8, v8s, pt.bh, pt.seq, D)); },
+            [&] { return std::make_tuple(fk::makeAttentionRead(q, pt.bh, pt.seq, D), fk::makeInt8KVRead(k8, k8s, pt.bh, pt.seq, D), fk::makeInt8KVRead(v8, v8s, pt.bh, pt.seq, D)); },
             [&](const auto& set) {
                 const auto& [qr, kr, vr] = set;
-                fk::executeFlashAttentionMma<D, 0, 0, 4, __nv_bfloat16>(qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal, stream);
+                fk::executeFlashAttentionMma<D>(qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal, stream);
             }, kRefI8, vRefI8, 1.f, 0.f, iters, 1);
         add("mma_int8kv_unfused",
-            [&] { return std::make_tuple(fk::makeAttentionRead(qc, pt.bh, pt.seq, D), fk::makeAttentionRead(kdc, pt.bh, pt.seq, D), fk::makeAttentionRead(vdc, pt.bh, pt.seq, D)); },
+            [&] { return std::make_tuple(fk::makeAttentionRead(q, pt.bh, pt.seq, D), fk::makeAttentionRead(kd, pt.bh, pt.seq, D), fk::makeAttentionRead(vd, pt.bh, pt.seq, D)); },
             [&](const auto& set) {
                 const auto& [qr, kr, vr] = set;
                 dequantKV<D, false><<<dqGrid, 256, 0, stream.getCUDAStream()>>>(k8, k8s, v8, v8s, kd, vd, tokens);
-                fk::executeFlashAttentionMma<D, 0, 0, 4, __nv_bfloat16>(qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal, stream);
+                fk::executeFlashAttentionMma<D>(qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal, stream);
             }, kRefI8, vRefI8, 1.f, 0.f, iters, 1);
         add("mma_fp8kv_fused",
-            [&] { return std::make_tuple(fk::makeAttentionRead(qc, pt.bh, pt.seq, D), fk::makeFp8KVRead(kf8, kf8s, pt.bh, pt.seq, D), fk::makeFp8KVRead(vf8, vf8s, pt.bh, pt.seq, D)); },
+            [&] { return std::make_tuple(fk::makeAttentionRead(q, pt.bh, pt.seq, D), fk::makeFp8KVRead(kf8, kf8s, pt.bh, pt.seq, D), fk::makeFp8KVRead(vf8, vf8s, pt.bh, pt.seq, D)); },
             [&](const auto& set) {
                 const auto& [qr, kr, vr] = set;
-                fk::executeFlashAttentionMma<D, 0, 0, 4, __nv_bfloat16>(qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal, stream);
+                fk::executeFlashAttentionMma<D>(qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal, stream);
             }, kRefF8, vRefF8, 1.f, 0.f, iters, 2);
         add("mma_fp8kv_unfused",
-            [&] { return std::make_tuple(fk::makeAttentionRead(qc, pt.bh, pt.seq, D), fk::makeAttentionRead(kdc, pt.bh, pt.seq, D), fk::makeAttentionRead(vdc, pt.bh, pt.seq, D)); },
+            [&] { return std::make_tuple(fk::makeAttentionRead(q, pt.bh, pt.seq, D), fk::makeAttentionRead(kd, pt.bh, pt.seq, D), fk::makeAttentionRead(vd, pt.bh, pt.seq, D)); },
             [&](const auto& set) {
                 const auto& [qr, kr, vr] = set;
                 dequantKV<D, true><<<dqGrid, 256, 0, stream.getCUDAStream()>>>(kf8, kf8s, vf8, vf8s, kd, vd, tokens);
-                fk::executeFlashAttentionMma<D, 0, 0, 4, __nv_bfloat16>(qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal, stream);
+                fk::executeFlashAttentionMma<D>(qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal, stream);
             }, kRefF8, vRefF8, 1.f, 0.f, iters, 2);
         add("mma_epilogue_fused",
-            [&] { return std::make_tuple(fk::makeAttentionRead(qc, pt.bh, pt.seq, D), fk::makeAttentionRead(kc, pt.bh, pt.seq, D), fk::makeAttentionRead(vc, pt.bh, pt.seq, D),
+            [&] { return std::make_tuple(fk::makeAttentionRead(q, pt.bh, pt.seq, D), fk::makeAttentionRead(k, pt.bh, pt.seq, D), fk::makeAttentionRead(v, pt.bh, pt.seq, D),
                                          fk::Mul<float>::build(epiA).then(fk::Add<float>::build(epiB))); },
             [&](const auto& set) {
                 const auto& [qr, kr, vr, epilogue] = set;
-                fk::executeFlashAttentionMma<D, 0, 0, 4, __nv_bfloat16>(qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal, stream, -1.f, epilogue);
+                fk::executeFlashAttentionMma<D>(qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal, stream, -1.f, epilogue);
             }, kRef, vRef, epiA, epiB, iters, 3);
         add("mma_epilogue_separate",
-            [&] { return std::make_tuple(fk::makeAttentionRead(qc, pt.bh, pt.seq, D), fk::makeAttentionRead(kc, pt.bh, pt.seq, D), fk::makeAttentionRead(vc, pt.bh, pt.seq, D)); },
+            [&] { return std::make_tuple(fk::makeAttentionRead(q, pt.bh, pt.seq, D), fk::makeAttentionRead(k, pt.bh, pt.seq, D), fk::makeAttentionRead(v, pt.bh, pt.seq, D)); },
             [&](const auto& set) {
                 const auto& [qr, kr, vr] = set;
-                fk::executeFlashAttentionMma<D, 0, 0, 4, __nv_bfloat16>(qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal, stream);
+                fk::executeFlashAttentionMma<D>(qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal, stream);
                 affineBf16<<<(n + 255) / 256, 256, 0, stream.getCUDAStream()>>>(o, n, epiA, epiB);
             }, kRef, vRef, epiA, epiB, iters, 3);
         if (pt.seq <= simtMaxSeq) {
             add("simt_raw",
-                [&] { return std::make_tuple(fk::makeAttentionRead(qc, pt.bh, pt.seq, D), fk::makeAttentionRead(kc, pt.bh, pt.seq, D), fk::makeAttentionRead(vc, pt.bh, pt.seq, D)); },
+                [&] { return std::make_tuple(fk::makeAttentionRead(q, pt.bh, pt.seq, D), fk::makeAttentionRead(k, pt.bh, pt.seq, D), fk::makeAttentionRead(v, pt.bh, pt.seq, D)); },
                 [&](const auto& set) {
                     const auto& [qr, kr, vr] = set;
-                    fk::executeFlashAttention<D, 32, 4, __nv_bfloat16>(qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal, stream);
+                    fk::executeFlashAttention<D>(qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal, stream);
                 }, kRef, vRef, 1.f, 0.f, simtIters, 4);
         }
         // ORDER: the groups {raw}, {int8 pair}, {fp8 pair}, {epilogue pair} are rotated by (configuration index + E16_ROTATE) mod 4 and the two members of a pair are swapped when that shift is odd, so that over the
@@ -660,9 +697,12 @@ void runDim(fklb::CsvWriter& csv, const std::vector<int>& seqs, const std::vecto
 int launch() {
     cudaDeviceProp prop;
     FKLB_CUDA_CHECK(cudaGetDeviceProperties(&prop, 0));
+    const std::vector<int> dims = envList("E16_DIMS", "64,128"), seqs = envList("E16_SEQS", "512,1024,2048,4096,8192"), causals = envList("E16_CAUSAL", "0,1");
+    const int tokens = std::atoi(envString("E16_TOKENS", "262144").c_str()), minBh = std::atoi(envString("E16_MIN_BH", "4").c_str()), fixedBh = std::atoi(envString("E16_BH", "0").c_str());
+    const std::string inputNotes = prepareInputFiles(dims, seqs, tokens, minBh, fixedBh);
     fklb::CsvWriter csv("e16_attention.csv", "E16 forward attention with FKL: the tensor-core DPP and the SIMT DPP against their unfused alternatives",
                         {"gpu", "variant", "d", "seq", "bh", "causal", "position", "blocks", "calls_per_block", "t_start_ms", "t_end_ms", "time_ms_median", "time_ms_min", "time_ms_max", "single_ms_median", "tflops_median", "max_abs_err", "mean_abs_err", "kernels", "schedule", "block_q", "block_kv", "num_warps", "split_kv", "kernel_facts", "note", "prep_us_per_call"},
-                        "bf16 Q, K, V (BH, S, D) contiguous, normal(0, 1), fp32 accumulation, bf16 output; inputs: the file e16_input_d<D>_s<S>_bh<BH>.bin of E16_INPUT_DIR, generated on the host (written by this program when missing, read by pytorch-attention/e16_baselines.py); "
+                        "bf16 Q, K, V (BH, S, D) contiguous, normal(0, 1), fp32 accumulation, bf16 output; inputs: the file e16_input_d<D>_s<S>_bh<BH>.bin of E16_INPUT_DIR, generated on the host (written by whichever FKL program runs first, read by pytorch-attention/e16_baselines.py; the size and SHA-256 of every file are at the end of these notes); "
                         "time_ms_* = per call, from `blocks` blocks of `calls_per_block` calls enqueued back to back between two CUDA events "
                         "(the GPU time of the call, no host gap between calls; the block lasts about E16_BLOCK_MS), after a warm-up of at least E16_WARMUP_MS of GPU time; every call launches its own argument set (the operations of the call), rebuilt before the events; "
                         "prep_us_per_call = host time (steady_clock) of building that set and releasing the one it replaces, per call; position = place of the variant in the order of its configuration (ORDER: groups rotated by configuration + E16_ROTATE, pair members swapped on odd shifts, SIMT last); t_start_ms and t_end_ms = wall clock of the blocks, for the join with the SM clock sampler; single_ms_median = median of `blocks` single calls, each between two events and synchronised (launch latency included); "
@@ -671,9 +711,7 @@ int launch() {
                         "of the *_unfused variants run the library's bf16 cp.async schedule (16-byte cp.async copies of K and V tiles); the fused int8 and fp8 variants run the library's quantised schedule: the raw quantised bytes are copied with cp.async (8 bytes) into a "
                         "staging area of shared memory and dequantised shared memory to shared memory inside the kernel, the per-token scales are read from global memory; each path has its own tile sizes (the library's choice). A fused-against-unfused prologue "
                         "pair therefore compares an in-kernel shared-memory dequantisation pass (half the global bytes for K and V) with a separate dequantisation kernel that writes bf16 to global memory, and the two kernels differ in schedule details and tile "
-                        "sizes as well as in fusion: it is not a pure fusion effect. The epilogue pair runs the same kernel and schedule and differs only in the epilogue");
-    const std::vector<int> dims = envList("E16_DIMS", "64,128"), seqs = envList("E16_SEQS", "512,1024,2048,4096,8192"), causals = envList("E16_CAUSAL", "0,1");
-    const int tokens = std::atoi(envString("E16_TOKENS", "262144").c_str()), minBh = std::atoi(envString("E16_MIN_BH", "4").c_str()), fixedBh = std::atoi(envString("E16_BH", "0").c_str());
+                        "sizes as well as in fusion: it is not a pure fusion effect. The epilogue pair runs the same kernel and schedule and differs only in the epilogue" + inputNotes);
     for (const int d : dims) {
         if (d == 64) { runDim<64>(csv, seqs, causals, tokens, minBh, fixedBh, prop.name); }
         else if (d == 128) { runDim<128>(csv, seqs, causals, tokens, minBh, fixedBh, prop.name); }
