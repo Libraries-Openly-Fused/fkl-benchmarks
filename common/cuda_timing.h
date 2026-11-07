@@ -31,6 +31,10 @@
 //   move of them is measured, and their scope ends between the GPU interval and the end of host 2. Compiler barriers keep the preparation
 //   and the release inside their intervals. The clock reads cost a few tens of nanoseconds, so a preparation shorter than that is
 //   measured as that.
+//
+// fklb::timePreparedLaunch(stream, prepare, beforeLaunch, launch, gpu, host): the same, and in every timed iteration beforeLaunch() is called
+//   after the preparation and before the start event, in none of the intervals: for example a kernel that flushes the L2 cache, enqueued on
+//   `stream` so that the GPU interval starts when it has finished. It is not called before the warm-up launch.
 #pragma once
 
 #include <common/status_check.h>
@@ -79,8 +83,9 @@ inline void preparedBarrier(const T& value) {
     asm volatile("" : : "r"(&value) : "memory");
 }
 
-template <typename Prepare, typename Launch>
-void timePreparedLaunch(cudaStream_t stream, const Prepare& prepare, const Launch& launch, Timing& gpu, Timing& host) {
+template <typename Prepare, typename BeforeLaunch, typename Launch>
+void timePreparedLaunch(cudaStream_t stream, const Prepare& prepare, const BeforeLaunch& beforeLaunch, const Launch& launch, Timing& gpu,
+                        Timing& host) {
     using Clock = std::chrono::steady_clock;
     cudaEvent_t start, stop;
     FKLB_CUDA_CHECK(cudaEventCreate(&start));
@@ -99,6 +104,7 @@ void timePreparedLaunch(cudaStream_t stream, const Prepare& prepare, const Launc
             const auto args = prepare();   // built in place: no copy or move of the arguments
             preparedBarrier(args);
             h1 = Clock::now();
+            beforeLaunch();
             FKLB_CUDA_CHECK(cudaEventRecord(start, stream));
             launch(args);
             FKLB_CUDA_CHECK(cudaEventRecord(stop, stream));
@@ -121,6 +127,11 @@ void timePreparedLaunch(cudaStream_t stream, const Prepare& prepare, const Launc
     FKLB_CUDA_CHECK(cudaGetLastError());
     FKLB_CUDA_CHECK(cudaEventDestroy(start));
     FKLB_CUDA_CHECK(cudaEventDestroy(stop));
+}
+
+template <typename Prepare, typename Launch>
+void timePreparedLaunch(cudaStream_t stream, const Prepare& prepare, const Launch& launch, Timing& gpu, Timing& host) {
+    timePreparedLaunch(stream, prepare, [] {}, launch, gpu, host);
 }
 
 }  // namespace fklb
