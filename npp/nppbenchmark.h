@@ -12,7 +12,17 @@
    See the License for the specific language governing permissions and
    limitations under the License. */
 
+#include <common/status_check.h>
 #include <common/system_info.h>
+
+#include <array>
+#include <chrono>
+#include <fstream>
+#include <iostream>
+#include <limits>
+#include <sstream>
+#include <string>
+#include <unordered_map>
    
 
 std::unordered_map<std::string, std::stringstream> benchmarkResultsText;
@@ -48,7 +58,7 @@ template <int BATCH, int ITERS, int NUM_BATCH_VALUES, const std::array<size_t, N
 inline void processExecution(const BenchmarkResultsNumbers &resF, const std::string &functionName,
                              const std::array<float, ITERS> &NPPelapsedTime,
                              const std::array<float, ITERS> &FKelapsedTime,
-                             const std::string &variableDimension) {
+                             const std::string &variableDimension, const float constructionMs = -1.f) {
   // The warm-up sweep runs one iteration per point: nothing of it goes to the CSV (it used to write a first, junk block)
   if (warmup) {
     return;
@@ -70,6 +80,9 @@ inline void processExecution(const BenchmarkResultsNumbers &resF, const std::str
     currentFile[fileName] << ", FK MaxTime";
     currentFile[fileName] << ", FK MinTime";
     currentFile[fileName] << ", Mean Speedup";
+    if (constructionMs >= 0.f) {
+      currentFile[fileName] << ", FastNPP construction ms (once, host)";
+    }
     currentFile[fileName] << std::endl;
   }
 
@@ -96,6 +109,9 @@ inline void processExecution(const BenchmarkResultsNumbers &resF, const std::str
     currentFile[fileName] << ", " << resF.FKelapsedTimeMax;
     currentFile[fileName] << ", " << resF.FKelapsedTimeMin;
     currentFile[fileName] << ", " << meanSpeedup;
+    if (constructionMs >= 0.f) {
+      currentFile[fileName] << ", " << constructionMs;
+    }
     currentFile[fileName] << std::endl;
   }
 }
@@ -107,46 +123,58 @@ inline void processExecution(const BenchmarkResultsNumbers &resF, const std::str
             << "/" << NUM_EXPERIMENTS << std::endl;                                                                    \
   cudaEvent_t start, stop;                                                                                             \
   BenchmarkResultsNumbers resF;                                                                                        \
-  resF.NPPelapsedTimeMax = fk::minValue<float>;                                                                        \
-  resF.NPPelapsedTimeMin = fk::maxValue<float>;                                                                        \
+  resF.NPPelapsedTimeMax = std::numeric_limits<float>::lowest();                                                                        \
+  resF.NPPelapsedTimeMin = std::numeric_limits<float>::max();                                                                        \
   resF.NPPelapsedTimeAcum = 0.f;                                                                                       \
-  resF.FKelapsedTimeMax = fk::minValue<float>;                                                                         \
-  resF.FKelapsedTimeMin = fk::maxValue<float>;                                                                         \
+  resF.FKelapsedTimeMax = std::numeric_limits<float>::lowest();                                                                         \
+  resF.FKelapsedTimeMin = std::numeric_limits<float>::max();                                                                         \
   resF.FKelapsedTimeAcum = 0.f;                                                                                        \
                                                \
-  gpuErrchk(cudaEventCreate(&start));                                                                                  \
-  gpuErrchk(cudaEventCreate(&stop));                                                                                   \
+  FKLB_CUDA_CHECK(cudaEventCreate(&start));                                                                                  \
+  FKLB_CUDA_CHECK(cudaEventCreate(&stop));                                                                                   \
   std::array<float, ITERS> NPPelapsedTime;                                                                             \
   std::array<float, ITERS> FKelapsedTime;                                                                              \
   for (int idx = 0; idx <ITERS; ++idx) {                                                                                    \
-    gpuErrchk(cudaEventRecord(start, compute_stream));
+    FKLB_CUDA_CHECK(cudaEventRecord(start, compute_stream));
  
 
  
 #define STOP_NPP_START_FK_BENCHMARK                                                                                    \
-  gpuErrchk(cudaEventRecord(stop, compute_stream));                                                                            \
-  gpuErrchk(cudaEventSynchronize(stop));                                                                               \
-  gpuErrchk(cudaEventElapsedTime(&NPPelapsedTime[idx], start, stop));                                                    \
+  FKLB_CUDA_CHECK(cudaEventRecord(stop, compute_stream));                                                                            \
+  FKLB_CUDA_CHECK(cudaEventSynchronize(stop));                                                                               \
+  FKLB_CUDA_CHECK(cudaEventElapsedTime(&NPPelapsedTime[idx], start, stop));                                                    \
   resF.NPPelapsedTimeMax = resF.NPPelapsedTimeMax < NPPelapsedTime[idx] ? NPPelapsedTime[idx] : resF.NPPelapsedTimeMax;    \
   resF.NPPelapsedTimeMin = resF.NPPelapsedTimeMin > NPPelapsedTime[idx] ? NPPelapsedTime[idx] : resF.NPPelapsedTimeMin;    \
   resF.NPPelapsedTimeAcum += NPPelapsedTime[idx];                                                                        \
-  gpuErrchk(cudaEventRecord(start, compute_stream));
+  FKLB_CUDA_CHECK(cudaEventRecord(start, compute_stream));
  
 
  
-#define STOP_FK_BENCHMARK                                                                                              \
-  gpuErrchk(cudaEventRecord(stop, compute_stream));                                                                            \
-  gpuErrchk(cudaEventSynchronize(stop));                                                                               \
-  gpuErrchk(cudaEventElapsedTime(&FKelapsedTime[idx], start, stop));                                                     \
+// STOP_FK_BENCHMARK_AND_REPORT(ms): as STOP_FK_BENCHMARK, and the CSV gets the column "FastNPP construction ms (once, host)" with ms
+#define STOP_FK_BENCHMARK_AND_REPORT(constructionMs)                                                                   \
+  FKLB_CUDA_CHECK(cudaEventRecord(stop, compute_stream));                                                                            \
+  FKLB_CUDA_CHECK(cudaEventSynchronize(stop));                                                                               \
+  FKLB_CUDA_CHECK(cudaEventElapsedTime(&FKelapsedTime[idx], start, stop));                                                     \
   resF.FKelapsedTimeMax = resF.FKelapsedTimeMax < FKelapsedTime[idx] ? FKelapsedTime[idx] : resF.FKelapsedTimeMax;         \
   resF.FKelapsedTimeMin = resF.FKelapsedTimeMin > FKelapsedTime[idx] ? FKelapsedTime[idx] : resF.FKelapsedTimeMin;         \
   resF.FKelapsedTimeAcum += FKelapsedTime[idx];                                                                       \
   if (warmup) break; \
   }                                                                                                                  \
 processExecution<BATCH, ITERS, batchValues.size(), batchValues>(                               \
-      resF, __func__, NPPelapsedTime, FKelapsedTime ,VARIABLE_DIMENSION);
+      resF, __func__, NPPelapsedTime, FKelapsedTime, VARIABLE_DIMENSION, (constructionMs));
+#define STOP_FK_BENCHMARK STOP_FK_BENCHMARK_AND_REPORT(-1.f)
  
  
+// A run that stops with an error must not leave files that look complete: called from the catch of launch(), this ends every timing CSV
+// that is still open with an INCOMPLETE line (a comment line, which pandas.read_csv(path, comment='#') skips).
+inline void markOpenFilesIncomplete() {
+  for (auto &&[_, file] : currentFile) {
+    if (file.is_open()) {
+      file << "# INCOMPLETE: the program stopped with an error; do not use this file" << std::endl;
+    }
+  }
+}
+
 #define CLOSE_BENCHMARK                                                                                                \
   for (auto &&[_, file] : currentFile) {                                                                               \
     file.close();                                                                                                      \
@@ -166,11 +194,11 @@ BenchmarkTemp<ITERS> initCPUBenchmark(const std::string & functionName, const st
     std::cout << "Executing " << functionName << " fusing " << BATCH << " operations. "
         << ((BATCH - FIRST_VALUE) / INCREMENT) + 1 << "/" << NUM_EXPERIMENTS << std::endl;
     BenchmarkTemp<ITERS> benchmarkTemp;
-    benchmarkTemp.resF.NPPelapsedTimeMax = fk::minValue<float>;
-    benchmarkTemp.resF.NPPelapsedTimeMin = fk::maxValue<float>;
+    benchmarkTemp.resF.NPPelapsedTimeMax = std::numeric_limits<float>::lowest();
+    benchmarkTemp.resF.NPPelapsedTimeMin = std::numeric_limits<float>::max();
     benchmarkTemp.resF.NPPelapsedTimeAcum = 0.f;
-    benchmarkTemp.resF.FKelapsedTimeMax = fk::minValue<float>;
-    benchmarkTemp.resF.FKelapsedTimeMin = fk::maxValue<float>;
+    benchmarkTemp.resF.FKelapsedTimeMax = std::numeric_limits<float>::lowest();
+    benchmarkTemp.resF.FKelapsedTimeMin = std::numeric_limits<float>::max();
     benchmarkTemp.resF.FKelapsedTimeAcum = 0.f;
 
     return benchmarkTemp;

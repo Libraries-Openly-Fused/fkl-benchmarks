@@ -108,6 +108,19 @@ inline const char* convention(const Agreement& fkl, const Agreement& pc) {
     return "none";
 }
 
+// The agreement CSVs, one per test function, open for the whole run
+inline std::map<std::string, std::ofstream> agreementFiles;
+
+// A run that stops with an error must not leave files that look complete: called from the catch of launch(), this ends every agreement
+// CSV with an INCOMPLETE line (a comment line, which pandas.read_csv(path, comment='#') skips).
+inline void markAgreementFilesIncomplete() {
+    for (auto& [name, file] : agreementFiles) {
+        if (file.is_open()) {
+            file << "# INCOMPLETE: the program stopped with an error; do not use this file" << std::endl;
+        }
+    }
+}
+
 // Checks one batch size. fastAt(j, c, i) / nppAt(j, c, i): the value of plane c, element i (row major, upW x upH) of image j
 // from FastNPP / NPP. order, mul, sub, div: the channel order and the constants of the pipeline (output channel k is
 // (resized[order[k]] * mul[k] - sub[k]) / div[k]). Returns true if both implementations match one of the references.
@@ -137,11 +150,10 @@ inline bool checkBatch(const std::string& function, const int batch, const int i
     const char* nppFollows = convention(nppFKL, nppPC);
     const bool ok = std::string(fastFollows) != "none" && std::string(nppFollows) != "none";
 
-    static std::map<std::string, std::ofstream> files;
     const std::string name = function + "_agreement.csv";
-    auto it = files.find(name);
-    if (it == files.end()) {
-        it = files.emplace(name, std::ofstream(name)).first;
+    auto it = agreementFiles.find(name);
+    if (it == agreementFiles.end()) {
+        it = agreementFiles.emplace(name, std::ofstream(name)).first;
         fklb::writeSystemInfoHeader(it->second, function + " agreement",
                                     "source: seeded uniform noise (std::mt19937_64 seed " + std::to_string(NOISE_SEED) +
                                     "); references in double precision for the whole pipeline; each implementation must match one "
