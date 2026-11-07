@@ -19,8 +19,8 @@
 //   fklb::CsvWriter csv("handwritten_madchain.csv", "E1 hand-written MAD chain", {"ops", "mean_ms", "min_ms", "max_ms"});
 //   csv.row(ops, mean, min, max);
 //
-// A run that stops with an error must not leave a file that looks complete (the coordinator, 2026-11-07): when the writer is destroyed while
-// an exception propagates (a failed FKLB_*_CHECK of common/status_check.h, caught in main), its last line is
+// A run that stops with an error must not leave a file that looks complete: when the writer is destroyed while an exception propagates (a
+// failed FKLB_*_CHECK of common/status_check.h, caught in main), its last line is
 //   # INCOMPLETE: the program stopped with an error after <n> rows; do not use this file
 // (a comment line, which pandas.read_csv(path, comment='#') skips). A normal run's file is unchanged.
 
@@ -103,6 +103,10 @@ public:
     }
 
     void flush() { m_file.flush(); }
+
+    // declared because the destructor below would otherwise remove them: a writer can still be returned, stored or emplaced
+    CsvWriter(CsvWriter&&) = default;
+    CsvWriter& operator=(CsvWriter&&) = default;
 
     ~CsvWriter() {
         if (std::uncaught_exceptions() > m_uncaughtAtStart) {

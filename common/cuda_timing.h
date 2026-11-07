@@ -14,19 +14,22 @@
 
 // CUDA event timing of launches. A failed CUDA call throws (common/status_check.h).
 //
-// fklb::timeIt(stream, launch, timing): e1::timeIt of handwritten-cuda/e1_common.h, moved here. One warm-up launch, then ITERATIONS launches,
-//   each between two CUDA events recorded on `stream` and synchronised; mean and min in ms. Whatever launch() does on the host before it
-//   enqueues its work is inside the interval: the pipeline experiments build their batch and their operations inside launch() (Oscar's
-//   answer 1 of 2026-11-07). Unlike e1::timeIt it always times: there is no early return in profile mode; a program that must not time in
-//   a profiling pass says so where it calls.
+// fklb::timeIt(stream, launch, timing): one warm-up launch, then ITERATIONS launches, each between two CUDA events recorded on `stream` and
+//   synchronised; mean and min in ms. Whatever launch() does on the host before it enqueues its work is inside the interval: in a pipeline
+//   experiment, building the batch and the operations is part of the measured time, so launch() builds them. It always times; a program
+//   that must not time in a profiling pass says so where it calls.
 //
-// fklb::timePreparedLaunch(stream, prepare, launch, gpu, host): the kernel comparisons (E1, E2), where each side's host preparation is timed
-//   apart from its kernel (Oscar's answer 2 of 2026-11-07). In every iteration the host clock (std::chrono::steady_clock) measures
-//   args = prepare(); then two CUDA events bracket launch(args) only, so that no host work sits between the GPU events. prepare() runs in
-//   every iteration, so every value that depends on where the crops are is rebuilt for every image (answer 3). One warm-up iteration first.
-//   gpu: the time of launch(args); host: the time of prepare(); both mean and min in ms over ITERATIONS. The arguments of an iteration are
-//   destroyed after its stop event, outside both intervals. Two compiler barriers keep the compiler from moving the preparation out of its
-//   interval. The two clock reads cost a few tens of nanoseconds, so a preparation shorter than that is measured as that.
+// fklb::timePreparedLaunch(stream, prepare, launch, gpu, host): for the kernel comparisons, which report the GPU time of each side's kernel
+//   and the host time of preparing its arguments separately. Every iteration has three intervals:
+//     host 1: args = prepare()          (std::chrono::steady_clock)
+//     GPU:    launch(args)              (two CUDA events, synchronised; no host work sits between them)
+//     host 2: the release of args       (std::chrono::steady_clock)
+//   host = host 1 + host 2: the cost of building and releasing the arguments of one image, as a per-image loop pays it (releasing a view
+//   of a reference-counted buffer is not free); gpu = the GPU interval. prepare() runs in every iteration because the crop locations may
+//   change on every image, so every value that depends on them is rebuilt for every image. One warm-up iteration first; mean and min over
+//   ITERATIONS, in ms. prepare() returns the arguments by value, and they must be move-constructible: they are held in a std::optional.
+//   Compiler barriers keep the preparation and the release inside their intervals. The clock reads cost a few tens of nanoseconds, so a
+//   preparation shorter than that is measured as that.
 #pragma once
 
 #include <common/status_check.h>
@@ -36,6 +39,8 @@
 #include <algorithm>
 #include <atomic>
 #include <chrono>
+#include <optional>
+#include <type_traits>
 
 namespace fklb {
 
@@ -78,28 +83,34 @@ inline void preparedBarrier(const T& value) {
 template <typename Prepare, typename Launch>
 void timePreparedLaunch(cudaStream_t stream, const Prepare& prepare, const Launch& launch, Timing& gpu, Timing& host) {
     using Clock = std::chrono::steady_clock;
+    using Args = std::decay_t<decltype(prepare())>;
     cudaEvent_t start, stop;
     FKLB_CUDA_CHECK(cudaEventCreate(&start));
     FKLB_CUDA_CHECK(cudaEventCreate(&stop));
-    {  // warm-up
-        const auto args = prepare();
-        launch(args);
-        FKLB_CUDA_CHECK(cudaStreamSynchronize(stream));
-    }
+    std::optional<Args> args;
+    args.emplace(prepare());  // warm-up
+    launch(*args);
+    FKLB_CUDA_CHECK(cudaStreamSynchronize(stream));
+    args.reset();
     double gpuSum = 0, hostSum = 0;
     for (int i = 0; i < ITERATIONS; ++i) {
         const auto h0 = Clock::now();
         std::atomic_signal_fence(std::memory_order_seq_cst);
-        const auto args = prepare();
-        preparedBarrier(args);
+        args.emplace(prepare());
+        preparedBarrier(*args);
         const auto h1 = Clock::now();
         FKLB_CUDA_CHECK(cudaEventRecord(start, stream));
-        launch(args);
+        launch(*args);
         FKLB_CUDA_CHECK(cudaEventRecord(stop, stream));
         FKLB_CUDA_CHECK(cudaEventSynchronize(stop));
+        const auto h2 = Clock::now();
+        std::atomic_signal_fence(std::memory_order_seq_cst);
+        args.reset();
+        std::atomic_signal_fence(std::memory_order_seq_cst);
+        const auto h3 = Clock::now();
         float ms = 0;
         FKLB_CUDA_CHECK(cudaEventElapsedTime(&ms, start, stop));
-        const double hostMs = std::chrono::duration<double, std::milli>(h1 - h0).count();
+        const double hostMs = std::chrono::duration<double, std::milli>((h1 - h0) + (h3 - h2)).count();
         gpuSum += ms;
         gpu.min = std::min<double>(gpu.min, ms);
         hostSum += hostMs;

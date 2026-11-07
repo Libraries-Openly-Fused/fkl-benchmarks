@@ -12,11 +12,11 @@
    See the License for the specific language governing permissions and
    limitations under the License. */
 
-// Status checks around library calls: one macro per library, used the same way on every compared side (the clean-up rules of 2026-11-06:
-// status checks are infrastructure, with one shared macro per library in common/).
-// A failed call throws std::runtime_error("<call> failed: <status> (<file>:<line>)"). The program's main catches it, prints the message and
-// returns 1, and an fklb::CsvWriter that is destroyed while the exception propagates marks its file INCOMPLETE (common/csv_writer.h).
-// Every status other than success is a failure; for NPP that includes the warnings, as the checks before these macros did.
+// Status checks around library calls: one macro per library. Status checks are infrastructure, used the same way on every compared side, so
+// that no side carries error handling of its own around the calls it makes.
+// A failed call throws std::runtime_error("<call> failed: <status> (<file>:<line>)"). The program's main (common/main.cpp) catches it, prints
+// the message and returns 1, and an fklb::CsvWriter that is destroyed while the exception propagates marks its file INCOMPLETE
+// (common/csv_writer.h). Every status other than success is a failure; for NPP that includes the warnings.
 // The header includes no library header: each program includes the headers of the libraries it calls, so a HIP build never sees CUDA and the
 // other way round. The macros are variadic, so that a call with a top-level comma (a template argument list) can be checked as it is.
 //
