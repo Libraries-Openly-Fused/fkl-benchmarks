@@ -13,14 +13,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# E0: re-run every existing experiment of the paper on the RTX 4090, one at a time, from a build of this repository.
+# E0: re-run the existing experiments of the paper on the RTX 4090, one at a time, from a build of this repository. Since 2026-11-07 only
+# e0-cpu-time-opencv, e0-cpu-time-npp and e0-npp run: the frozen 2025 experiments refuse to run (FROZEN below).
 #
 #   scripts/run_e0.sh --list
-#   scripts/run_e0.sh [--only NAME]...          (default: all, in the order of --list; short ones first)
+#   scripts/run_e0.sh [--only NAME]...          (default: every experiment that is not frozen, in the order of --list; asking for a
+#                                                frozen one stops the runner before anything starts)
 #
 # Environment: source scripts/env-cuda13.4.sh with CUDA_VISIBLE_DEVICES set to the RTX 4090; BUILD=<build dir> (default
 # build/local-rtx4090). Each experiment runs in results/rtx4090/<name>/ (stdout.txt, stderr.txt, exit_code.txt, the CSVs the
 # benchmark writes in its working directory). Refuses to run when
+#   - the experiment is frozen (Oscar's rule of 2026-11-07, FROZEN below),
 #   - the tracked files have uncommitted changes (the CSV header would say -dirty; set FKLB_ALLOW_DIRTY=1 to override),
 #   - another process uses the GPU (the measurement would be contended; the desktop session's own processes are ignored),
 #   - results/rtx4090/<name>/ already holds files (move them away; nothing is overwritten).
@@ -47,15 +50,28 @@ EXPERIMENTS=(
   "e0-vf-mul-add|benchmark_vertical_fusionCompareMulAdd_cu|VF + HF mul_add (batch 50) + CUDA Graphs (hours)"
 )
 
+# The frozen 2025 experiments: their programs are never run again, from any build and for any purpose (Oscar's rule of 2026-11-07, passed on by
+# the coordinator). Compiling them, reading them and comparing their SASS stay allowed; this runner only refuses to execute them.
+FROZEN="e0-latency-hiding e0-numinstructions e0-wrapper-overhead e0-data-type e0-data-size e0-hf e0-graph-instantiate e0-vf-mul-add1 e0-vf-mul1 e0-vf-mul-add"
+FROZEN_RULE="frozen 2025 experiment, never run again (Oscar's rule of 2026-11-07: \"Make sure the benchmark agents do not execute any of the benchmarks that I told you not to change in the paper.\")"
+is_frozen() { [[ " $FROZEN " == *" $1 "* ]]; }
+
 if [ "${1:-}" = "--list" ]; then
-  printf '%-22s %-52s %s\n' name binary description
-  for e in "${EXPERIMENTS[@]}"; do IFS='|' read -r n b d <<<"$e"; printf '%-22s %-52s %s\n' "$n" "$b" "$d"; done
+  printf '%-22s %-52s %-7s %s\n' name binary status description
+  for e in "${EXPERIMENTS[@]}"; do
+    IFS='|' read -r n b d <<<"$e"; s=runs; is_frozen "$n" && s=frozen
+    printf '%-22s %-52s %-7s %s\n' "$n" "$b" "$s" "$d"
+  done
+  echo "frozen: $FROZEN_RULE"
   exit 0
 fi
 
 ONLY=()
 while [ $# -gt 0 ]; do
   case $1 in --only) ONLY+=("$2"); shift 2;; *) echo "unknown argument $1"; exit 2;; esac
+done
+for o in ${ONLY[@]+"${ONLY[@]}"}; do
+  if is_frozen "$o"; then echo "$o: not run: $FROZEN_RULE"; exit 1; fi
 done
 
 command -v nvcc >/dev/null || { echo "nvcc not found: source scripts/env-cuda13.4.sh"; exit 1; }
@@ -99,6 +115,7 @@ for e in "${EXPERIMENTS[@]}"; do
   if [ ${#ONLY[@]} -gt 0 ]; then
     keep=0; for o in "${ONLY[@]}"; do [ "$o" = "$name" ] && keep=1; done; [ $keep = 1 ] || continue
   fi
+  if is_frozen "$name"; then echo "$name: not run: $FROZEN_RULE"; continue; fi
   dir=$OUT/$name
   if [ -d "$dir" ] && [ -n "$(ls -A "$dir" 2>/dev/null)" ]; then echo "$name: $dir is not empty, skipped"; continue; fi
   [ -x "$BUILD/bin/$bin" ] || { echo "$name: $BUILD/bin/$bin is not built, skipped"; continue; }
