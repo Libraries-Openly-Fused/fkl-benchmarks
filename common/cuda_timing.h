@@ -22,15 +22,22 @@
 // fklb::timePreparedLaunch(stream, prepare, launch, gpu, host): for the kernel comparisons, which report the GPU time of each side's kernel
 //   and the host time of preparing its arguments separately. Every iteration has three intervals:
 //     host 1: args = prepare()          (std::chrono::steady_clock)
-//     GPU:    launch(args)              (two CUDA events, synchronised; no host work sits between them)
+//     GPU:    launch(args)              (two CUDA events, synchronised; between them only the launch itself)
 //     host 2: the release of args       (std::chrono::steady_clock)
 //   host = host 1 + host 2: the cost of building and releasing the arguments of one image, as a per-image loop pays it (releasing a view
-//   of a reference-counted buffer is not free); gpu = the GPU interval. prepare() runs in every iteration because the crop locations may
-//   change on every image, so every value that depends on them is rebuilt for every image. One warm-up iteration first; mean and min over
-//   ITERATIONS, in ms. prepare() returns the arguments by value; they are a local built in place (guaranteed copy elision), so no copy or
-//   move of them is measured, and their scope ends between the GPU interval and the end of host 2. Compiler barriers keep the preparation
-//   and the release inside their intervals. The clock reads cost a few tens of nanoseconds, so a preparation shorter than that is
-//   measured as that.
+//   of a reference-counted buffer is not free). What prepare() makes and does not return (for example the crop views it builds the
+//   arguments from) is released at its end, inside host 1; what it returns is released in host 2; both count in host. gpu = the GPU
+//   interval. prepare() runs in every iteration because the crop locations may change on every image, so every value that depends on them
+//   is rebuilt for every image. One warm-up iteration first; mean and min over ITERATIONS, in ms. prepare() returns the arguments by value;
+//   they are a local built in place (guaranteed copy elision), so no copy or move of the returned object is measured (copying its parts
+//   while building it counts as building), and their scope ends between the GPU interval and the end of host 2. Compiler barriers keep the
+//   preparation and the release inside their intervals. The clock reads cost a few tens of nanoseconds, so a preparation shorter than that
+//   is measured as that. The launch is enqueued between the events: when the GPU reaches the start event before the launch is queued, the
+//   interval also holds the host's dispatch of the launch (a GPU spin passed as beforeLaunch, below, keeps it out).
+//
+// fklb::timePreparedLaunch(stream, prepare, beforeLaunch, launch, gpu, host): the same, and in every timed iteration beforeLaunch() is called
+//   after the preparation and before the start event, in none of the intervals: for example a kernel that flushes the L2 cache, enqueued on
+//   `stream` so that the GPU interval starts when it has finished. It is not called before the warm-up launch.
 #pragma once
 
 #include <common/status_check.h>
@@ -79,8 +86,9 @@ inline void preparedBarrier(const T& value) {
     asm volatile("" : : "r"(&value) : "memory");
 }
 
-template <typename Prepare, typename Launch>
-void timePreparedLaunch(cudaStream_t stream, const Prepare& prepare, const Launch& launch, Timing& gpu, Timing& host) {
+template <typename Prepare, typename BeforeLaunch, typename Launch>
+void timePreparedLaunch(cudaStream_t stream, const Prepare& prepare, const BeforeLaunch& beforeLaunch, const Launch& launch, Timing& gpu,
+                        Timing& host) {
     using Clock = std::chrono::steady_clock;
     cudaEvent_t start, stop;
     FKLB_CUDA_CHECK(cudaEventCreate(&start));
@@ -99,6 +107,7 @@ void timePreparedLaunch(cudaStream_t stream, const Prepare& prepare, const Launc
             const auto args = prepare();   // built in place: no copy or move of the arguments
             preparedBarrier(args);
             h1 = Clock::now();
+            beforeLaunch();
             FKLB_CUDA_CHECK(cudaEventRecord(start, stream));
             launch(args);
             FKLB_CUDA_CHECK(cudaEventRecord(stop, stream));
@@ -121,6 +130,11 @@ void timePreparedLaunch(cudaStream_t stream, const Prepare& prepare, const Launc
     FKLB_CUDA_CHECK(cudaGetLastError());
     FKLB_CUDA_CHECK(cudaEventDestroy(start));
     FKLB_CUDA_CHECK(cudaEventDestroy(stop));
+}
+
+template <typename Prepare, typename Launch>
+void timePreparedLaunch(cudaStream_t stream, const Prepare& prepare, const Launch& launch, Timing& gpu, Timing& host) {
+    timePreparedLaunch(stream, prepare, [] {}, launch, gpu, host);
 }
 
 }  // namespace fklb

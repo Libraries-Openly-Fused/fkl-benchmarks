@@ -20,10 +20,20 @@
 // paper). k comes from E2_FKL_KS (comma separated, even; set by CMake), or from E2_FKL_K_ONE (one value, a plain -D: used to time the compilation of one k).
 // The image is the file E2_INPUT (raw uint8, row after row, 4096 x 2160): if it does not exist this program writes it first, with the generator of E1a
 // (std::mt19937_64 seed 20261030, uniform_int_distribution<int>(0, 255)), and triton/e2_chain.py reads it (--input), so every implementation starts from the same bytes.
-// For every k: the output of one launch is written to <E2_OUT_DIR>/fkl_out_k<k>.f32 (raw float32, row after row), then the launch is timed (CUDA events around one
-// launch, 100 launches after one warm-up, mean and min), and e2_fkl_chain.csv gets one row: k, mean and min GPU time, the number of kernels (1), the output file.
+// For every k: the output of one launch is written to <E2_OUT_DIR>/fkl_out_k<k>.f32 (raw float32, row after row), then the launch is timed, and e2_fkl_chain.csv
+// gets one row: k, the GPU time, the number of kernels (1), the output file, the time with the L2 flushed, and the host time of the preparation.
+//
+// Timing (fklb::timePreparedLaunch, common/cuda_timing.h): CUDA events around one launch, 100 launches after one warm-up, mean and min. FKL's arguments are its
+// operations (the read, the cast, the scale, the loops of pairs and the write). There are no crops, so they are the same for every launch; they are built before
+// every launch anyway, outside the GPU interval, so that the host time of building and releasing them is measured over the same iterations (fkl_prep_*).
+// fkl_flushed_*: the same with the L2 flushed before every timed launch, by a kernel enqueued after the preparation and before the start event, outside both
+// intervals (fkl_flushed_prep_* is the preparation of that run); the flush also keeps the GPU busy while the launch is enqueued.
+// fkl_kernel_*: the warm launches queued behind a GPU spin enqueued before the start event (e1::gpuSpin, E1_SPIN_US, no memory access, so the L2 stays
+// warm): the interval holds the kernel without the host's dispatch of the launch.
 #include <common/main.h>
 #include <common/csv_writer.h>
+#include <common/cuda_timing.h>
+#include <common/status_check.h>
 
 #include "e1_common.h"
 
@@ -34,13 +44,14 @@
 #include <fused_kernel/core/data/ptr_utils.h>
 #include <fused_kernel/core/execution_model/executors.h>
 
-#include <algorithm>
-#include <cstdio>
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
 #include <random>
+#include <stdexcept>
 #include <string>
+#include <tuple>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -53,7 +64,6 @@
 
 namespace {
 constexpr int WIDTH = 4096, HEIGHT = 2160;
-using e1::Timing; using e1::timeIt;
 constexpr float ALPHA = 1.0f;
 constexpr float COEF = 0.54f;
 constexpr int KS[] = {E2_FKL_KS_LIST};
@@ -70,57 +80,6 @@ __global__ void l2Flush(const float4* __restrict__ p, const size_t n, float* sin
     if (acc == 12345.f) *sink = acc;   // never true for a zeroed buffer: keeps the loads
 }
 
-template <typename Launch>
-bool timeFlushed(cudaStream_t stream, const Launch& launch, const float4* flushBuf, float* sink, Timing& t) {
-    if (e1::profileMode()) return true;
-    cudaEvent_t start, stop;
-    E1_CHECK(cudaEventCreate(&start));
-    E1_CHECK(cudaEventCreate(&stop));
-    launch();   // warm-up
-    E1_CHECK(cudaStreamSynchronize(stream));
-    double sum = 0;
-    for (int i = 0; i < e1::ITERATIONS; ++i) {
-        l2Flush<<<4096, 256, 0, stream>>>(flushBuf, FLUSH_BYTES / sizeof(float4), sink);
-        E1_CHECK(cudaEventRecord(start, stream));
-        launch();
-        E1_CHECK(cudaEventRecord(stop, stream));
-        E1_CHECK(cudaEventSynchronize(stop));
-        float ms = 0;
-        E1_CHECK(cudaEventElapsedTime(&ms, start, stop));
-        sum += ms;
-        t.min = std::min<double>(t.min, ms);
-    }
-    t.mean = sum / e1::ITERATIONS;
-    E1_CHECK(cudaEventDestroy(start));
-    E1_CHECK(cudaEventDestroy(stop));
-    return true;
-}
-
-// The chain, built like cvGS's VerticalFusion and like E1a (nested loops of 50 pairs, then the remainder; StaticLoop<X, 0> executes X once, not zero times)
-template <int PAIRS, typename ReadIOp, typename WriteIOp>
-void launchFKL(fk::Stream_<fk::ParArch::GPU_NVIDIA>& stream, const ReadIOp& readIOp, const WriteIOp& writeIOp) {
-    const auto cast = fk::SaturateCast<unsigned char, float>::build();
-    const auto scale = fk::Mul<float>::build(ALPHA);
-    const auto pairOp = fk::Mul<float>::build(COEF).then(fk::Add<float>::build(COEF));
-    using PairOperation = typename decltype(pairOp)::Operation;
-    constexpr int INNER = 50;
-    if constexpr (PAIRS < INNER) {
-        using Loop = fk::Binary<fk::StaticLoop<PairOperation, PAIRS>>;
-        const Loop loop{{pairOp.params}};
-        fk::executeOperations<fk::TransformDPP<fk::ParArch::GPU_NVIDIA, fk::TF::DISABLED>>(stream, readIOp, cast, scale, loop, writeIOp);
-    } else {
-        using Loop = fk::Binary<fk::StaticLoop<fk::StaticLoop<PairOperation, INNER>, PAIRS / INNER>>;
-        const Loop loop{{pairOp.params}};
-        if constexpr (PAIRS % INNER == 0) {
-            fk::executeOperations<fk::TransformDPP<fk::ParArch::GPU_NVIDIA, fk::TF::DISABLED>>(stream, readIOp, cast, scale, loop, writeIOp);
-        } else {
-            using Remainder = fk::Binary<fk::StaticLoop<PairOperation, PAIRS % INNER>>;
-            const Remainder remainder{{pairOp.params}};
-            fk::executeOperations<fk::TransformDPP<fk::ParArch::GPU_NVIDIA, fk::TF::DISABLED>>(stream, readIOp, cast, scale, loop, remainder, writeIOp);
-        }
-    }
-}
-
 template <int K>
 bool runPoint(cudaStream_t cs, fk::Stream_<fk::ParArch::GPU_NVIDIA>& fkStream, fklb::CsvWriter& csv, const std::vector<unsigned char>& noise, const std::string& outDir) {
     static_assert(K % 2 == 0, "the number of operations is 2 per pair");
@@ -128,39 +87,73 @@ bool runPoint(cudaStream_t cs, fk::Stream_<fk::ParArch::GPU_NVIDIA>& fkStream, f
     fk::Ptr2D<unsigned char> dIn(WIDTH, HEIGHT);
     fk::Ptr2D<float> dOut(WIDTH, HEIGHT);
     const size_t inPitch = dIn.ptr().dims.pitch, outPitch = dOut.ptr().dims.pitch;
-    E1_CHECK(cudaMemcpy2D(dIn.ptr().data, inPitch, noise.data(), WIDTH, WIDTH, HEIGHT, cudaMemcpyHostToDevice));
-    const auto readIOp = fk::PerThreadRead<fk::ND::_2D, unsigned char>::build(dIn);
-    const auto writeIOp = fk::PerThreadWrite<fk::ND::_2D, float>::build(dOut);
-    auto launchFkl = [&] { launchFKL<PAIRS>(fkStream, readIOp, writeIOp); };
+    FKLB_CUDA_CHECK(cudaMemcpy2D(dIn.ptr().data, inPitch, noise.data(), WIDTH, WIDTH, HEIGHT, cudaMemcpyHostToDevice));
 
-    E1_CHECK(cudaMemset2D(dOut.ptr().data, outPitch, 0, WIDTH * sizeof(float), HEIGHT));
-    launchFkl();
-    E1_CHECK(cudaStreamSynchronize(cs));
+    // FKL's arguments, built before every launch: the chain is built like cvGS's VerticalFusion and like E1a (nested loops of 50 pairs, then the remainder;
+    // StaticLoop<X, 0> executes X once, not zero times)
+    const auto prepareFkl = [&] {
+        const auto pairOp = fk::Mul<float>::build(COEF).then(fk::Add<float>::build(COEF));
+        constexpr int INNER = 50;
+        if constexpr (PAIRS < INNER) {
+            return std::make_tuple(fk::PerThreadRead<fk::ND::_2D, unsigned char>::build(dIn), fk::SaturateCast<unsigned char, float>::build(),
+                                   fk::Mul<float>::build(ALPHA),
+                                   fk::StaticLoop<typename decltype(pairOp)::Operation, PAIRS>::build(pairOp.params),
+                                   fk::PerThreadWrite<fk::ND::_2D, float>::build(dOut));
+        } else if constexpr (PAIRS % INNER == 0) {
+            return std::make_tuple(fk::PerThreadRead<fk::ND::_2D, unsigned char>::build(dIn), fk::SaturateCast<unsigned char, float>::build(),
+                                   fk::Mul<float>::build(ALPHA),
+                                   fk::StaticLoop<fk::StaticLoop<typename decltype(pairOp)::Operation, INNER>, PAIRS / INNER>::build(pairOp.params),
+                                   fk::PerThreadWrite<fk::ND::_2D, float>::build(dOut));
+        } else {
+            return std::make_tuple(fk::PerThreadRead<fk::ND::_2D, unsigned char>::build(dIn), fk::SaturateCast<unsigned char, float>::build(),
+                                   fk::Mul<float>::build(ALPHA),
+                                   fk::StaticLoop<fk::StaticLoop<typename decltype(pairOp)::Operation, INNER>, PAIRS / INNER>::build(pairOp.params),
+                                   fk::StaticLoop<typename decltype(pairOp)::Operation, PAIRS % INNER>::build(pairOp.params),
+                                   fk::PerThreadWrite<fk::ND::_2D, float>::build(dOut));
+        }
+    };
+    const auto launchFkl = [&](const auto& operations) {
+        if constexpr (std::tuple_size_v<std::decay_t<decltype(operations)>> == 5) {
+            const auto& [read, cast, scale, loop, write] = operations;
+            fk::executeOperations<fk::TransformDPP<fk::ParArch::GPU_NVIDIA, fk::TF::DISABLED>>(fkStream, read, cast, scale, loop, write);
+        } else {
+            const auto& [read, cast, scale, loop, remainder, write] = operations;
+            fk::executeOperations<fk::TransformDPP<fk::ParArch::GPU_NVIDIA, fk::TF::DISABLED>>(fkStream, read, cast, scale, loop, remainder, write);
+        }
+    };
+
+    FKLB_CUDA_CHECK(cudaMemset2D(dOut.ptr().data, outPitch, 0, WIDTH * sizeof(float), HEIGHT));
+    launchFkl(prepareFkl());
+    FKLB_CUDA_CHECK(cudaGetLastError());
+    FKLB_CUDA_CHECK(cudaStreamSynchronize(cs));
     std::vector<float> host(static_cast<size_t>(WIDTH) * HEIGHT);
-    E1_CHECK(cudaMemcpy2D(host.data(), WIDTH * sizeof(float), dOut.ptr().data, outPitch, WIDTH * sizeof(float), HEIGHT, cudaMemcpyDeviceToHost));
+    FKLB_CUDA_CHECK(cudaMemcpy2D(host.data(), WIDTH * sizeof(float), dOut.ptr().data, outPitch, WIDTH * sizeof(float), HEIGHT, cudaMemcpyDeviceToHost));
     const std::string path = outDir + "/fkl_out_k" + std::to_string(K) + ".f32";
     {
         std::ofstream f(path, std::ios::binary);
         f.write(reinterpret_cast<const char*>(host.data()), static_cast<std::streamsize>(host.size() * sizeof(float)));
-        if (!f) {
-            std::cerr << "cannot write " << path << std::endl;
-            return false;
-        }
+        if (!f) throw std::runtime_error("cannot write " + path);
     }
-    Timing t, tFlushed;
-    if (!timeIt(cs, launchFkl, t)) return false;
-    float4* flushBuf = nullptr;
-    float* sink = nullptr;
-    E1_CHECK(cudaMalloc(&flushBuf, FLUSH_BYTES));
-    E1_CHECK(cudaMemset(flushBuf, 0, FLUSH_BYTES));
-    E1_CHECK(cudaMalloc(&sink, sizeof(float)));
-    const bool flushedOk = timeFlushed(cs, launchFkl, flushBuf, sink, tFlushed);
-    cudaFree(flushBuf);
-    cudaFree(sink);
-    if (!flushedOk) return false;
-    csv.row(K, PAIRS, t.mean, t.min, 1, path, tFlushed.mean, tFlushed.min);
+    fklb::Timing t, prep, tFlushed, prepFlushed, tKernel, prepKernel;
+    if (!e1::profileMode()) {   // in profile mode the kernel is launched once, for the output above, and nothing is timed
+        fklb::timePreparedLaunch(cs, prepareFkl, launchFkl, t, prep);
+        const auto spin = [&] { e1::gpuSpin<<<1, 1, 0, cs>>>(e1::spinNs()); };
+        fklb::timePreparedLaunch(cs, prepareFkl, spin, launchFkl, tKernel, prepKernel);
+        float4* flushBuf = nullptr;
+        float* sink = nullptr;
+        FKLB_CUDA_CHECK(cudaMalloc(reinterpret_cast<void**>(&flushBuf), FLUSH_BYTES));
+        FKLB_CUDA_CHECK(cudaMemset(flushBuf, 0, FLUSH_BYTES));
+        FKLB_CUDA_CHECK(cudaMalloc(reinterpret_cast<void**>(&sink), sizeof(float)));
+        const auto flush = [&] { l2Flush<<<4096, 256, 0, cs>>>(flushBuf, FLUSH_BYTES / sizeof(float4), sink); };
+        fklb::timePreparedLaunch(cs, prepareFkl, flush, launchFkl, tFlushed, prepFlushed);
+        FKLB_CUDA_CHECK(cudaFree(flushBuf));
+        FKLB_CUDA_CHECK(cudaFree(sink));
+    }
+    csv.row(K, PAIRS, e1::timed(t.mean), e1::timed(t.min), 1, path, e1::timed(tFlushed.mean), e1::timed(tFlushed.min), e1::timed(prep.mean), e1::timed(prep.min),
+            e1::timed(prepFlushed.mean), e1::timed(prepFlushed.min), e1::timed(tKernel.mean), e1::timed(tKernel.min));
     csv.flush();
-    std::cout << K << " ops: fkl " << t.mean << " ms (min " << t.min << "), L2 flushed " << tFlushed.mean << " ms (min " << tFlushed.min << "), output " << path << std::endl;
+    std::cout << K << " ops: fkl " << t.mean << " ms (min " << t.min << "), L2 flushed " << tFlushed.mean << " ms (min " << tFlushed.min << "), preparation "
+              << prep.mean << " ms, output " << path << std::endl;
     return true;
 }
 
@@ -169,7 +162,7 @@ bool runAll(std::index_sequence<Is...>, cudaStream_t cs, fk::Stream_<fk::ParArch
     return (runPoint<KS[Is]>(cs, fkStream, csv, noise, outDir) & ...);
 }
 
-// E2_ORDER=reverse: the chain lengths in the reverse order (the order check of the revision: the first point timed after the host phase might see a lower clock)
+// E2_ORDER=reverse: the chain lengths in the reverse order (an order check: the first point timed after the host phase might see a lower clock)
 template <size_t... Is>
 bool runAllReversed(std::index_sequence<Is...>, cudaStream_t cs, fk::Stream_<fk::ParArch::GPU_NVIDIA>& fkStream, fklb::CsvWriter& csv, const std::vector<unsigned char>& noise, const std::string& outDir) {
     constexpr size_t LAST = sizeof...(Is) - 1;
@@ -179,7 +172,7 @@ bool runAllReversed(std::index_sequence<Is...>, cudaStream_t cs, fk::Stream_<fk:
 
 int launch() {
     cudaStream_t cs;
-    if (cudaStreamCreate(&cs) != cudaSuccess) return -1;
+    FKLB_CUDA_CHECK(cudaStreamCreate(&cs));
     fk::Stream_<fk::ParArch::GPU_NVIDIA> fkStream(cs);
 
     const char* inEnv = std::getenv("E2_INPUT");
@@ -191,27 +184,27 @@ int launch() {
         std::ifstream in(inputPath, std::ios::binary);
         if (in) {
             in.read(reinterpret_cast<char*>(noise.data()), static_cast<std::streamsize>(noise.size()));
-            if (!in) {
-                std::cerr << inputPath << " exists but has fewer than " << noise.size() << " bytes" << std::endl;
-                return -1;
-            }
+            if (!in) throw std::runtime_error(inputPath + " exists but has fewer than " + std::to_string(noise.size()) + " bytes");
         } else {   // the generator of E1a
             std::mt19937_64 gen(20261030ull);
             std::uniform_int_distribution<int> dist(0, 255);
             for (auto& v : noise) v = static_cast<unsigned char>(dist(gen));
             std::ofstream out(inputPath, std::ios::binary);
             out.write(reinterpret_cast<const char*>(noise.data()), static_cast<std::streamsize>(noise.size()));
-            if (!out) {
-                std::cerr << "cannot write " << inputPath << std::endl;
-                return -1;
-            }
+            if (!out) throw std::runtime_error("cannot write " + inputPath);
         }
     }
-    fklb::CsvWriter csv("e2_fkl_chain.csv", "E2 element-wise chain through FKL (4096x2160 uchar -> float)", {"ops", "pairs", "fkl_mean_ms", "fkl_min_ms", "kernels", "output_file", "fkl_flushed_mean_ms", "fkl_flushed_min_ms"},
+    fklb::CsvWriter csv("e2_fkl_chain.csv", "E2 element-wise chain through FKL (4096x2160 uchar -> float)",
+                        {"ops", "pairs", "fkl_mean_ms", "fkl_min_ms", "kernels", "output_file", "fkl_flushed_mean_ms", "fkl_flushed_min_ms",
+                         "fkl_prep_mean_ms", "fkl_prep_min_ms", "fkl_flushed_prep_mean_ms", "fkl_flushed_prep_min_ms", "fkl_kernel_mean_ms", "fkl_kernel_min_ms"},
                         std::string("thread fusion: off (fk::TF::DISABLED, the default); input: ") + inputPath + " (uint8 noise, std::mt19937_64 seed 20261030 as E1a, uniform 0..255, row after row); "
-                        "alpha 1.0, c 0.54, k operations alternating Mul c and Add c; 32x8 threads per block (the block FKL picks); 100 timed iterations after one warm-up; "
-                        "fkl_flushed_*: the same launch with the L2 flushed before it (a kernel that reads 256 MB, outside the timed interval); "
-                        "outputs are raw float32 files, one per k, for the bitwise and ULP comparison of triton/e2_chain.py" + (e1::profileMode() ? "; PROFILE MODE: nothing was timed" : ""));
+                        "alpha 1.0, c 0.54, k operations alternating Mul c and Add c; 32x8 threads per block (the block FKL picks); GPU columns: CUDA events around one "
+                        "launch of operations built before it, 100 timed iterations after one warm-up; fkl_prep_*: host time (steady_clock) of building and releasing "
+                        "the operations, done before every launch and outside the GPU interval; fkl_flushed_*: the same launch with the L2 flushed before it (a kernel "
+                        "that reads 256 MB, enqueued after the preparation and before the start event, outside both intervals); fkl_kernel_*: the warm launch with a GPU "
+                        "spin of " + std::to_string(e1::spinNs() / 1000) + " us (no memory access) enqueued before the start event, so that the launch is queued when "
+                        "the GPU reaches the start event: the kernel without the host's dispatch; "
+                        "outputs are raw float32 files, one per k, for the bitwise and ULP comparison of triton/e2_chain.py" + (e1::profileMode() ? "; PROFILE MODE: nothing was timed, the time columns are empty" : ""));
     const char* order = std::getenv("E2_ORDER");
     const bool reverse = order != nullptr && std::string(order) == "reverse";
     constexpr auto all = std::make_index_sequence<sizeof(KS) / sizeof(KS[0])>{};

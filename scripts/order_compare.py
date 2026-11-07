@@ -65,17 +65,29 @@ def main():
         if not fa or not fb:
             continue
         ra, rb = {x[key]: x for x in rd(sorted(fa)[0])}, {x[key]: x for x in rd(sorted(fb)[0])}
-        cols = [c for c in next(iter(ra.values())) if "mean" in c.lower() and "over" not in c.lower()]
+        names = list(next(iter(ra.values())))
+        # GPU times (as the launch runs and kernel-only); the host times of the preparation (and the totals that contain them) separately, against the
+        # 5 % threshold of host-bound numbers
+        cols = [c for c in names if "mean" in c.lower() and not any(w in c.lower() for w in ("over", "prep", "total"))]
+        host = [c for c in names if "prep_mean" in c.lower()]
         report(f"E1 {prog} (columns {', '.join(cols)})", {(f"{key} {k}", c): (float(ra[k][c]), float(rb[k][c])) for k in ra if k in rb for c in cols}, thr)
+        if host:
+            report(f"E1 {prog}, host time of the preparation (columns {', '.join(host)}; threshold 5 %)",
+                   {(f"{key} {k}", c): (float(ra[k][c]), float(rb[k][c])) for k in ra if k in rb for c in host}, 5.0)
     # E2 FKL program and the Python driver
     fa, fb = os.path.join(d, "e2", "fkl_normal", "e2_fkl_chain.csv"), os.path.join(d, "e2", "fkl_reverse", "e2_fkl_chain.csv")
     if os.path.exists(fa) and os.path.exists(fb):
         ra, rb = {x["ops"]: x for x in rd(fa)}, {x["ops"]: x for x in rd(fb)}
-        report("E2 FKL program (fkl_mean_ms and fkl_flushed_mean_ms)", {(f"k {k}", c): (float(ra[k][c]), float(rb[k][c])) for k in ra if k in rb for c in ("fkl_mean_ms", "fkl_flushed_mean_ms")}, thr)
+        gpu = [c for c in ("fkl_mean_ms", "fkl_flushed_mean_ms", "fkl_kernel_mean_ms") if c in next(iter(ra.values()))]
+        report(f"E2 FKL program ({', '.join(gpu)})", {(f"k {k}", c): (float(ra[k][c]), float(rb[k][c])) for k in ra if k in rb for c in gpu}, thr)
+        host = [c for c in ("fkl_prep_mean_ms", "fkl_flushed_prep_mean_ms") if c in next(iter(ra.values()))]
+        if host:
+            report(f"E2 FKL program, host time of the preparation ({', '.join(host)}; threshold 5 %)",
+                   {(f"k {k}", c): (float(ra[k][c]), float(rb[k][c])) for k in ra if k in rb for c in host}, 5.0)
     pa, pb = os.path.join(d, "e2", "python_normal", "e2_chain.csv"), os.path.join(d, "e2", "python_reverse", "e2_chain.csv")
     if os.path.exists(pa) and os.path.exists(pb):
         ra, rb = {(x["version"], x["ops"]): x for x in rd(pa) if x["status"] == "ok"}, {(x["version"], x["ops"]): x for x in rd(pb) if x["status"] == "ok"}
-        report("E2 Python driver (gpu_mean_ms and gpu_flushed_mean_ms; versions and chain lengths reversed)", {(f"k {k[1]}", f"{k[0]} {c}"): (float(ra[k][c]), float(rb[k][c])) for k in ra if k in rb and k[0] != "fkl" for c in ("gpu_mean_ms", "gpu_flushed_mean_ms") if ra[k].get(c) not in (None, "") and rb[k].get(c) not in (None, "")}, thr)
+        report("E2 Python driver (gpu_mean_ms, gpu_flushed_mean_ms and gpu_kernel_mean_ms; versions and chain lengths reversed)", {(f"k {k[1]}", f"{k[0]} {c}"): (float(ra[k][c]), float(rb[k][c])) for k in ra if k in rb and k[0] != "fkl" for c in ("gpu_mean_ms", "gpu_flushed_mean_ms", "gpu_kernel_mean_ms") if ra[k].get(c) not in (None, "") and rb[k].get(c) not in (None, "")}, thr)
 
 
 if __name__ == "__main__":
