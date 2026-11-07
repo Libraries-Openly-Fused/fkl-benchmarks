@@ -18,6 +18,7 @@
 // The raw outputs of every case are written as bit patterns (<E6_OUT>/<tag>/<case>.bin) for the comparison across the two builds (scripts/e6_analyse.py); the CSV written here holds the within-build results.
 // The results in results/rtx4090/e6-fused-vs-unfused and ...-run2 were produced by the FULL program, which also held the special-value study and the aliasing test: de47e88 (run 1) and 4203918 (run 2); those two
 // studies were removed from this file afterwards (git history keeps them); P1, P2 and P3 are unchanged. Host references: -ffp-contract=off (see the CMake target).
+#include <common/status_check.h>
 #include <common/main.h>
 #include <common/csv_writer.h>
 #include <common/nan_safe.h>
@@ -50,15 +51,6 @@
 #include <vector>
 
 namespace {
-#define E6_CHECK(call)                                                                                                        \
-    {                                                                                                                         \
-        const cudaError_t err_ = (call);                                                                                      \
-        if (err_ != cudaSuccess) {                                                                                            \
-            std::cerr << #call << " failed: " << cudaGetErrorString(err_) << " (" << __FILE__ << ":" << __LINE__ << ")" << std::endl; \
-            std::exit(2);                                                                                                     \
-        }                                                                                                                     \
-    }
-
 std::string g_tag, g_out;
 constexpr int SEEDS = 5;
 constexpr int SEED0 = 1000;
@@ -118,7 +110,7 @@ void p1Fused(fk::Ptr2D<float>& in, fk::Ptr2D<float>& out, cudaStream_t s) {
     const dim3 block(32, 8);
     const dim3 grid((P1_W + block.x - 1) / block.x, (P1_H + block.y - 1) / block.y);
     fk::launchTransformDPP_Kernel<fk::ParArch::GPU_NVIDIA, fk::TF::DISABLED, true><<<grid, block, 0, s>>>(tDetails, readOp, loop, writeOp);
-    E6_CHECK(cudaGetLastError());
+    FKLB_CUDA_CHECK(cudaGetLastError());
 }
 
 // one operation per launch: Mul then Add, ping-pong between two buffers, every intermediate is a float Ptr2D in global memory
@@ -138,10 +130,10 @@ void p1CompareOne(const int pairs, const int seed, fklb::CsvWriter& csv, fk::Ptr
                   const std::vector<float>& hIn, void (*fused)(fk::Ptr2D<float>&, fk::Ptr2D<float>&, cudaStream_t)) {
     fused(dIn, dF, s);
     p1PerOp(dIn, dTmp, dP, pairs, s);
-    E6_CHECK(cudaStreamSynchronize(s));
+    FKLB_CUDA_CHECK(cudaStreamSynchronize(s));
     std::vector<float> f(P1_W * P1_H), p(P1_W * P1_H);
-    E6_CHECK(cudaMemcpy2D(f.data(), P1_W * 4, dF.ptr().data, dF.ptr().dims.pitch, P1_W * 4, P1_H, cudaMemcpyDeviceToHost));
-    E6_CHECK(cudaMemcpy2D(p.data(), P1_W * 4, dP.ptr().data, dP.ptr().dims.pitch, P1_W * 4, P1_H, cudaMemcpyDeviceToHost));
+    FKLB_CUDA_CHECK(cudaMemcpy2D(f.data(), P1_W * 4, dF.ptr().data, dF.ptr().dims.pitch, P1_W * 4, P1_H, cudaMemcpyDeviceToHost));
+    FKLB_CUDA_CHECK(cudaMemcpy2D(p.data(), P1_W * 4, dP.ptr().data, dP.ptr().dims.pitch, P1_W * 4, P1_H, cudaMemcpyDeviceToHost));
     Stats fp, f64f, f64p;
     double maxErrF = 0, maxErrP = 0, outMin = 1e300, outMax = -1e300;
     for (size_t i = 0; i < f.size(); ++i) {
@@ -175,9 +167,9 @@ void resizeNormalise(const Geo& g, const std::vector<std::array<int, 2>>& pos, c
     fk::Stream_<fk::ParArch::GPU_NVIDIA> st(s);
     fk::Ptr2D<uchar3> dInput(g.srcW, g.srcH);
     const size_t inPitch = dInput.ptr().dims.pitch;
-    E6_CHECK(cudaMemcpy2D(dInput.ptr().data, inPitch, noise.data(), static_cast<size_t>(g.srcW) * 3, static_cast<size_t>(g.srcW) * 3, g.srcH, cudaMemcpyHostToDevice));
+    FKLB_CUDA_CHECK(cudaMemcpy2D(dInput.ptr().data, inPitch, noise.data(), static_cast<size_t>(g.srcW) * 3, static_cast<size_t>(g.srcW) * 3, g.srcH, cudaMemcpyHostToDevice));
     std::array<fk::Ptr2D<uchar3>, BATCH> crops;
-    for (int i = 0; i < BATCH; ++i) crops[i] = dInput.crop(fk::Point{pos[i][0], pos[i][1], 0}, fk::PtrDims<fk::ND::_2D>{static_cast<uint>(g.cropW), static_cast<uint>(g.cropH), static_cast<uint>(inPitch)});
+    for (int i = 0; i < BATCH; ++i) crops[i] = dInput.crop2D(fk::Rect(pos[i][0], pos[i][1], g.cropW, g.cropH));
     const auto resizeOp = fk::Resize<fk::InterpolationType::INTER_LINEAR, fk::AspectRatio::IGNORE_AR, NullType, SAMPLING>::build(fk::Size(g.outW, g.outH));
     const auto reorder = fk::VectorReorder<float3, 2, 1, 0>::build();
     const auto mul = fk::Mul<float3>::build(make_float3(ALPHA, ALPHA, ALPHA));
@@ -202,12 +194,12 @@ void resizeNormalise(const Geo& g, const std::vector<std::array<int, 2>>& pos, c
         // the split of crop i into its three planes: the tensor of this crop alone (BATCH = 1) copied to the batch tensor
         fk::Tensor<float> one(g.outW, g.outH, 1, 3);
         fk::executeOperations<DPP>(st, fk::PerThreadRead<fk::ND::_2D, float3>::build(bufA.ptr()), fk::Write<fk::TensorSplit<float3>>{one.ptr()});
-        E6_CHECK(cudaMemcpyAsync(dPer.ptr().data + static_cast<size_t>(i) * 3 * plane, one.ptr().data, 3 * plane * sizeof(float), cudaMemcpyDeviceToDevice, s));
+        FKLB_CUDA_CHECK(cudaMemcpyAsync(dPer.ptr().data + static_cast<size_t>(i) * 3 * plane, one.ptr().data, 3 * plane * sizeof(float), cudaMemcpyDeviceToDevice, s));
     }
-    E6_CHECK(cudaStreamSynchronize(s));
+    FKLB_CUDA_CHECK(cudaStreamSynchronize(s));
     std::vector<float> f(total), p(total);
-    E6_CHECK(cudaMemcpy(f.data(), dFused.ptr().data, total * 4, cudaMemcpyDeviceToHost));
-    E6_CHECK(cudaMemcpy(p.data(), dPer.ptr().data, total * 4, cudaMemcpyDeviceToHost));
+    FKLB_CUDA_CHECK(cudaMemcpy(f.data(), dFused.ptr().data, total * 4, cudaMemcpyDeviceToHost));
+    FKLB_CUDA_CHECK(cudaMemcpy(p.data(), dPer.ptr().data, total * 4, cudaMemcpyDeviceToHost));
     // fp64 reference (the chain in double with the float constants), in the tensor layout: [crop][channel][y][x], output channel k is the source channel 2 - k
     std::vector<float> ref(total);
     std::vector<double> refD(total), resized(plane * 3);
@@ -265,7 +257,7 @@ int launch() {
     const std::string mk = "mkdir -p '" + g_out + "/" + g_tag + "'";
     if (std::system(mk.c_str()) != 0) return 1;
     cudaStream_t s;
-    E6_CHECK(cudaStreamCreate(&s));
+    FKLB_CUDA_CHECK(cudaStreamCreate(&s));
     fklb::CsvWriter csv("e6_fused_vs_unfused_" + g_tag + ".csv", "E6 fused against kernel-per-op", {"pipeline", "case", "seed", "comparison", "n", "identical", "differing", "max_ulp", "nan_a", "nan_b", "inf_a", "inf_b", "region", "x1", "x2", "max_abs", "mag_at_max_ulp", "max_abs_over_max_out", "n_small_lt_1e-3", "max_ulp_outside_small"},
                         "build tag " + g_tag + "; identical = memcmp of the bit patterns; max_ulp in ULP (integer distance of the monotonic bit mapping; NaN pairs excluded and counted); for fused_vs_fp64_rounded x1 = max error against the unrounded double result in ULP; "
                         "for P1 fused_vs_perop x1,x2 = min and max of the output; the fp64 host reference is compiled with -ffp-contract=off");
@@ -277,7 +269,7 @@ int launch() {
             std::uniform_real_distribution<float> u(0.5f, 2.f);
             std::vector<float> h(static_cast<size_t>(P1_W) * P1_H);
             for (auto& v : h) v = u(rng);
-            E6_CHECK(cudaMemcpy2D(dIn.ptr().data, dIn.ptr().dims.pitch, h.data(), P1_W * 4, P1_W * 4, P1_H, cudaMemcpyHostToDevice));
+            FKLB_CUDA_CHECK(cudaMemcpy2D(dIn.ptr().data, dIn.ptr().dims.pitch, h.data(), P1_W * 4, P1_W * 4, P1_H, cudaMemcpyHostToDevice));
             p1CompareOne(1, seed, csv, dIn, dTmp, dF, dP, s, h, &p1Fused<1>);
             p1CompareOne(10, seed, csv, dIn, dTmp, dF, dP, s, h, &p1Fused<10>);
             p1CompareOne(100, seed, csv, dIn, dTmp, dF, dP, s, h, &p1Fused<100>);
