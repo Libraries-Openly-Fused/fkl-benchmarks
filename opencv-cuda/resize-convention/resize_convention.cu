@@ -29,6 +29,7 @@
 // follows a convention when its difference to that reference is at the level of float rounding (about 1e-5).
 //
 // The seed is fixed and written to the CSV header. Writes resize_convention.csv.
+#include <common/status_check.h>
 #include <common/main.h>
 #include <common/csv_writer.h>
 #include <common/nan_safe.h>
@@ -47,22 +48,6 @@
 #include <string>
 #include <vector>
 
-#define CHECK_CUDA(call)                                                                                            \
-    {                                                                                                               \
-        const cudaError_t err_ = (call);                                                                            \
-        if (err_ != cudaSuccess) {                                                                                  \
-            std::cerr << #call << ": " << cudaGetErrorString(err_) << " (" << __FILE__ << ":" << __LINE__ << ")\n"; \
-            return -1;                                                                                              \
-        }                                                                                                           \
-    }
-#define CHECK_NPP(call)                                                                                          \
-    {                                                                                                            \
-        const NppStatus st_ = (call);                                                                            \
-        if (st_ != NPP_SUCCESS) {                                                                                \
-            std::cerr << #call << ": NPP status " << st_ << " (" << __FILE__ << ":" << __LINE__ << ")\n";        \
-            return -1;                                                                                           \
-        }                                                                                                        \
-    }
 
 namespace {
 constexpr unsigned long long SEED = 20261030ull;
@@ -138,26 +123,6 @@ Diff compare(const Image& a, const Image& b) {
     return {maxAbs, sum / a.size(), static_cast<double>(gt) / a.size()};
 }
 
-NppStreamContext makeNppContext(cudaStream_t stream) {
-    int device = 0;
-    cudaGetDevice(&device);
-    cudaDeviceProp prop;
-    cudaGetDeviceProperties(&prop, device);
-    NppStreamContext ctx{};
-    ctx.hStream = stream;
-    ctx.nCudaDeviceId = device;
-    ctx.nMultiProcessorCount = prop.multiProcessorCount;
-    ctx.nMaxThreadsPerMultiProcessor = prop.maxThreadsPerMultiProcessor;
-    ctx.nMaxThreadsPerBlock = prop.maxThreadsPerBlock;
-    ctx.nSharedMemPerBlock = prop.sharedMemPerBlock;
-    ctx.nCudaDevAttrComputeCapabilityMajor = prop.major;
-    ctx.nCudaDevAttrComputeCapabilityMinor = prop.minor;
-    unsigned int flags = 0;
-    cudaStreamGetFlags(stream, &flags);
-    ctx.nStreamFlags = flags;
-    return ctx;
-}
-
 struct Case {
     int sw, sh, dw, dh;
     const char* what;
@@ -174,7 +139,21 @@ int launch() {
 
     cv::cuda::Stream cvStream;
     cudaStream_t stream = cv::cuda::StreamAccessor::getStream(cvStream);
-    const NppStreamContext nppCtx = makeNppContext(stream);
+    // The NPP stream context, filled field by field from the device properties and the stream's flags (CUDA 13 has no nppGetStreamContext)
+    int device = 0;
+    FKLB_CUDA_CHECK(cudaGetDevice(&device));
+    cudaDeviceProp props;
+    FKLB_CUDA_CHECK(cudaGetDeviceProperties(&props, device));
+    NppStreamContext nppCtx{};
+    nppCtx.hStream = stream;
+    nppCtx.nCudaDeviceId = device;
+    nppCtx.nMultiProcessorCount = props.multiProcessorCount;
+    nppCtx.nMaxThreadsPerMultiProcessor = props.maxThreadsPerMultiProcessor;
+    nppCtx.nMaxThreadsPerBlock = props.maxThreadsPerBlock;
+    nppCtx.nSharedMemPerBlock = props.sharedMemPerBlock;
+    nppCtx.nCudaDevAttrComputeCapabilityMajor = props.major;
+    nppCtx.nCudaDevAttrComputeCapabilityMinor = props.minor;
+    FKLB_CUDA_CHECK(cudaStreamGetFlags(stream, &nppCtx.nStreamFlags));
 
     fklb::CsvWriter csv("resize_convention.csv", "resize sampling convention: candidates vs two scalar double references",
                         {"case", "candidate", "reference", "max_abs_diff", "mean_abs_diff", "fraction_gt_1e-3"},
@@ -216,25 +195,25 @@ int launch() {
         {
             Npp32f *dNppSrc = nullptr, *dNppDst = nullptr;
             size_t srcPitch = 0, dstPitch = 0;
-            CHECK_CUDA(cudaMallocPitch(reinterpret_cast<void**>(&dNppSrc), &srcPitch, cs.sw * 3 * sizeof(float), cs.sh));
-            CHECK_CUDA(cudaMallocPitch(reinterpret_cast<void**>(&dNppDst), &dstPitch, cs.dw * 3 * sizeof(float), cs.dh));
-            CHECK_CUDA(cudaMemcpy2DAsync(dNppSrc, srcPitch, src.data(), cs.sw * 3 * sizeof(float), cs.sw * 3 * sizeof(float), cs.sh,
+            FKLB_CUDA_CHECK(cudaMallocPitch(reinterpret_cast<void**>(&dNppSrc), &srcPitch, cs.sw * 3 * sizeof(float), cs.sh));
+            FKLB_CUDA_CHECK(cudaMallocPitch(reinterpret_cast<void**>(&dNppDst), &dstPitch, cs.dw * 3 * sizeof(float), cs.dh));
+            FKLB_CUDA_CHECK(cudaMemcpy2DAsync(dNppSrc, srcPitch, src.data(), cs.sw * 3 * sizeof(float), cs.sw * 3 * sizeof(float), cs.sh,
                                          cudaMemcpyHostToDevice, stream));
             const NppiSize srcSize{cs.sw, cs.sh}, dstSize{cs.dw, cs.dh};
             const NppiRect srcROI{0, 0, cs.sw, cs.sh}, dstROI{0, 0, cs.dw, cs.dh};
-            CHECK_NPP(nppiResize_32f_C3R_Ctx(dNppSrc, static_cast<int>(srcPitch), srcSize, srcROI, dNppDst, static_cast<int>(dstPitch),
+            FKLB_NPP_CHECK(nppiResize_32f_C3R_Ctx(dNppSrc, static_cast<int>(srcPitch), srcSize, srcROI, dNppDst, static_cast<int>(dstPitch),
                                              dstSize, dstROI, NPPI_INTER_LINEAR, nppCtx));
             Image out(static_cast<size_t>(cs.dw) * cs.dh * 3);
-            CHECK_CUDA(cudaMemcpy2DAsync(out.data(), cs.dw * 3 * sizeof(float), dNppDst, dstPitch, cs.dw * 3 * sizeof(float), cs.dh,
+            FKLB_CUDA_CHECK(cudaMemcpy2DAsync(out.data(), cs.dw * 3 * sizeof(float), dNppDst, dstPitch, cs.dw * 3 * sizeof(float), cs.dh,
                                          cudaMemcpyDeviceToHost, stream));
-            CHECK_CUDA(cudaStreamSynchronize(stream));
+            FKLB_CUDA_CHECK(cudaStreamSynchronize(stream));
             candidates.emplace_back("nppiResize_32f_C3R_Ctx (NPPI_INTER_LINEAR)", out);
 
             // batch of two (NPP's batch API rejects a batch of one: NPP_BAD_ARGUMENT_ERROR): the same source twice, two destinations,
             // descriptors on the device, as the baseline of the paper calls it; the first destination is compared
             Npp32f* dNppDst2 = nullptr;
             size_t dstPitch2 = 0;
-            CHECK_CUDA(cudaMallocPitch(reinterpret_cast<void**>(&dNppDst2), &dstPitch2, cs.dw * 3 * sizeof(float), cs.dh));
+            FKLB_CUDA_CHECK(cudaMallocPitch(reinterpret_cast<void**>(&dNppDst2), &dstPitch2, cs.dw * 3 * sizeof(float), cs.dh));
             NppiImageDescriptor hSrcDesc[2]{}, hDstDesc[2]{};
             NppiResizeBatchROI_Advanced hROI[2]{};
             for (int b = 0; b < 2; ++b) {
@@ -247,18 +226,18 @@ int launch() {
             }
             NppiImageDescriptor *dSrcDesc = nullptr, *dDstDesc = nullptr;
             NppiResizeBatchROI_Advanced* dROI = nullptr;
-            CHECK_CUDA(cudaMalloc(&dSrcDesc, sizeof(hSrcDesc)));
-            CHECK_CUDA(cudaMalloc(&dDstDesc, sizeof(hDstDesc)));
-            CHECK_CUDA(cudaMalloc(&dROI, sizeof(hROI)));
-            CHECK_CUDA(cudaMemcpyAsync(dSrcDesc, hSrcDesc, sizeof(hSrcDesc), cudaMemcpyHostToDevice, stream));
-            CHECK_CUDA(cudaMemcpyAsync(dDstDesc, hDstDesc, sizeof(hDstDesc), cudaMemcpyHostToDevice, stream));
-            CHECK_CUDA(cudaMemcpyAsync(dROI, hROI, sizeof(hROI), cudaMemcpyHostToDevice, stream));
-            CHECK_CUDA(cudaMemset2DAsync(dNppDst, dstPitch, 0, cs.dw * 3 * sizeof(float), cs.dh, stream));
-            CHECK_NPP(nppiResizeBatch_32f_C3R_Advanced_Ctx(cs.dw, cs.dh, dSrcDesc, dDstDesc, dROI, 2, NPPI_INTER_LINEAR, nppCtx));
+            FKLB_CUDA_CHECK(cudaMalloc(&dSrcDesc, sizeof(hSrcDesc)));
+            FKLB_CUDA_CHECK(cudaMalloc(&dDstDesc, sizeof(hDstDesc)));
+            FKLB_CUDA_CHECK(cudaMalloc(&dROI, sizeof(hROI)));
+            FKLB_CUDA_CHECK(cudaMemcpyAsync(dSrcDesc, hSrcDesc, sizeof(hSrcDesc), cudaMemcpyHostToDevice, stream));
+            FKLB_CUDA_CHECK(cudaMemcpyAsync(dDstDesc, hDstDesc, sizeof(hDstDesc), cudaMemcpyHostToDevice, stream));
+            FKLB_CUDA_CHECK(cudaMemcpyAsync(dROI, hROI, sizeof(hROI), cudaMemcpyHostToDevice, stream));
+            FKLB_CUDA_CHECK(cudaMemset2DAsync(dNppDst, dstPitch, 0, cs.dw * 3 * sizeof(float), cs.dh, stream));
+            FKLB_NPP_CHECK(nppiResizeBatch_32f_C3R_Advanced_Ctx(cs.dw, cs.dh, dSrcDesc, dDstDesc, dROI, 2, NPPI_INTER_LINEAR, nppCtx));
             Image outB(static_cast<size_t>(cs.dw) * cs.dh * 3);
-            CHECK_CUDA(cudaMemcpy2DAsync(outB.data(), cs.dw * 3 * sizeof(float), dNppDst, dstPitch, cs.dw * 3 * sizeof(float), cs.dh,
+            FKLB_CUDA_CHECK(cudaMemcpy2DAsync(outB.data(), cs.dw * 3 * sizeof(float), dNppDst, dstPitch, cs.dw * 3 * sizeof(float), cs.dh,
                                          cudaMemcpyDeviceToHost, stream));
-            CHECK_CUDA(cudaStreamSynchronize(stream));
+            FKLB_CUDA_CHECK(cudaStreamSynchronize(stream));
             candidates.emplace_back("nppiResizeBatch_32f_C3R_Advanced_Ctx (batch of 2, NPPI_INTER_LINEAR)", outB);
             cudaFree(dNppDst2);
             cudaFree(dSrcDesc); cudaFree(dDstDesc); cudaFree(dROI); cudaFree(dNppSrc); cudaFree(dNppDst);
@@ -319,16 +298,16 @@ int launch() {
             {
                 Npp8u *dNppSrc = nullptr, *dNppDst = nullptr;
                 size_t srcPitch = 0, dstPitch = 0;
-                CHECK_CUDA(cudaMallocPitch(reinterpret_cast<void**>(&dNppSrc), &srcPitch, cs.sw * 3, cs.sh));
-                CHECK_CUDA(cudaMallocPitch(reinterpret_cast<void**>(&dNppDst), &dstPitch, cs.dw * 3, cs.dh));
-                CHECK_CUDA(cudaMemcpy2DAsync(dNppSrc, srcPitch, src8.data(), cs.sw * 3, cs.sw * 3, cs.sh, cudaMemcpyHostToDevice, stream));
+                FKLB_CUDA_CHECK(cudaMallocPitch(reinterpret_cast<void**>(&dNppSrc), &srcPitch, cs.sw * 3, cs.sh));
+                FKLB_CUDA_CHECK(cudaMallocPitch(reinterpret_cast<void**>(&dNppDst), &dstPitch, cs.dw * 3, cs.dh));
+                FKLB_CUDA_CHECK(cudaMemcpy2DAsync(dNppSrc, srcPitch, src8.data(), cs.sw * 3, cs.sw * 3, cs.sh, cudaMemcpyHostToDevice, stream));
                 const NppiSize srcSize{cs.sw, cs.sh}, dstSize{cs.dw, cs.dh};
                 const NppiRect srcROI{0, 0, cs.sw, cs.sh}, dstROI{0, 0, cs.dw, cs.dh};
-                CHECK_NPP(nppiResize_8u_C3R_Ctx(dNppSrc, static_cast<int>(srcPitch), srcSize, srcROI, dNppDst, static_cast<int>(dstPitch), dstSize,
+                FKLB_NPP_CHECK(nppiResize_8u_C3R_Ctx(dNppSrc, static_cast<int>(srcPitch), srcSize, srcROI, dNppDst, static_cast<int>(dstPitch), dstSize,
                                                 dstROI, NPPI_INTER_LINEAR, nppCtx));
                 std::vector<unsigned char> out8(static_cast<size_t>(cs.dw) * cs.dh * 3);
-                CHECK_CUDA(cudaMemcpy2DAsync(out8.data(), cs.dw * 3, dNppDst, dstPitch, cs.dw * 3, cs.dh, cudaMemcpyDeviceToHost, stream));
-                CHECK_CUDA(cudaStreamSynchronize(stream));
+                FKLB_CUDA_CHECK(cudaMemcpy2DAsync(out8.data(), cs.dw * 3, dNppDst, dstPitch, cs.dw * 3, cs.dh, cudaMemcpyDeviceToHost, stream));
+                FKLB_CUDA_CHECK(cudaStreamSynchronize(stream));
                 Image out(out8.size());
                 for (size_t i = 0; i < out.size(); ++i) out[i] = out8[i];
                 cand8.emplace_back("nppiResize_8u_C3R_Ctx (NPPI_INTER_LINEAR, 8UC3 input and output)", out);
