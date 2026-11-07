@@ -23,7 +23,8 @@
 //   - each implementation must match ONE of the two references (|difference| < 1e-3); which one is recorded, so the check keeps
 //     working if FKL adopts the other convention,
 //   - the difference between the two implementations is recorded, not required to be small.
-// The timing code of the benchmarks is not touched. One row per batch size is written to <function>_agreement.csv.
+// The check runs after the timed loop of each test call, outside the timed intervals. Every call writes one row to
+// <function>_agreement.csv, so a run has two rows per batch size: one from the warm-up sweep and one from the measured sweep.
 #pragma once
 
 #include <common/nan_safe.h>

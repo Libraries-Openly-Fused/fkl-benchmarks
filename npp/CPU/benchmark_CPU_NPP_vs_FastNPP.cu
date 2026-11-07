@@ -69,6 +69,7 @@ bool test_NPP_cpu_batchresize_x_split3D(const size_t NUM_ELEMS_X, const size_t N
     const std::vector<unsigned char>& sourceNoise = fklb_npp::seededNoise(static_cast<int>(NUM_ELEMS_X), static_cast<int>(NUM_ELEMS_Y));
     constexpr NppiSize crop_size{ CROP_W, CROP_H };
     constexpr NppiSize up_size{ UP_W, UP_H };
+    // the constants of the pipeline: set up once, they do not depend on the crops
     constexpr Npp32f mulValue[3] = { ALPHA, ALPHA, ALPHA };
     constexpr Npp32f subValue[3] = { 1.f, 4.f, 3.2f };
     constexpr Npp32f divValue[3] = { 1.f, 4.f, 3.2f };
@@ -89,7 +90,6 @@ bool test_NPP_cpu_batchresize_x_split3D(const size_t NUM_ELEMS_X, const size_t N
     nppContext.nCudaDevAttrComputeCapabilityMajor = props.major;
     nppContext.nCudaDevAttrComputeCapabilityMinor = props.minor;
     FKLB_CUDA_CHECK(cudaStreamGetFlags(stream, &nppContext.nStreamFlags));
-    nppContext.hWorkspace = 0;
 
     // NPP: its own copy of the frame, uploaded from the same host bytes as FastNPP's
     Npp8u* nppSrc = nullptr;
@@ -162,7 +162,9 @@ bool test_NPP_cpu_batchresize_x_split3D(const size_t NUM_ELEMS_X, const size_t N
             fastPlanes[c][i] = fastOut + (static_cast<size_t>(i) * 3 + c) * PLANE;
         }
     }
-    // FastNPP's descriptor and ROI arrays, in host memory: FastNPP reads them on the host when it builds its operations
+    // FastNPP's descriptor and ROI arrays, in host memory: FastNPP reads the descriptors (pointer, step and size of every crop) on the host
+    // when it builds its operations. It does not read the ROI array (its resize assumes full-image ROIs); the array is filled anyway, in the
+    // timed interval, as NPP's interface asks for it.
     std::array<NppiImageDescriptor, BATCH> fastSrcDesc{};
     std::array<NppiResizeBatchROI_Advanced, BATCH> fastROI{};
 
@@ -172,6 +174,7 @@ bool test_NPP_cpu_batchresize_x_split3D(const size_t NUM_ELEMS_X, const size_t N
                   << UP_W * sizeof(Npp32f) << " bytes per row" << std::endl;
     }
 
+    FKLB_CUDA_CHECK(cudaStreamSynchronize(stream));   // the uploads of the setup are done before the first timed interval of either side
     auto benchmarkTemp = initCPUBenchmark<ITERS, BATCH, FIRST_VALUE, INCREMENT, NUM_EXPERIMENTS>(__func__, VARIABLE_DIMENSION);
     for (int it = 0; it < ITERS; it++) {
         startNPP_CPU(benchmarkTemp);

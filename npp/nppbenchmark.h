@@ -81,7 +81,7 @@ inline void processExecution(const BenchmarkResultsNumbers &resF, const std::str
     currentFile[fileName] << ", FK MinTime";
     currentFile[fileName] << ", Mean Speedup";
     if (constructionMs >= 0.f) {
-      currentFile[fileName] << ", FastNPP construction ms (once, host)";
+      currentFile[fileName] << ", FastNPP construction ms (once on host)";
     }
     currentFile[fileName] << std::endl;
   }
@@ -150,7 +150,7 @@ inline void processExecution(const BenchmarkResultsNumbers &resF, const std::str
  
 
  
-// STOP_FK_BENCHMARK_AND_REPORT(ms): as STOP_FK_BENCHMARK, and the CSV gets the column "FastNPP construction ms (once, host)" with ms
+// STOP_FK_BENCHMARK_AND_REPORT(ms): as STOP_FK_BENCHMARK, and the CSV gets the column "FastNPP construction ms (once on host)" with ms
 #define STOP_FK_BENCHMARK_AND_REPORT(constructionMs)                                                                   \
   FKLB_CUDA_CHECK(cudaEventRecord(stop, compute_stream));                                                                            \
   FKLB_CUDA_CHECK(cudaEventSynchronize(stop));                                                                               \
@@ -160,6 +160,8 @@ inline void processExecution(const BenchmarkResultsNumbers &resF, const std::str
   resF.FKelapsedTimeAcum += FKelapsedTime[idx];                                                                       \
   if (warmup) break; \
   }                                                                                                                  \
+  FKLB_CUDA_CHECK(cudaEventDestroy(start));                                                                          \
+  FKLB_CUDA_CHECK(cudaEventDestroy(stop));                                                                           \
 processExecution<BATCH, ITERS, batchValues.size(), batchValues>(                               \
       resF, __func__, NPPelapsedTime, FKelapsedTime, VARIABLE_DIMENSION, (constructionMs));
 #define STOP_FK_BENCHMARK STOP_FK_BENCHMARK_AND_REPORT(-1.f)

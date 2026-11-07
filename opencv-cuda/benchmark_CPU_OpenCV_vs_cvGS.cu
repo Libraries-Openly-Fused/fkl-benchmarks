@@ -18,8 +18,8 @@
 // to BGR, subtracted and divided, and split into planes.
 // Everything a side does for a frame is timed, building its batch included: the crop locations may change on every image, so OpenCV makes the
 // ROI of every crop in the call, and cvGPUSpeedup makes its array of ROIs in the call and builds its operations on it; the ROIs are released
-// before the interval ends. Each side reads its own frame (cv::cuda::GpuMat, filled with the same value); cvGPUSpeedup writes a continuous
-// tensor (cv::cuda::createContinuous).
+// before the interval ends. Each side reads its own frame (cv::cuda::GpuMat), both uploaded from the same host bytes (seeded noise, so that the
+// check compares real crops); cvGPUSpeedup writes a continuous tensor (cv::cuda::createContinuous).
 
 #include <opencv-cuda/testsCommon.cuh>
 #include <cvGPUSpeedup.cuh>
@@ -27,6 +27,9 @@
 
 #include <common/main.h>
 #include <common/sequence.h>
+
+#include <random>
+#include <vector>
 
 #ifdef ENABLE_BENCHMARK
 constexpr char VARIABLE_DIMENSION[]{ "Batch size" };
@@ -38,7 +41,7 @@ constexpr size_t INCREMENT = 10;
 constexpr std::array<size_t, NUM_EXPERIMENTS> batchValues = fklb::arrayIndexSequence<FIRST_VALUE, INCREMENT, NUM_EXPERIMENTS>;
 
 template <int CV_TYPE_I, int CV_TYPE_O, int BATCH>
-bool test_cpu_batchresize_x_split3D(size_t NUM_ELEMS_X, size_t NUM_ELEMS_Y, cv::cuda::Stream& cv_stream) {
+bool test_cpu_batchresize_x_split3D(size_t NUM_ELEMS_X, size_t NUM_ELEMS_Y, const cv::Mat& hostFrame, cv::cuda::Stream& cv_stream) {
     bool passed = true;
 
     struct Parameters {
@@ -56,7 +59,6 @@ bool test_cpu_batchresize_x_split3D(size_t NUM_ELEMS_X, size_t NUM_ELEMS_Y, cv::
         {{5u, 5u, 5u}, {alpha, alpha, alpha}, {1.f, 4.f, 3.2f}, {3.2f, 0.6f, 11.8f}},
         {{2u, 37u, 128u, 20u}, {alpha, alpha, alpha, alpha}, {1.f, 4.f, 3.2f, 0.5f}, {3.2f, 0.6f, 11.8f, 33.f}} };
 
-    cv::Scalar val_init = params.at(CV_MAT_CN(CV_TYPE_O) - 1).init;
     cv::Scalar val_alpha = params.at(CV_MAT_CN(CV_TYPE_O) - 1).alpha;
     cv::Scalar val_sub = params.at(CV_MAT_CN(CV_TYPE_O) - 1).val_sub;
     cv::Scalar val_div = params.at(CV_MAT_CN(CV_TYPE_O) - 1).val_div;
@@ -64,9 +66,12 @@ bool test_cpu_batchresize_x_split3D(size_t NUM_ELEMS_X, size_t NUM_ELEMS_Y, cv::
     constexpr int CROP_WIDTH = 60;
     constexpr int CROP_HEIGHT = 120;
 
-    // each side reads its own frame, filled with the same value
-    cv::cuda::GpuMat d_input((int)NUM_ELEMS_Y, (int)NUM_ELEMS_X, CV_TYPE_I, val_init);
-    cv::cuda::GpuMat d_input_cvGS((int)NUM_ELEMS_Y, (int)NUM_ELEMS_X, CV_TYPE_I, val_init);
+    // each side reads its own frame, uploaded from the same host bytes
+    cv::cuda::GpuMat d_input, d_input_cvGS;
+    d_input.upload(hostFrame);
+    d_input_cvGS.upload(hostFrame);
+    // crops_2d holds the crop positions themselves, the input of every frame (as a detector would give them); each side makes its ROIs from
+    // them in every iteration
     std::array<cv::Rect2d, BATCH> crops_2d;
     for (int crop_i = 0; crop_i < BATCH; crop_i++) {
         crops_2d[crop_i] =
@@ -177,10 +182,10 @@ bool test_cpu_batchresize_x_split3D(size_t NUM_ELEMS_X, size_t NUM_ELEMS_Y, cv::
 }
 
 template <int CV_TYPE_I, int CV_TYPE_O, size_t... Is>
-bool test_cpu_batchresize_x_split3D(const size_t NUM_ELEMS_X, const size_t NUM_ELEMS_Y, std::index_sequence<Is...> seq,
+bool test_cpu_batchresize_x_split3D(const size_t NUM_ELEMS_X, const size_t NUM_ELEMS_Y, const cv::Mat& hostFrame, std::index_sequence<Is...> seq,
     cv::cuda::Stream cv_stream) {
     bool passed = true;
-    int dummy[] = { (passed &= test_cpu_batchresize_x_split3D<CV_TYPE_I, CV_TYPE_O, batchValues[Is]>(NUM_ELEMS_X, NUM_ELEMS_Y,
+    int dummy[] = { (passed &= test_cpu_batchresize_x_split3D<CV_TYPE_I, CV_TYPE_O, batchValues[Is]>(NUM_ELEMS_X, NUM_ELEMS_Y, hostFrame,
                                                                                                 cv_stream),
                     0)... };
     return passed;
@@ -197,13 +202,20 @@ int launch() {
 
     cv::Mat::setDefaultAllocator(cv::cuda::HostMem::getAllocator(cv::cuda::HostMem::AllocType::PAGE_LOCKED));
 
+    // the frame of both sides: seeded noise (std::mt19937_64 seed 20261030, uniform 0..255), one host image uploaded by each side
+    std::vector<unsigned char> noise(NUM_ELEMS_X * NUM_ELEMS_Y * 3);
+    std::mt19937_64 gen(20261030ull);
+    std::uniform_int_distribution<int> dist(0, 255);
+    for (auto& v : noise) v = static_cast<unsigned char>(dist(gen));
+    const cv::Mat hostFrame(static_cast<int>(NUM_ELEMS_Y), static_cast<int>(NUM_ELEMS_X), CV_8UC3, noise.data());
+
     std::unordered_map<std::string, bool> results;
     results["test_cpu_batchresize_x_split3D"] = true;
     std::make_index_sequence<batchValues.size()> iSeq{};
 
 #define LAUNCH_TESTS(CV_INPUT, CV_OUTPUT)                                                                              \
   results["test_cpu_batchresize_x_split3D"] &=                                                                             \
-      test_cpu_batchresize_x_split3D<CV_INPUT, CV_OUTPUT>(NUM_ELEMS_X, NUM_ELEMS_Y, iSeq, cv_stream);
+      test_cpu_batchresize_x_split3D<CV_INPUT, CV_OUTPUT>(NUM_ELEMS_X, NUM_ELEMS_Y, hostFrame, iSeq, cv_stream);
 
     try {
         // Warming up for the benchmarks
@@ -211,7 +223,8 @@ int launch() {
         LAUNCH_TESTS(CV_8UC3, CV_32FC3)
         warmup = false;
 
-        benchmarkNotes = "Host time to enqueue the work of one frame (steady_clock, no synchronisation inside). Each side reads its own frame. "
+        benchmarkNotes = "Host time to enqueue the work of one frame (steady_clock, no synchronisation inside). Each side reads its own frame, both uploaded "
+                         "from the same seeded noise bytes (std::mt19937_64 seed 20261030). "
                          "Everything a side does for a frame is timed, building its batch included, because the crop locations may change "
                          "on every image: OpenCV makes the ROI of every crop in the call; cvGPUSpeedup makes its array of ROIs in the call "
                          "and builds its operations on it.";

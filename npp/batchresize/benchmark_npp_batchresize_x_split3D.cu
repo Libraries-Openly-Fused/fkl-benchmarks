@@ -24,12 +24,13 @@
 //   test_npp_batchresize_x_split3D_No_CPU_Overhead  FastNPP's descriptor and ROI arrays and its operations are built once, before the timed
 //                                                   loop, so this variant is valid only when the crops do not move. The one-time construction
 //                                                   cost is measured with a host timer and written next to the times (column "FastNPP
-//                                                   construction ms (once, host)").
+//                                                   construction ms (once on host)").
 // Each side owns its buffers: its own copy of the frame (cudaMallocPitch, uploaded from the same host bytes) and its own output. NPP's
 // intermediate images are cudaMallocPitch images, one per crop; FastNPP writes one dense tensor (cudaMalloc). The NPP stream context is filled
 // field by field, as NPP documents it, and FastNPP takes the same context.
 
 #include <common/main.h>
+#include <common/cuda_timing.h>   // fklb::preparedBarrier, for the one-time construction timer
 #include <common/sequence.h>
 #include <common/status_check.h>
 
@@ -40,6 +41,7 @@
 #include <include/fast_npp.h>
 
 #include <array>
+#include <atomic>
 #include <chrono>
 #include <cstddef>
 #include <iostream>
@@ -67,6 +69,7 @@ bool test_npp_batchresize_x_split3D(const size_t NUM_ELEMS_X, const size_t NUM_E
     const std::vector<unsigned char>& sourceNoise = fklb_npp::seededNoise(static_cast<int>(NUM_ELEMS_X), static_cast<int>(NUM_ELEMS_Y));
     constexpr NppiSize crop_size{CROP_W, CROP_H};
     constexpr NppiSize up_size{UP_W, UP_H};
+    // the constants of the pipeline: set up once, they do not depend on the crops
     constexpr Npp32f mulValue[3] = {ALPHA, ALPHA, ALPHA};
     constexpr Npp32f subValue[3] = {1.f, 4.f, 3.2f};
     constexpr Npp32f divValue[3] = {1.f, 4.f, 3.2f};
@@ -87,7 +90,6 @@ bool test_npp_batchresize_x_split3D(const size_t NUM_ELEMS_X, const size_t NUM_E
     nppContext.nCudaDevAttrComputeCapabilityMajor = props.major;
     nppContext.nCudaDevAttrComputeCapabilityMinor = props.minor;
     FKLB_CUDA_CHECK(cudaStreamGetFlags(compute_stream, &nppContext.nStreamFlags));
-    nppContext.hWorkspace = 0;
 
     // NPP: its own copy of the frame, uploaded from the same host bytes as FastNPP's
     Npp8u* nppSrc = nullptr;
@@ -160,7 +162,9 @@ bool test_npp_batchresize_x_split3D(const size_t NUM_ELEMS_X, const size_t NUM_E
             fastPlanes[c][i] = fastOut + (static_cast<size_t>(i) * 3 + c) * PLANE;
         }
     }
-    // FastNPP's descriptor and ROI arrays, in host memory: FastNPP reads them on the host when it builds its operations
+    // FastNPP's descriptor and ROI arrays, in host memory: FastNPP reads the descriptors (pointer, step and size of every crop) on the host
+    // when it builds its operations. It does not read the ROI array (its resize assumes full-image ROIs); the array is filled anyway, in the
+    // timed interval, as NPP's interface asks for it.
     std::array<NppiImageDescriptor, BATCH> fastSrcDesc{};
     std::array<NppiResizeBatchROI_Advanced, BATCH> fastROI{};
 
@@ -169,6 +173,8 @@ bool test_npp_batchresize_x_split3D(const size_t NUM_ELEMS_X, const size_t NUM_E
                   << ", NPP 64 x 128 float image " << upStep << ", NPP plane " << planeStep << "; FastNPP output dense, "
                   << UP_W * sizeof(Npp32f) << " bytes per row" << std::endl;
     }
+
+    FKLB_CUDA_CHECK(cudaStreamSynchronize(compute_stream));   // the uploads of the setup are done before the first timed interval of either side
 
     START_NPP_BENCHMARK
 
@@ -287,6 +293,7 @@ bool test_npp_batchresize_x_split3D_No_CPU_Overhead(const size_t NUM_ELEMS_X, co
     const std::vector<unsigned char>& sourceNoise = fklb_npp::seededNoise(static_cast<int>(NUM_ELEMS_X), static_cast<int>(NUM_ELEMS_Y));
     constexpr NppiSize crop_size{CROP_W, CROP_H};
     constexpr NppiSize up_size{UP_W, UP_H};
+    // the constants of the pipeline: set up once, they do not depend on the crops
     constexpr Npp32f mulValue[3] = {ALPHA, ALPHA, ALPHA};
     constexpr Npp32f subValue[3] = {1.f, 4.f, 3.2f};
     constexpr Npp32f divValue[3] = {1.f, 4.f, 3.2f};
@@ -307,7 +314,6 @@ bool test_npp_batchresize_x_split3D_No_CPU_Overhead(const size_t NUM_ELEMS_X, co
     nppContext.nCudaDevAttrComputeCapabilityMajor = props.major;
     nppContext.nCudaDevAttrComputeCapabilityMinor = props.minor;
     FKLB_CUDA_CHECK(cudaStreamGetFlags(compute_stream, &nppContext.nStreamFlags));
-    nppContext.hWorkspace = 0;
 
     // NPP: its own copy of the frame, uploaded from the same host bytes as FastNPP's
     Npp8u* nppSrc = nullptr;
@@ -385,6 +391,7 @@ bool test_npp_batchresize_x_split3D_No_CPU_Overhead(const size_t NUM_ELEMS_X, co
     // by every iteration. This is valid only when the crops do not move. Their one-time construction cost is measured with a host timer and
     // written next to the times.
     const auto constructionStart = std::chrono::steady_clock::now();
+    std::atomic_signal_fence(std::memory_order_seq_cst);
     std::array<NppiImageDescriptor, BATCH> fastSrcDesc{};
     std::array<NppiResizeBatchROI_Advanced, BATCH> fastROI{};
     for (int i = 0; i < BATCH; ++i) {
@@ -400,6 +407,13 @@ bool test_npp_batchresize_x_split3D_No_CPU_Overhead(const size_t NUM_ELEMS_X, co
     const auto sub = fastNPP::SubC_32f_C3R_Ctx(subValue);
     const auto div = fastNPP::DivC_32f_C3R_Ctx(divValue);
     const auto copy_batch = fastNPP::CopyBatch_32f_C3P3R_Ctx(fastPlanes, static_cast<int>(UP_W * sizeof(Npp32f)), up_size);
+    fklb::preparedBarrier(resizeIOp);
+    fklb::preparedBarrier(swap);
+    fklb::preparedBarrier(mul);
+    fklb::preparedBarrier(sub);
+    fklb::preparedBarrier(div);
+    fklb::preparedBarrier(copy_batch);
+    std::atomic_signal_fence(std::memory_order_seq_cst);
     const float constructionMs = std::chrono::duration<float, std::milli>(std::chrono::steady_clock::now() - constructionStart).count();
 
     if (BATCH == batchValues[0] && !warmup) {
@@ -407,6 +421,8 @@ bool test_npp_batchresize_x_split3D_No_CPU_Overhead(const size_t NUM_ELEMS_X, co
                   << ", NPP 64 x 128 float image " << upStep << ", NPP plane " << planeStep << "; FastNPP output dense, "
                   << UP_W * sizeof(Npp32f) << " bytes per row" << std::endl;
     }
+
+    FKLB_CUDA_CHECK(cudaStreamSynchronize(compute_stream));   // the uploads of the setup are done before the first timed interval of either side
 
     START_NPP_BENCHMARK
 
@@ -531,7 +547,7 @@ int launch() {
                          "batched-resize descriptors point at NPP's own images with full-image ROIs and are set up once.";
         results["test_npp_batchresize_x_split3D"] = launch_test_npp_batchresize_x_split3D(NUM_ELEMS_X, NUM_ELEMS_Y, iSeq, stream);
         benchmarkNotes = "VALID ONLY WHEN THE CROPS DO NOT MOVE: FastNPP's descriptor and ROI arrays and its operations are built once, before "
-                         "the timed loop; their one-time construction cost (host timer) is the column 'FastNPP construction ms (once, host)'. "
+                         "the timed loop; their one-time construction cost (host timer) is the column 'FastNPP construction ms (once on host)'. "
                          "NPP computes the source pointer of every crop in the call, as in test_npp_batchresize_x_split3D.";
         results["test_npp_batchresize_x_split3D_No_CPU_Overhead"] =
             launch_test_npp_batchresize_x_split3D_No_CPU_Overhead(NUM_ELEMS_X, NUM_ELEMS_Y, iSeq, stream);
