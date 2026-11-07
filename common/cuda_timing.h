@@ -27,9 +27,10 @@
 //   host = host 1 + host 2: the cost of building and releasing the arguments of one image, as a per-image loop pays it (releasing a view
 //   of a reference-counted buffer is not free); gpu = the GPU interval. prepare() runs in every iteration because the crop locations may
 //   change on every image, so every value that depends on them is rebuilt for every image. One warm-up iteration first; mean and min over
-//   ITERATIONS, in ms. prepare() returns the arguments by value, and they must be move-constructible: they are held in a std::optional.
-//   Compiler barriers keep the preparation and the release inside their intervals. The clock reads cost a few tens of nanoseconds, so a
-//   preparation shorter than that is measured as that.
+//   ITERATIONS, in ms. prepare() returns the arguments by value; they are a local built in place (guaranteed copy elision), so no copy or
+//   move of them is measured, and their scope ends between the GPU interval and the end of host 2. Compiler barriers keep the preparation
+//   and the release inside their intervals. The clock reads cost a few tens of nanoseconds, so a preparation shorter than that is
+//   measured as that.
 #pragma once
 
 #include <common/status_check.h>
@@ -39,8 +40,6 @@
 #include <algorithm>
 #include <atomic>
 #include <chrono>
-#include <optional>
-#include <type_traits>
 
 namespace fklb {
 
@@ -83,29 +82,30 @@ inline void preparedBarrier(const T& value) {
 template <typename Prepare, typename Launch>
 void timePreparedLaunch(cudaStream_t stream, const Prepare& prepare, const Launch& launch, Timing& gpu, Timing& host) {
     using Clock = std::chrono::steady_clock;
-    using Args = std::decay_t<decltype(prepare())>;
     cudaEvent_t start, stop;
     FKLB_CUDA_CHECK(cudaEventCreate(&start));
     FKLB_CUDA_CHECK(cudaEventCreate(&stop));
-    std::optional<Args> args;
-    args.emplace(prepare());  // warm-up
-    launch(*args);
-    FKLB_CUDA_CHECK(cudaStreamSynchronize(stream));
-    args.reset();
+    {  // warm-up
+        const auto args = prepare();
+        launch(args);
+        FKLB_CUDA_CHECK(cudaStreamSynchronize(stream));
+    }
     double gpuSum = 0, hostSum = 0;
     for (int i = 0; i < ITERATIONS; ++i) {
-        const auto h0 = Clock::now();
-        std::atomic_signal_fence(std::memory_order_seq_cst);
-        args.emplace(prepare());
-        preparedBarrier(*args);
-        const auto h1 = Clock::now();
-        FKLB_CUDA_CHECK(cudaEventRecord(start, stream));
-        launch(*args);
-        FKLB_CUDA_CHECK(cudaEventRecord(stop, stream));
-        FKLB_CUDA_CHECK(cudaEventSynchronize(stop));
-        const auto h2 = Clock::now();
-        std::atomic_signal_fence(std::memory_order_seq_cst);
-        args.reset();
+        Clock::time_point h0, h1, h2;
+        {
+            h0 = Clock::now();
+            std::atomic_signal_fence(std::memory_order_seq_cst);
+            const auto args = prepare();   // built in place: no copy or move of the arguments
+            preparedBarrier(args);
+            h1 = Clock::now();
+            FKLB_CUDA_CHECK(cudaEventRecord(start, stream));
+            launch(args);
+            FKLB_CUDA_CHECK(cudaEventRecord(stop, stream));
+            FKLB_CUDA_CHECK(cudaEventSynchronize(stop));
+            h2 = Clock::now();
+            std::atomic_signal_fence(std::memory_order_seq_cst);
+        }  // the arguments are released here, inside host 2
         std::atomic_signal_fence(std::memory_order_seq_cst);
         const auto h3 = Clock::now();
         float ms = 0;
