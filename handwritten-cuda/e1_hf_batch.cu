@@ -31,13 +31,16 @@
 // FKL reads its own fk::Ptr2D image, its crops are crop2D views of it, and it writes its own fk::Tensor (the iterated version: one fk::Ptr2D
 // per crop). Every FKL result and the iterated one are compared bit by bit with hand_batch before anything is timed.
 //
-// Timing (fklb::timePreparedLaunch, common/cuda_timing.h). The crop locations may change on every image, so each version builds its batch
-// before every launch, outside the GPU interval, and the host time of building and releasing it is a column of its own (<version>_prep_*):
-//   hand_batch: the array of crop pointers; hand_generic: the array of crop descriptors;
-//   fkl: the crop views and the read built on them; iterated: the crop views and one read per crop.
+// Timing (fklb::timePreparedLaunch, common/cuda_timing.h). The crop locations may change on every image, so each version builds its arguments
+// before every launch, outside the GPU interval, and the host time of building and releasing them is a column of its own (<version>_prep_*):
+//   hand_batch: the array of crop pointers; hand_generic: the array of crop descriptors (the strides and constants are plain kernel arguments);
+//   fkl: all its operations (the crop views, the read built on them, the cast, the arithmetic and the write), as one FKL call builds them;
+//   iterated: the same with one read and one write per crop.
+// FKL's operations are returned in a tuple, which copies the batched read once (about 24 bytes per crop) while it is built: that counts as building.
 // The GPU columns time one launch of the prepared arguments: CUDA events, 100 iterations after a warm-up, mean and min.
-// <version>_total_mean_ms = GPU mean + preparation mean. What does not depend on the crops is set up once: the strides and constants of the
-// hand-written kernels, and FKL's cast, arithmetic and writes (to outputs that do not move).
+// <version>_total_mean_ms = GPU mean + preparation mean. <version>_kernel_*: the same launches queued behind a GPU spin enqueued before the start
+// event (e1::gpuSpin, E1_SPIN_US), so that the interval holds the kernels without the host's dispatch; the iterated version enqueues one launch per
+// crop, and with many crops the launch queue can fill before the spin ends, so its kernel-only time may still hold some of that dispatch.
 //
 // The batch sizes come from E1_HF_BATCHES (generated header, set by CMake): default 1, 51, 201, 601, 1191. Writes e1_hf_batch.csv.
 #include <common/main.h>
@@ -60,6 +63,7 @@
 #include <random>
 #include <stdexcept>
 #include <string>
+#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -131,14 +135,6 @@ bool runPoint(cudaStream_t cs, fk::Stream_<fk::ParArch::GPU_NVIDIA>& fkStream, f
     std::array<fk::Ptr2D<float>, BATCH> iteratedOut;
     for (int i = 0; i < BATCH; ++i) iteratedOut[i].Alloc(fk::Size(CROP_W, CROP_H));
 
-    // FKL's operations that do not depend on the crops, set up once like the constants of the hand-written kernels
-    const auto saturate = fk::SaturateCast<unsigned char, float>::build();
-    const auto mul = fk::Mul<float>::build(ALPHA);
-    const auto sub = fk::Sub<float>::build(SUB);
-    const auto div = fk::Div<float>::build(DIV);
-    const auto write = fk::TensorWrite<float>::build(dTensor);
-    const auto writeArray = fk::PerThreadWrite<fk::ND::_2D, float>::build_batch(iteratedOut);
-
     // The crop locations may change on every image: each version builds its batch for every launch (its preparation).
     const auto prepareHand = [&] {
         CropPointers<BATCH> crops;
@@ -156,12 +152,15 @@ bool runPoint(cudaStream_t cs, fk::Stream_<fk::ParArch::GPU_NVIDIA>& fkStream, f
     const auto prepareFkl = [&] {
         std::array<fk::Ptr2D<unsigned char>, BATCH> crops;
         for (int i = 0; i < BATCH; ++i) crops[i] = dInput.crop2D(fk::Rect(i, i, CROP_W, CROP_H));
-        return fk::PerThreadRead<fk::ND::_2D, unsigned char>::build(crops);
+        return std::make_tuple(fk::PerThreadRead<fk::ND::_2D, unsigned char>::build(crops), fk::SaturateCast<unsigned char, float>::build(),
+                               fk::Mul<float>::build(ALPHA), fk::Sub<float>::build(SUB), fk::Div<float>::build(DIV), fk::TensorWrite<float>::build(dTensor));
     };
     const auto prepareIterated = [&] {
         std::array<fk::Ptr2D<unsigned char>, BATCH> crops;
         for (int i = 0; i < BATCH; ++i) crops[i] = dInput.crop2D(fk::Rect(i, i, CROP_W, CROP_H));
-        return fk::PerThreadRead<fk::ND::_2D, unsigned char>::build_batch(crops);
+        return std::make_tuple(fk::PerThreadRead<fk::ND::_2D, unsigned char>::build_batch(crops), fk::SaturateCast<unsigned char, float>::build(),
+                               fk::Mul<float>::build(ALPHA), fk::Sub<float>::build(SUB), fk::Div<float>::build(DIV),
+                               fk::PerThreadWrite<fk::ND::_2D, float>::build_batch(iteratedOut));
     };
 
     const dim3 block(32, 8);
@@ -172,10 +171,12 @@ bool runPoint(cudaStream_t cs, fk::Stream_<fk::ParArch::GPU_NVIDIA>& fkStream, f
     const auto launchHandGeneric = [&](const CropDescriptors<BATCH>& crops) {
         handBatchGeneric<BATCH><<<grid, block, 0, cs>>>(crops, hTensor, pitch, planePitch, ALPHA, SUB, DIV);
     };
-    const auto launchFkl = [&](const auto& read) {
+    const auto launchFkl = [&](const auto& operations) {
+        const auto& [read, saturate, mul, sub, div, write] = operations;
         fk::executeOperations<fk::TransformDPP<fk::ParArch::GPU_NVIDIA, fk::TF::DISABLED>>(fkStream, read, saturate, mul, sub, div, write);
     };
-    const auto launchIterated = [&](const auto& readArray) {
+    const auto launchIterated = [&](const auto& operations) {
+        const auto& [readArray, saturate, mul, sub, div, writeArray] = operations;
         for (int i = 0; i < BATCH; ++i) {
             fk::executeOperations<fk::TransformDPP<fk::ParArch::GPU_NVIDIA, fk::TF::DISABLED>>(fkStream, readArray[i], saturate, mul, sub, div,
                                                                                                writeArray[i]);
@@ -213,18 +214,25 @@ bool runPoint(cudaStream_t cs, fk::Stream_<fk::ParArch::GPU_NVIDIA>& fkStream, f
     const bool exactFkl = e1::sameBits(refHand, outFkl), exactIterated = e1::profileMode() || e1::sameBits(refHand, outIterated);
     const bool exactHandGeneric = e1::sameBits(refHand, outHandGeneric);
 
-    fklb::Timing tHand, pHand, tHandGeneric, pHandGeneric, tFkl, pFkl, tIterated, pIterated;
+    fklb::Timing tHand, pHand, kHand, tHandGeneric, pHandGeneric, kHandGeneric, tFkl, pFkl, kFkl, tIterated, pIterated, kIterated;
+    const auto spin = [&] { e1::gpuSpin<<<1, 1, 0, cs>>>(e1::spinNs()); };
     if (!e1::profileMode()) {   // in profile mode every kernel is launched once, by the checks above, and nothing is timed
-        e1::timeVariants({[&] { fklb::timePreparedLaunch(cs, prepareHand, launchHand, tHand, pHand); },
-                          [&] { fklb::timePreparedLaunch(cs, prepareHandGeneric, launchHandGeneric, tHandGeneric, pHandGeneric); },
-                          [&] { fklb::timePreparedLaunch(cs, prepareFkl, launchFkl, tFkl, pFkl); },
-                          [&] { fklb::timePreparedLaunch(cs, prepareIterated, launchIterated, tIterated, pIterated); }});
+        e1::timeVariants({[&] { fklb::Timing h; fklb::timePreparedLaunch(cs, prepareHand, launchHand, tHand, pHand);
+                                fklb::timePreparedLaunch(cs, prepareHand, spin, launchHand, kHand, h); },
+                          [&] { fklb::Timing h; fklb::timePreparedLaunch(cs, prepareHandGeneric, launchHandGeneric, tHandGeneric, pHandGeneric);
+                                fklb::timePreparedLaunch(cs, prepareHandGeneric, spin, launchHandGeneric, kHandGeneric, h); },
+                          [&] { fklb::Timing h; fklb::timePreparedLaunch(cs, prepareFkl, launchFkl, tFkl, pFkl);
+                                fklb::timePreparedLaunch(cs, prepareFkl, spin, launchFkl, kFkl, h); },
+                          [&] { fklb::Timing h; fklb::timePreparedLaunch(cs, prepareIterated, launchIterated, tIterated, pIterated);
+                                fklb::timePreparedLaunch(cs, prepareIterated, spin, launchIterated, kIterated, h); }});
     }
-    csv.row(BATCH, tHand.mean, tHand.min, tFkl.mean, tFkl.min, tIterated.mean, tIterated.min, tFkl.mean / tHand.mean,
-            tIterated.mean / tFkl.mean, int(exactFkl), int(exactIterated), tHandGeneric.mean, tHandGeneric.min,
-            tFkl.mean / tHandGeneric.mean, int(exactHandGeneric), sizeof(CropPointers<BATCH>), sizeof(CropDescriptors<BATCH>),
-            pHand.mean, pHand.min, tHand.mean + pHand.mean, pHandGeneric.mean, pHandGeneric.min, tHandGeneric.mean + pHandGeneric.mean,
-            pFkl.mean, pFkl.min, tFkl.mean + pFkl.mean, pIterated.mean, pIterated.min, tIterated.mean + pIterated.mean);
+    csv.row(BATCH, e1::timed(tHand.mean), e1::timed(tHand.min), e1::timed(tFkl.mean), e1::timed(tFkl.min), e1::timed(tIterated.mean), e1::timed(tIterated.min),
+            e1::timed(tFkl.mean / tHand.mean), e1::timed(tIterated.mean / tFkl.mean), int(exactFkl), int(exactIterated), e1::timed(tHandGeneric.mean),
+            e1::timed(tHandGeneric.min), e1::timed(tFkl.mean / tHandGeneric.mean), int(exactHandGeneric), sizeof(CropPointers<BATCH>), sizeof(CropDescriptors<BATCH>),
+            e1::timed(pHand.mean), e1::timed(pHand.min), e1::timed(tHand.mean + pHand.mean), e1::timed(pHandGeneric.mean), e1::timed(pHandGeneric.min),
+            e1::timed(tHandGeneric.mean + pHandGeneric.mean), e1::timed(pFkl.mean), e1::timed(pFkl.min), e1::timed(tFkl.mean + pFkl.mean), e1::timed(pIterated.mean),
+            e1::timed(pIterated.min), e1::timed(tIterated.mean + pIterated.mean), e1::timed(kHand.mean), e1::timed(kHand.min), e1::timed(kHandGeneric.mean),
+            e1::timed(kHandGeneric.min), e1::timed(kFkl.mean), e1::timed(kFkl.min), e1::timed(kIterated.mean), e1::timed(kIterated.min));
     csv.flush();
     std::cout << BATCH << " crops: hand " << tHand.mean << " ms, hand_generic " << tHandGeneric.mean << ", fkl " << tFkl.mean << ", iterated " << tIterated.mean
               << " | preparation: hand " << pHand.mean << " ms, hand_generic " << pHandGeneric.mean << ", fkl " << pFkl.mean << ", iterated " << pIterated.mean
@@ -257,15 +265,20 @@ int launch() {
                          "hand_generic_mean_ms", "hand_generic_min_ms", "fkl_over_hand_generic", "hand_generic_bitexact", "hand_param_bytes", "hand_generic_param_bytes",
                          "hand_prep_mean_ms", "hand_prep_min_ms", "hand_total_mean_ms", "hand_generic_prep_mean_ms", "hand_generic_prep_min_ms",
                          "hand_generic_total_mean_ms", "fkl_prep_mean_ms", "fkl_prep_min_ms", "fkl_total_mean_ms", "iterated_prep_mean_ms",
-                         "iterated_prep_min_ms", "iterated_total_mean_ms"},
+                         "iterated_prep_min_ms", "iterated_total_mean_ms", "hand_kernel_mean_ms", "hand_kernel_min_ms",
+                         "hand_generic_kernel_mean_ms", "hand_generic_kernel_min_ms", "fkl_kernel_mean_ms", "fkl_kernel_min_ms", "iterated_kernel_mean_ms",
+                         "iterated_kernel_min_ms"},
                         std::string("thread fusion: off (fk::TF::DISABLED, the default); source: seeded uint8 noise 3840x2160 (std::mt19937_64 seed 20261030), "
                                     "uploaded to each side's own image (hand-written kernels: cudaMallocPitch, crops are pointers into it; FKL: fk::Ptr2D, crops "
                                     "are crop2D views), crop i at (i, i); cast, *1.0, -1.0, /3.2; 32x8 threads per block (the block FKL launches for a crop); "
                                     "GPU columns: CUDA events around one launch of prepared arguments, 100 timed iterations after one warm-up; *_prep_*: host "
-                                    "time (steady_clock) of building and releasing the batch of one launch (hand: the crop pointers; hand_generic: the crop "
-                                    "descriptors; fkl: the crop views and the read; iterated: the crop views and one read per crop), done before every launch "
-                                    "because the crops may move, outside the GPU interval; *_total_mean_ms = GPU mean + preparation mean; *_bitexact = same "
-                                    "bytes as hand_batch") +
-                            (e1::profileMode() ? "; PROFILE MODE (E1_PROFILE=1): nothing was timed and the iterated version was not run, the times are zero" : ""));
+                                    "time (steady_clock) of building and releasing the arguments of one launch (hand: the crop pointers; hand_generic: the crop "
+                                    "descriptors; fkl: all its operations, the crop views and the read included, the read copied once into the tuple that holds "
+                                    "them; iterated: the same with one read and one write per crop), done before every launch because the crops may move, outside "
+                                    "the GPU interval; *_total_mean_ms = GPU mean + preparation mean; *_kernel_*: the same launches with a GPU spin of " +
+                                    std::to_string(e1::spinNs() / 1000) + " us (no memory access) enqueued before the start event, so that the launches are queued "
+                                    "when the GPU reaches the start event: the kernels without the host's dispatch (iterated: with many crops the launch queue can "
+                                    "fill before the spin ends, so some dispatch may remain); *_bitexact = same bytes as hand_batch") +
+                            (e1::profileMode() ? "; PROFILE MODE (E1_PROFILE=1): nothing was timed and the iterated version was not run, the time columns are empty" : ""));
     return runAll(std::make_index_sequence<sizeof(BATCHES) / sizeof(BATCHES[0])>{}, cs, fkStream, csv, noise) ? 0 : -1;
 }

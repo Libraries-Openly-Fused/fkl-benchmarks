@@ -117,6 +117,37 @@ def cuda_time(call, x, out):
     return sum(times) / len(times), min(times), host_us
 
 
+def spin_cycles(us):
+    """The number of GPU clock cycles of torch.cuda._sleep that last about `us` microseconds, measured once with CUDA events."""
+    torch.cuda._sleep(1000)
+    torch.cuda.synchronize()
+    start, stop = torch.cuda.Event(enable_timing=True), torch.cuda.Event(enable_timing=True)
+    start.record()
+    torch.cuda._sleep(10_000_000)
+    stop.record()
+    stop.synchronize()
+    return int(us * 10_000_000 / (start.elapsed_time(stop) * 1000.0))
+
+
+def cuda_time_hidden(call, x, out, cycles):
+    """Mean and min GPU time (ms) of 100 calls, each queued behind a GPU spin (torch.cuda._sleep: no memory access, so the L2 stays warm) enqueued before the
+    start event: the call is already queued when the GPU reaches the start event, so the interval holds its kernels without the host's dispatch of the call
+    (the Triton launcher, the torch.compile wrapper, the graph replay). A call that enqueues more work than the spin covers keeps part of its dispatch."""
+    start, stop = torch.cuda.Event(enable_timing=True), torch.cuda.Event(enable_timing=True)
+    times = []
+    for _ in range(ITERATIONS):
+        torch.cuda._sleep(cycles)
+        start.record()
+        call(x, out)
+        stop.record()
+        stop.synchronize()
+        times.append(start.elapsed_time(stop))
+    return sum(times) / len(times), min(times)
+
+
+# E1_SPIN_US: the length of the spin of the kernel-only timing, as in the FKL program (handwritten-cuda/e1_common.h), default 5000 us
+SPIN_US = float(os.environ.get("E1_SPIN_US", "5000"))
+
 FLUSH_BYTES = 256 << 20
 
 
@@ -244,6 +275,7 @@ def worker(version, ops, ref_path, input_path=None, fkl_dir=None):
     flush_buf = torch.zeros(FLUSH_BYTES // 4, dtype=torch.float32, device="cuda")
     res["gpu_flushed_mean_ms"], res["gpu_flushed_min_ms"] = cuda_time_flushed(call, x, out, flush_buf)
     del flush_buf
+    res["gpu_kernel_mean_ms"], res["gpu_kernel_min_ms"] = cuda_time_hidden(call, x, out, spin_cycles(SPIN_US))
     res["kernels"] = count_kernels(call, x, out) if version != "eager_graphs" else count_kernels(lambda a, b: g.replay(), x, out)
     if version not in ("eager", "eager_graphs"):    # eager runs PyTorch's own precompiled kernels, one per operation: nothing is contracted across operations
         res.update(sass_counts(os.environ.get("TRITON_CACHE_DIR")))
@@ -292,10 +324,13 @@ def main():
     notes = (f"k values: {','.join(str(k) for k in ks)}; 4096x2160 uint8 noise ({image}) -> float32, alpha {ALPHA}, c {C}, k operations alternating mul and add; each (version, k) in its own process "
              f"with fresh Triton and Inductor caches (compile_s = the first call, cold); {ITERATIONS} timed calls after warm-up; kernels counted with torch.profiler; "
              f"gpu_flushed_*: the same timing with the L2 flushed before every call (a kernel that reads 256 MB, outside the timed interval); "
+             f"gpu_kernel_*: the warm calls queued behind a GPU spin of {SPIN_US:.0f} us (torch.cuda._sleep, no memory access) enqueued before the start event, so that the call is "
+             f"queued when the GPU reaches the start event: its kernels without the host's dispatch (a call that enqueues more than the spin covers, as eager with one kernel per "
+             f"operation at large k, keeps part of it; FKL: fkl_kernel_* of its program, the same method); "
              f"ULP error against an exact float64 evaluation (max_ulp_vs_exact) and against the FKL output (max_ulp_vs_fkl, in ULPs of the FKL value; bitexact_fraction_vs_fkl); "
              f"FKL row: time from {args.fkl_csv}, cold compile time from {args.fkl_compile}; timeout {args.timeout} s per point")
     cols = ["ops", "version", "status", "why", "gpu_mean_ms", "gpu_min_ms", "host_launch_us", "kernels", "compile_s", "max_ulp_vs_exact", "bitexact_fraction_vs_triton_hand",
-            "bitexact_fraction_vs_fkl", "max_ulp_vs_fkl", "sass_ffma", "sass_fmul", "sass_fadd", "gpu_flushed_mean_ms", "gpu_flushed_min_ms"]
+            "bitexact_fraction_vs_fkl", "max_ulp_vs_fkl", "sass_ffma", "sass_fmul", "sass_fadd", "gpu_flushed_mean_ms", "gpu_flushed_min_ms", "gpu_kernel_mean_ms", "gpu_kernel_min_ms"]
     with CsvWriter(args.out, "E2a element-wise chain: Triton and TorchInductor", cols, notes=notes) as csv:
         versions = args.versions.split(",")
         if args.fkl_dir and "fkl" not in versions:
@@ -331,6 +366,8 @@ def main():
                         r["gpu_mean_ms"], r["gpu_min_ms"] = float(fkl_times[ops]["fkl_mean_ms"]), float(fkl_times[ops]["fkl_min_ms"])
                         if fkl_times[ops].get("fkl_flushed_mean_ms"):
                             r["gpu_flushed_mean_ms"], r["gpu_flushed_min_ms"] = float(fkl_times[ops]["fkl_flushed_mean_ms"]), float(fkl_times[ops]["fkl_flushed_min_ms"])
+                        if fkl_times[ops].get("fkl_kernel_mean_ms"):
+                            r["gpu_kernel_mean_ms"], r["gpu_kernel_min_ms"] = float(fkl_times[ops]["fkl_kernel_mean_ms"]), float(fkl_times[ops]["fkl_kernel_min_ms"])
                     if ops in fkl_compile:
                         r["compile_s"] = float(fkl_compile[ops]["nvcc_s"])
                 csv.row(ops, version, status, why, *[r.get(c, "") for c in cols[4:]])

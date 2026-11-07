@@ -39,11 +39,14 @@
 //
 // Timing (fklb::timePreparedLaunch, common/cuda_timing.h). The crop locations may change on every image, so each version builds its batch
 // before every launch, outside the GPU interval, and the host time of building and releasing it is a column of its own (<version>_prep_*):
-//   hand_batch: the array of crop pointers; hand_generic, hand_padded: the array of crop descriptors;
-//   fkl: the crop views and the read built on them (with the resize, which holds the per-crop resize parameters).
+//   hand_batch: the array of crop pointers; hand_generic, hand_padded: the array of crop descriptors (the strides, resize factors and constants
+//   are plain kernel arguments);
+//   fkl: all its operations (the crop views, the read built on them with the resize, which holds the per-crop resize parameters, the reorder,
+//   the arithmetic and the write), as one FKL call builds them.
+// FKL's operations are returned in a tuple, which copies the batched read once while it is built: that counts as building.
 // The GPU columns time one launch of the prepared arguments: CUDA events, 100 iterations after a warm-up, mean and min.
-// <version>_total_mean_ms = GPU mean + preparation mean. What does not depend on the crops is set up once: the strides, resize factors and
-// constants of the hand-written kernels, and FKL's reorder, arithmetic and write (to the output tensor, which does not move).
+// <version>_total_mean_ms = GPU mean + preparation mean. <version>_kernel_*: the same launches queued behind a GPU spin enqueued before the start
+// event (e1::gpuSpin, E1_SPIN_US), so that the interval holds the kernel without the host's dispatch of the launch.
 //
 // The batch sizes come from E1_PP_BATCHES (generated header, set by CMake): default 10, 50, 100, 200, 300. Writes e1_preproc.csv.
 #include <common/main.h>
@@ -69,6 +72,7 @@
 #include <random>
 #include <stdexcept>
 #include <string>
+#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -193,13 +197,6 @@ bool runPoint(cudaStream_t cs, fk::Stream_<fk::ParArch::GPU_NVIDIA>& fkStream, f
     const double cfx = static_cast<double>(UP_W) / CROP_W, cfy = static_cast<double>(UP_H) / CROP_H;
     const float fx = static_cast<float>(1.0 / cfx), fy = static_cast<float>(1.0 / cfy);
 
-    // FKL's operations that do not depend on the crops, set up once like the constants of the hand-written kernels
-    const auto reorder = fk::VectorReorder<float3, 2, 1, 0>::build();
-    const auto mul = fk::Mul<float3>::build(make_float3(ALPHA, ALPHA, ALPHA));
-    const auto sub = fk::Sub<float3>::build(make_float3(SUB_X, SUB_Y, SUB_Z));
-    const auto div = fk::Div<float3>::build(make_float3(DIV_X, DIV_Y, DIV_Z));
-    const auto write = fk::TensorSplit<float3>::build(dTensor.ptr());
-
     // The crop locations may change on every image: each version builds its batch for every launch (its preparation).
     const auto prepareHand = [&] {
         CropPointers<BATCH> crops;
@@ -217,11 +214,14 @@ bool runPoint(cudaStream_t cs, fk::Stream_<fk::ParArch::GPU_NVIDIA>& fkStream, f
     const auto prepareFkl = [&] {
         std::array<fk::Ptr2D<uchar3>, BATCH> crops;
         for (int i = 0; i < BATCH; ++i) crops[i] = dInput.crop2D(fk::Rect(i, i, CROP_W, CROP_H));
-        return fk::PerThreadRead<fk::ND::_2D, uchar3>::build(crops).then(fk::Resize<fk::InterpolationType::INTER_LINEAR>::build(fk::Size(UP_W, UP_H)));
+        return std::make_tuple(fk::PerThreadRead<fk::ND::_2D, uchar3>::build(crops).then(fk::Resize<fk::InterpolationType::INTER_LINEAR>::build(fk::Size(UP_W, UP_H))),
+                               fk::VectorReorder<float3, 2, 1, 0>::build(), fk::Mul<float3>::build(make_float3(ALPHA, ALPHA, ALPHA)),
+                               fk::Sub<float3>::build(make_float3(SUB_X, SUB_Y, SUB_Z)), fk::Div<float3>::build(make_float3(DIV_X, DIV_Y, DIV_Z)),
+                               fk::TensorSplit<float3>::build(dTensor.ptr()));
     };
     // the padding makes the hand-written parameter block as large as FKL's read IOp (which holds the per-crop pointers, sizes and resize parameters)
     constexpr size_t PAD = 24 * BATCH + 16;
-    static_assert(sizeof(CropDescriptors<BATCH>) + PAD == sizeof(decltype(prepareFkl())), "hand_padded's parameter block is as large as FKL's read IOp");
+    static_assert(sizeof(CropDescriptors<BATCH>) + PAD == sizeof(std::tuple_element_t<0, decltype(prepareFkl())>), "hand_padded's parameter block is as large as FKL's read IOp");
     const auto prepareHandPadded = [&] {
         PaddedCropDescriptors<BATCH, PAD> params;
         for (int i = 0; i < BATCH; ++i) {
@@ -242,7 +242,8 @@ bool runPoint(cudaStream_t cs, fk::Stream_<fk::ParArch::GPU_NVIDIA>& fkStream, f
     const auto launchHandPadded = [&](const PaddedCropDescriptors<BATCH, PAD>& params) {
         handPreprocPadded<BATCH, PAD><<<grid, block, 0, cs>>>(params, hTensor, pitch, imageStride, fx, fy);
     };
-    const auto launchFkl = [&](const auto& read) {
+    const auto launchFkl = [&](const auto& operations) {
+        const auto& [read, reorder, mul, sub, div, write] = operations;
         fk::executeOperations<fk::TransformDPP<fk::ParArch::GPU_NVIDIA, fk::TF::DISABLED>>(fkStream, read, reorder, mul, sub, div, write);
     };
 
@@ -276,18 +277,26 @@ bool runPoint(cudaStream_t cs, fk::Stream_<fk::ParArch::GPU_NVIDIA>& fkStream, f
         std::cerr << BATCH << " crops: FKL differs from the hand-written kernel in " << differing << " of " << refHand.size() << " elements, max " << maxDiff << std::endl;
     }
 
-    fklb::Timing tHand, pHand, tHandGeneric, pHandGeneric, tHandPadded, pHandPadded, tFkl, pFkl;
+    fklb::Timing tHand, pHand, kHand, tHandGeneric, pHandGeneric, kHandGeneric, tHandPadded, pHandPadded, kHandPadded, tFkl, pFkl, kFkl;
+    const auto spin = [&] { e1::gpuSpin<<<1, 1, 0, cs>>>(e1::spinNs()); };
     if (!e1::profileMode()) {   // in profile mode every kernel is launched once, by the checks above, and nothing is timed
-        e1::timeVariants({[&] { fklb::timePreparedLaunch(cs, prepareHand, launchHand, tHand, pHand); },
-                          [&] { fklb::timePreparedLaunch(cs, prepareHandGeneric, launchHandGeneric, tHandGeneric, pHandGeneric); },
-                          [&] { fklb::timePreparedLaunch(cs, prepareHandPadded, launchHandPadded, tHandPadded, pHandPadded); },
-                          [&] { fklb::timePreparedLaunch(cs, prepareFkl, launchFkl, tFkl, pFkl); }});
+        e1::timeVariants({[&] { fklb::Timing h; fklb::timePreparedLaunch(cs, prepareHand, launchHand, tHand, pHand);
+                                fklb::timePreparedLaunch(cs, prepareHand, spin, launchHand, kHand, h); },
+                          [&] { fklb::Timing h; fklb::timePreparedLaunch(cs, prepareHandGeneric, launchHandGeneric, tHandGeneric, pHandGeneric);
+                                fklb::timePreparedLaunch(cs, prepareHandGeneric, spin, launchHandGeneric, kHandGeneric, h); },
+                          [&] { fklb::Timing h; fklb::timePreparedLaunch(cs, prepareHandPadded, launchHandPadded, tHandPadded, pHandPadded);
+                                fklb::timePreparedLaunch(cs, prepareHandPadded, spin, launchHandPadded, kHandPadded, h); },
+                          [&] { fklb::Timing h; fklb::timePreparedLaunch(cs, prepareFkl, launchFkl, tFkl, pFkl);
+                                fklb::timePreparedLaunch(cs, prepareFkl, spin, launchFkl, kFkl, h); }});
     }
-    csv.row(BATCH, tHand.mean, tHand.min, tHandGeneric.mean, tHandGeneric.min, tFkl.mean, tFkl.min, tFkl.mean / tHand.mean,
-            tFkl.mean / tHandGeneric.mean, int(exactFkl), int(exactHandGeneric), sizeof(CropPointers<BATCH>), sizeof(CropDescriptors<BATCH>), tHandPadded.mean, tHandPadded.min,
-            tFkl.mean / tHandPadded.mean, int(exactHandPadded), sizeof(decltype(prepareFkl())),
-            pHand.mean, pHand.min, tHand.mean + pHand.mean, pHandGeneric.mean, pHandGeneric.min, tHandGeneric.mean + pHandGeneric.mean,
-            pHandPadded.mean, pHandPadded.min, tHandPadded.mean + pHandPadded.mean, pFkl.mean, pFkl.min, tFkl.mean + pFkl.mean);
+    csv.row(BATCH, e1::timed(tHand.mean), e1::timed(tHand.min), e1::timed(tHandGeneric.mean), e1::timed(tHandGeneric.min), e1::timed(tFkl.mean), e1::timed(tFkl.min),
+            e1::timed(tFkl.mean / tHand.mean), e1::timed(tFkl.mean / tHandGeneric.mean), int(exactFkl), int(exactHandGeneric), sizeof(CropPointers<BATCH>),
+            sizeof(CropDescriptors<BATCH>), e1::timed(tHandPadded.mean), e1::timed(tHandPadded.min), e1::timed(tFkl.mean / tHandPadded.mean), int(exactHandPadded),
+            sizeof(std::tuple_element_t<0, decltype(prepareFkl())>), e1::timed(pHand.mean), e1::timed(pHand.min), e1::timed(tHand.mean + pHand.mean),
+            e1::timed(pHandGeneric.mean), e1::timed(pHandGeneric.min), e1::timed(tHandGeneric.mean + pHandGeneric.mean), e1::timed(pHandPadded.mean),
+            e1::timed(pHandPadded.min), e1::timed(tHandPadded.mean + pHandPadded.mean), e1::timed(pFkl.mean), e1::timed(pFkl.min), e1::timed(tFkl.mean + pFkl.mean),
+            e1::timed(kHand.mean), e1::timed(kHand.min), e1::timed(kHandGeneric.mean), e1::timed(kHandGeneric.min), e1::timed(kHandPadded.mean),
+            e1::timed(kHandPadded.min), e1::timed(kFkl.mean), e1::timed(kFkl.min));
     csv.flush();
     std::cout << BATCH << " crops: hand " << tHand.mean << " ms, hand_generic " << tHandGeneric.mean << ", hand_padded " << tHandPadded.mean << ", fkl " << tFkl.mean
               << " | preparation: hand " << pHand.mean << " ms, hand_generic " << pHandGeneric.mean << ", hand_padded " << pHandPadded.mean << ", fkl " << pFkl.mean
@@ -319,16 +328,20 @@ int launch() {
                          "hand_param_bytes", "hand_generic_param_bytes", "hand_padded_mean_ms", "hand_padded_min_ms", "fkl_over_hand_padded", "hand_padded_bitexact",
                          "fkl_read_iop_bytes", "hand_prep_mean_ms", "hand_prep_min_ms", "hand_total_mean_ms", "hand_generic_prep_mean_ms",
                          "hand_generic_prep_min_ms", "hand_generic_total_mean_ms", "hand_padded_prep_mean_ms", "hand_padded_prep_min_ms",
-                         "hand_padded_total_mean_ms", "fkl_prep_mean_ms", "fkl_prep_min_ms", "fkl_total_mean_ms"},
+                         "hand_padded_total_mean_ms", "fkl_prep_mean_ms", "fkl_prep_min_ms", "fkl_total_mean_ms", "hand_kernel_mean_ms", "hand_kernel_min_ms",
+                         "hand_generic_kernel_mean_ms", "hand_generic_kernel_min_ms", "hand_padded_kernel_mean_ms", "hand_padded_kernel_min_ms", "fkl_kernel_mean_ms",
+                         "fkl_kernel_min_ms"},
                         std::string("thread fusion: off (fk::TF::DISABLED, the default); resize sampling: ASYMMETRIC (x * scale), the library default, in the hand-written kernels and in FKL (fk::Resize<INTER_LINEAR>); "
                                     "source: seeded uint8 noise 3840x2160x3 (std::mt19937_64 seed 20261030), uploaded to each side's own image (hand-written "
                                     "kernels: cudaMallocPitch, crops are pointers into it; FKL: fk::Ptr2D, crops are crop2D views), crop i at (i, i), 60x120 -> "
                                     "64x128 bilinear, RGB to BGR, *0.3, -(1, 4, 3.2), /(3.2, 0.6, 11.8), planar float output; 32x8 threads per block (the block "
                                     "FKL launches for an output image); GPU columns: CUDA events around one launch of prepared arguments, 100 timed iterations "
-                                    "after one warm-up; *_prep_*: host time (steady_clock) of building and releasing the batch of one launch (hand: the crop "
-                                    "pointers; hand_generic and hand_padded: the crop descriptors; fkl: the crop views and the read with the resize), done "
-                                    "before every launch because the crops may move, outside the GPU interval; *_total_mean_ms = GPU mean + preparation mean; "
-                                    "*_bitexact = same bytes as hand_batch") +
-                            (e1::profileMode() ? "; PROFILE MODE (E1_PROFILE=1): nothing was timed, the times are zero" : ""));
+                                    "after one warm-up; *_prep_*: host time (steady_clock) of building and releasing the arguments of one launch (hand: the crop "
+                                    "pointers; hand_generic and hand_padded: the crop descriptors; fkl: all its operations, the crop views and the read with the "
+                                    "resize included, the read copied once into the tuple that holds them), done before every launch because the crops may move, "
+                                    "outside the GPU interval; *_total_mean_ms = GPU mean + preparation mean; *_kernel_*: the same launches with a GPU spin of " +
+                                    std::to_string(e1::spinNs() / 1000) + " us (no memory access) enqueued before the start event, so that the launch is queued "
+                                    "when the GPU reaches the start event: the kernel without the host's dispatch; *_bitexact = same bytes as hand_batch") +
+                            (e1::profileMode() ? "; PROFILE MODE (E1_PROFILE=1): nothing was timed, the time columns are empty" : ""));
     return runAll(std::make_index_sequence<sizeof(BATCHES) / sizeof(BATCHES[0])>{}, cs, fkStream, csv, noise) ? 0 : -1;
 }

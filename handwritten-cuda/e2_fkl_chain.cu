@@ -27,7 +27,9 @@
 // operations (the read, the cast, the scale, the loops of pairs and the write). There are no crops, so they are the same for every launch; they are built before
 // every launch anyway, outside the GPU interval, so that the host time of building and releasing them is measured over the same iterations (fkl_prep_*).
 // fkl_flushed_*: the same with the L2 flushed before every timed launch, by a kernel enqueued after the preparation and before the start event, outside both
-// intervals (fkl_flushed_prep_* is the preparation of that run).
+// intervals (fkl_flushed_prep_* is the preparation of that run); the flush also keeps the GPU busy while the launch is enqueued.
+// fkl_kernel_*: the warm launches queued behind a GPU spin enqueued before the start event (e1::gpuSpin, E1_SPIN_US, no memory access, so the L2 stays
+// warm): the interval holds the kernel without the host's dispatch of the launch.
 #include <common/main.h>
 #include <common/csv_writer.h>
 #include <common/cuda_timing.h>
@@ -49,6 +51,7 @@
 #include <stdexcept>
 #include <string>
 #include <tuple>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -110,9 +113,13 @@ bool runPoint(cudaStream_t cs, fk::Stream_<fk::ParArch::GPU_NVIDIA>& fkStream, f
         }
     };
     const auto launchFkl = [&](const auto& operations) {
-        std::apply([&](const auto&... operation) {
-            fk::executeOperations<fk::TransformDPP<fk::ParArch::GPU_NVIDIA, fk::TF::DISABLED>>(fkStream, operation...);
-        }, operations);
+        if constexpr (std::tuple_size_v<std::decay_t<decltype(operations)>> == 5) {
+            const auto& [read, cast, scale, loop, write] = operations;
+            fk::executeOperations<fk::TransformDPP<fk::ParArch::GPU_NVIDIA, fk::TF::DISABLED>>(fkStream, read, cast, scale, loop, write);
+        } else {
+            const auto& [read, cast, scale, loop, remainder, write] = operations;
+            fk::executeOperations<fk::TransformDPP<fk::ParArch::GPU_NVIDIA, fk::TF::DISABLED>>(fkStream, read, cast, scale, loop, remainder, write);
+        }
     };
 
     FKLB_CUDA_CHECK(cudaMemset2D(dOut.ptr().data, outPitch, 0, WIDTH * sizeof(float), HEIGHT));
@@ -127,9 +134,11 @@ bool runPoint(cudaStream_t cs, fk::Stream_<fk::ParArch::GPU_NVIDIA>& fkStream, f
         f.write(reinterpret_cast<const char*>(host.data()), static_cast<std::streamsize>(host.size() * sizeof(float)));
         if (!f) throw std::runtime_error("cannot write " + path);
     }
-    fklb::Timing t, prep, tFlushed, prepFlushed;
+    fklb::Timing t, prep, tFlushed, prepFlushed, tKernel, prepKernel;
     if (!e1::profileMode()) {   // in profile mode the kernel is launched once, for the output above, and nothing is timed
         fklb::timePreparedLaunch(cs, prepareFkl, launchFkl, t, prep);
+        const auto spin = [&] { e1::gpuSpin<<<1, 1, 0, cs>>>(e1::spinNs()); };
+        fklb::timePreparedLaunch(cs, prepareFkl, spin, launchFkl, tKernel, prepKernel);
         float4* flushBuf = nullptr;
         float* sink = nullptr;
         FKLB_CUDA_CHECK(cudaMalloc(reinterpret_cast<void**>(&flushBuf), FLUSH_BYTES));
@@ -140,7 +149,8 @@ bool runPoint(cudaStream_t cs, fk::Stream_<fk::ParArch::GPU_NVIDIA>& fkStream, f
         FKLB_CUDA_CHECK(cudaFree(flushBuf));
         FKLB_CUDA_CHECK(cudaFree(sink));
     }
-    csv.row(K, PAIRS, t.mean, t.min, 1, path, tFlushed.mean, tFlushed.min, prep.mean, prep.min, prepFlushed.mean, prepFlushed.min);
+    csv.row(K, PAIRS, e1::timed(t.mean), e1::timed(t.min), 1, path, e1::timed(tFlushed.mean), e1::timed(tFlushed.min), e1::timed(prep.mean), e1::timed(prep.min),
+            e1::timed(prepFlushed.mean), e1::timed(prepFlushed.min), e1::timed(tKernel.mean), e1::timed(tKernel.min));
     csv.flush();
     std::cout << K << " ops: fkl " << t.mean << " ms (min " << t.min << "), L2 flushed " << tFlushed.mean << " ms (min " << tFlushed.min << "), preparation "
               << prep.mean << " ms, output " << path << std::endl;
@@ -186,13 +196,15 @@ int launch() {
     }
     fklb::CsvWriter csv("e2_fkl_chain.csv", "E2 element-wise chain through FKL (4096x2160 uchar -> float)",
                         {"ops", "pairs", "fkl_mean_ms", "fkl_min_ms", "kernels", "output_file", "fkl_flushed_mean_ms", "fkl_flushed_min_ms",
-                         "fkl_prep_mean_ms", "fkl_prep_min_ms", "fkl_flushed_prep_mean_ms", "fkl_flushed_prep_min_ms"},
+                         "fkl_prep_mean_ms", "fkl_prep_min_ms", "fkl_flushed_prep_mean_ms", "fkl_flushed_prep_min_ms", "fkl_kernel_mean_ms", "fkl_kernel_min_ms"},
                         std::string("thread fusion: off (fk::TF::DISABLED, the default); input: ") + inputPath + " (uint8 noise, std::mt19937_64 seed 20261030 as E1a, uniform 0..255, row after row); "
                         "alpha 1.0, c 0.54, k operations alternating Mul c and Add c; 32x8 threads per block (the block FKL picks); GPU columns: CUDA events around one "
                         "launch of operations built before it, 100 timed iterations after one warm-up; fkl_prep_*: host time (steady_clock) of building and releasing "
                         "the operations, done before every launch and outside the GPU interval; fkl_flushed_*: the same launch with the L2 flushed before it (a kernel "
-                        "that reads 256 MB, enqueued after the preparation and before the start event, outside both intervals); "
-                        "outputs are raw float32 files, one per k, for the bitwise and ULP comparison of triton/e2_chain.py" + (e1::profileMode() ? "; PROFILE MODE: nothing was timed" : ""));
+                        "that reads 256 MB, enqueued after the preparation and before the start event, outside both intervals); fkl_kernel_*: the warm launch with a GPU "
+                        "spin of " + std::to_string(e1::spinNs() / 1000) + " us (no memory access) enqueued before the start event, so that the launch is queued when "
+                        "the GPU reaches the start event: the kernel without the host's dispatch; "
+                        "outputs are raw float32 files, one per k, for the bitwise and ULP comparison of triton/e2_chain.py" + (e1::profileMode() ? "; PROFILE MODE: nothing was timed, the time columns are empty" : ""));
     const char* order = std::getenv("E2_ORDER");
     const bool reverse = order != nullptr && std::string(order) == "reverse";
     constexpr auto all = std::make_index_sequence<sizeof(KS) / sizeof(KS[0])>{};

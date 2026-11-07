@@ -12,14 +12,19 @@
    See the License for the specific language governing permissions and
    limitations under the License. */
 
-// Shared by the E1 experiments: the profile switch, the order switch and the bit-exact comparison. The timers are those of
-// common/cuda_timing.h, the status checks those of common/status_check.h.
+// Shared by the E1 and E2 programs: the profile switch, the order switch, the loop over the variants of a point, the GPU spin of the kernel-only
+// timing, the CSV value of a time and the bit-exact comparison. The timers are those of common/cuda_timing.h, the status checks those of
+// common/status_check.h.
 #pragma once
+
+#include <cuda_runtime.h>
 
 #include <algorithm>
 #include <cstdlib>
 #include <cstring>
 #include <functional>
+#include <iomanip>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -39,11 +44,39 @@ inline bool reverseOrder() {
     return reverse;
 }
 
-// Times the variants of a point, one after the other, in the order of the list or in the reverse order (E1_ORDER=reverse): each element
-// times one variant (fklb::timePreparedLaunch).
+// Times the variants of a point, one after the other, in the order of the list or in the reverse order (E1_ORDER=reverse): each element times
+// one variant, with fklb::timePreparedLaunch, twice: as the launch runs (the dispatch of the launch is in the GPU interval when the GPU waits for
+// it) and kernel-only (the launch queued behind gpuSpin before the start event).
 inline void timeVariants(std::vector<std::function<void()>> variants) {
     if (reverseOrder()) std::reverse(variants.begin(), variants.end());
     for (auto& v : variants) v();
+}
+
+// The GPU spin of the kernel-only timing: one thread waits on the GPU's global timer and touches no memory, so the L2 stays as the previous launch
+// left it. Enqueued before the start event (the beforeLaunch hook of fklb::timePreparedLaunch), it keeps the GPU busy while the host records the
+// start event and enqueues the timed launch: the launch is already queued when the GPU reaches the start event, and the interval holds the
+// kernel, not the host's dispatch of it. It has to last longer than the slowest dispatch of one call.
+static __global__ void gpuSpin(const unsigned long long ns) {
+    unsigned long long t0 = 0, t = 0;
+    asm volatile("mov.u64 %0, %%globaltimer;" : "=l"(t0));
+    do {
+        asm volatile("mov.u64 %0, %%globaltimer;" : "=l"(t));
+    } while (t - t0 < ns);
+}
+
+// E1_SPIN_US: the length of gpuSpin in microseconds, default 5000 (E1b's iterated version enqueues up to 1191 launches in one call, about 3 ms
+// of host time; with that many launches the launch queue can fill before the spin ends, so its kernel-only time may still hold some dispatch).
+inline unsigned long long spinNs() {
+    static const unsigned long long ns = 1000ull * std::strtoull(std::getenv("E1_SPIN_US") ? std::getenv("E1_SPIN_US") : "5000", nullptr, 10);
+    return ns;
+}
+
+// A time or a ratio of times as the CSV writes it (9 significant digits, as fklb::CsvWriter), empty in profile mode, where nothing is timed
+inline std::string timed(const double value) {
+    if (profileMode()) return std::string();
+    std::ostringstream s;
+    s << std::setprecision(9) << value;
+    return s.str();
 }
 
 inline bool sameBits(const std::vector<float>& a, const std::vector<float>& b) {

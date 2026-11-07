@@ -31,13 +31,15 @@
 // Each side owns its buffers, filled from the same host bytes: the hand-written kernels read and write cudaMallocPitch images, FKL reads and
 // writes its own fk::Ptr2D images. Every FKL result is compared bit by bit with hand_params before anything is timed.
 //
-// Timing (common/cuda_timing.h): CUDA events around one launch, 100 iterations after a warm-up launch, mean and min.
-//   fkl: fklb::timePreparedLaunch. FKL's arguments are its operations (the read, the cast, the scale, the loops of pairs and the write). They are
-//        built before every launch, outside the GPU interval, and the host time of building and releasing them is the column fkl_prep_*.
-//   hand_params, hand_imm: fklb::timeIt. Their arguments are plain values (the buffers, the size and the constants): nothing is prepared.
+// Timing (fklb::timePreparedLaunch, common/cuda_timing.h): CUDA events around one launch of arguments prepared before it, 100 iterations after a
+// warm-up, mean and min. FKL's arguments are all its operations (the read, the cast, the scale, the loops of pairs and the write); the hand-written
+// kernels' are plain values (the images, the size and the constants). Every version builds its arguments before every launch, outside the GPU
+// interval, and the host time of building and releasing them is its column <version>_prep_*, with <version>_total_mean_ms = GPU + preparation.
+// <version>_kernel_*: the same launches queued behind a GPU spin enqueued before the start event (e1::gpuSpin, E1_SPIN_US), so that the interval
+// holds the kernel without the host's dispatch of the launch.
 //
 // The operation counts come from E1_VF_OPS (comma separated, even numbers, set by CMake), default 2,102,1002,5002,10002,19902.
-// Writes e1_vf_chain.csv: mean and minimum time of each version and the ratios.
+// Writes e1_vf_chain.csv: mean and minimum time of each version, the ratios, the preparation and the kernel-only times (empty in profile mode).
 #include <common/main.h>
 #include <common/csv_writer.h>
 #include <common/cuda_timing.h>
@@ -56,6 +58,7 @@
 #include <random>
 #include <string>
 #include <tuple>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -122,8 +125,17 @@ bool runPoint(cudaStream_t cs, fk::Stream_<fk::ParArch::GPU_NVIDIA>& fkStream, f
 
     const dim3 block(32, 8);
     const dim3 grid((WIDTH + block.x - 1) / block.x, (HEIGHT + block.y - 1) / block.y);
-    const auto launchHandParams = [&] { handParams<PAIRS><<<grid, block, 0, cs>>>(hIn, hInPitch, hOut, hOutPitch, WIDTH, HEIGHT, ALPHA, COEF); };
-    const auto launchHandImm = [&] { handImmediates<PAIRS><<<grid, block, 0, cs>>>(hIn, hInPitch, hOut, hOutPitch); };
+    // the hand-written kernels' arguments: plain values, the same for every launch, built before every launch like FKL's operations
+    const auto prepareHandParams = [&] { return std::make_tuple(static_cast<const unsigned char*>(hIn), hInPitch, hOut, hOutPitch, WIDTH, HEIGHT, ALPHA, COEF); };
+    const auto launchHandParams = [&](const auto& arguments) {
+        const auto& [in, inPitch, out, outPitch, width, height, alpha, c] = arguments;
+        handParams<PAIRS><<<grid, block, 0, cs>>>(in, inPitch, out, outPitch, width, height, alpha, c);
+    };
+    const auto prepareHandImm = [&] { return std::make_tuple(static_cast<const unsigned char*>(hIn), hInPitch, hOut, hOutPitch); };
+    const auto launchHandImm = [&](const auto& arguments) {
+        const auto& [in, inPitch, out, outPitch] = arguments;
+        handImmediates<PAIRS><<<grid, block, 0, cs>>>(in, inPitch, out, outPitch);
+    };
 
     // FKL's arguments, built before every launch: the chain is built like cvGS's VerticalFusion (nested loops of 50 pairs, then the
     // remainder). StaticLoop<X, 0> executes X once, not zero times, so the cases without a nested loop or without a remainder are separate.
@@ -149,20 +161,24 @@ bool runPoint(cudaStream_t cs, fk::Stream_<fk::ParArch::GPU_NVIDIA>& fkStream, f
         }
     };
     const auto launchFkl = [&](const auto& operations) {
-        std::apply([&](const auto&... operation) {
-            fk::executeOperations<fk::TransformDPP<fk::ParArch::GPU_NVIDIA, fk::TF::DISABLED>>(fkStream, operation...);
-        }, operations);
+        if constexpr (std::tuple_size_v<std::decay_t<decltype(operations)>> == 5) {
+            const auto& [read, cast, scale, loop, write] = operations;
+            fk::executeOperations<fk::TransformDPP<fk::ParArch::GPU_NVIDIA, fk::TF::DISABLED>>(fkStream, read, cast, scale, loop, write);
+        } else {
+            const auto& [read, cast, scale, loop, remainder, write] = operations;
+            fk::executeOperations<fk::TransformDPP<fk::ParArch::GPU_NVIDIA, fk::TF::DISABLED>>(fkStream, read, cast, scale, loop, remainder, write);
+        }
     };
 
     // results first (bit-exact against hand_params), then times
     std::vector<float> refHand(static_cast<size_t>(WIDTH) * HEIGHT), outImm(refHand.size()), outFkl(refHand.size());
     FKLB_CUDA_CHECK(cudaMemset2D(hOut, hOutPitch, 0, WIDTH * sizeof(float), HEIGHT));
-    launchHandParams();
+    launchHandParams(prepareHandParams());
     FKLB_CUDA_CHECK(cudaGetLastError());
     FKLB_CUDA_CHECK(cudaStreamSynchronize(cs));
     FKLB_CUDA_CHECK(cudaMemcpy2D(refHand.data(), WIDTH * sizeof(float), hOut, hOutPitch, WIDTH * sizeof(float), HEIGHT, cudaMemcpyDeviceToHost));
     FKLB_CUDA_CHECK(cudaMemset2D(hOut, hOutPitch, 0, WIDTH * sizeof(float), HEIGHT));
-    launchHandImm();
+    launchHandImm(prepareHandImm());
     FKLB_CUDA_CHECK(cudaGetLastError());
     FKLB_CUDA_CHECK(cudaStreamSynchronize(cs));
     FKLB_CUDA_CHECK(cudaMemcpy2D(outImm.data(), WIDTH * sizeof(float), hOut, hOutPitch, WIDTH * sizeof(float), HEIGHT, cudaMemcpyDeviceToHost));
@@ -174,13 +190,21 @@ bool runPoint(cudaStream_t cs, fk::Stream_<fk::ParArch::GPU_NVIDIA>& fkStream, f
                                  cudaMemcpyDeviceToHost));
     const bool exactImm = e1::sameBits(refHand, outImm), exactFkl = e1::sameBits(refHand, outFkl);
 
-    fklb::Timing tHandParams, tHandImm, tFkl, pFkl;
+    fklb::Timing tHandParams, pHandParams, kHandParams, tHandImm, pHandImm, kHandImm, tFkl, pFkl, kFkl;
+    const auto spin = [&] { e1::gpuSpin<<<1, 1, 0, cs>>>(e1::spinNs()); };
     if (!e1::profileMode()) {   // in profile mode every kernel is launched once, by the check above, and nothing is timed
-        e1::timeVariants({[&] { fklb::timeIt(cs, launchHandParams, tHandParams); }, [&] { fklb::timeIt(cs, launchHandImm, tHandImm); },
-                          [&] { fklb::timePreparedLaunch(cs, prepareFkl, launchFkl, tFkl, pFkl); }});
+        e1::timeVariants({[&] { fklb::Timing h; fklb::timePreparedLaunch(cs, prepareHandParams, launchHandParams, tHandParams, pHandParams);
+                                fklb::timePreparedLaunch(cs, prepareHandParams, spin, launchHandParams, kHandParams, h); },
+                          [&] { fklb::Timing h; fklb::timePreparedLaunch(cs, prepareHandImm, launchHandImm, tHandImm, pHandImm);
+                                fklb::timePreparedLaunch(cs, prepareHandImm, spin, launchHandImm, kHandImm, h); },
+                          [&] { fklb::Timing h; fklb::timePreparedLaunch(cs, prepareFkl, launchFkl, tFkl, pFkl);
+                                fklb::timePreparedLaunch(cs, prepareFkl, spin, launchFkl, kFkl, h); }});
     }
-    csv.row(OPS_N, PAIRS, tHandParams.mean, tHandParams.min, tHandImm.mean, tHandImm.min, tFkl.mean, tFkl.min, tFkl.mean / tHandParams.mean,
-            int(exactFkl), int(exactImm), pFkl.mean, pFkl.min, tFkl.mean + pFkl.mean);
+    csv.row(OPS_N, PAIRS, e1::timed(tHandParams.mean), e1::timed(tHandParams.min), e1::timed(tHandImm.mean), e1::timed(tHandImm.min), e1::timed(tFkl.mean),
+            e1::timed(tFkl.min), e1::timed(tFkl.mean / tHandParams.mean), int(exactFkl), int(exactImm), e1::timed(pFkl.mean), e1::timed(pFkl.min),
+            e1::timed(tFkl.mean + pFkl.mean), e1::timed(pHandParams.mean), e1::timed(pHandParams.min), e1::timed(tHandParams.mean + pHandParams.mean),
+            e1::timed(pHandImm.mean), e1::timed(pHandImm.min), e1::timed(tHandImm.mean + pHandImm.mean), e1::timed(kHandParams.mean), e1::timed(kHandParams.min),
+            e1::timed(kHandImm.mean), e1::timed(kHandImm.min), e1::timed(kFkl.mean), e1::timed(kFkl.min));
     csv.flush();
     std::cout << OPS_N << " ops: hand " << tHandParams.mean << " ms, hand_imm " << tHandImm.mean << ", fkl " << tFkl.mean << " (preparation "
               << pFkl.mean << " ms) | bit-exact vs hand_params: fkl " << exactFkl << ", hand_imm " << exactImm << std::endl;
@@ -209,14 +233,18 @@ int launch() {
     fklb::CsvWriter csv("e1_vf_chain.csv", "E1a hand-written MAD chain vs FKL (4096x2160 uchar -> float)",
                         {"ops", "pairs", "hand_params_mean_ms", "hand_params_min_ms", "hand_imm_mean_ms", "hand_imm_min_ms",
                          "fkl_mean_ms", "fkl_min_ms", "fkl_over_hand_params", "fkl_bitexact", "hand_imm_bitexact",
-                         "fkl_prep_mean_ms", "fkl_prep_min_ms", "fkl_total_mean_ms"},
+                         "fkl_prep_mean_ms", "fkl_prep_min_ms", "fkl_total_mean_ms", "hand_params_prep_mean_ms", "hand_params_prep_min_ms",
+                         "hand_params_total_mean_ms", "hand_imm_prep_mean_ms", "hand_imm_prep_min_ms", "hand_imm_total_mean_ms", "hand_params_kernel_mean_ms",
+                         "hand_params_kernel_min_ms", "hand_imm_kernel_mean_ms", "hand_imm_kernel_min_ms", "fkl_kernel_mean_ms", "fkl_kernel_min_ms"},
                         std::string("thread fusion: off (fk::TF::DISABLED, the default); input: seeded uint8 noise (std::mt19937_64 seed 20261030), uploaded "
                                     "to each side's own image (hand-written kernels: cudaMallocPitch; FKL: fk::Ptr2D); alpha 1.0, c 0.54; 32x8 threads per "
                                     "block (the block FKL launches for this image); GPU columns: CUDA events around one launch, 100 timed iterations after one "
-                                    "warm-up; fkl_prep_*: host time (steady_clock) of building and releasing FKL's operations, done before every launch and "
-                                    "outside the GPU interval; fkl_total_mean_ms = fkl_mean_ms + fkl_prep_mean_ms; the hand-written kernels' arguments are "
-                                    "plain values and need no preparation; *_bitexact = bit-identical to hand_params") +
-                            (e1::profileMode() ? "; PROFILE MODE (E1_PROFILE=1): nothing was timed, the times are zero" : ""));
+                                    "warm-up; *_prep_*: host time (steady_clock) of building and releasing the arguments of one launch, done before every launch and "
+                                    "outside the GPU interval (fkl: all its operations; hand_*: the kernel's argument values); *_total_mean_ms = GPU mean + "
+                                    "preparation mean; *_kernel_*: the same launches with a GPU spin of " + std::to_string(e1::spinNs() / 1000) + " us (no memory "
+                                    "access) enqueued before the start event, so that the launch is queued when the GPU reaches the start event: the kernel "
+                                    "without the host's dispatch of the launch; *_bitexact = bit-identical to hand_params") +
+                            (e1::profileMode() ? "; PROFILE MODE (E1_PROFILE=1): nothing was timed, the time columns are empty" : ""));
     const bool ok = runAll(std::make_index_sequence<sizeof(OPS) / sizeof(OPS[0])>{}, cs, fkStream, csv, noise);
     return ok ? 0 : -1;
 }
