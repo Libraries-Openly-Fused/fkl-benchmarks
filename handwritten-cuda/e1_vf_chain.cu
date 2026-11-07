@@ -19,7 +19,7 @@
 // by alpha (cvGS::convertTo), then NumOps / 2 pairs of (Mul by c, Add c) with c = 0.54, written as float. NumOps is the number of
 // operations, the x axis of the paper (2, 102, ... 19902). The input is seeded noise (so the check is not on a constant image).
 //
-// Versions (one kernel each, all with the launch geometry FKL picks for this image: 32 x 8 threads per block):
+// Versions (one kernel each, all with 32 x 8 threads per block, the block FKL launches for this image: checked at compile time):
 //   hand_params  scalar kernel, alpha, c and the image size are kernel arguments, like the parameters of FKL's operations (constant
 //                bank operands)
 //   hand_imm     scalar kernel, alpha and c are compile-time constants (what an expert writes when the constants are known)
@@ -27,13 +27,21 @@
 // (A vectorised hand kernel and FKL with thread fusion were part of the first runs, kept in results/rtx4090/e1-vf-chain and e1-sass for the
 // record; they are not measured any more.)
 // The hand kernels do the operations in the same order as FKL: v = (float)in; v = v * alpha; then v = v * c; v = v + c (the
-// compiler contracts the pair to one FFMA under the default -fmad=true, in both). Every FKL result is compared bit by bit with
-// hand_params before anything is timed. Timing: CUDA events around one launch, 100 iterations after a warm-up launch.
+// compiler contracts the pair to one FFMA under the default -fmad=true, in both).
+// Each side owns its buffers, filled from the same host bytes: the hand-written kernels read and write cudaMallocPitch images, FKL reads and
+// writes its own fk::Ptr2D images. Every FKL result is compared bit by bit with hand_params before anything is timed.
+//
+// Timing (common/cuda_timing.h): CUDA events around one launch, 100 iterations after a warm-up launch, mean and min.
+//   fkl: fklb::timePreparedLaunch. FKL's arguments are its operations (the read, the cast, the scale, the loops of pairs and the write). They are
+//        built before every launch, outside the GPU interval, and the host time of building and releasing them is the column fkl_prep_*.
+//   hand_params, hand_imm: fklb::timeIt. Their arguments are plain values (the buffers, the size and the constants): nothing is prepared.
 //
 // The operation counts come from E1_VF_OPS (comma separated, even numbers, set by CMake), default 2,102,1002,5002,10002,19902.
 // Writes e1_vf_chain.csv: mean and minimum time of each version and the ratios.
 #include <common/main.h>
 #include <common/csv_writer.h>
+#include <common/cuda_timing.h>
+#include <common/status_check.h>
 
 #include "e1_common.h"
 
@@ -44,11 +52,10 @@
 #include <fused_kernel/core/data/ptr_utils.h>
 #include <fused_kernel/core/execution_model/executors.h>
 
-#include <algorithm>
-#include <cstring>
 #include <iostream>
 #include <random>
 #include <string>
+#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -56,10 +63,11 @@
 
 namespace {
 constexpr int WIDTH = 4096, HEIGHT = 2160;
-using e1::Timing; using e1::timeIt; using e1::sameBits;
 constexpr float ALPHA = 1.0f;     // convertTo(alpha) of the benchmark
 constexpr float COEF = 0.54f;     // val_mul of the benchmark
 constexpr int OPS[] = {E1_VF_OPS};
+static_assert(fk::getDefaultBlockSize(WIDTH, HEIGHT).x == 32 && fk::getDefaultBlockSize(WIDTH, HEIGHT).y == 8,
+              "the hand-written kernels are launched with the block FKL launches for this image");
 
 // ---- the hand-written kernels ---------------------------------------------------------------------------------------
 template <int PAIRS>
@@ -94,77 +102,90 @@ __global__ void handImmediates(const unsigned char* __restrict__ in, const size_
     reinterpret_cast<float*>(reinterpret_cast<char*>(out) + y * outPitch)[x] = v;
 }
 
-// ---- FKL: the chain, built like cvGS's VerticalFusion (nested loops of 50 pairs, then the remainder) -------------------
-// StaticLoop<X, 0> executes X once, not zero times, so the cases without a nested loop or without a remainder are separate.
-template <int PAIRS, typename ReadIOp, typename WriteIOp>
-void launchFKL(fk::Stream_<fk::ParArch::GPU_NVIDIA>& stream, const ReadIOp& readIOp, const WriteIOp& writeIOp) {
-    const auto cast = fk::SaturateCast<unsigned char, float>::build();
-    const auto scale = fk::Mul<float>::build(ALPHA);
-    const auto pairOp = fk::Mul<float>::build(COEF).then(fk::Add<float>::build(COEF));
-    using PairOperation = typename decltype(pairOp)::Operation;
-    constexpr int INNER = 50;  // pairs per inner loop (100 operations, as INCREMENT / OPS_PER_ITER in cvGS)
-    if constexpr (PAIRS < INNER) {
-        using Loop = fk::Binary<fk::StaticLoop<PairOperation, PAIRS>>;
-        const Loop loop{{pairOp.params}};
-        fk::executeOperations<fk::TransformDPP<fk::ParArch::GPU_NVIDIA, fk::TF::DISABLED>>(stream, readIOp, cast, scale, loop, writeIOp);
-    } else {
-        using Loop = fk::Binary<fk::StaticLoop<fk::StaticLoop<PairOperation, INNER>, PAIRS / INNER>>;
-        const Loop loop{{pairOp.params}};
-        if constexpr (PAIRS % INNER == 0) {
-            fk::executeOperations<fk::TransformDPP<fk::ParArch::GPU_NVIDIA, fk::TF::DISABLED>>(stream, readIOp, cast, scale, loop, writeIOp);
-        } else {
-            using Remainder = fk::Binary<fk::StaticLoop<PairOperation, PAIRS % INNER>>;
-            const Remainder remainder{{pairOp.params}};
-            fk::executeOperations<fk::TransformDPP<fk::ParArch::GPU_NVIDIA, fk::TF::DISABLED>>(stream, readIOp, cast, scale, loop, remainder,
-                                                                                 writeIOp);
-        }
-    }
-}
-
 template <int OPS_N>
 bool runPoint(cudaStream_t cs, fk::Stream_<fk::ParArch::GPU_NVIDIA>& fkStream, fklb::CsvWriter& csv,
               const std::vector<unsigned char>& noise) {
     static_assert(OPS_N % 2 == 0, "the number of operations is 2 per pair");
     constexpr int PAIRS = OPS_N / 2;
 
+    // the hand-written kernels' images
+    unsigned char* hIn = nullptr;
+    float* hOut = nullptr;
+    size_t hInPitch = 0, hOutPitch = 0;
+    FKLB_CUDA_CHECK(cudaMallocPitch(reinterpret_cast<void**>(&hIn), &hInPitch, WIDTH, HEIGHT));
+    FKLB_CUDA_CHECK(cudaMallocPitch(reinterpret_cast<void**>(&hOut), &hOutPitch, WIDTH * sizeof(float), HEIGHT));
+    FKLB_CUDA_CHECK(cudaMemcpy2D(hIn, hInPitch, noise.data(), WIDTH, WIDTH, HEIGHT, cudaMemcpyHostToDevice));
+    // FKL's images
     fk::Ptr2D<unsigned char> dIn(WIDTH, HEIGHT);
     fk::Ptr2D<float> dOut(WIDTH, HEIGHT);
-    const size_t inPitch = dIn.ptr().dims.pitch, outPitch = dOut.ptr().dims.pitch;
-    E1_CHECK(cudaMemcpy2D(dIn.ptr().data, inPitch, noise.data(), WIDTH, WIDTH, HEIGHT, cudaMemcpyHostToDevice));
-
-    const auto readIOp = fk::PerThreadRead<fk::ND::_2D, unsigned char>::build(dIn);
-    const auto writeIOp = fk::PerThreadWrite<fk::ND::_2D, float>::build(dOut);
+    FKLB_CUDA_CHECK(cudaMemcpy2D(dIn.ptr().data, dIn.ptr().dims.pitch, noise.data(), WIDTH, WIDTH, HEIGHT, cudaMemcpyHostToDevice));
 
     const dim3 block(32, 8);
     const dim3 grid((WIDTH + block.x - 1) / block.x, (HEIGHT + block.y - 1) / block.y);
+    const auto launchHandParams = [&] { handParams<PAIRS><<<grid, block, 0, cs>>>(hIn, hInPitch, hOut, hOutPitch, WIDTH, HEIGHT, ALPHA, COEF); };
+    const auto launchHandImm = [&] { handImmediates<PAIRS><<<grid, block, 0, cs>>>(hIn, hInPitch, hOut, hOutPitch); };
 
-    auto download = [&](std::vector<float>& host) {
-        host.resize(static_cast<size_t>(WIDTH) * HEIGHT);
-        cudaMemcpy2D(host.data(), WIDTH * sizeof(float), dOut.ptr().data, outPitch, WIDTH * sizeof(float), HEIGHT,
-                     cudaMemcpyDeviceToHost);
+    // FKL's arguments, built before every launch: the chain is built like cvGS's VerticalFusion (nested loops of 50 pairs, then the
+    // remainder). StaticLoop<X, 0> executes X once, not zero times, so the cases without a nested loop or without a remainder are separate.
+    const auto prepareFkl = [&] {
+        const auto pairOp = fk::Mul<float>::build(COEF).then(fk::Add<float>::build(COEF));
+        constexpr int INNER = 50;  // pairs per inner loop (100 operations, as INCREMENT / OPS_PER_ITER in cvGS)
+        if constexpr (PAIRS < INNER) {
+            return std::make_tuple(fk::PerThreadRead<fk::ND::_2D, unsigned char>::build(dIn), fk::SaturateCast<unsigned char, float>::build(),
+                                   fk::Mul<float>::build(ALPHA),
+                                   fk::StaticLoop<typename decltype(pairOp)::Operation, PAIRS>::build(pairOp.params),
+                                   fk::PerThreadWrite<fk::ND::_2D, float>::build(dOut));
+        } else if constexpr (PAIRS % INNER == 0) {
+            return std::make_tuple(fk::PerThreadRead<fk::ND::_2D, unsigned char>::build(dIn), fk::SaturateCast<unsigned char, float>::build(),
+                                   fk::Mul<float>::build(ALPHA),
+                                   fk::StaticLoop<fk::StaticLoop<typename decltype(pairOp)::Operation, INNER>, PAIRS / INNER>::build(pairOp.params),
+                                   fk::PerThreadWrite<fk::ND::_2D, float>::build(dOut));
+        } else {
+            return std::make_tuple(fk::PerThreadRead<fk::ND::_2D, unsigned char>::build(dIn), fk::SaturateCast<unsigned char, float>::build(),
+                                   fk::Mul<float>::build(ALPHA),
+                                   fk::StaticLoop<fk::StaticLoop<typename decltype(pairOp)::Operation, INNER>, PAIRS / INNER>::build(pairOp.params),
+                                   fk::StaticLoop<typename decltype(pairOp)::Operation, PAIRS % INNER>::build(pairOp.params),
+                                   fk::PerThreadWrite<fk::ND::_2D, float>::build(dOut));
+        }
     };
-    auto clearOut = [&]() { cudaMemset2D(dOut.ptr().data, outPitch, 0, WIDTH * sizeof(float), HEIGHT); };
-
-    std::vector<float> refHand, outImm, outFkl;
-    auto launchHandParams = [&] { handParams<PAIRS><<<grid, block, 0, cs>>>(dIn.ptr().data, inPitch, dOut.ptr().data, outPitch, WIDTH, HEIGHT, ALPHA, COEF); };
-    auto launchHandImm = [&] { handImmediates<PAIRS><<<grid, block, 0, cs>>>(dIn.ptr().data, inPitch, dOut.ptr().data, outPitch); };
-    auto launchFkl = [&] { launchFKL<PAIRS>(fkStream, readIOp, writeIOp); };
+    const auto launchFkl = [&](const auto& operations) {
+        std::apply([&](const auto&... operation) {
+            fk::executeOperations<fk::TransformDPP<fk::ParArch::GPU_NVIDIA, fk::TF::DISABLED>>(fkStream, operation...);
+        }, operations);
+    };
 
     // results first (bit-exact against hand_params), then times
-    clearOut(); launchHandParams(); E1_CHECK(cudaStreamSynchronize(cs)); download(refHand);
-    clearOut(); launchHandImm(); E1_CHECK(cudaStreamSynchronize(cs)); download(outImm);
-    clearOut(); launchFkl(); E1_CHECK(cudaStreamSynchronize(cs)); download(outFkl);
-    const bool exactImm = sameBits(refHand, outImm), exactFkl = sameBits(refHand, outFkl);
+    std::vector<float> refHand(static_cast<size_t>(WIDTH) * HEIGHT), outImm(refHand.size()), outFkl(refHand.size());
+    FKLB_CUDA_CHECK(cudaMemset2D(hOut, hOutPitch, 0, WIDTH * sizeof(float), HEIGHT));
+    launchHandParams();
+    FKLB_CUDA_CHECK(cudaGetLastError());
+    FKLB_CUDA_CHECK(cudaStreamSynchronize(cs));
+    FKLB_CUDA_CHECK(cudaMemcpy2D(refHand.data(), WIDTH * sizeof(float), hOut, hOutPitch, WIDTH * sizeof(float), HEIGHT, cudaMemcpyDeviceToHost));
+    FKLB_CUDA_CHECK(cudaMemset2D(hOut, hOutPitch, 0, WIDTH * sizeof(float), HEIGHT));
+    launchHandImm();
+    FKLB_CUDA_CHECK(cudaGetLastError());
+    FKLB_CUDA_CHECK(cudaStreamSynchronize(cs));
+    FKLB_CUDA_CHECK(cudaMemcpy2D(outImm.data(), WIDTH * sizeof(float), hOut, hOutPitch, WIDTH * sizeof(float), HEIGHT, cudaMemcpyDeviceToHost));
+    FKLB_CUDA_CHECK(cudaMemset2D(dOut.ptr().data, dOut.ptr().dims.pitch, 0, WIDTH * sizeof(float), HEIGHT));
+    launchFkl(prepareFkl());
+    FKLB_CUDA_CHECK(cudaGetLastError());
+    FKLB_CUDA_CHECK(cudaStreamSynchronize(cs));
+    FKLB_CUDA_CHECK(cudaMemcpy2D(outFkl.data(), WIDTH * sizeof(float), dOut.ptr().data, dOut.ptr().dims.pitch, WIDTH * sizeof(float), HEIGHT,
+                                 cudaMemcpyDeviceToHost));
+    const bool exactImm = e1::sameBits(refHand, outImm), exactFkl = e1::sameBits(refHand, outFkl);
 
-    Timing tHandParams, tHandImm, tFkl;
-    if (!e1::timeVariants(cs, {{launchHandParams, &tHandParams}, {launchHandImm, &tHandImm}, {launchFkl, &tFkl}})) {
-        return false;
+    fklb::Timing tHandParams, tHandImm, tFkl, pFkl;
+    if (!e1::profileMode()) {   // in profile mode every kernel is launched once, by the check above, and nothing is timed
+        e1::timeVariants({[&] { fklb::timeIt(cs, launchHandParams, tHandParams); }, [&] { fklb::timeIt(cs, launchHandImm, tHandImm); },
+                          [&] { fklb::timePreparedLaunch(cs, prepareFkl, launchFkl, tFkl, pFkl); }});
     }
     csv.row(OPS_N, PAIRS, tHandParams.mean, tHandParams.min, tHandImm.mean, tHandImm.min, tFkl.mean, tFkl.min, tFkl.mean / tHandParams.mean,
-            int(exactFkl), int(exactImm));
+            int(exactFkl), int(exactImm), pFkl.mean, pFkl.min, tFkl.mean + pFkl.mean);
     csv.flush();
-    std::cout << OPS_N << " ops: hand " << tHandParams.mean << " ms, hand_imm " << tHandImm.mean << ", fkl " << tFkl.mean
-              << " | bit-exact vs hand_params: fkl " << exactFkl << ", hand_imm " << exactImm << std::endl;
+    std::cout << OPS_N << " ops: hand " << tHandParams.mean << " ms, hand_imm " << tHandImm.mean << ", fkl " << tFkl.mean << " (preparation "
+              << pFkl.mean << " ms) | bit-exact vs hand_params: fkl " << exactFkl << ", hand_imm " << exactImm << std::endl;
+    FKLB_CUDA_CHECK(cudaFree(hIn));
+    FKLB_CUDA_CHECK(cudaFree(hOut));
     return exactFkl && exactImm;
 }
 
@@ -177,7 +198,7 @@ bool runAll(std::index_sequence<Is...>, cudaStream_t cs, fk::Stream_<fk::ParArch
 
 int launch() {
     cudaStream_t cs;
-    if (cudaStreamCreate(&cs) != cudaSuccess) return -1;
+    FKLB_CUDA_CHECK(cudaStreamCreate(&cs));
     fk::Stream_<fk::ParArch::GPU_NVIDIA> fkStream(cs);
 
     std::mt19937_64 gen(20261030ull);
@@ -187,9 +208,14 @@ int launch() {
 
     fklb::CsvWriter csv("e1_vf_chain.csv", "E1a hand-written MAD chain vs FKL (4096x2160 uchar -> float)",
                         {"ops", "pairs", "hand_params_mean_ms", "hand_params_min_ms", "hand_imm_mean_ms", "hand_imm_min_ms",
-                         "fkl_mean_ms", "fkl_min_ms", "fkl_over_hand_params", "fkl_bitexact", "hand_imm_bitexact"},
-                        std::string("thread fusion: off (fk::TF::DISABLED, the default); input: seeded uint8 noise (std::mt19937_64 seed 20261030); alpha 1.0, c 0.54; 32x8 threads per block "
-                                    "(the block FKL picks); 100 timed iterations after one warm-up; *_bitexact = bit-identical to hand_params") +
+                         "fkl_mean_ms", "fkl_min_ms", "fkl_over_hand_params", "fkl_bitexact", "hand_imm_bitexact",
+                         "fkl_prep_mean_ms", "fkl_prep_min_ms", "fkl_total_mean_ms"},
+                        std::string("thread fusion: off (fk::TF::DISABLED, the default); input: seeded uint8 noise (std::mt19937_64 seed 20261030), uploaded "
+                                    "to each side's own image (hand-written kernels: cudaMallocPitch; FKL: fk::Ptr2D); alpha 1.0, c 0.54; 32x8 threads per "
+                                    "block (the block FKL launches for this image); GPU columns: CUDA events around one launch, 100 timed iterations after one "
+                                    "warm-up; fkl_prep_*: host time (steady_clock) of building and releasing FKL's operations, done before every launch and "
+                                    "outside the GPU interval; fkl_total_mean_ms = fkl_mean_ms + fkl_prep_mean_ms; the hand-written kernels' arguments are "
+                                    "plain values and need no preparation; *_bitexact = bit-identical to hand_params") +
                             (e1::profileMode() ? "; PROFILE MODE (E1_PROFILE=1): nothing was timed, the times are zero" : ""));
     const bool ok = runAll(std::make_index_sequence<sizeof(OPS) / sizeof(OPS[0])>{}, cs, fkStream, csv, noise);
     return ok ? 0 : -1;
