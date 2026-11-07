@@ -1,4 +1,4 @@
-﻿/* Copyright 2024-2025 Oscar Amoros Huguet
+/* Copyright 2024-2025 Oscar Amoros Huguet
    Copyright 2024 Albert Andaluz Gonzalez
 
    Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,696 +13,561 @@
    See the License for the specific language governing permissions and
    limitations under the License. */
 
+// NPP against FastNPP on the GPU. BATCH crops of 60 x 120 pixels (8 bit, 3 channels), crop i at (i, i) of a 3840 x 2160 frame, are each
+// converted to float, resized to 64 x 128 (bilinear), their channels swapped (RGB -> BGR), multiplied, subtracted and divided by constants,
+// and written as the three planes of a float tensor. CUDA events time each side, 100 iterations per batch size after a warm-up sweep
+// (npp/nppbenchmark.h).
+//   test_npp_batchresize_x_split3D                  everything a side does for a frame is timed, building its batch included: the crop
+//                                                   locations may change on every image, so NPP computes the source pointer of every crop
+//                                                   in the call, and FastNPP fills its descriptor and ROI arrays and builds its operations
+//                                                   in the call.
+//   test_npp_batchresize_x_split3D_No_CPU_Overhead  FastNPP's descriptor and ROI arrays and its operations are built once, before the timed
+//                                                   loop, so this variant is valid only when the crops do not move. The one-time construction
+//                                                   cost is measured with a host timer and written next to the times (column "FastNPP
+//                                                   construction ms (once on host)").
+// Each side owns its buffers: its own copy of the frame (cudaMallocPitch, uploaded from the same host bytes) and its own output. NPP's
+// intermediate images are cudaMallocPitch images, one per crop; FastNPP writes one dense tensor (cudaMalloc). The NPP stream context is filled
+// field by field, as NPP documents it, and FastNPP takes the same context.
+
 #include <common/main.h>
+#include <common/cuda_timing.h>   // fklb::preparedBarrier, for the one-time construction timer
+#include <common/sequence.h>
+#include <common/status_check.h>
 
-#include <nppi_geometry_transforms.h>
+#include <npp.h>
 
-#include <fused_kernel/core/data/size.h>
-#include <fused_kernel/algorithms/basic_ops/vector_ops.h>
-#include <fused_kernel/core/utils/parameter_pack_utils.h>
-#include <fused_kernel/core/data/rect.h>
-#include <fused_kernel/algorithms/basic_ops/arithmetic.h>
-#include <fused_kernel/algorithms/image_processing/resize.h>
-#include <fused_kernel/fused_kernel.h>
-
-#include <numeric>
-#include <sstream>
-#include <iostream>
-#include <vector>
- 
-#include <tests/testsNppCommon.h>
 #include <npp/nppbenchmark.h>
 #include <npp/resize_agreement.h>
 #include <include/fast_npp.h>
+
+#include <array>
+#include <atomic>
+#include <chrono>
+#include <cstddef>
+#include <iostream>
+#include <stdexcept>
+#include <string>
+#include <unordered_map>
+#include <vector>
 
 constexpr char VARIABLE_DIMENSION[]{"Batch size"};
 constexpr size_t NUM_EXPERIMENTS = 15;
 constexpr size_t FIRST_VALUE = 10;
 constexpr size_t INCREMENT = 10;
-constexpr std::array<size_t, NUM_EXPERIMENTS> batchValues = arrayIndexSecuence<FIRST_VALUE, INCREMENT, NUM_EXPERIMENTS>;
+constexpr std::array<size_t, NUM_EXPERIMENTS> batchValues = fklb::arrayIndexSequence<FIRST_VALUE, INCREMENT, NUM_EXPERIMENTS>;
+
+constexpr int CROP_W = 60;
+constexpr int CROP_H = 120;
+constexpr int UP_W = 64;
+constexpr int UP_H = 128;
+constexpr size_t PLANE = static_cast<size_t>(UP_W) * UP_H;   // floats per plane of the output
+constexpr float ALPHA = 0.3f;
 
 template <int BATCH>
-bool test_npp_batchresize_x_split3D(size_t NUM_ELEMS_X, size_t NUM_ELEMS_Y, fk::Stream &compute_stream,
-                                    bool enabled) {
-  std::stringstream error_s;
-  bool passed = true;
-  bool exception = false;
+bool test_npp_batchresize_x_split3D(const size_t NUM_ELEMS_X, const size_t NUM_ELEMS_Y, cudaStream_t compute_stream) {
+    // Same input on both sides: seeded noise, so that the agreement check can tell the sampling conventions apart (npp/resize_agreement.h)
+    const std::vector<unsigned char>& sourceNoise = fklb_npp::seededNoise(static_cast<int>(NUM_ELEMS_X), static_cast<int>(NUM_ELEMS_Y));
+    constexpr NppiSize crop_size{CROP_W, CROP_H};
+    constexpr NppiSize up_size{UP_W, UP_H};
+    // the constants of the pipeline: set up once, they do not depend on the crops
+    constexpr Npp32f mulValue[3] = {ALPHA, ALPHA, ALPHA};
+    constexpr Npp32f subValue[3] = {1.f, 4.f, 3.2f};
+    constexpr Npp32f divValue[3] = {1.f, 4.f, 3.2f};
+    const int aDstOrder[3] = {2, 1, 0};   // output channel c is resized channel aDstOrder[c]: RGB -> BGR
 
-  if (enabled) {
-    constexpr float alpha = 0.3f;
-    constexpr uchar CROP_W = 60;
-    constexpr uchar CROP_H = 120;
-    constexpr uchar UP_W = 64;
-    constexpr uchar UP_H = 128;
-    try {
-      // Original image from where we will crop
-      fk::Ptr2D<uchar3> d_input(NUM_ELEMS_X, NUM_ELEMS_Y);
-      // Seeded noise instead of a constant colour, so that the check below can tell the sampling conventions apart
-      // (npp/resize_agreement.h)
-      const std::vector<unsigned char>& sourceNoise = fklb_npp::seededNoise(static_cast<int>(NUM_ELEMS_X), static_cast<int>(NUM_ELEMS_Y));
-      gpuErrchk(cudaMemcpy2DAsync(d_input.ptr().data, d_input.ptr().dims.pitch, sourceNoise.data(), NUM_ELEMS_X * 3, NUM_ELEMS_X * 3,
-                                   NUM_ELEMS_Y, cudaMemcpyHostToDevice, compute_stream));
+    // The NPP stream context, filled field by field from the device properties and the stream's flags (CUDA 13 has no nppGetStreamContext)
+    int device = 0;
+    FKLB_CUDA_CHECK(cudaGetDevice(&device));
+    cudaDeviceProp props;
+    FKLB_CUDA_CHECK(cudaGetDeviceProperties(&props, device));
+    NppStreamContext nppContext{};
+    nppContext.hStream = compute_stream;
+    nppContext.nCudaDeviceId = device;
+    nppContext.nMultiProcessorCount = props.multiProcessorCount;
+    nppContext.nMaxThreadsPerMultiProcessor = props.maxThreadsPerMultiProcessor;
+    nppContext.nMaxThreadsPerBlock = props.maxThreadsPerBlock;
+    nppContext.nSharedMemPerBlock = props.sharedMemPerBlock;
+    nppContext.nCudaDevAttrComputeCapabilityMajor = props.major;
+    nppContext.nCudaDevAttrComputeCapabilityMinor = props.minor;
+    FKLB_CUDA_CHECK(cudaStreamGetFlags(compute_stream, &nppContext.nStreamFlags));
 
-      // Batches of crops (fk)
-      std::array<fk::Ptr2D<uchar3>, BATCH> d_cropped;
-      std::array<fk::Ptr2D<float3>, BATCH> d_cropped_FP32, d_resized_npp, d_swap, d_mul, d_sub, d_div;
-      std::array<fk::Ptr2D<float>, BATCH> d_channelA, d_channelB, d_channelC;
-      std::array<fk::Ptr2D<float>, BATCH> h_channelA, h_channelB, h_channelC;
-
-      // Batches of crops (npp)
-      NppiImageDescriptor *hBatchSrc = nullptr, *dBatchSrc = nullptr, *hBatchSrcFP32 = nullptr, *dBatchSrcFP32 = nullptr, *hBatchDst = nullptr, *dBatchDst = nullptr;
-      NppiResizeBatchROI_Advanced *dBatchROI = nullptr, *hBatchROI = nullptr;
-
-      // Init NPP context
-      NppStreamContext nppcontext = initNppStreamContext(compute_stream);
-
-      // Initialize function parameters
-      constexpr Npp32f mulValue[3] = {alpha, alpha, alpha};
-      constexpr Npp32f subValue[3] = {1.f, 4.f, 3.2f};
-      constexpr Npp32f divValue[3] = {1.f, 4.f, 3.2f};
-      constexpr NppiSize crop_size{CROP_W, CROP_H};
-      constexpr NppiSize up_size{UP_W, UP_H};
-
-      fk::Tensor<float> h_tensor(UP_W, UP_H, BATCH, 3, fk::MemType::HostPinned);
-      fk::Tensor<float> d_tensor(UP_W, UP_H, BATCH, 3);
-      std::array<Npp32f*, BATCH> d_dst_output[3];
-      for (int planeId = 0; planeId < 3; ++planeId) {
-          for (int batchId = 0; batchId < BATCH; ++batchId) {
-              uint plane_padding = d_tensor.ptr().dims.plane_pitch * planeId;
-              d_dst_output[planeId][batchId] =
-                  reinterpret_cast<Npp32f*>(
-                    reinterpret_cast<uchar*>(
-                      fk::PtrAccessor<fk::ND::_3D>::point(fk::Point{0,0,batchId}, d_tensor.ptr())
-                    ) + plane_padding
-                  );
-          }
-      }
-      // crop array of images using batch resize+ ROIs
-      // force fill 5
-      constexpr int COLOR_PLANE = UP_H * UP_W;
-      constexpr int IMAGE_STRIDE = (COLOR_PLANE * 3);
-      // asume RGB->BGR
-      const int aDstOrder[3] = {BLUE, GREEN, RED};
-      gpuErrchk(cudaMallocHost(reinterpret_cast<void **>(&hBatchSrc), sizeof(NppiImageDescriptor) * BATCH));
-      gpuErrchk(cudaMallocHost(reinterpret_cast<void **>(&hBatchSrcFP32), sizeof(NppiImageDescriptor) * BATCH));
-      gpuErrchk(cudaMallocHost(reinterpret_cast<void **>(&hBatchDst), sizeof(NppiImageDescriptor) * BATCH));
-      gpuErrchk(cudaMallocHost(reinterpret_cast<void **>(&hBatchROI), sizeof(NppiResizeBatchROI_Advanced) * BATCH));
-      gpuErrchk(cudaMalloc(reinterpret_cast<void **>(&dBatchSrc), sizeof(NppiImageDescriptor) * BATCH));
-      gpuErrchk(cudaMalloc(reinterpret_cast<void **>(&dBatchSrcFP32), sizeof(NppiImageDescriptor) * BATCH));
-      gpuErrchk(cudaMalloc(reinterpret_cast<void **>(&dBatchDst), sizeof(NppiImageDescriptor) * BATCH));
-      gpuErrchk(cudaMalloc(reinterpret_cast<void **>(&dBatchROI), sizeof(NppiResizeBatchROI_Advanced) * BATCH));
-
-      std::vector<std::array<Npp32f *, 3>> aDst;
-      // dest images (Rgb, 32f)
-      for (int i = 0; i < BATCH; ++i) {
-        // NPP variables
-        d_cropped_FP32[i] = fk::Ptr2D<float3>(CROP_W, CROP_H);
-        d_resized_npp[i] = fk::Ptr2D<float3>(UP_W, UP_H);
-        d_swap[i] = fk::Ptr2D<float3>(UP_W, UP_H);
-        d_mul[i] = fk::Ptr2D<float3>(UP_W, UP_H);
-        d_sub[i] = fk::Ptr2D<float3>(UP_W, UP_H);
-        d_div[i] = fk::Ptr2D<float3>(UP_W, UP_H);
-
-        // Fill NPP Batch structs
-        hBatchDst[i].pData = d_resized_npp[i].ptr().data;
-        hBatchDst[i].nStep = d_resized_npp[i].ptr().dims.pitch;
-        hBatchDst[i].oSize = up_size;
-
-        const fk::Point current_start_coord{i, i};
-        hBatchSrc[i].pData = reinterpret_cast<void*>(fk::PtrAccessor<fk::ND::_2D>::point(current_start_coord, d_input.ptr()));
-        hBatchSrc[i].nStep = d_input.dims().pitch;
-        hBatchSrc[i].oSize = crop_size;
-
-        hBatchSrcFP32[i].pData = d_cropped_FP32[i].ptr().data;
-        hBatchSrcFP32[i].nStep = d_cropped_FP32[i].dims().pitch;
-        hBatchSrcFP32[i].oSize = crop_size;
-
-        hBatchROI[i].oSrcRectROI = NppiRect{0, 0, CROP_W, CROP_H};
-        hBatchROI[i].oDstRectROI = NppiRect{0, 0, UP_W, UP_H};
-
-        // Allocate pointers for split images (device)
-        d_channelA[i] = fk::Ptr2D<float>(UP_W, UP_H);
-        d_channelB[i] = fk::Ptr2D<float>(UP_W, UP_H);
-        d_channelC[i] = fk::Ptr2D<float>(UP_W, UP_H);
-        // Allocate pointers for split images (host)
-        h_channelA[i] = fk::Ptr2D<float>(UP_W, UP_H, 0, fk::MemType::HostPinned);
-        h_channelB[i] = fk::Ptr2D<float>(UP_W, UP_H, 0, fk::MemType::HostPinned);
-        h_channelC[i] = fk::Ptr2D<float>(UP_W, UP_H, 0, fk::MemType::HostPinned);
-
-        std::array<Npp32f*, 3> ptrs = {reinterpret_cast<Npp32f *>(d_channelA[i].ptr().data),
-                                        reinterpret_cast<Npp32f *>(d_channelB[i].ptr().data),
-                                        reinterpret_cast<Npp32f *>(d_channelC[i].ptr().data)};
-        aDst.push_back(ptrs);
-      }
-
-      gpuErrchk(cudaMemcpyAsync(reinterpret_cast<void **>(dBatchSrcFP32), hBatchSrcFP32, sizeof(NppiImageDescriptor) * BATCH,
-                                cudaMemcpyHostToDevice, compute_stream));
-      gpuErrchk(cudaMemcpyAsync(reinterpret_cast<void **>(dBatchSrc), hBatchSrc, sizeof(NppiImageDescriptor) * BATCH,
-                                cudaMemcpyHostToDevice, compute_stream));
-      gpuErrchk(cudaMemcpyAsync(reinterpret_cast<void **>(dBatchDst), hBatchDst, sizeof(NppiImageDescriptor) * BATCH,
-                                cudaMemcpyHostToDevice, compute_stream));
-      gpuErrchk(cudaMemcpyAsync(reinterpret_cast<void **>(dBatchROI), hBatchROI, sizeof(NppiResizeBatchROI_Advanced) * BATCH,
-                                cudaMemcpyHostToDevice, compute_stream));
-
-      std::array<fk::RawPtr<fk::ND::_2D, uchar3>, BATCH> d_crop_fk;
-      for (int i = 0; i < BATCH; i++) {
-        d_crop_fk[i] = d_input.crop2D(fk::Point{i, i}, fk::PtrDims<fk::ND::_2D>(CROP_W, CROP_H));
-      }
-
-      START_NPP_BENCHMARK
-
-      // NPP version
-      // convert to 32f
-      // print2D("Values after initialization", d_input, compute_stream);
-
-      for (int i = 0; i < BATCH; ++i) {
-        NPP_CHECK(nppiConvert_8u32f_C3R_Ctx(reinterpret_cast<const Npp8u*>(hBatchSrc[i].pData), hBatchSrc[i].nStep, reinterpret_cast<Npp32f*>(hBatchSrcFP32[i].pData),
-                                            hBatchSrcFP32[i].nStep, hBatchSrcFP32[i].oSize, nppcontext));
-      }
-
-      NPP_CHECK(nppiResizeBatch_32f_C3R_Advanced_Ctx(UP_W, UP_H, dBatchSrcFP32, dBatchDst, dBatchROI, BATCH,
-                                                     NPPI_INTER_LINEAR, nppcontext));
-
-      for (int i = 0; i < BATCH; ++i) {
-        NPP_CHECK(nppiSwapChannels_32f_C3R_Ctx(
-            reinterpret_cast<Npp32f *>(d_resized_npp[i].ptr().data), d_resized_npp[i].ptr().dims.pitch,
-            reinterpret_cast<Npp32f *>(d_swap[i].ptr().data), d_swap[i].dims().pitch, up_size, aDstOrder, nppcontext));
-
-        NPP_CHECK(nppiMulC_32f_C3R_Ctx(reinterpret_cast<Npp32f *>(d_swap[i].ptr().data), d_swap[i].ptr().dims.pitch,
-                                       mulValue, reinterpret_cast<Npp32f *>(d_mul[i].ptr().data),
-                                       d_mul[i].ptr().dims.pitch, up_size, nppcontext));
-
-        NPP_CHECK(nppiSubC_32f_C3R_Ctx(reinterpret_cast<Npp32f *>(d_mul[i].ptr().data), d_mul[i].ptr().dims.pitch,
-                                       subValue, reinterpret_cast<Npp32f *>(d_sub[i].ptr().data),
-                                       d_sub[i].ptr().dims.pitch, up_size, nppcontext));
-
-        NPP_CHECK(nppiDivC_32f_C3R_Ctx(reinterpret_cast<Npp32f *>(d_sub[i].ptr().data), d_sub[i].ptr().dims.pitch,
-                                       divValue, reinterpret_cast<Npp32f *>(d_div[i].ptr().data),
-                                       d_div[i].ptr().dims.pitch, up_size, nppcontext));
-
-        Npp32f *const aDst_arr[3] = {reinterpret_cast<Npp32f *>(d_channelA[i].ptr().data),
-                                     reinterpret_cast<Npp32f *>(d_channelB[i].ptr().data),
-                                     reinterpret_cast<Npp32f *>(d_channelC[i].ptr().data)};
-
-        NPP_CHECK(nppiCopy_32f_C3P3R_Ctx(reinterpret_cast<Npp32f *>(d_div[i].ptr().data), d_div[i].ptr().dims.pitch,
-                                         aDst_arr, d_channelA[i].ptr().dims.pitch, up_size, nppcontext));
-      }
-
-      STOP_NPP_START_FK_BENCHMARK
-      // do the same via fastNPP
-      const auto resizeIOp = 
-        fastNPP::ResizeBatch_8u32f_C3R_Advanced_Ctx<NPPI_INTER_LINEAR, BATCH>(UP_W, UP_H, hBatchSrc, hBatchROI);
-                
-      fastNPP::executeOperations(nppcontext, resizeIOp,
-                                 fastNPP::SwapChannels_32f_C3R_Ctx(aDstOrder),
-                                 fastNPP::MulC_32f_C3R_Ctx(mulValue),
-                                 fastNPP::SubC_32f_C3R_Ctx(subValue),
-                                 fastNPP::DivC_32f_C3R_Ctx(divValue),
-                                 fastNPP::CopyBatch_32f_C3P3R_Ctx(d_dst_output, UP_W * sizeof(float), up_size));
-      STOP_FK_BENCHMARK
-      // copy tensor
-      gpuErrchk(cudaMemcpyAsync(h_tensor.ptr().data, d_tensor.ptr().data, h_tensor.sizeInBytes(),
-                                cudaMemcpyDeviceToHost, compute_stream));
-
-      // Bucle final de copia (NPP)
-      for (int i = 0; i < BATCH; ++i) {
-        const auto d_dims = d_channelA[i].dims();
-        const auto h_dims = h_channelA[i].dims();
-
-        gpuErrchk(cudaMemcpy2DAsync(h_channelA[i].ptr().data, h_dims.pitch, d_channelA[i].ptr().data, d_dims.pitch,
-                                    d_dims.width * sizeof(float), d_dims.height, cudaMemcpyDeviceToHost,
-                                    compute_stream));
-        gpuErrchk(cudaMemcpy2DAsync(h_channelB[i].ptr().data, h_dims.pitch, d_channelB[i].ptr().data, d_dims.pitch,
-                                    d_dims.width * sizeof(float), d_dims.height, cudaMemcpyDeviceToHost,
-                                    compute_stream));
-        gpuErrchk(cudaMemcpy2DAsync(h_channelC[i].ptr().data, h_dims.pitch, d_channelC[i].ptr().data, d_dims.pitch,
-                                    d_dims.width * sizeof(float), d_dims.height, cudaMemcpyDeviceToHost,
-                                    compute_stream));
-      }
-
-      gpuErrchk(cudaStreamSynchronize(compute_stream));
-
-      // free NPP Data
-      gpuErrchk(cudaFree(dBatchSrc));
-      gpuErrchk(cudaFree(dBatchDst));
-      gpuErrchk(cudaFree(dBatchROI));
-      gpuErrchk(cudaFreeHost(hBatchSrc));
-      gpuErrchk(cudaFreeHost(hBatchDst));
-      gpuErrchk(cudaFreeHost(hBatchROI));
-
-      // compare data: each implementation must match ONE of the two sampling conventions (npp/resize_agreement.h);
-      // the difference between FastNPP and NPP is recorded, not required to be small
-      {
-          constexpr int COLOR_PLANE_ = UP_H * UP_W;
-          constexpr int IMAGE_STRIDE_ = COLOR_PLANE_ * 3;
-          const auto fastAt = [&](int j, int c, int k) { return h_tensor.ptr().data[(j * IMAGE_STRIDE_) + k + (COLOR_PLANE_ * c)]; };
-          const auto nppAt = [&](int j, int c, int k) {
-              return c == RED ? h_channelA[j].ptr().data[k] : (c == GREEN ? h_channelB[j].ptr().data[k] : h_channelC[j].ptr().data[k]);
-          };
-          passed &= fklb_npp::checkBatch(std::string(__func__), BATCH, static_cast<int>(NUM_ELEMS_X), CROP_W, CROP_H, UP_W, UP_H, aDstOrder,
-                                         mulValue, subValue, divValue, fastAt, nppAt, sourceNoise);
-      }
-
-      if (!passed) {
-        std::cout << "BATCH size = " << BATCH << std::endl;
-        std::cout << "Results fk:" << std::endl;
-        for (int b = 0; b < BATCH; ++b) {
-
-          for (int y = 0; y < UP_H; y++) {
-            for (int x = 0; x < UP_W; x++) {
-              const float value = *fk::PtrAccessor<fk::ND::_3D>::cr_point(fk::Point{x, y, b}, h_tensor.ptr());
-              std::cout << " " << value;
-            }
-            std::cout << std::endl;
-          }
-          std::cout << std::endl;
-          for (int y = 0; y < UP_H; y++) {
-            for (int x = 0; x < UP_W; x++) {
-              const float *const image = fk::PtrAccessor<fk::ND::_3D>::cr_point(fk::Point{x, y, b}, h_tensor.ptr());
-              const float pixel = *reinterpret_cast<const float*>(reinterpret_cast<const uchar*>(image) + h_tensor.dims().plane_pitch);
-              std::cout << " " << pixel;
-            }
-            std::cout << std::endl;
-          }
-          std::cout << std::endl;
-          for (int y = 0; y < UP_H; y++) {
-            for (int x = 0; x < UP_W; x++) {
-              const float *const image = fk::PtrAccessor<fk::ND::_3D>::cr_point(fk::Point{x, y, b}, h_tensor.ptr());
-              const float pixel = *reinterpret_cast<const float*>(reinterpret_cast<const uchar*>(image) + (h_tensor.dims().plane_pitch * 2));
-              std::cout << " " << pixel;
-            }
-            std::cout << std::endl;
-          }
+    // NPP: its own copy of the frame, uploaded from the same host bytes as FastNPP's
+    Npp8u* nppSrc = nullptr;
+    size_t nppSrcStep = 0;
+    FKLB_CUDA_CHECK(cudaMallocPitch(reinterpret_cast<void**>(&nppSrc), &nppSrcStep, NUM_ELEMS_X * 3, NUM_ELEMS_Y));
+    FKLB_CUDA_CHECK(cudaMemcpy2DAsync(nppSrc, nppSrcStep, sourceNoise.data(), NUM_ELEMS_X * 3, NUM_ELEMS_X * 3, NUM_ELEMS_Y,
+                                      cudaMemcpyHostToDevice, compute_stream));
+    // NPP's images, one cudaMallocPitch per image: per crop, the float crop, the resized, swapped, multiplied, subtracted and divided images,
+    // and the three output planes. cudaMallocPitch gives every image of one size the same step (checked).
+    std::array<Npp32f*, BATCH> nppCrop, nppResized, nppSwap, nppMul, nppSub, nppDiv;
+    std::array<Npp32f*, BATCH> nppPlane[3];
+    size_t cropStep = 0, upStep = 0, planeStep = 0;
+    for (int i = 0; i < BATCH; ++i) {
+        size_t s[9];
+        FKLB_CUDA_CHECK(cudaMallocPitch(reinterpret_cast<void**>(&nppCrop[i]), &s[0], CROP_W * 3 * sizeof(Npp32f), CROP_H));
+        FKLB_CUDA_CHECK(cudaMallocPitch(reinterpret_cast<void**>(&nppResized[i]), &s[1], UP_W * 3 * sizeof(Npp32f), UP_H));
+        FKLB_CUDA_CHECK(cudaMallocPitch(reinterpret_cast<void**>(&nppSwap[i]), &s[2], UP_W * 3 * sizeof(Npp32f), UP_H));
+        FKLB_CUDA_CHECK(cudaMallocPitch(reinterpret_cast<void**>(&nppMul[i]), &s[3], UP_W * 3 * sizeof(Npp32f), UP_H));
+        FKLB_CUDA_CHECK(cudaMallocPitch(reinterpret_cast<void**>(&nppSub[i]), &s[4], UP_W * 3 * sizeof(Npp32f), UP_H));
+        FKLB_CUDA_CHECK(cudaMallocPitch(reinterpret_cast<void**>(&nppDiv[i]), &s[5], UP_W * 3 * sizeof(Npp32f), UP_H));
+        for (int c = 0; c < 3; ++c) {
+            FKLB_CUDA_CHECK(cudaMallocPitch(reinterpret_cast<void**>(&nppPlane[c][i]), &s[6 + c], UP_W * sizeof(Npp32f), UP_H));
         }
-
-        std::cout << "Results npp:" << std::endl;
-        for (int b = 0; b < BATCH; ++b) {
-
-          for (int y = 0; y < UP_H; y++) {
-            for (int x = 0; x < UP_W; x++) {
-              const float value = *fk::PtrAccessor<fk::ND::_2D>::cr_point(fk::Point{x, y}, h_channelA[b].ptr());
-              std::cout << " " << value;
-            }
-            std::cout << std::endl;
-          }
-          std::cout << std::endl;
-          for (int y = 0; y < UP_H; y++) {
-            for (int x = 0; x < UP_W; x++) {
-              const float value = *fk::PtrAccessor<fk::ND::_2D>::cr_point(fk::Point{x, y}, h_channelB[b].ptr());
-              std::cout << " " << value;
-            }
-            std::cout << std::endl;
-          }
-          std::cout << std::endl;
-          for (int y = 0; y < UP_H; y++) {
-            for (int x = 0; x < UP_W; x++) {
-              const float value = *fk::PtrAccessor<fk::ND::_2D>::cr_point(fk::Point{x, y}, h_channelC[b].ptr());
-              std::cout << " " << value;
-            }
-            std::cout << std::endl;
-          }
+        if (i == 0) {
+            cropStep = s[0];
+            upStep = s[1];
+            planeStep = s[6];
         }
-      }
+        if (s[0] != cropStep || s[1] != upStep || s[2] != upStep || s[3] != upStep || s[4] != upStep || s[5] != upStep ||
+            s[6] != planeStep || s[7] != planeStep || s[8] != planeStep) {
+            throw std::runtime_error("cudaMallocPitch returned different steps for images of the same size");
+        }
+    }
+    // NPP's batched-resize descriptors are set up once: they point only at NPP's own float crops and resized images, with full-image ROIs,
+    // so they do not depend on where the crops are in the frame.
+    NppiImageDescriptor *hResizeSrc = nullptr, *hResizeDst = nullptr, *dResizeSrc = nullptr, *dResizeDst = nullptr;
+    NppiResizeBatchROI_Advanced *hResizeROI = nullptr, *dResizeROI = nullptr;
+    FKLB_CUDA_CHECK(cudaMallocHost(reinterpret_cast<void**>(&hResizeSrc), sizeof(NppiImageDescriptor) * BATCH));
+    FKLB_CUDA_CHECK(cudaMallocHost(reinterpret_cast<void**>(&hResizeDst), sizeof(NppiImageDescriptor) * BATCH));
+    FKLB_CUDA_CHECK(cudaMallocHost(reinterpret_cast<void**>(&hResizeROI), sizeof(NppiResizeBatchROI_Advanced) * BATCH));
+    FKLB_CUDA_CHECK(cudaMalloc(reinterpret_cast<void**>(&dResizeSrc), sizeof(NppiImageDescriptor) * BATCH));
+    FKLB_CUDA_CHECK(cudaMalloc(reinterpret_cast<void**>(&dResizeDst), sizeof(NppiImageDescriptor) * BATCH));
+    FKLB_CUDA_CHECK(cudaMalloc(reinterpret_cast<void**>(&dResizeROI), sizeof(NppiResizeBatchROI_Advanced) * BATCH));
+    for (int i = 0; i < BATCH; ++i) {
+        hResizeSrc[i].pData = nppCrop[i];
+        hResizeSrc[i].nStep = static_cast<int>(cropStep);
+        hResizeSrc[i].oSize = crop_size;
+        hResizeDst[i].pData = nppResized[i];
+        hResizeDst[i].nStep = static_cast<int>(upStep);
+        hResizeDst[i].oSize = up_size;
+        hResizeROI[i].oSrcRectROI = NppiRect{0, 0, CROP_W, CROP_H};
+        hResizeROI[i].oDstRectROI = NppiRect{0, 0, UP_W, UP_H};
+    }
+    FKLB_CUDA_CHECK(cudaMemcpyAsync(dResizeSrc, hResizeSrc, sizeof(NppiImageDescriptor) * BATCH, cudaMemcpyHostToDevice, compute_stream));
+    FKLB_CUDA_CHECK(cudaMemcpyAsync(dResizeDst, hResizeDst, sizeof(NppiImageDescriptor) * BATCH, cudaMemcpyHostToDevice, compute_stream));
+    FKLB_CUDA_CHECK(cudaMemcpyAsync(dResizeROI, hResizeROI, sizeof(NppiResizeBatchROI_Advanced) * BATCH, cudaMemcpyHostToDevice, compute_stream));
+
+    // FastNPP: its own copy of the frame (the same host bytes) and its own output, one dense tensor of BATCH images of 3 planes
+    Npp8u* fastSrc = nullptr;
+    size_t fastSrcStep = 0;
+    FKLB_CUDA_CHECK(cudaMallocPitch(reinterpret_cast<void**>(&fastSrc), &fastSrcStep, NUM_ELEMS_X * 3, NUM_ELEMS_Y));
+    FKLB_CUDA_CHECK(cudaMemcpy2DAsync(fastSrc, fastSrcStep, sourceNoise.data(), NUM_ELEMS_X * 3, NUM_ELEMS_X * 3, NUM_ELEMS_Y,
+                                      cudaMemcpyHostToDevice, compute_stream));
+    Npp32f* fastOut = nullptr;
+    FKLB_CUDA_CHECK(cudaMalloc(reinterpret_cast<void**>(&fastOut), BATCH * 3 * PLANE * sizeof(Npp32f)));
+    // The plane pointers into FastNPP's output are set up once: they depend only on the layout of the output tensor, not on the crops.
+    std::array<Npp32f*, BATCH> fastPlanes[3];
+    for (int c = 0; c < 3; ++c) {
+        for (int i = 0; i < BATCH; ++i) {
+            fastPlanes[c][i] = fastOut + (static_cast<size_t>(i) * 3 + c) * PLANE;
+        }
+    }
+    // FastNPP's descriptor and ROI arrays, in host memory: FastNPP reads the descriptors (pointer, step and size of every crop) on the host
+    // when it builds its operations. It does not read the ROI array (its resize assumes full-image ROIs); the array is filled anyway, in the
+    // timed interval, as NPP's interface asks for it.
+    std::array<NppiImageDescriptor, BATCH> fastSrcDesc{};
+    std::array<NppiResizeBatchROI_Advanced, BATCH> fastROI{};
+
+    if (BATCH == batchValues[0] && !warmup) {
+        std::cout << "steps (bytes): NPP frame " << nppSrcStep << ", FastNPP frame " << fastSrcStep << ", NPP float crop " << cropStep
+                  << ", NPP 64 x 128 float image " << upStep << ", NPP plane " << planeStep << "; FastNPP output dense, "
+                  << UP_W * sizeof(Npp32f) << " bytes per row" << std::endl;
     }
 
-    catch (const std::exception &e) {
-      error_s << e.what();
-      passed = false;
-      exception = true;
+    FKLB_CUDA_CHECK(cudaStreamSynchronize(compute_stream));   // the uploads of the setup are done before the first timed interval of either side
+
+    START_NPP_BENCHMARK
+
+    // NPP, timed. The crop locations may change on every image, so everything derived from them, the source pointer of each crop, is
+    // computed here, in the call.
+    for (int i = 0; i < BATCH; ++i) {
+        FKLB_NPP_CHECK(nppiConvert_8u32f_C3R_Ctx(nppSrc + i * nppSrcStep + i * 3, static_cast<int>(nppSrcStep), nppCrop[i],
+                                                 static_cast<int>(cropStep), crop_size, nppContext));
+    }
+    FKLB_NPP_CHECK(nppiResizeBatch_32f_C3R_Advanced_Ctx(UP_W, UP_H, dResizeSrc, dResizeDst, dResizeROI, BATCH, NPPI_INTER_LINEAR, nppContext));
+    for (int i = 0; i < BATCH; ++i) {
+        FKLB_NPP_CHECK(nppiSwapChannels_32f_C3R_Ctx(nppResized[i], static_cast<int>(upStep), nppSwap[i], static_cast<int>(upStep), up_size,
+                                                    aDstOrder, nppContext));
+        FKLB_NPP_CHECK(nppiMulC_32f_C3R_Ctx(nppSwap[i], static_cast<int>(upStep), mulValue, nppMul[i], static_cast<int>(upStep), up_size,
+                                            nppContext));
+        FKLB_NPP_CHECK(nppiSubC_32f_C3R_Ctx(nppMul[i], static_cast<int>(upStep), subValue, nppSub[i], static_cast<int>(upStep), up_size,
+                                            nppContext));
+        FKLB_NPP_CHECK(nppiDivC_32f_C3R_Ctx(nppSub[i], static_cast<int>(upStep), divValue, nppDiv[i], static_cast<int>(upStep), up_size,
+                                            nppContext));
+        Npp32f* const planes[3] = {nppPlane[0][i], nppPlane[1][i], nppPlane[2][i]};
+        FKLB_NPP_CHECK(nppiCopy_32f_C3P3R_Ctx(nppDiv[i], static_cast<int>(upStep), planes, static_cast<int>(planeStep), up_size, nppContext));
     }
 
+    STOP_NPP_START_FK_BENCHMARK
+
+    // FastNPP, timed. The crop locations may change on every image, so its descriptor and ROI arrays are filled here, in the call, and its
+    // operations are built on them; they are released before the interval ends.
+    {
+        for (int i = 0; i < BATCH; ++i) {
+            fastSrcDesc[i].pData = fastSrc + i * fastSrcStep + i * 3;
+            fastSrcDesc[i].nStep = static_cast<int>(fastSrcStep);
+            fastSrcDesc[i].oSize = crop_size;
+            fastROI[i].oSrcRectROI = NppiRect{0, 0, CROP_W, CROP_H};
+            fastROI[i].oDstRectROI = NppiRect{0, 0, UP_W, UP_H};
+        }
+        const auto resizeIOp =
+            fastNPP::ResizeBatch_8u32f_C3R_Advanced_Ctx<NPPI_INTER_LINEAR, BATCH>(UP_W, UP_H, fastSrcDesc.data(), fastROI.data());
+        fastNPP::executeOperations(nppContext, resizeIOp, fastNPP::SwapChannels_32f_C3R_Ctx(aDstOrder), fastNPP::MulC_32f_C3R_Ctx(mulValue),
+                                   fastNPP::SubC_32f_C3R_Ctx(subValue), fastNPP::DivC_32f_C3R_Ctx(divValue),
+                                   fastNPP::CopyBatch_32f_C3P3R_Ctx(fastPlanes, static_cast<int>(UP_W * sizeof(Npp32f)), up_size));
+    }
+
+    STOP_FK_BENCHMARK
+
+    // results to the host (pinned memory), then the agreement check: each implementation must match ONE of the two sampling conventions
+    // (npp/resize_agreement.h); the difference between FastNPP and NPP is recorded, not required to be small
+    Npp32f *hFast = nullptr, *hNpp = nullptr;
+    FKLB_CUDA_CHECK(cudaMallocHost(reinterpret_cast<void**>(&hFast), BATCH * 3 * PLANE * sizeof(Npp32f)));
+    FKLB_CUDA_CHECK(cudaMallocHost(reinterpret_cast<void**>(&hNpp), BATCH * 3 * PLANE * sizeof(Npp32f)));
+    FKLB_CUDA_CHECK(cudaMemcpyAsync(hFast, fastOut, BATCH * 3 * PLANE * sizeof(Npp32f), cudaMemcpyDeviceToHost, compute_stream));
+    for (int i = 0; i < BATCH; ++i) {
+        for (int c = 0; c < 3; ++c) {
+            FKLB_CUDA_CHECK(cudaMemcpy2DAsync(hNpp + (static_cast<size_t>(i) * 3 + c) * PLANE, UP_W * sizeof(Npp32f), nppPlane[c][i], planeStep,
+                                              UP_W * sizeof(Npp32f), UP_H, cudaMemcpyDeviceToHost, compute_stream));
+        }
+    }
+    FKLB_CUDA_CHECK(cudaStreamSynchronize(compute_stream));
+    const auto fastAt = [&](int j, int c, int k) { return hFast[(static_cast<size_t>(j) * 3 + c) * PLANE + k]; };
+    const auto nppAt = [&](int j, int c, int k) { return hNpp[(static_cast<size_t>(j) * 3 + c) * PLANE + k]; };
+    const bool passed = fklb_npp::checkBatch(std::string(__func__), BATCH, static_cast<int>(NUM_ELEMS_X), CROP_W, CROP_H, UP_W, UP_H, aDstOrder,
+                                             mulValue, subValue, divValue, fastAt, nppAt, sourceNoise);
     if (!passed) {
-      if (!exception) {
-        std::cout << "Test failed!! RESULT ERROR: Some results do not match baseline." << std::endl;
-      } else {
-        std::cout << "Test failed!! EXCEPTION: " << error_s.str() << std::endl;
-      }
+        std::cout << "BATCH size = " << BATCH << std::endl;
+        for (const char* side : {"FastNPP", "NPP"}) {
+            std::cout << "Results " << side << ":" << std::endl;
+            for (int b = 0; b < BATCH; ++b) {
+                for (int c = 0; c < 3; ++c) {
+                    for (int y = 0; y < UP_H; y++) {
+                        for (int x = 0; x < UP_W; x++) {
+                            std::cout << " " << (side[0] == 'F' ? fastAt(b, c, y * UP_W + x) : nppAt(b, c, y * UP_W + x));
+                        }
+                        std::cout << std::endl;
+                    }
+                    std::cout << std::endl;
+                }
+            }
+        }
     }
 
+    for (int i = 0; i < BATCH; ++i) {
+        FKLB_CUDA_CHECK(cudaFree(nppCrop[i]));
+        FKLB_CUDA_CHECK(cudaFree(nppResized[i]));
+        FKLB_CUDA_CHECK(cudaFree(nppSwap[i]));
+        FKLB_CUDA_CHECK(cudaFree(nppMul[i]));
+        FKLB_CUDA_CHECK(cudaFree(nppSub[i]));
+        FKLB_CUDA_CHECK(cudaFree(nppDiv[i]));
+        for (int c = 0; c < 3; ++c) {
+            FKLB_CUDA_CHECK(cudaFree(nppPlane[c][i]));
+        }
+    }
+    FKLB_CUDA_CHECK(cudaFree(nppSrc));
+    FKLB_CUDA_CHECK(cudaFree(fastSrc));
+    FKLB_CUDA_CHECK(cudaFree(fastOut));
+    FKLB_CUDA_CHECK(cudaFree(dResizeSrc));
+    FKLB_CUDA_CHECK(cudaFree(dResizeDst));
+    FKLB_CUDA_CHECK(cudaFree(dResizeROI));
+    FKLB_CUDA_CHECK(cudaFreeHost(hResizeSrc));
+    FKLB_CUDA_CHECK(cudaFreeHost(hResizeDst));
+    FKLB_CUDA_CHECK(cudaFreeHost(hResizeROI));
+    FKLB_CUDA_CHECK(cudaFreeHost(hFast));
+    FKLB_CUDA_CHECK(cudaFreeHost(hNpp));
     return passed;
-  }
-  return passed;
 }
 
 template <size_t... Is>
-bool launch_test_npp_batchresize_x_split3D(const size_t NUM_ELEMS_X, const size_t NUM_ELEMS_Y,
-                                           std::index_sequence<Is...> seq, fk::Stream compute_stream, bool enabled) {
-  bool passed = true;
-  int dummy[] = {
-      (passed &= test_npp_batchresize_x_split3D<batchValues[Is]>(NUM_ELEMS_X, NUM_ELEMS_Y, compute_stream, enabled),
-       0)...};
-  (void)dummy;
-
-  return passed;
+bool launch_test_npp_batchresize_x_split3D(const size_t NUM_ELEMS_X, const size_t NUM_ELEMS_Y, std::index_sequence<Is...>,
+                                           cudaStream_t compute_stream) {
+    bool passed = true;
+    ((passed &= test_npp_batchresize_x_split3D<batchValues[Is]>(NUM_ELEMS_X, NUM_ELEMS_Y, compute_stream)), ...);
+    return passed;
 }
 
 template <int BATCH>
-bool test_npp_batchresize_x_split3D_No_CPU_Overhead(size_t NUM_ELEMS_X, size_t NUM_ELEMS_Y, fk::Stream &compute_stream,
-                                    bool enabled) {
-  std::stringstream error_s;
-  bool passed = true;
-  bool exception = false;
+bool test_npp_batchresize_x_split3D_No_CPU_Overhead(const size_t NUM_ELEMS_X, const size_t NUM_ELEMS_Y, cudaStream_t compute_stream) {
+    // Same input on both sides: seeded noise, so that the agreement check can tell the sampling conventions apart (npp/resize_agreement.h)
+    const std::vector<unsigned char>& sourceNoise = fklb_npp::seededNoise(static_cast<int>(NUM_ELEMS_X), static_cast<int>(NUM_ELEMS_Y));
+    constexpr NppiSize crop_size{CROP_W, CROP_H};
+    constexpr NppiSize up_size{UP_W, UP_H};
+    // the constants of the pipeline: set up once, they do not depend on the crops
+    constexpr Npp32f mulValue[3] = {ALPHA, ALPHA, ALPHA};
+    constexpr Npp32f subValue[3] = {1.f, 4.f, 3.2f};
+    constexpr Npp32f divValue[3] = {1.f, 4.f, 3.2f};
+    const int aDstOrder[3] = {2, 1, 0};   // output channel c is resized channel aDstOrder[c]: RGB -> BGR
 
-  if (enabled) {
-    constexpr float alpha = 0.3f;
-    constexpr uchar CROP_W = 60;
-    constexpr uchar CROP_H = 120;
-    constexpr uchar UP_W = 64;
-    constexpr uchar UP_H = 128;
-    try {
-      // Original image from where we will crop
-      fk::Ptr2D<uchar3> d_input(NUM_ELEMS_X, NUM_ELEMS_Y);
-      // Seeded noise instead of a constant colour (npp/resize_agreement.h)
-      const std::vector<unsigned char>& sourceNoise = fklb_npp::seededNoise(static_cast<int>(NUM_ELEMS_X), static_cast<int>(NUM_ELEMS_Y));
-      gpuErrchk(cudaMemcpy2DAsync(d_input.ptr().data, d_input.ptr().dims.pitch, sourceNoise.data(), NUM_ELEMS_X * 3, NUM_ELEMS_X * 3,
-                                  NUM_ELEMS_Y, cudaMemcpyHostToDevice, compute_stream));
-      
-      // Batches of crops (fk)
-      std::array<fk::Ptr2D<uchar3>, BATCH> d_cropped;
-      std::array<fk::Ptr2D<float3>, BATCH> d_cropped_FP32, d_resized_npp, d_swap, d_mul, d_sub, d_div;
-      std::array<fk::Ptr2D<float>, BATCH> d_channelA, d_channelB, d_channelC;
-      std::array<fk::Ptr2D<float>, BATCH> h_channelA, h_channelB, h_channelC;
+    // The NPP stream context, filled field by field from the device properties and the stream's flags (CUDA 13 has no nppGetStreamContext)
+    int device = 0;
+    FKLB_CUDA_CHECK(cudaGetDevice(&device));
+    cudaDeviceProp props;
+    FKLB_CUDA_CHECK(cudaGetDeviceProperties(&props, device));
+    NppStreamContext nppContext{};
+    nppContext.hStream = compute_stream;
+    nppContext.nCudaDeviceId = device;
+    nppContext.nMultiProcessorCount = props.multiProcessorCount;
+    nppContext.nMaxThreadsPerMultiProcessor = props.maxThreadsPerMultiProcessor;
+    nppContext.nMaxThreadsPerBlock = props.maxThreadsPerBlock;
+    nppContext.nSharedMemPerBlock = props.sharedMemPerBlock;
+    nppContext.nCudaDevAttrComputeCapabilityMajor = props.major;
+    nppContext.nCudaDevAttrComputeCapabilityMinor = props.minor;
+    FKLB_CUDA_CHECK(cudaStreamGetFlags(compute_stream, &nppContext.nStreamFlags));
 
-      // Batches of crops (npp)
-      NppiImageDescriptor *hBatchSrc = nullptr, *dBatchSrc = nullptr, *hBatchSrcFP32 = nullptr, *dBatchSrcFP32 = nullptr, *hBatchDst = nullptr, *dBatchDst = nullptr;
-      NppiResizeBatchROI_Advanced *dBatchROI = nullptr, *hBatchROI = nullptr;
-
-      // Init NPP context
-      NppStreamContext nppcontext = initNppStreamContext(compute_stream);
-
-      // Initialize function parameters
-      constexpr Npp32f mulValue[3] = {alpha, alpha, alpha};
-      constexpr Npp32f subValue[3] = {1.f, 4.f, 3.2f};
-      constexpr Npp32f divValue[3] = {1.f, 4.f, 3.2f};
-      constexpr NppiSize crop_size{CROP_W, CROP_H};
-      constexpr NppiSize up_size{UP_W, UP_H};
-
-      fk::Tensor<float> h_tensor(UP_W, UP_H, BATCH, 3, fk::MemType::HostPinned);
-      fk::Tensor<float> d_tensor(UP_W, UP_H, BATCH, 3);
-      std::array<Npp32f*, BATCH> d_dst_output[3];
-      for (int planeId = 0; planeId < 3; ++planeId) {
-          for (int batchId = 0; batchId < BATCH; ++batchId) {
-              uint plane_padding = d_tensor.ptr().dims.plane_pitch * planeId;
-              d_dst_output[planeId][batchId] =
-                  reinterpret_cast<Npp32f*>(
-                    reinterpret_cast<uchar*>(
-                      fk::PtrAccessor<fk::ND::_3D>::point(fk::Point{0,0,batchId}, d_tensor.ptr())
-                    ) + plane_padding
-                  );
-          }
-      }
-      // crop array of images using batch resize+ ROIs
-      // force fill 5
-      constexpr int COLOR_PLANE = UP_H * UP_W;
-      constexpr int IMAGE_STRIDE = (COLOR_PLANE * 3);
-      // asume RGB->BGR
-      const int aDstOrder[3] = {BLUE, GREEN, RED};
-      gpuErrchk(cudaMallocHost(reinterpret_cast<void **>(&hBatchSrc), sizeof(NppiImageDescriptor) * BATCH));
-      gpuErrchk(cudaMallocHost(reinterpret_cast<void **>(&hBatchSrcFP32), sizeof(NppiImageDescriptor) * BATCH));
-      gpuErrchk(cudaMallocHost(reinterpret_cast<void **>(&hBatchDst), sizeof(NppiImageDescriptor) * BATCH));
-      gpuErrchk(cudaMallocHost(reinterpret_cast<void **>(&hBatchROI), sizeof(NppiResizeBatchROI_Advanced) * BATCH));
-      gpuErrchk(cudaMalloc(reinterpret_cast<void **>(&dBatchSrc), sizeof(NppiImageDescriptor) * BATCH));
-      gpuErrchk(cudaMalloc(reinterpret_cast<void **>(&dBatchSrcFP32), sizeof(NppiImageDescriptor) * BATCH));
-      gpuErrchk(cudaMalloc(reinterpret_cast<void **>(&dBatchDst), sizeof(NppiImageDescriptor) * BATCH));
-      gpuErrchk(cudaMalloc(reinterpret_cast<void **>(&dBatchROI), sizeof(NppiResizeBatchROI_Advanced) * BATCH));
-
-      std::vector<std::array<Npp32f *, 3>> aDst;
-      // dest images (Rgb, 32f)
-      for (int i = 0; i < BATCH; ++i) {
-        // NPP variables
-        d_cropped_FP32[i] = fk::Ptr2D<float3>(CROP_W, CROP_H);
-        d_resized_npp[i] = fk::Ptr2D<float3>(UP_W, UP_H);
-        d_swap[i] = fk::Ptr2D<float3>(UP_W, UP_H);
-        d_mul[i] = fk::Ptr2D<float3>(UP_W, UP_H);
-        d_sub[i] = fk::Ptr2D<float3>(UP_W, UP_H);
-        d_div[i] = fk::Ptr2D<float3>(UP_W, UP_H);
-
-        // Fill NPP Batch structs
-        hBatchDst[i].pData = d_resized_npp[i].ptr().data;
-        hBatchDst[i].nStep = d_resized_npp[i].ptr().dims.pitch;
-        hBatchDst[i].oSize = up_size;
-
-        const fk::Point current_start_coord{i, i};
-        hBatchSrc[i].pData = reinterpret_cast<void*>(fk::PtrAccessor<fk::ND::_2D>::point(current_start_coord, d_input.ptr()));
-        hBatchSrc[i].nStep = d_input.dims().pitch;
-        hBatchSrc[i].oSize = crop_size;
-
-        hBatchSrcFP32[i].pData = d_cropped_FP32[i].ptr().data;
-        hBatchSrcFP32[i].nStep = d_cropped_FP32[i].dims().pitch;
-        hBatchSrcFP32[i].oSize = crop_size;
-
-        hBatchROI[i].oSrcRectROI = NppiRect{0, 0, CROP_W, CROP_H};
-        hBatchROI[i].oDstRectROI = NppiRect{0, 0, UP_W, UP_H};
-
-        // Allocate pointers for split images (device)
-        d_channelA[i] = fk::Ptr2D<float>(UP_W, UP_H);
-        d_channelB[i] = fk::Ptr2D<float>(UP_W, UP_H);
-        d_channelC[i] = fk::Ptr2D<float>(UP_W, UP_H);
-        // Allocate pointers for split images (host)
-        h_channelA[i] = fk::Ptr2D<float>(UP_W, UP_H, 0, fk::MemType::HostPinned);
-        h_channelB[i] = fk::Ptr2D<float>(UP_W, UP_H, 0, fk::MemType::HostPinned);
-        h_channelC[i] = fk::Ptr2D<float>(UP_W, UP_H, 0, fk::MemType::HostPinned);
-
-        std::array<Npp32f*, 3> ptrs = {reinterpret_cast<Npp32f *>(d_channelA[i].ptr().data),
-                                        reinterpret_cast<Npp32f *>(d_channelB[i].ptr().data),
-                                        reinterpret_cast<Npp32f *>(d_channelC[i].ptr().data)};
-        aDst.push_back(ptrs);
-      }
-
-      gpuErrchk(cudaMemcpyAsync(reinterpret_cast<void **>(dBatchSrcFP32), hBatchSrcFP32, sizeof(NppiImageDescriptor) * BATCH,
-                                cudaMemcpyHostToDevice, compute_stream));
-      gpuErrchk(cudaMemcpyAsync(reinterpret_cast<void **>(dBatchSrc), hBatchSrc, sizeof(NppiImageDescriptor) * BATCH,
-                                cudaMemcpyHostToDevice, compute_stream));
-      gpuErrchk(cudaMemcpyAsync(reinterpret_cast<void **>(dBatchDst), hBatchDst, sizeof(NppiImageDescriptor) * BATCH,
-                                cudaMemcpyHostToDevice, compute_stream));
-      gpuErrchk(cudaMemcpyAsync(reinterpret_cast<void **>(dBatchROI), hBatchROI, sizeof(NppiResizeBatchROI_Advanced) * BATCH,
-                                cudaMemcpyHostToDevice, compute_stream));
-
-      std::array<fk::RawPtr<fk::ND::_2D, uchar3>, BATCH> d_crop_fk;
-      for (int i = 0; i < BATCH; i++) {
-        d_crop_fk[i] = d_input.crop2D(fk::Point{i, i}, fk::PtrDims<fk::ND::_2D>(CROP_W, CROP_H));
-      }
-
-      // Precompute FastNPP operations for faster execution
-      const auto resizeIOp = 
-        fastNPP::ResizeBatch_8u32f_C3R_Advanced_Ctx<NPPI_INTER_LINEAR, BATCH>(UP_W, UP_H, hBatchSrc, hBatchROI);
-      const auto swap = fastNPP::SwapChannels_32f_C3R_Ctx(aDstOrder);
-      const auto mul = fastNPP::MulC_32f_C3R_Ctx(mulValue);
-      const auto sub = fastNPP::SubC_32f_C3R_Ctx(subValue);
-      const auto div = fastNPP::DivC_32f_C3R_Ctx(divValue);
-      const auto copy_batch = fastNPP::CopyBatch_32f_C3P3R_Ctx(d_dst_output, UP_W * sizeof(float), up_size);
-
-      START_NPP_BENCHMARK
-
-      // NPP version
-      // convert to 32f
-      // print2D("Values after initialization", d_input, compute_stream);
-
-      for (int i = 0; i < BATCH; ++i) {
-        NPP_CHECK(nppiConvert_8u32f_C3R_Ctx(reinterpret_cast<const Npp8u*>(hBatchSrc[i].pData), hBatchSrc[i].nStep, reinterpret_cast<Npp32f*>(hBatchSrcFP32[i].pData),
-                                            hBatchSrcFP32[i].nStep, hBatchSrcFP32[i].oSize, nppcontext));
-      }
-
-      NPP_CHECK(nppiResizeBatch_32f_C3R_Advanced_Ctx(UP_W, UP_H, dBatchSrcFP32, dBatchDst, dBatchROI, BATCH,
-                                                     NPPI_INTER_LINEAR, nppcontext));
-
-      for (int i = 0; i < BATCH; ++i) {
-        NPP_CHECK(nppiSwapChannels_32f_C3R_Ctx(
-            reinterpret_cast<Npp32f *>(d_resized_npp[i].ptr().data), d_resized_npp[i].ptr().dims.pitch,
-            reinterpret_cast<Npp32f *>(d_swap[i].ptr().data), d_swap[i].dims().pitch, up_size, aDstOrder, nppcontext));
-
-        NPP_CHECK(nppiMulC_32f_C3R_Ctx(reinterpret_cast<Npp32f *>(d_swap[i].ptr().data), d_swap[i].ptr().dims.pitch,
-                                       mulValue, reinterpret_cast<Npp32f *>(d_mul[i].ptr().data),
-                                       d_mul[i].ptr().dims.pitch, up_size, nppcontext));
-
-        NPP_CHECK(nppiSubC_32f_C3R_Ctx(reinterpret_cast<Npp32f *>(d_mul[i].ptr().data), d_mul[i].ptr().dims.pitch,
-                                       subValue, reinterpret_cast<Npp32f *>(d_sub[i].ptr().data),
-                                       d_sub[i].ptr().dims.pitch, up_size, nppcontext));
-
-        NPP_CHECK(nppiDivC_32f_C3R_Ctx(reinterpret_cast<Npp32f *>(d_sub[i].ptr().data), d_sub[i].ptr().dims.pitch,
-                                       divValue, reinterpret_cast<Npp32f *>(d_div[i].ptr().data),
-                                       d_div[i].ptr().dims.pitch, up_size, nppcontext));
-
-        Npp32f *const aDst_arr[3] = {reinterpret_cast<Npp32f *>(d_channelA[i].ptr().data),
-                                     reinterpret_cast<Npp32f *>(d_channelB[i].ptr().data),
-                                     reinterpret_cast<Npp32f *>(d_channelC[i].ptr().data)};
-
-        NPP_CHECK(nppiCopy_32f_C3P3R_Ctx(reinterpret_cast<Npp32f *>(d_div[i].ptr().data), d_div[i].ptr().dims.pitch,
-                                         aDst_arr, d_channelA[i].ptr().dims.pitch, up_size, nppcontext));
-      }
-
-      STOP_NPP_START_FK_BENCHMARK
-      // do the same via fastNPP
-      fastNPP::executeOperations(nppcontext, resizeIOp, swap, mul, sub, div, copy_batch);
-      STOP_FK_BENCHMARK
-      // copy tensor
-      gpuErrchk(cudaMemcpyAsync(h_tensor.ptr().data, d_tensor.ptr().data, h_tensor.sizeInBytes(),
-                                cudaMemcpyDeviceToHost, compute_stream));
-
-      // Bucle final de copia (NPP)
-      for (int i = 0; i < BATCH; ++i) {
-        const auto d_dims = d_channelA[i].dims();
-        const auto h_dims = h_channelA[i].dims();
-
-        gpuErrchk(cudaMemcpy2DAsync(h_channelA[i].ptr().data, h_dims.pitch, d_channelA[i].ptr().data, d_dims.pitch,
-                                    d_dims.width * sizeof(float), d_dims.height, cudaMemcpyDeviceToHost,
-                                    compute_stream));
-        gpuErrchk(cudaMemcpy2DAsync(h_channelB[i].ptr().data, h_dims.pitch, d_channelB[i].ptr().data, d_dims.pitch,
-                                    d_dims.width * sizeof(float), d_dims.height, cudaMemcpyDeviceToHost,
-                                    compute_stream));
-        gpuErrchk(cudaMemcpy2DAsync(h_channelC[i].ptr().data, h_dims.pitch, d_channelC[i].ptr().data, d_dims.pitch,
-                                    d_dims.width * sizeof(float), d_dims.height, cudaMemcpyDeviceToHost,
-                                    compute_stream));
-      }
-
-      gpuErrchk(cudaStreamSynchronize(compute_stream));
-
-      // free NPP Data
-      gpuErrchk(cudaFree(dBatchSrc));
-      gpuErrchk(cudaFree(dBatchDst));
-      gpuErrchk(cudaFree(dBatchROI));
-      gpuErrchk(cudaFreeHost(hBatchSrc));
-      gpuErrchk(cudaFreeHost(hBatchDst));
-      gpuErrchk(cudaFreeHost(hBatchROI));
-
-      // compare data: each implementation must match ONE of the two sampling conventions (npp/resize_agreement.h);
-      // the difference between FastNPP and NPP is recorded, not required to be small
-      {
-          constexpr int COLOR_PLANE_ = UP_H * UP_W;
-          constexpr int IMAGE_STRIDE_ = COLOR_PLANE_ * 3;
-          const auto fastAt = [&](int j, int c, int k) { return h_tensor.ptr().data[(j * IMAGE_STRIDE_) + k + (COLOR_PLANE_ * c)]; };
-          const auto nppAt = [&](int j, int c, int k) {
-              return c == RED ? h_channelA[j].ptr().data[k] : (c == GREEN ? h_channelB[j].ptr().data[k] : h_channelC[j].ptr().data[k]);
-          };
-          passed &= fklb_npp::checkBatch(std::string(__func__), BATCH, static_cast<int>(NUM_ELEMS_X), CROP_W, CROP_H, UP_W, UP_H, aDstOrder,
-                                         mulValue, subValue, divValue, fastAt, nppAt, sourceNoise);
-      }
-
-      if (!passed) {
-        std::cout << "BATCH size = " << BATCH << std::endl;
-        std::cout << "Results fk:" << std::endl;
-        for (int b = 0; b < BATCH; ++b) {
-
-          for (int y = 0; y < UP_H; y++) {
-            for (int x = 0; x < UP_W; x++) {
-              const float value = *fk::PtrAccessor<fk::ND::_3D>::cr_point(fk::Point{x, y, b}, h_tensor.ptr());
-              std::cout << " " << value;
-            }
-            std::cout << std::endl;
-          }
-          std::cout << std::endl;
-          for (int y = 0; y < UP_H; y++) {
-            for (int x = 0; x < UP_W; x++) {
-              const float *const image = fk::PtrAccessor<fk::ND::_3D>::cr_point(fk::Point{x, y, b}, h_tensor.ptr());
-              const float pixel = *reinterpret_cast<const float*>(reinterpret_cast<const uchar*>(image) + h_tensor.dims().plane_pitch);
-              std::cout << " " << pixel;
-            }
-            std::cout << std::endl;
-          }
-          std::cout << std::endl;
-          for (int y = 0; y < UP_H; y++) {
-            for (int x = 0; x < UP_W; x++) {
-              const float *const image = fk::PtrAccessor<fk::ND::_3D>::cr_point(fk::Point{x, y, b}, h_tensor.ptr());
-              const float pixel = *reinterpret_cast<const float*>(reinterpret_cast<const uchar*>(image) + (h_tensor.dims().plane_pitch * 2));
-              std::cout << " " << pixel;
-            }
-            std::cout << std::endl;
-          }
+    // NPP: its own copy of the frame, uploaded from the same host bytes as FastNPP's
+    Npp8u* nppSrc = nullptr;
+    size_t nppSrcStep = 0;
+    FKLB_CUDA_CHECK(cudaMallocPitch(reinterpret_cast<void**>(&nppSrc), &nppSrcStep, NUM_ELEMS_X * 3, NUM_ELEMS_Y));
+    FKLB_CUDA_CHECK(cudaMemcpy2DAsync(nppSrc, nppSrcStep, sourceNoise.data(), NUM_ELEMS_X * 3, NUM_ELEMS_X * 3, NUM_ELEMS_Y,
+                                      cudaMemcpyHostToDevice, compute_stream));
+    // NPP's images, one cudaMallocPitch per image: per crop, the float crop, the resized, swapped, multiplied, subtracted and divided images,
+    // and the three output planes. cudaMallocPitch gives every image of one size the same step (checked).
+    std::array<Npp32f*, BATCH> nppCrop, nppResized, nppSwap, nppMul, nppSub, nppDiv;
+    std::array<Npp32f*, BATCH> nppPlane[3];
+    size_t cropStep = 0, upStep = 0, planeStep = 0;
+    for (int i = 0; i < BATCH; ++i) {
+        size_t s[9];
+        FKLB_CUDA_CHECK(cudaMallocPitch(reinterpret_cast<void**>(&nppCrop[i]), &s[0], CROP_W * 3 * sizeof(Npp32f), CROP_H));
+        FKLB_CUDA_CHECK(cudaMallocPitch(reinterpret_cast<void**>(&nppResized[i]), &s[1], UP_W * 3 * sizeof(Npp32f), UP_H));
+        FKLB_CUDA_CHECK(cudaMallocPitch(reinterpret_cast<void**>(&nppSwap[i]), &s[2], UP_W * 3 * sizeof(Npp32f), UP_H));
+        FKLB_CUDA_CHECK(cudaMallocPitch(reinterpret_cast<void**>(&nppMul[i]), &s[3], UP_W * 3 * sizeof(Npp32f), UP_H));
+        FKLB_CUDA_CHECK(cudaMallocPitch(reinterpret_cast<void**>(&nppSub[i]), &s[4], UP_W * 3 * sizeof(Npp32f), UP_H));
+        FKLB_CUDA_CHECK(cudaMallocPitch(reinterpret_cast<void**>(&nppDiv[i]), &s[5], UP_W * 3 * sizeof(Npp32f), UP_H));
+        for (int c = 0; c < 3; ++c) {
+            FKLB_CUDA_CHECK(cudaMallocPitch(reinterpret_cast<void**>(&nppPlane[c][i]), &s[6 + c], UP_W * sizeof(Npp32f), UP_H));
         }
-
-        std::cout << "Results npp:" << std::endl;
-        for (int b = 0; b < BATCH; ++b) {
-
-          for (int y = 0; y < UP_H; y++) {
-            for (int x = 0; x < UP_W; x++) {
-              const float value = *fk::PtrAccessor<fk::ND::_2D>::cr_point(fk::Point{x, y}, h_channelA[b].ptr());
-              std::cout << " " << value;
-            }
-            std::cout << std::endl;
-          }
-          std::cout << std::endl;
-          for (int y = 0; y < UP_H; y++) {
-            for (int x = 0; x < UP_W; x++) {
-              const float value = *fk::PtrAccessor<fk::ND::_2D>::cr_point(fk::Point{x, y}, h_channelB[b].ptr());
-              std::cout << " " << value;
-            }
-            std::cout << std::endl;
-          }
-          std::cout << std::endl;
-          for (int y = 0; y < UP_H; y++) {
-            for (int x = 0; x < UP_W; x++) {
-              const float value = *fk::PtrAccessor<fk::ND::_2D>::cr_point(fk::Point{x, y}, h_channelC[b].ptr());
-              std::cout << " " << value;
-            }
-            std::cout << std::endl;
-          }
+        if (i == 0) {
+            cropStep = s[0];
+            upStep = s[1];
+            planeStep = s[6];
         }
-      }
+        if (s[0] != cropStep || s[1] != upStep || s[2] != upStep || s[3] != upStep || s[4] != upStep || s[5] != upStep ||
+            s[6] != planeStep || s[7] != planeStep || s[8] != planeStep) {
+            throw std::runtime_error("cudaMallocPitch returned different steps for images of the same size");
+        }
+    }
+    // NPP's batched-resize descriptors are set up once: they point only at NPP's own float crops and resized images, with full-image ROIs,
+    // so they do not depend on where the crops are in the frame.
+    NppiImageDescriptor *hResizeSrc = nullptr, *hResizeDst = nullptr, *dResizeSrc = nullptr, *dResizeDst = nullptr;
+    NppiResizeBatchROI_Advanced *hResizeROI = nullptr, *dResizeROI = nullptr;
+    FKLB_CUDA_CHECK(cudaMallocHost(reinterpret_cast<void**>(&hResizeSrc), sizeof(NppiImageDescriptor) * BATCH));
+    FKLB_CUDA_CHECK(cudaMallocHost(reinterpret_cast<void**>(&hResizeDst), sizeof(NppiImageDescriptor) * BATCH));
+    FKLB_CUDA_CHECK(cudaMallocHost(reinterpret_cast<void**>(&hResizeROI), sizeof(NppiResizeBatchROI_Advanced) * BATCH));
+    FKLB_CUDA_CHECK(cudaMalloc(reinterpret_cast<void**>(&dResizeSrc), sizeof(NppiImageDescriptor) * BATCH));
+    FKLB_CUDA_CHECK(cudaMalloc(reinterpret_cast<void**>(&dResizeDst), sizeof(NppiImageDescriptor) * BATCH));
+    FKLB_CUDA_CHECK(cudaMalloc(reinterpret_cast<void**>(&dResizeROI), sizeof(NppiResizeBatchROI_Advanced) * BATCH));
+    for (int i = 0; i < BATCH; ++i) {
+        hResizeSrc[i].pData = nppCrop[i];
+        hResizeSrc[i].nStep = static_cast<int>(cropStep);
+        hResizeSrc[i].oSize = crop_size;
+        hResizeDst[i].pData = nppResized[i];
+        hResizeDst[i].nStep = static_cast<int>(upStep);
+        hResizeDst[i].oSize = up_size;
+        hResizeROI[i].oSrcRectROI = NppiRect{0, 0, CROP_W, CROP_H};
+        hResizeROI[i].oDstRectROI = NppiRect{0, 0, UP_W, UP_H};
+    }
+    FKLB_CUDA_CHECK(cudaMemcpyAsync(dResizeSrc, hResizeSrc, sizeof(NppiImageDescriptor) * BATCH, cudaMemcpyHostToDevice, compute_stream));
+    FKLB_CUDA_CHECK(cudaMemcpyAsync(dResizeDst, hResizeDst, sizeof(NppiImageDescriptor) * BATCH, cudaMemcpyHostToDevice, compute_stream));
+    FKLB_CUDA_CHECK(cudaMemcpyAsync(dResizeROI, hResizeROI, sizeof(NppiResizeBatchROI_Advanced) * BATCH, cudaMemcpyHostToDevice, compute_stream));
+
+    // FastNPP: its own copy of the frame (the same host bytes) and its own output, one dense tensor of BATCH images of 3 planes
+    Npp8u* fastSrc = nullptr;
+    size_t fastSrcStep = 0;
+    FKLB_CUDA_CHECK(cudaMallocPitch(reinterpret_cast<void**>(&fastSrc), &fastSrcStep, NUM_ELEMS_X * 3, NUM_ELEMS_Y));
+    FKLB_CUDA_CHECK(cudaMemcpy2DAsync(fastSrc, fastSrcStep, sourceNoise.data(), NUM_ELEMS_X * 3, NUM_ELEMS_X * 3, NUM_ELEMS_Y,
+                                      cudaMemcpyHostToDevice, compute_stream));
+    Npp32f* fastOut = nullptr;
+    FKLB_CUDA_CHECK(cudaMalloc(reinterpret_cast<void**>(&fastOut), BATCH * 3 * PLANE * sizeof(Npp32f)));
+    // The plane pointers into FastNPP's output are set up once: they depend only on the layout of the output tensor, not on the crops.
+    std::array<Npp32f*, BATCH> fastPlanes[3];
+    for (int c = 0; c < 3; ++c) {
+        for (int i = 0; i < BATCH; ++i) {
+            fastPlanes[c][i] = fastOut + (static_cast<size_t>(i) * 3 + c) * PLANE;
+        }
     }
 
-    catch (const std::exception &e) {
-      error_s << e.what();
-      passed = false;
-      exception = true;
+    // FastNPP without CPU overhead: its descriptor and ROI arrays and its operations are built ONCE, here, before the timed loop, and reused
+    // by every iteration. This is valid only when the crops do not move. Their one-time construction cost is measured with a host timer and
+    // written next to the times.
+    const auto constructionStart = std::chrono::steady_clock::now();
+    std::atomic_signal_fence(std::memory_order_seq_cst);
+    std::array<NppiImageDescriptor, BATCH> fastSrcDesc{};
+    std::array<NppiResizeBatchROI_Advanced, BATCH> fastROI{};
+    for (int i = 0; i < BATCH; ++i) {
+        fastSrcDesc[i].pData = fastSrc + i * fastSrcStep + i * 3;
+        fastSrcDesc[i].nStep = static_cast<int>(fastSrcStep);
+        fastSrcDesc[i].oSize = crop_size;
+        fastROI[i].oSrcRectROI = NppiRect{0, 0, CROP_W, CROP_H};
+        fastROI[i].oDstRectROI = NppiRect{0, 0, UP_W, UP_H};
+    }
+    const auto resizeIOp = fastNPP::ResizeBatch_8u32f_C3R_Advanced_Ctx<NPPI_INTER_LINEAR, BATCH>(UP_W, UP_H, fastSrcDesc.data(), fastROI.data());
+    const auto swap = fastNPP::SwapChannels_32f_C3R_Ctx(aDstOrder);
+    const auto mul = fastNPP::MulC_32f_C3R_Ctx(mulValue);
+    const auto sub = fastNPP::SubC_32f_C3R_Ctx(subValue);
+    const auto div = fastNPP::DivC_32f_C3R_Ctx(divValue);
+    const auto copy_batch = fastNPP::CopyBatch_32f_C3P3R_Ctx(fastPlanes, static_cast<int>(UP_W * sizeof(Npp32f)), up_size);
+    fklb::preparedBarrier(resizeIOp);
+    fklb::preparedBarrier(swap);
+    fklb::preparedBarrier(mul);
+    fklb::preparedBarrier(sub);
+    fklb::preparedBarrier(div);
+    fklb::preparedBarrier(copy_batch);
+    std::atomic_signal_fence(std::memory_order_seq_cst);
+    const float constructionMs = std::chrono::duration<float, std::milli>(std::chrono::steady_clock::now() - constructionStart).count();
+
+    if (BATCH == batchValues[0] && !warmup) {
+        std::cout << "steps (bytes): NPP frame " << nppSrcStep << ", FastNPP frame " << fastSrcStep << ", NPP float crop " << cropStep
+                  << ", NPP 64 x 128 float image " << upStep << ", NPP plane " << planeStep << "; FastNPP output dense, "
+                  << UP_W * sizeof(Npp32f) << " bytes per row" << std::endl;
     }
 
+    FKLB_CUDA_CHECK(cudaStreamSynchronize(compute_stream));   // the uploads of the setup are done before the first timed interval of either side
+
+    START_NPP_BENCHMARK
+
+    // NPP, timed. The crop locations may change on every image, so everything derived from them, the source pointer of each crop, is
+    // computed here, in the call.
+    for (int i = 0; i < BATCH; ++i) {
+        FKLB_NPP_CHECK(nppiConvert_8u32f_C3R_Ctx(nppSrc + i * nppSrcStep + i * 3, static_cast<int>(nppSrcStep), nppCrop[i],
+                                                 static_cast<int>(cropStep), crop_size, nppContext));
+    }
+    FKLB_NPP_CHECK(nppiResizeBatch_32f_C3R_Advanced_Ctx(UP_W, UP_H, dResizeSrc, dResizeDst, dResizeROI, BATCH, NPPI_INTER_LINEAR, nppContext));
+    for (int i = 0; i < BATCH; ++i) {
+        FKLB_NPP_CHECK(nppiSwapChannels_32f_C3R_Ctx(nppResized[i], static_cast<int>(upStep), nppSwap[i], static_cast<int>(upStep), up_size,
+                                                    aDstOrder, nppContext));
+        FKLB_NPP_CHECK(nppiMulC_32f_C3R_Ctx(nppSwap[i], static_cast<int>(upStep), mulValue, nppMul[i], static_cast<int>(upStep), up_size,
+                                            nppContext));
+        FKLB_NPP_CHECK(nppiSubC_32f_C3R_Ctx(nppMul[i], static_cast<int>(upStep), subValue, nppSub[i], static_cast<int>(upStep), up_size,
+                                            nppContext));
+        FKLB_NPP_CHECK(nppiDivC_32f_C3R_Ctx(nppSub[i], static_cast<int>(upStep), divValue, nppDiv[i], static_cast<int>(upStep), up_size,
+                                            nppContext));
+        Npp32f* const planes[3] = {nppPlane[0][i], nppPlane[1][i], nppPlane[2][i]};
+        FKLB_NPP_CHECK(nppiCopy_32f_C3P3R_Ctx(nppDiv[i], static_cast<int>(upStep), planes, static_cast<int>(planeStep), up_size, nppContext));
+    }
+
+    STOP_NPP_START_FK_BENCHMARK
+
+    // FastNPP, timed: only the execution of the operations built once above (valid only when the crops do not move)
+    fastNPP::executeOperations(nppContext, resizeIOp, swap, mul, sub, div, copy_batch);
+
+    STOP_FK_BENCHMARK_AND_REPORT(constructionMs)
+
+    // results to the host (pinned memory), then the agreement check: each implementation must match ONE of the two sampling conventions
+    // (npp/resize_agreement.h); the difference between FastNPP and NPP is recorded, not required to be small
+    Npp32f *hFast = nullptr, *hNpp = nullptr;
+    FKLB_CUDA_CHECK(cudaMallocHost(reinterpret_cast<void**>(&hFast), BATCH * 3 * PLANE * sizeof(Npp32f)));
+    FKLB_CUDA_CHECK(cudaMallocHost(reinterpret_cast<void**>(&hNpp), BATCH * 3 * PLANE * sizeof(Npp32f)));
+    FKLB_CUDA_CHECK(cudaMemcpyAsync(hFast, fastOut, BATCH * 3 * PLANE * sizeof(Npp32f), cudaMemcpyDeviceToHost, compute_stream));
+    for (int i = 0; i < BATCH; ++i) {
+        for (int c = 0; c < 3; ++c) {
+            FKLB_CUDA_CHECK(cudaMemcpy2DAsync(hNpp + (static_cast<size_t>(i) * 3 + c) * PLANE, UP_W * sizeof(Npp32f), nppPlane[c][i], planeStep,
+                                              UP_W * sizeof(Npp32f), UP_H, cudaMemcpyDeviceToHost, compute_stream));
+        }
+    }
+    FKLB_CUDA_CHECK(cudaStreamSynchronize(compute_stream));
+    const auto fastAt = [&](int j, int c, int k) { return hFast[(static_cast<size_t>(j) * 3 + c) * PLANE + k]; };
+    const auto nppAt = [&](int j, int c, int k) { return hNpp[(static_cast<size_t>(j) * 3 + c) * PLANE + k]; };
+    const bool passed = fklb_npp::checkBatch(std::string(__func__), BATCH, static_cast<int>(NUM_ELEMS_X), CROP_W, CROP_H, UP_W, UP_H, aDstOrder,
+                                             mulValue, subValue, divValue, fastAt, nppAt, sourceNoise);
     if (!passed) {
-      if (!exception) {
-        std::cout << "Test failed!! RESULT ERROR: Some results do not match baseline." << std::endl;
-      } else {
-        std::cout << "Test failed!! EXCEPTION: " << error_s.str() << std::endl;
-      }
+        std::cout << "BATCH size = " << BATCH << std::endl;
+        for (const char* side : {"FastNPP", "NPP"}) {
+            std::cout << "Results " << side << ":" << std::endl;
+            for (int b = 0; b < BATCH; ++b) {
+                for (int c = 0; c < 3; ++c) {
+                    for (int y = 0; y < UP_H; y++) {
+                        for (int x = 0; x < UP_W; x++) {
+                            std::cout << " " << (side[0] == 'F' ? fastAt(b, c, y * UP_W + x) : nppAt(b, c, y * UP_W + x));
+                        }
+                        std::cout << std::endl;
+                    }
+                    std::cout << std::endl;
+                }
+            }
+        }
     }
 
+    for (int i = 0; i < BATCH; ++i) {
+        FKLB_CUDA_CHECK(cudaFree(nppCrop[i]));
+        FKLB_CUDA_CHECK(cudaFree(nppResized[i]));
+        FKLB_CUDA_CHECK(cudaFree(nppSwap[i]));
+        FKLB_CUDA_CHECK(cudaFree(nppMul[i]));
+        FKLB_CUDA_CHECK(cudaFree(nppSub[i]));
+        FKLB_CUDA_CHECK(cudaFree(nppDiv[i]));
+        for (int c = 0; c < 3; ++c) {
+            FKLB_CUDA_CHECK(cudaFree(nppPlane[c][i]));
+        }
+    }
+    FKLB_CUDA_CHECK(cudaFree(nppSrc));
+    FKLB_CUDA_CHECK(cudaFree(fastSrc));
+    FKLB_CUDA_CHECK(cudaFree(fastOut));
+    FKLB_CUDA_CHECK(cudaFree(dResizeSrc));
+    FKLB_CUDA_CHECK(cudaFree(dResizeDst));
+    FKLB_CUDA_CHECK(cudaFree(dResizeROI));
+    FKLB_CUDA_CHECK(cudaFreeHost(hResizeSrc));
+    FKLB_CUDA_CHECK(cudaFreeHost(hResizeDst));
+    FKLB_CUDA_CHECK(cudaFreeHost(hResizeROI));
+    FKLB_CUDA_CHECK(cudaFreeHost(hFast));
+    FKLB_CUDA_CHECK(cudaFreeHost(hNpp));
     return passed;
-  }
-  return passed;
 }
 
-// test_npp_batchresize_x_split3D_No_CPU_Overhead
 template <size_t... Is>
-bool launch_test_npp_batchresize_x_split3D_No_CPU_Overhead(const size_t NUM_ELEMS_X, const size_t NUM_ELEMS_Y,
-                                           std::index_sequence<Is...> seq, fk::Stream compute_stream, bool enabled) {
-  bool passed = true;
-  int dummy[] = {
-      (passed &= test_npp_batchresize_x_split3D_No_CPU_Overhead<batchValues[Is]>(NUM_ELEMS_X, NUM_ELEMS_Y, compute_stream, enabled),
-       0)...};
-  (void)dummy;
-
-  return passed;
+bool launch_test_npp_batchresize_x_split3D_No_CPU_Overhead(const size_t NUM_ELEMS_X, const size_t NUM_ELEMS_Y, std::index_sequence<Is...>,
+                                                           cudaStream_t compute_stream) {
+    bool passed = true;
+    ((passed &= test_npp_batchresize_x_split3D_No_CPU_Overhead<batchValues[Is]>(NUM_ELEMS_X, NUM_ELEMS_Y, compute_stream)), ...);
+    return passed;
 }
-
 
 int launch() {
-  constexpr size_t NUM_ELEMS_X = 3840;
-  constexpr size_t NUM_ELEMS_Y = 2160;
+    constexpr size_t NUM_ELEMS_X = 3840;
+    constexpr size_t NUM_ELEMS_Y = 2160;
 
-  fk::Stream stream;
+    // one plain CUDA stream for both sides
+    cudaStream_t stream;
+    FKLB_CUDA_CHECK(cudaStreamCreate(&stream));
+    unsigned int streamFlags = 0;
+    FKLB_CUDA_CHECK(cudaStreamGetFlags(stream, &streamFlags));
+    std::cout << "stream: cudaStreamCreate, flags " << streamFlags << std::endl;
 
-  std::unordered_map<std::string, bool> results;
-  results["test_npp_batchresize_x_split3D"] = true;
-  results["test_npp_batchresize_x_split3D_No_CPU_Overhead"] = true;
-  std::make_index_sequence<batchValues.size()> iSeq{};
+    std::unordered_map<std::string, bool> results;
+    const auto iSeq = std::make_index_sequence<batchValues.size()>{};
+    try {
+        // warm-up sweep: one iteration per point, nothing written to the timing CSVs
+        warmup = true;
+        launch_test_npp_batchresize_x_split3D(NUM_ELEMS_X, NUM_ELEMS_Y, iSeq, stream);
+        launch_test_npp_batchresize_x_split3D_No_CPU_Overhead(NUM_ELEMS_X, NUM_ELEMS_Y, iSeq, stream);
+        warmup = false;
 
-  // Warmup
-  warmup = true;
-  launch_test_npp_batchresize_x_split3D(NUM_ELEMS_X, NUM_ELEMS_Y, iSeq, stream, true);
-  launch_test_npp_batchresize_x_split3D_No_CPU_Overhead(NUM_ELEMS_X, NUM_ELEMS_Y, iSeq, stream, true);
-  warmup = false;
-
-  results["test_npp_batchresize_x_split3D"] &=
-      launch_test_npp_batchresize_x_split3D(NUM_ELEMS_X, NUM_ELEMS_Y, iSeq, stream, true);
-  results["test_npp_batchresize_x_split3D_No_CPU_Overhead"] &=
-      launch_test_npp_batchresize_x_split3D_No_CPU_Overhead(NUM_ELEMS_X, NUM_ELEMS_Y, iSeq, stream, true);
-  CLOSE_BENCHMARK
-  int returnValue = 0;
-  for (const auto &[key, passed] : results) {
-    if (passed) {
-      std::cout << key << " passed!!" << std::endl;
-    } else {
-      std::cout << key << " failed!!" << std::endl;
-      returnValue = -1;
+        benchmarkNotes = "Each side owns its frame copy and its output. Everything a side does for a frame is timed with CUDA events, building "
+                         "its batch included, because the crop locations may change on every image: NPP computes the source pointer of every "
+                         "crop in the call; FastNPP fills its descriptor and ROI arrays and builds its operations in the call. NPP's "
+                         "batched-resize descriptors point at NPP's own images with full-image ROIs and are set up once.";
+        results["test_npp_batchresize_x_split3D"] = launch_test_npp_batchresize_x_split3D(NUM_ELEMS_X, NUM_ELEMS_Y, iSeq, stream);
+        benchmarkNotes = "VALID ONLY WHEN THE CROPS DO NOT MOVE: FastNPP's descriptor and ROI arrays and its operations are built once, before "
+                         "the timed loop; their one-time construction cost (host timer) is the column 'FastNPP construction ms (once on host)'. "
+                         "NPP computes the source pointer of every crop in the call, as in test_npp_batchresize_x_split3D.";
+        results["test_npp_batchresize_x_split3D_No_CPU_Overhead"] =
+            launch_test_npp_batchresize_x_split3D_No_CPU_Overhead(NUM_ELEMS_X, NUM_ELEMS_Y, iSeq, stream);
+    } catch (...) {
+        // a failed run must not leave files that look complete
+        markOpenFilesIncomplete();
+        fklb_npp::markAgreementFilesIncomplete();
+        throw;
     }
-  }
-  return returnValue;
+    CLOSE_BENCHMARK
+    FKLB_CUDA_CHECK(cudaStreamDestroy(stream));
+
+    int returnValue = 0;
+    for (const auto& [key, passed] : results) {
+        if (passed) {
+            std::cout << key << " passed!!" << std::endl;
+        } else {
+            std::cout << key << " failed!!" << std::endl;
+            returnValue = -1;
+        }
+    }
+    return returnValue;
 }
