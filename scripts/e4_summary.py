@@ -18,7 +18,7 @@
 
 Writes e4_summary.csv (one row per experiment, batch, frame width and version: median of gpu_mean_ms over the runs, the smallest and the largest of the runs, spread_pct = (largest - smallest) / median,
 the smallest single call of all runs, the median host_enqueue_us and host_launch_us, intermediate_bytes) and e4_speedups.csv (per point: the median over the runs of the per-run ratio of the baseline
-to the fused kernel, with the smallest and largest per-run ratio; the baselines of the sampling convention of the fused kernel: fkl_fused (ASYMMETRIC) against opencv_percrop and opencv_batch,
+to the fused kernel, with the smallest and largest per-run ratio; the baselines of the sampling convention of the fused kernel: fkl_fused (ASYMMETRIC) against opencv_percrop,
 fkl_fused_half_pixel (HALF_PIXEL) against npp).
 """
 import csv
@@ -27,7 +27,7 @@ import os
 import statistics as stats
 import sys
 
-BASELINES = [("opencv_percrop", "fkl_fused"), ("opencv_batch", "fkl_fused"), ("npp", "fkl_fused_half_pixel")]
+BASELINES = [("opencv_percrop", "fkl_fused"), ("npp", "fkl_fused_half_pixel")]   # the batched OpenCV-CUDA baseline is not a baseline of the paper (no batched OpenCV-CUDA interface)
 
 
 def rd(path):

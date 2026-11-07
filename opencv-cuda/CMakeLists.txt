@@ -61,7 +61,7 @@ if(EXISTS "${CMAKE_SOURCE_DIR}/common/resize_reference.h")
     fklb_add_benchmark(e4_preprocessing
         BACKENDS cu LIBS fkl opencv npp
         SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/batched-preprocessing/e4_preprocessing.cu"
-        INCLUDE_DIRS "${CMAKE_SOURCE_DIR}/handwritten-cuda" "${CMAKE_CURRENT_BINARY_DIR}")
+        INCLUDE_DIRS "${CMAKE_CURRENT_BINARY_DIR}")
 else()
     message(STATUS "fkl-benchmarks: e4_preprocessing skipped (common/resize_reference.h of fkl-benchmarks PR #2 is not present)")
 endif()

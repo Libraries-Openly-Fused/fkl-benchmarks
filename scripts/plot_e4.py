@@ -14,13 +14,13 @@
 # limitations under the License.
 """E4a figure and the compact CSVs of E4c and E4d, from the three quiet runs of the pre-processing program (results/rtx4090/e4-preprocessing).
 
-  python scripts/plot_e4.py --csv results/rtx4090/e4-preprocessing [--out figures/e4_pipeline_r2.pdf] [--series opencv_batch,opencv_percrop,npp]
+  python scripts/plot_e4.py --csv results/rtx4090/e4-preprocessing [--out figures/e4_pipeline_r2.pdf] [--series opencv_percrop,npp]
   python scripts/plot_e4.py --csv results/rtx4090/e4-preprocessing --series opencv_percrop,npp --out figures/e4_pipeline_2series_r2.pdf
-     --series selects the series that are DRAWN (the others stay in e4_speedups.csv and e4_summary.csv): the paper compares with the per-crop OpenCV-CUDA calls and with NPP; the batched OpenCV-CUDA formulation
-     (the crops stacked by hand into one GpuMat, one OpenCV-CUDA call per operation) is not drawn. With a custom list the colours and markers follow the position in the list (the first series is blue) and the
+     --series selects the series that are DRAWN (the others stay in e4_speedups.csv and e4_summary.csv): the paper compares with the per-crop OpenCV-CUDA calls and with NPP (OpenCV-CUDA has no batched
+     interface, and the program no longer runs a hand-stacked batched formulation). With a custom list the colours and markers follow the position in the list (the first series is blue) and the
      two compact CSVs are not written again.
 
-Figure (3.4 x 2.0 in, one column): speedup of the fused pre-processing kernel (FKL, one launch) against OpenCV-CUDA with one batched call per operation, OpenCV-CUDA per crop and NPP, against the
+Figure (3.4 x 2.0 in, one column): speedup of the fused pre-processing kernel (FKL, one launch) against OpenCV-CUDA per crop and NPP, against the
 number of crops (10 to 300); the median over the three runs of the per-run ratio (`e4_speedups.csv`). FKL uses the sampling convention of its baseline: ASYMMETRIC against OpenCV-CUDA, HALF_PIXEL against NPP.
 CSVs (next to the figure's sidecar and in the results folder): e4c_compact.csv (the three whole frames: GPU time of every version, speedups, host time) and e4d_compact.csv (DRAM bytes of the whole call).
 """
@@ -32,7 +32,7 @@ import shutil
 import plot_common as pc
 import matplotlib.pyplot as plt
 
-SERIES = [("opencv_batch", "vs OpenCV-CUDA (batched)"), ("opencv_percrop", "vs OpenCV-CUDA (per crop)"), ("npp", "vs NPP")]
+SERIES = [("opencv_percrop", "vs OpenCV-CUDA (per crop)"), ("npp", "vs NPP")]
 FRAMES = {720: "720p (720 x 480)", 1920: "1080p (1920 x 1080)", 3840: "4K (3840 x 2160)"}
 OUT_SIZES = {720: "768 x 512", 1920: "2048 x 1152", 3840: "4096 x 2304"}
 
@@ -43,7 +43,7 @@ def rd(path):
 
 def main():
     ap = pc.arg_parser(__doc__, "e4_pipeline_r2.pdf")
-    ap.add_argument("--series", default=",".join(b for b, _ in SERIES), help="baselines to draw, comma separated, in drawing order (default: all three)")
+    ap.add_argument("--series", default=",".join(b for b, _ in SERIES), help="baselines to draw, comma separated, in drawing order (default: both)")
     args = ap.parse_args()
     wanted = args.series.split(",")
     labels = dict(SERIES)
@@ -108,7 +108,7 @@ def main():
     warm = {(r["point"], r["version"]): r for r in rd(os.path.join(d, "ncu-warm", "e4_dram_bytes.csv"))}
     out = []
     for point, label in (("E4a-100", "100 crops of 60 x 120 -> 64 x 128"), ("E4c-3840", "one 4K frame -> 4096 x 2304")):
-        for v in ("opencv_percrop", "opencv_batch", "npp", "fkl_fused", "fkl_fused_half_pixel"):
+        for v in ("opencv_percrop", "npp", "fkl_fused", "fkl_fused_half_pixel"):
             if (point, v) not in cold:
                 continue
             ref_c, ref_w = float(cold[(point, "fkl_fused")]["dram_MB"]), float(warm[(point, "fkl_fused")]["dram_MB"])
