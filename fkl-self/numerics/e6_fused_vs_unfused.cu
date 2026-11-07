@@ -100,8 +100,7 @@ constexpr float P1_A = 0.999f, P1_B = 0.003f;   // fixed point 3.0, inputs in [0
 
 template <int PAIRS>
 void p1Fused(fk::Ptr2D<float>& in, fk::Ptr2D<float>& out, cudaStream_t s) {
-    using Loop = fk::Binary<fk::StaticLoop<fk::FusedOperation<fk::Binary<fk::Mul<float>>, fk::Binary<fk::Add<float>>>, PAIRS>>;
-    Loop loop;
+    fk::Binary<fk::StaticLoop<fk::FusedOperation<fk::Binary<fk::Mul<float>>, fk::Binary<fk::Add<float>>>, PAIRS>> loop;
     fk::get_opt<0>(loop.params).params = P1_A;
     fk::get_opt<1>(loop.params).params = P1_B;
     const auto readOp = fk::PerThreadRead<fk::ND::_2D, float>::build(in.ptr());
@@ -175,25 +174,24 @@ void resizeNormalise(const Geo& g, const std::vector<std::array<int, 2>>& pos, c
     const auto mul = fk::Mul<float3>::build(make_float3(ALPHA, ALPHA, ALPHA));
     const auto sub = fk::Sub<float3>::build(make_float3(SUBV[0], SUBV[1], SUBV[2]));
     const auto div = fk::Div<float3>::build(make_float3(DIVV[0], DIVV[1], DIVV[2]));
-    using DPP = fk::TransformDPP<fk::ParArch::GPU_NVIDIA, fk::TF::DISABLED>;
     const size_t plane = static_cast<size_t>(g.outW) * g.outH, total = static_cast<size_t>(BATCH) * 3 * plane;
     // fused: ONE kernel, the read is a BatchRead of the crop ROIs followed by the Resize (the code of the E4a program)
     fk::Tensor<float> dFused(g.outW, g.outH, BATCH, 3);
     const auto readOp = fk::PerThreadRead<fk::ND::_2D, uchar3>::build(crops).then(resizeOp);
-    fk::executeOperations<DPP>(st, readOp, reorder, mul, sub, div, fk::Write<fk::TensorSplit<float3>>{dFused.ptr()});
+    fk::executeOperations<fk::TransformDPP<fk::ParArch::GPU_NVIDIA, fk::TF::DISABLED>>(st, readOp, reorder, mul, sub, div, fk::Write<fk::TensorSplit<float3>>{dFused.ptr()});
     // per-op: one launch per operation and per crop; the intermediates are float3 Ptr2D (outW x outH) in global memory, rounded to fp32 after every operation:
     //   step 1 read+Resize (the resize is the read of the crop ROI: uchar3 -> float3) -> A; step 2 VectorReorder A -> B; step 3 Mul B -> A; step 4 Sub A -> B; step 5 Div B -> A; step 6 TensorSplit write A -> tensor
     fk::Tensor<float> dPer(g.outW, g.outH, BATCH, 3);
     fk::Ptr2D<float3> bufA(g.outW, g.outH), bufB(g.outW, g.outH);
     for (int i = 0; i < BATCH; ++i) {
-        fk::executeOperations<DPP>(st, fk::PerThreadRead<fk::ND::_2D, uchar3>::build(crops[i]).then(resizeOp), fk::PerThreadWrite<fk::ND::_2D, float3>::build(bufA.ptr()));
-        fk::executeOperations<DPP>(st, fk::PerThreadRead<fk::ND::_2D, float3>::build(bufA.ptr()), reorder, fk::PerThreadWrite<fk::ND::_2D, float3>::build(bufB.ptr()));
-        fk::executeOperations<DPP>(st, fk::PerThreadRead<fk::ND::_2D, float3>::build(bufB.ptr()), mul, fk::PerThreadWrite<fk::ND::_2D, float3>::build(bufA.ptr()));
-        fk::executeOperations<DPP>(st, fk::PerThreadRead<fk::ND::_2D, float3>::build(bufA.ptr()), sub, fk::PerThreadWrite<fk::ND::_2D, float3>::build(bufB.ptr()));
-        fk::executeOperations<DPP>(st, fk::PerThreadRead<fk::ND::_2D, float3>::build(bufB.ptr()), div, fk::PerThreadWrite<fk::ND::_2D, float3>::build(bufA.ptr()));
+        fk::executeOperations<fk::TransformDPP<fk::ParArch::GPU_NVIDIA, fk::TF::DISABLED>>(st, fk::PerThreadRead<fk::ND::_2D, uchar3>::build(crops[i]).then(resizeOp), fk::PerThreadWrite<fk::ND::_2D, float3>::build(bufA.ptr()));
+        fk::executeOperations<fk::TransformDPP<fk::ParArch::GPU_NVIDIA, fk::TF::DISABLED>>(st, fk::PerThreadRead<fk::ND::_2D, float3>::build(bufA.ptr()), reorder, fk::PerThreadWrite<fk::ND::_2D, float3>::build(bufB.ptr()));
+        fk::executeOperations<fk::TransformDPP<fk::ParArch::GPU_NVIDIA, fk::TF::DISABLED>>(st, fk::PerThreadRead<fk::ND::_2D, float3>::build(bufB.ptr()), mul, fk::PerThreadWrite<fk::ND::_2D, float3>::build(bufA.ptr()));
+        fk::executeOperations<fk::TransformDPP<fk::ParArch::GPU_NVIDIA, fk::TF::DISABLED>>(st, fk::PerThreadRead<fk::ND::_2D, float3>::build(bufA.ptr()), sub, fk::PerThreadWrite<fk::ND::_2D, float3>::build(bufB.ptr()));
+        fk::executeOperations<fk::TransformDPP<fk::ParArch::GPU_NVIDIA, fk::TF::DISABLED>>(st, fk::PerThreadRead<fk::ND::_2D, float3>::build(bufB.ptr()), div, fk::PerThreadWrite<fk::ND::_2D, float3>::build(bufA.ptr()));
         // the split of crop i into its three planes: the tensor of this crop alone (BATCH = 1) copied to the batch tensor
         fk::Tensor<float> one(g.outW, g.outH, 1, 3);
-        fk::executeOperations<DPP>(st, fk::PerThreadRead<fk::ND::_2D, float3>::build(bufA.ptr()), fk::Write<fk::TensorSplit<float3>>{one.ptr()});
+        fk::executeOperations<fk::TransformDPP<fk::ParArch::GPU_NVIDIA, fk::TF::DISABLED>>(st, fk::PerThreadRead<fk::ND::_2D, float3>::build(bufA.ptr()), fk::Write<fk::TensorSplit<float3>>{one.ptr()});
         FKLB_CUDA_CHECK(cudaMemcpyAsync(dPer.ptr().data + static_cast<size_t>(i) * 3 * plane, one.ptr().data, 3 * plane * sizeof(float), cudaMemcpyDeviceToDevice, s));
     }
     FKLB_CUDA_CHECK(cudaStreamSynchronize(s));
