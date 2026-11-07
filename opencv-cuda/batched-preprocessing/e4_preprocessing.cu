@@ -333,7 +333,6 @@ void runCase(const Geometry& g, const std::vector<unsigned char>& noise, cudaStr
         ctx.nCudaDevAttrComputeCapabilityMajor = props.major;
         ctx.nCudaDevAttrComputeCapabilityMinor = props.minor;
         FKLB_CUDA_CHECK(cudaStreamGetFlags(cs, &ctx.nStreamFlags));
-        ctx.hWorkspace = 0;
 
         Npp8u* nppSrc = nullptr;
         size_t nppSrcStep = 0;

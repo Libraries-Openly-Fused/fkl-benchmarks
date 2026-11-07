@@ -201,7 +201,6 @@ int launch() {
     nppCtx.nCudaDevAttrComputeCapabilityMajor = props.major;
     nppCtx.nCudaDevAttrComputeCapabilityMinor = props.minor;
     FKLB_CUDA_CHECK(cudaStreamGetFlags(cs, &nppCtx.nStreamFlags));
-    nppCtx.hWorkspace = 0;
     const int seeds = std::atoi(envString("E9_SEEDS", "3").c_str()), run = std::atoi(envString("E9_RUN", "0").c_str());
     const int blocks = std::atoi(envString("E9_BLOCKS", "15").c_str());
     const double blockMs = std::atof(envString("E9_BLOCK_MS", "20").c_str());
