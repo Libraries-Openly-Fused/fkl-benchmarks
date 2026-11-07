@@ -1,0 +1,35 @@
+# experiment: test_cpu_batchresize_x_split3D
+# notes: Host time to enqueue the work of one frame (steady_clock, no synchronisation inside). Each side reads its own frame, both uploaded from the same seeded noise bytes (std::mt19937_64 seed 20261030). Everything a side does for a frame is timed, building its batch included, because the crop locations may change on every image: OpenCV makes the ROI of every crop in the call; cvGPUSpeedup makes its array of ROIs in the call and builds its operations on it.
+# repo: fkl-benchmarks 836a98e025bb4182528cbf47f082d548a943fbac
+# fkl: 64ad9195cd785d0c93a70b35e02d5a6c7c4a5048
+# cvGPUSpeedup: 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c
+# FastNPP: a1b5e245d7dd70fba23dcb51a0aea80495dbc61d
+# nvcc: 13.4.92 (/home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/nvcc), architectures 89, -fmad on, -lineinfo on
+# hip: none (none), architectures none
+# host compiler: GNU 15.2.0, Release, -march=native, -ftemplate-depth=1000
+# opencv: 4.14.0
+# cpu: AMD Ryzen 9 5950X 16-Core Processor
+# os: Ubuntu 26.04.1 LTS
+# kernel: Linux 7.0.0-38-generic
+# gpu: NVIDIA GeForce RTX 4090, cc 8.9, 128 SMs, 24106 MiB, PCI 0000:09:00.0
+# cuda driver api: 13.3, cuda runtime: 13.4
+# nvidia-smi driver: 610.43.02
+# clocks (sm, mem, max sm, max mem, MHz): 2685 MHz, 10251 MHz, 3105 MHz, 10501 MHz
+# power limit, temperature at start: 450.00 W, 42
+Batch size (CV_8UC3XCV_32FC3), OpenCV MeanTime, OpenCV TimeVariance, OpenCV MaxTime, OpenCV MinTime, cvGS MeanTime, cvGS TimeVariance, cvGS MaxTime, cvGS MinTime, Mean Speedup
+2, 0.0256923, 6.19834e-06, 0.04737, 0.02466, 0.00185006, 6.88805e-08, 0.00439, 0.00177, 13.9375
+12, 0.156019, 8.2045e-05, 0.216567, 0.150499, 0.00246868, 4.17951e-07, 0.00828, 0.00225, 64.4244
+22, 0.277192, 1.68071e-05, 0.307187, 0.272317, 0.00285188, 5.45793e-07, 0.00736, 0.00263, 99.9115
+32, 0.403631, 4.34581e-05, 0.446175, 0.394696, 0.0032154, 2.01189e-07, 0.00753, 0.00304, 126.553
+42, 0.534348, 2.15134e-05, 0.553844, 0.525364, 0.00360274, 1.09728e-07, 0.00673, 0.00345, 148.996
+52, 0.657854, 2.9294e-05, 0.694003, 0.649553, 0.00412874, 3.14193e-07, 0.0081, 0.00388, 160.91
+62, 0.784422, 7.27126e-05, 0.830261, 0.771741, 0.00447727, 3.35211e-07, 0.00855, 0.00425, 176.777
+72, 0.910277, 0.000178208, 0.96108, 0.89439, 0.00486373, 1.21628e-07, 0.007739, 0.00464, 187.776
+82, 1.03606, 8.98798e-05, 1.09223, 1.026, 0.00530186, 1.926e-07, 0.00843, 0.00507, 196.25
+92, 1.16126, 9.11678e-05, 1.20728, 1.14994, 0.00569775, 3.77847e-07, 0.00991, 0.00547, 205.188
+102, 1.28358, 5.4619e-05, 1.30945, 1.27326, 0.00599766, 1.01837e-07, 0.00907, 0.00583, 214.404
+112, 1.40988, 4.84458e-05, 1.43438, 1.39576, 0.0066155, 3.61334e-07, 0.01072, 0.00635, 214.259
+122, 1.5392, 9.80706e-05, 1.58218, 1.52565, 0.00680915, 1.05633e-07, 0.00987, 0.00664, 226.394
+132, 1.66703, 0.000126942, 1.70606, 1.65097, 0.00745903, 5.99787e-07, 0.01314, 0.00713, 224.938
+142, 1.79144, 0.000111008, 1.83562, 1.77576, 0.00801231, 6.76635e-07, 0.01283, 0.00758, 225.209
+152, 1.91829, 0.000203165, 1.96903, 1.90046, 0.00821692, 1.60786e-07, 0.011929, 0.007969, 233.837

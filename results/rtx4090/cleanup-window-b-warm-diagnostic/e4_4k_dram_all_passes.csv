@@ -1,0 +1,34 @@
+# experiment: E4c 3840 x 2160, DRAM traffic of every Nsight Compute pass of 2026-11-07 (window B at 23:19 and the warm-pass diagnostic at 23:33), both builds
+# notes: one implementation per process, E4_PROFILE=1 (one launch of every kernel); metrics dram__bytes_read.sum, dram__bytes_write.sum, gpu__time_duration.sum summed over the kernels of the implementation; cold = ncu default (caches flushed before every kernel), warm = --cache-control none; clock control base. reference = build/local-rtx4090 (fkl-benchmarks a5dd9fa), cleaned = main 836a98e; both FKL 64ad9195, cvGPUSpeedup 6d26c65, FastNPP a1b5e245. MiB = 2^20 bytes.
+# notes: fkl_fused must move at least 131.7 MiB to and from DRAM sooner or later: the frame read (3840 x 2160 x 3 = 23.73 MiB) and the output written (4096 x 2304 x 3 floats = 108.00 MiB). Its output is larger than the 72 MB (68.66 MiB) L2, and ncu counts only what is written back during the kernel: the rest of the output is still dirty in L2 when the kernel ends. That part varies between passes (fkl_fused writes 60 to 87 MiB), and the kernel time with it. For opencv_percrop and npp, which move 10 to 15 times more, the same effect is a few percent.
+window,build,condition,repetition,version,kernels,dram_read_bytes,dram_write_bytes,dram_bytes,dram_read_MiB,dram_write_MiB,dram_MiB,kernel_time_us,folder
+B 23:19,cleaned,cold,1,fkl_fused,1,25037952,65982848,91020800,23.88,62.93,86.80,111.3,cleanup-window-b/cleaned/e4-preprocessing/ncu-cold-4k
+B 23:19,cleaned,cold,1,opencv_percrop,7,692298624,433215744,1125514368,660.23,413.15,1073.37,1238.5,cleanup-window-b/cleaned/e4-preprocessing/ncu-cold-4k
+B 23:19,cleaned,cold,1,npp,9,919629824,450154368,1369784192,877.03,429.30,1306.33,1512.6,cleanup-window-b/cleaned/e4-preprocessing/ncu-cold-4k
+B 23:19,cleaned,warm,1,fkl_fused,1,29028736,90658304,119687040,27.68,86.46,114.14,153.6,cleanup-window-b/cleaned/e4-preprocessing/ncu-warm-4k
+B 23:19,cleaned,warm,1,opencv_percrop,7,698986368,663780480,1362766848,666.61,633.03,1299.64,1507.0,cleanup-window-b/cleaned/e4-preprocessing/ncu-warm-4k
+B 23:19,cleaned,warm,1,npp,9,917725440,701620608,1619346048,875.21,669.12,1544.33,1759.3,cleanup-window-b/cleaned/e4-preprocessing/ncu-warm-4k
+diagnostic 23:33,reference,warm,1,fkl_fused,1,24887296,90831616,115718912,23.73,86.62,110.36,132.5,cleanup-window-b-warm-diagnostic/reference/ncu-warm-4k-rep1
+diagnostic 23:33,reference,warm,1,opencv_percrop,7,697862912,655309440,1353172352,665.53,624.95,1290.49,1508.8,cleanup-window-b-warm-diagnostic/reference/ncu-warm-4k-rep1
+diagnostic 23:33,reference,warm,1,npp,9,927282560,714112128,1641394688,884.33,681.03,1565.36,1801.8,cleanup-window-b-warm-diagnostic/reference/ncu-warm-4k-rep1
+diagnostic 23:33,reference,cold,1,fkl_fused,1,28552960,83758720,112311680,27.23,79.88,107.11,143.6,cleanup-window-b-warm-diagnostic/reference/ncu-cold-4k-rep1
+diagnostic 23:33,reference,cold,1,opencv_percrop,7,691169408,451111040,1142280448,659.15,430.21,1089.36,1236.6,cleanup-window-b-warm-diagnostic/reference/ncu-cold-4k-rep1
+diagnostic 23:33,reference,cold,1,npp,9,917948544,434290560,1352239104,875.42,414.17,1289.60,1493.0,cleanup-window-b-warm-diagnostic/reference/ncu-cold-4k-rep1
+diagnostic 23:33,cleaned,warm,1,fkl_fused,1,24973568,90517504,115491072,23.82,86.32,110.14,132.2,cleanup-window-b-warm-diagnostic/cleaned/ncu-warm-4k-rep1
+diagnostic 23:33,cleaned,warm,1,opencv_percrop,7,693922688,658008192,1351930880,661.78,627.53,1289.30,1478.8,cleanup-window-b-warm-diagnostic/cleaned/ncu-warm-4k-rep1
+diagnostic 23:33,cleaned,warm,1,npp,9,919445632,706865152,1626310784,876.85,674.12,1550.97,1770.3,cleanup-window-b-warm-diagnostic/cleaned/ncu-warm-4k-rep1
+diagnostic 23:33,cleaned,cold,1,fkl_fused,1,24947200,81581184,106528384,23.79,77.80,101.59,123.6,cleanup-window-b-warm-diagnostic/cleaned/ncu-cold-4k-rep1
+diagnostic 23:33,cleaned,cold,1,opencv_percrop,7,691012864,448409216,1139422080,659.00,427.64,1086.64,1233.6,cleanup-window-b-warm-diagnostic/cleaned/ncu-cold-4k-rep1
+diagnostic 23:33,cleaned,cold,1,npp,9,917933056,429608832,1347541888,875.41,409.71,1285.12,1487.9,cleanup-window-b-warm-diagnostic/cleaned/ncu-cold-4k-rep1
+diagnostic 23:33,cleaned,warm,2,fkl_fused,1,24905472,89940224,114845696,23.75,85.77,109.53,131.1,cleanup-window-b-warm-diagnostic/cleaned/ncu-warm-4k-rep2
+diagnostic 23:33,cleaned,warm,2,opencv_percrop,7,691303552,659739776,1351043328,659.28,629.18,1288.46,1471.5,cleanup-window-b-warm-diagnostic/cleaned/ncu-warm-4k-rep2
+diagnostic 23:33,cleaned,warm,2,npp,9,924671488,715121536,1639793024,881.84,681.99,1563.83,1793.7,cleanup-window-b-warm-diagnostic/cleaned/ncu-warm-4k-rep2
+diagnostic 23:33,cleaned,cold,2,fkl_fused,1,24955392,65718656,90674048,23.80,62.67,86.47,110.5,cleanup-window-b-warm-diagnostic/cleaned/ncu-cold-4k-rep2
+diagnostic 23:33,cleaned,cold,2,opencv_percrop,7,692580096,432002432,1124582528,660.50,411.99,1072.49,1223.5,cleanup-window-b-warm-diagnostic/cleaned/ncu-cold-4k-rep2
+diagnostic 23:33,cleaned,cold,2,npp,9,920374144,476295296,1396669440,877.74,454.23,1331.97,1560.7,cleanup-window-b-warm-diagnostic/cleaned/ncu-cold-4k-rep2
+diagnostic 23:33,reference,warm,2,fkl_fused,1,24887296,90657024,115544320,23.73,86.46,110.19,132.2,cleanup-window-b-warm-diagnostic/reference/ncu-warm-4k-rep2
+diagnostic 23:33,reference,warm,2,opencv_percrop,7,692323328,660465792,1352789120,660.25,629.87,1290.12,1474.8,cleanup-window-b-warm-diagnostic/reference/ncu-warm-4k-rep2
+diagnostic 23:33,reference,warm,2,npp,9,921416576,707825792,1629242368,878.73,675.04,1553.77,1783.6,cleanup-window-b-warm-diagnostic/reference/ncu-warm-4k-rep2
+diagnostic 23:33,reference,cold,2,fkl_fused,1,25582336,80070912,105653248,24.40,76.36,100.76,125.2,cleanup-window-b-warm-diagnostic/reference/ncu-cold-4k-rep2
+diagnostic 23:33,reference,cold,2,opencv_percrop,7,691194624,431605632,1122800256,659.17,411.61,1070.79,1218.6,cleanup-window-b-warm-diagnostic/reference/ncu-cold-4k-rep2
+diagnostic 23:33,reference,cold,2,npp,9,919378560,433528192,1352906752,876.79,413.44,1290.23,1494.9,cleanup-window-b-warm-diagnostic/reference/ncu-cold-4k-rep2

@@ -1,0 +1,37 @@
+# experiment: E9 cross-library kernels: agreement of the outputs
+# notes: seeded noise 3840 x 2160 uchar3, 50 crops 60 x 120 -> 64 x 128 float3, tensor (crop, channel, y, x); identical = memcmp of the bit patterns; M1 = cvGS resize + FastNPP + cvGS + user gamma, M2 = FastNPP resize + cvGS + FastNPP + user gamma, R1 = cvGS only, R2 = FastNPP only (each with the same user gamma)
+# repo: fkl-benchmarks a5dd9fa54210f60d0b631ce34508e95c86c387ce
+# fkl: 64ad9195cd785d0c93a70b35e02d5a6c7c4a5048
+# cvGPUSpeedup: 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c
+# FastNPP: a1b5e245d7dd70fba23dcb51a0aea80495dbc61d
+# nvcc: 13.4.92 (/home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/nvcc), architectures 89, -fmad on, -lineinfo on
+# hip: none (none), architectures none
+# host compiler: GNU 15.2.0, Release, -march=native, -ftemplate-depth=1000
+# opencv: 4.14.0
+# cpu: AMD Ryzen 9 5950X 16-Core Processor
+# os: Ubuntu 26.04.1 LTS
+# kernel: Linux 7.0.0-38-generic
+# gpu: NVIDIA GeForce RTX 4090, cc 8.9, 128 SMs, 24106 MiB, PCI 0000:09:00.0
+# cuda driver api: 13.3, cuda runtime: 13.4
+# nvidia-smi driver: 610.43.02
+# clocks (sm, mem, max sm, max mem, MHz): 2685 MHz, 10251 MHz, 3105 MHz, 10501 MHz
+# power limit, temperature at start: 450.00 W, 43
+seed,comparison,n,identical,differing,max_abs_difference,nan_a,nan_b
+0,M1listing_vs_M1,1228800,1,0,0,0,0
+0,M1shortlisting_vs_M1,1228800,1,0,0,0,0
+0,M1_vs_R1,1228800,1,0,0,0,0
+0,M2_vs_R2,1228800,1,0,0,0,0
+0,R1_vs_R2,1228800,0,1227896,1.14883769,0,0
+0,M1_vs_M2,1228800,0,1227896,1.14883769,0,0
+1,M1listing_vs_M1,1228800,1,0,0,0,0
+1,M1shortlisting_vs_M1,1228800,1,0,0,0,0
+1,M1_vs_R1,1228800,1,0,0,0,0
+1,M2_vs_R2,1228800,1,0,0,0,0
+1,R1_vs_R2,1228800,0,1227858,1.20168179,0,0
+1,M1_vs_M2,1228800,0,1227858,1.20168179,0,0
+2,M1listing_vs_M1,1228800,1,0,0,0,0
+2,M1shortlisting_vs_M1,1228800,1,0,0,0,0
+2,M1_vs_R1,1228800,1,0,0,0,0
+2,M2_vs_R2,1228800,1,0,0,0,0
+2,R1_vs_R2,1228800,0,1227884,1.20363176,0,0
+2,M1_vs_M2,1228800,0,1227884,1.20363176,0,0

@@ -1,0 +1,35 @@
+# experiment: test_NPP_cpu_batchresize_x_split3D
+# notes: Host time to enqueue the work of one frame (steady_clock, no synchronisation inside). Each side owns its frame copy and its output. Everything a side does for a frame is timed, building its batch included, because the crop locations may change on every image: NPP computes the source pointer of every crop in the call; FastNPP fills its descriptor and ROI arrays and builds its operations in the call. NPP's batched-resize descriptors point at NPP's own images with full-image ROIs and are set up once.
+# repo: fkl-benchmarks 836a98e025bb4182528cbf47f082d548a943fbac
+# fkl: 64ad9195cd785d0c93a70b35e02d5a6c7c4a5048
+# cvGPUSpeedup: 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c
+# FastNPP: a1b5e245d7dd70fba23dcb51a0aea80495dbc61d
+# nvcc: 13.4.92 (/home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/nvcc), architectures 89, -fmad on, -lineinfo on
+# hip: none (none), architectures none
+# host compiler: GNU 15.2.0, Release, -march=native, -ftemplate-depth=1000
+# opencv: 4.14.0
+# cpu: AMD Ryzen 9 5950X 16-Core Processor
+# os: Ubuntu 26.04.1 LTS
+# kernel: Linux 7.0.0-38-generic
+# gpu: NVIDIA GeForce RTX 4090, cc 8.9, 128 SMs, 24106 MiB, PCI 0000:09:00.0
+# cuda driver api: 13.3, cuda runtime: 13.4
+# nvidia-smi driver: 610.43.02
+# clocks (sm, mem, max sm, max mem, MHz): 2685 MHz, 10251 MHz, 3105 MHz, 10501 MHz
+# power limit, temperature at start: 450.00 W, 43
+Batch size, NPP MeanTime, NPP TimeVariance, NPP MaxTime, NPP MinTime, FK MeanTime, FK TimeVariance, FK MaxTime, FK MinTime, Mean Speedup
+2, 0.0281446, 3.17497e-05, 0.072849, 0.02646, 0.00189239, 1.28599e-07, 0.00529, 0.001769, 14.9525
+12, 0.157694, 1.99958e-05, 0.189218, 0.154009, 0.00259838, 2.25252e-07, 0.00707, 0.00245, 61.4278
+22, 0.282955, 2.02899e-05, 0.302207, 0.277187, 0.00261557, 1.35064e-07, 0.00606, 0.00244, 109.167
+32, 0.412157, 3.02886e-05, 0.444526, 0.405415, 0.00290818, 1.52724e-07, 0.006519, 0.00271, 142.949
+42, 0.542153, 1.91288e-05, 0.565964, 0.534854, 0.00313598, 7.98762e-08, 0.0058, 0.00298, 173.654
+52, 0.672857, 4.72236e-05, 0.698672, 0.663513, 0.00349767, 1.6795e-07, 0.00672, 0.00331, 193.893
+62, 0.805619, 2.94378e-05, 0.829171, 0.798471, 0.00384006, 3.90788e-07, 0.00792, 0.00358, 212.802
+72, 0.934209, 5.8754e-05, 0.9678, 0.92472, 0.00417177, 3.63762e-07, 0.00783, 0.00388, 226.734
+82, 1.05789, 4.54911e-05, 1.08785, 1.04726, 0.00437305, 2.82267e-07, 0.00798, 0.00416, 243.928
+92, 1.18635, 6.14571e-05, 1.22045, 1.17479, 0.00466154, 2.56279e-07, 0.00942, 0.00447, 256.058
+102, 1.32128, 9.02839e-05, 1.37209, 1.30941, 0.00508833, 1.04107e-06, 0.01395, 0.00478, 264.173
+112, 1.45216, 0.000107662, 1.54399, 1.44334, 0.00530191, 3.1465e-07, 0.00978, 0.00508, 275.694
+122, 1.57004, 0.000313096, 1.62791, 1.54306, 0.00560563, 2.70753e-07, 0.01039, 0.00538, 281.45
+132, 1.69022, 0.00015911, 1.7689, 1.67627, 0.00602185, 4.25868e-07, 0.01118, 0.00575, 282.571
+142, 1.82303, 0.000114023, 1.87535, 1.81223, 0.00630123, 6.27335e-07, 0.01306, 0.00603, 291.711
+152, 1.95436, 0.000146679, 2.00556, 1.94002, 0.00655928, 3.05889e-07, 0.01181, 0.006339, 299.165
