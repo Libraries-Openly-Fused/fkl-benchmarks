@@ -256,10 +256,9 @@ void runCase(const Geometry& g, const std::vector<unsigned char>& noise, cudaStr
         }
     };
     auto launchFklHalf = [&] {
-        using HalfPixelResize = fk::Resize<fk::InterpolationType::INTER_LINEAR, fk::AspectRatio::IGNORE_AR, NullType, fk::ResizeSampling::HALF_PIXEL>;
         if constexpr (frame) {   // a single frame is not a batch: the read is a read of the frame
             fk::executeOperations<fk::TransformDPP<fk::ParArch::GPU_NVIDIA, fk::TF::DISABLED>>(fkStream,
-                fk::PerThreadRead<fk::ND::_2D, uchar3>::build(dInput).then(HalfPixelResize::build(fk::Size(g.outW, g.outH))),
+                fk::PerThreadRead<fk::ND::_2D, uchar3>::build(dInput).then(fk::Resize<fk::InterpolationType::INTER_LINEAR, fk::AspectRatio::IGNORE_AR, NullType, fk::ResizeSampling::HALF_PIXEL>::build(fk::Size(g.outW, g.outH))),
                 fk::VectorReorder<float3, 2, 1, 0>::build(), fk::Mul<float3>::build(make_float3(ALPHA, ALPHA, ALPHA)),
                 fk::Sub<float3>::build(make_float3(SUBV[0], SUBV[1], SUBV[2])), fk::Div<float3>::build(make_float3(DIVV[0], DIVV[1], DIVV[2])),
                 fk::TensorSplit<float3>::build(dTensor.ptr()));
@@ -267,7 +266,7 @@ void runCase(const Geometry& g, const std::vector<unsigned char>& noise, cudaStr
             std::array<fk::Ptr2D<uchar3>, BATCH> crops;
             for (int i = 0; i < BATCH; ++i) crops[i] = dInput.crop2D(fk::Rect(g.x0(i), g.y0(i), g.cropW, g.cropH));
             fk::executeOperations<fk::TransformDPP<fk::ParArch::GPU_NVIDIA, fk::TF::DISABLED>>(fkStream,
-                fk::PerThreadRead<fk::ND::_2D, uchar3>::build(crops).then(HalfPixelResize::build(fk::Size(g.outW, g.outH))),
+                fk::PerThreadRead<fk::ND::_2D, uchar3>::build(crops).then(fk::Resize<fk::InterpolationType::INTER_LINEAR, fk::AspectRatio::IGNORE_AR, NullType, fk::ResizeSampling::HALF_PIXEL>::build(fk::Size(g.outW, g.outH))),
                 fk::VectorReorder<float3, 2, 1, 0>::build(), fk::Mul<float3>::build(make_float3(ALPHA, ALPHA, ALPHA)),
                 fk::Sub<float3>::build(make_float3(SUBV[0], SUBV[1], SUBV[2])), fk::Div<float3>::build(make_float3(DIVV[0], DIVV[1], DIVV[2])),
                 fk::TensorSplit<float3>::build(dTensor.ptr()));
@@ -351,9 +350,6 @@ void runCase(const Geometry& g, const std::vector<unsigned char>& noise, cudaStr
         FKLB_CUDA_CHECK(cudaMallocPitch(reinterpret_cast<void**>(&stackA), &upStep, static_cast<size_t>(g.outW) * 3 * sizeof(Npp32f), static_cast<size_t>(BATCH) * g.outH));
         FKLB_CUDA_CHECK(cudaMallocPitch(reinterpret_cast<void**>(&stackB), &upStepB, static_cast<size_t>(g.outW) * 3 * sizeof(Npp32f), static_cast<size_t>(BATCH) * g.outH));
         if (upStepB != upStep) throw std::runtime_error("cudaMallocPitch returned different steps for the two stacks");
-        const auto cropImage = [&](const int i) { return reinterpret_cast<Npp32f*>(cropStack + static_cast<size_t>(i) * g.cropH * cropStep); };
-        const auto imageA = [&](const int i) { return reinterpret_cast<Npp32f*>(stackA + static_cast<size_t>(i) * g.outH * upStep); };
-        const auto imageB = [&](const int i) { return reinterpret_cast<Npp32f*>(stackB + static_cast<size_t>(i) * g.outH * upStep); };
         const NppiSize cropSize{g.cropW, g.cropH}, upSize{g.outW, g.outH};
         // NPP's batched-resize descriptors are set up once: they point only at NPP's own crop stack and stack A, with full-image ROIs, so they do
         // not depend on where the crops are in the frame. A single frame does not use them (NPP's batched resize needs more than one image).
@@ -368,10 +364,10 @@ void runCase(const Geometry& g, const std::vector<unsigned char>& noise, cudaStr
             std::vector<NppiImageDescriptor> hSrc(BATCH), hDst(BATCH);
             std::vector<NppiResizeBatchROI_Advanced> hRoi(BATCH);
             for (int i = 0; i < BATCH; ++i) {
-                hSrc[i].pData = cropImage(i);
+                hSrc[i].pData = cropStack + static_cast<size_t>(i) * g.cropH * cropStep;
                 hSrc[i].nStep = static_cast<int>(cropStep);
                 hSrc[i].oSize = cropSize;
-                hDst[i].pData = imageA(i);
+                hDst[i].pData = stackA + static_cast<size_t>(i) * g.outH * upStep;
                 hDst[i].nStep = static_cast<int>(upStep);
                 hDst[i].oSize = upSize;
                 hRoi[i].oSrcRectROI = NppiRect{0, 0, g.cropW, g.cropH};
@@ -391,10 +387,12 @@ void runCase(const Geometry& g, const std::vector<unsigned char>& noise, cudaStr
         auto launch = [&] {
             for (int i = 0; i < BATCH; ++i) {
                 const Npp8u* srcCrop = nppSrc + static_cast<size_t>(g.y0(i)) * nppSrcStep + static_cast<size_t>(g.x0(i)) * 3;
-                FKLB_NPP_CHECK(nppiConvert_8u32f_C3R_Ctx(srcCrop, static_cast<int>(nppSrcStep), cropImage(i), static_cast<int>(cropStep), cropSize, ctx));
+                Npp32f* const crop = reinterpret_cast<Npp32f*>(cropStack + static_cast<size_t>(i) * g.cropH * cropStep);
+                FKLB_NPP_CHECK(nppiConvert_8u32f_C3R_Ctx(srcCrop, static_cast<int>(nppSrcStep), crop, static_cast<int>(cropStep), cropSize, ctx));
             }
             if constexpr (BATCH == 1) {   // a single frame: NPP's single-image resize
-                FKLB_NPP_CHECK(nppiResize_32f_C3R_Ctx(cropImage(0), static_cast<int>(cropStep), cropSize, NppiRect{0, 0, g.cropW, g.cropH}, imageA(0), stepUp, upSize,
+                FKLB_NPP_CHECK(nppiResize_32f_C3R_Ctx(reinterpret_cast<const Npp32f*>(cropStack), static_cast<int>(cropStep), cropSize, NppiRect{0, 0, g.cropW, g.cropH},
+                                                      reinterpret_cast<Npp32f*>(stackA), stepUp, upSize,
                                                       NppiRect{0, 0, g.outW, g.outH}, NPPI_INTER_LINEAR, ctx));
             } else {
                 FKLB_NPP_CHECK(nppiResizeBatch_32f_C3R_Advanced_Ctx(g.outW, g.outH, dSrc, dDst, dRoi, BATCH, NPPI_INTER_LINEAR, ctx));
@@ -402,11 +400,13 @@ void runCase(const Geometry& g, const std::vector<unsigned char>& noise, cudaStr
             for (int i = 0; i < BATCH; ++i) {
                 Npp32f* const planesOut[3] = {nppOut + (static_cast<size_t>(i) * 3 + 0) * g.planeElems(), nppOut + (static_cast<size_t>(i) * 3 + 1) * g.planeElems(),
                                               nppOut + (static_cast<size_t>(i) * 3 + 2) * g.planeElems()};
-                FKLB_NPP_CHECK(nppiSwapChannels_32f_C3R_Ctx(imageA(i), stepUp, imageB(i), stepUp, upSize, order, ctx));
-                FKLB_NPP_CHECK(nppiMulC_32f_C3R_Ctx(imageB(i), stepUp, mulV, imageA(i), stepUp, upSize, ctx));
-                FKLB_NPP_CHECK(nppiSubC_32f_C3R_Ctx(imageA(i), stepUp, subV, imageB(i), stepUp, upSize, ctx));
-                FKLB_NPP_CHECK(nppiDivC_32f_C3R_Ctx(imageB(i), stepUp, divV, imageA(i), stepUp, upSize, ctx));
-                FKLB_NPP_CHECK(nppiCopy_32f_C3P3R_Ctx(imageA(i), stepUp, planesOut, g.outW * static_cast<int>(sizeof(Npp32f)), upSize, ctx));
+                Npp32f* const a = reinterpret_cast<Npp32f*>(stackA + static_cast<size_t>(i) * g.outH * upStep);
+                Npp32f* const b = reinterpret_cast<Npp32f*>(stackB + static_cast<size_t>(i) * g.outH * upStep);
+                FKLB_NPP_CHECK(nppiSwapChannels_32f_C3R_Ctx(a, stepUp, b, stepUp, upSize, order, ctx));
+                FKLB_NPP_CHECK(nppiMulC_32f_C3R_Ctx(b, stepUp, mulV, a, stepUp, upSize, ctx));
+                FKLB_NPP_CHECK(nppiSubC_32f_C3R_Ctx(a, stepUp, subV, b, stepUp, upSize, ctx));
+                FKLB_NPP_CHECK(nppiDivC_32f_C3R_Ctx(b, stepUp, divV, a, stepUp, upSize, ctx));
+                FKLB_NPP_CHECK(nppiCopy_32f_C3P3R_Ctx(a, stepUp, planesOut, g.outW * static_cast<int>(sizeof(Npp32f)), upSize, ctx));
             }
         };
         if (g.batch == BATCHES[0] || frame) {
