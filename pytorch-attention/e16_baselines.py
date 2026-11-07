@@ -14,30 +14,36 @@
 # limitations under the License.
 """E16: forward attention baselines, the counterpart of fkl-self/attention/e16_attention.cu (same configurations, same columns).
 
-  CUDA_DEVICE_ORDER=PCI_BUS_ID CUDA_VISIBLE_DEVICES=1 python pytorch-attention/e16_baselines.py --out e16_baselines.csv
+  CUDA_DEVICE_ORDER=PCI_BUS_ID CUDA_VISIBLE_DEVICES=1 python pytorch-attention/e16_baselines.py --out e16_baselines.csv --input-dir DIR
       [--dims 64,128] [--seqs 512,1024,2048,4096,8192] [--tokens 262144] [--bh 0] [--causal 0,1] [--backends flash,cudnn,efficient,math,flash_attn,triton,dequant_flash,dequant_compiled_flash,epilogue_flash]
 
-The same configurations as the C++ program: bf16 Q, K, V of shape (BH, S, D) (contiguous, the memory layout of the FKL program; PyTorch sees them as (1, BH, S, D), flash-attn as the view (1, S, BH, D)),
+The same configurations and the same input bytes as the C++ program: the file e16_input_d<D>_s<S>_bh<BH>.bin of --input-dir, written by whichever FKL program runs first (fkl-self/attention/
+e16_attention.cu or e16_query_tile.cu; raw bytes in the native little-endian order: Q, K, V in bf16, then K and V
+in int8, each followed by its fp32 per-token scales, then K and V in e4m3 with their scales; the e4m3 data is not used here). bf16 Q, K, V of shape (BH, S, D) (contiguous, the memory layout of the FKL program;
+PyTorch sees them as (1, BH, S, D), flash-attn as the view (1, S, BH, D)),
 BH = max(min_bh, tokens / S) heads so that BH x S is the same for every S (or --bh heads for every S), causal or not, fp32 accumulation inside every kernel. Per variant and configuration: the time per call from
 `--iters` blocks of back-to-back calls between two CUDA events (each block about `--block-ms` long: the GPU time of the call, with no gap for the host between calls) and the median of `--iters` single synchronised
 calls (the launch latency of the call is in it), TFLOP/s = 4 BH S^2 D (halved for causal) / time, the largest and mean absolute error of the output against an fp32 attention of the same inputs on the same GPU (the
-math backend in fp32, for `--error-heads` heads: the first ones), and the kernels of one call (CUPTI, one extra untimed call under torch.profiler). Variants:
+math backend in fp32, for the first and the last head, the heads the FKL program checks), and the kernels of one call (CUPTI, one extra untimed call under torch.profiler). Variants:
   flash           torch.nn.functional.scaled_dot_product_attention with SDPBackend.FLASH_ATTENTION (FlashAttention-2)
   cudnn           the same with SDPBackend.CUDNN_ATTENTION
   efficient       the same with SDPBackend.EFFICIENT_ATTENTION
   math            the same with SDPBackend.MATH (materialises S x S; skipped when it would take more than --max-math-gb)
   flash_attn      flash_attn.flash_attn_func of the flash-attn package
   triton          the forward kernel of triton/e16_fused_attention_fwd.py (the fused-attention tutorial kernel of Triton, forward only, its autotuner as shipped)
-  dequant_flash   the unfused alternative of the compressed KV cache: K and V are int8 with one scale per token (kept in bf16), dequantised by one PyTorch elementwise kernel each (int8 * bf16 -> bf16), then flash
+  dequant_flash   the unfused alternative of the compressed KV cache: K and V are int8 with one fp32 scale per token (those of the FKL program), dequantised by one PyTorch elementwise kernel each
+                  (int8 * fp32, rounded to bf16 in the same kernel: the arithmetic of the FKL program's dequantisation kernel), then flash
   dequant_compiled_flash   the same with the dequantisation of K and V compiled by torch.compile (TorchInductor), then flash; its kernel count is the CUPTI count of the row
   epilogue_flash  the unfused alternative of the epilogue o * a + b: flash, then one PyTorch elementwise kernel (torch.addcmul with the scalars as 0-dim tensors)
 dequant_flash, dequant_compiled_flash and epilogue_flash are compositions of off-the-shelf pieces that a user has today (elementwise kernels around the flash kernel). They are NOT a hand-fused quantised-cache attention
 kernel such as the ones in serving systems, and not the best that could be written for these two cases.
 A variant that cannot run a configuration (not supported on the GPU, out of memory) writes a row with its message in `note` and no time.
+Preparation: none (column prep_us_per_call = "none"). The tensors exist before timing, and torch.compile and Triton's autotuner run once before timing (the probe, the first call of every variant).
 """
 import argparse
 import csv
 import datetime
+import hashlib
 import math
 import os
 import platform
@@ -54,7 +60,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(os.path.dirname(HERE), "triton"))
 
 COLUMNS = ["gpu", "variant", "d", "seq", "bh", "causal", "position", "blocks", "calls_per_block", "t_start_ms", "t_end_ms", "time_ms_median", "time_ms_min", "time_ms_max", "single_ms_median", "tflops_median",
-           "max_abs_err", "mean_abs_err", "kernels", "schedule", "block_q", "block_kv", "num_warps", "split_kv", "kernel_facts", "note"]
+           "max_abs_err", "mean_abs_err", "kernels", "schedule", "block_q", "block_kv", "num_warps", "split_kv", "kernel_facts", "note", "prep_us_per_call"]
 
 
 def flops(bh, seq, d, causal):
@@ -108,13 +114,13 @@ def _sdpa_call(backend, q, k, v, causal):
 
 
 def reference(q, k, v, causal, heads):
-    """fp32 attention of the first `heads` heads from the bf16 inputs (the math backend, fp32)."""
+    """fp32 attention of the heads `heads` (a list of indices) from the bf16 inputs (the math backend, fp32)."""
     with sdpa_kernel(SDPBackend.MATH):
-        return F.scaled_dot_product_attention(q[:, :heads].float(), k[:, :heads].float(), v[:, :heads].float(), is_causal=causal)
+        return F.scaled_dot_product_attention(q[:, heads].float(), k[:, heads].float(), v[:, heads].float(), is_causal=causal)
 
 
 def errors(out, ref, heads):
-    diff = (out[:, :heads].float() - ref).abs()
+    diff = (out[:, heads].float() - ref).abs()
     return diff.max().item(), diff.mean().item()
 
 
@@ -160,7 +166,15 @@ def os_kernel_lines():
     return [f"# os: {name}", f"# kernel: {u.sysname} {u.release}"]
 
 
-def header_lines(probes, unavailable):
+def file_sha256(path):
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(1 << 20), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def header_lines(probes, unavailable, inputs):
     lines = ["# experiment: E16 forward attention baselines (PyTorch SDPA backends, flash-attn, Triton)", f"# date: {datetime.datetime.now().isoformat(timespec='seconds')}"]
     props = torch.cuda.get_device_properties(0)
     lines += os_kernel_lines()
@@ -189,8 +203,11 @@ def header_lines(probes, unavailable):
         lines.append(f"# unavailable {name}: {why}")
     lines.append("# note: dequant_flash, dequant_compiled_flash and epilogue_flash are compositions of off-the-shelf PyTorch pieces that a user has today (elementwise kernels around the flash kernel); they are not a hand-fused "
                  "quantised-cache attention kernel such as the ones in serving systems, and not the best that could be written for these two cases")
-    lines.append("# input: bf16 normal(0, 1), seeded; layout (BH, S, D) contiguous; time = per call from blocks of back-to-back calls between two CUDA events, single = one synchronised call; warm-up before; "
-                 "fp32 accumulation inside the kernels")
+    lines.append("# input: the files e16_input_d<D>_s<S>_bh<BH>.bin written by whichever FKL program runs first (the bytes of the FKL program: bf16 Q, K, V, int8 K and V with fp32 per-token scales); "
+                 "layout (BH, S, D) contiguous; time = per call from blocks of back-to-back calls between two CUDA events, single = one synchronised call; warm-up before; fp32 accumulation inside the kernels")
+    lines.append("# preparation: none (prep_us_per_call = none): the tensors exist before timing, and torch.compile and Triton's autotuner run once before timing")
+    for path, size, digest in inputs:
+        lines.append(f"# input file: {path} {size} bytes sha256 {digest}")
     return lines
 
 
@@ -209,11 +226,10 @@ def main():
     ap.add_argument("--warmup", type=int, default=10)
     ap.add_argument("--warmup-ms", type=float, default=300.0, help="the warm-up lasts at least this much GPU time")
     ap.add_argument("--rotate", type=int, default=0, help="offset of the order of the groups of variants (the long runs use 0, 1, 2)")
-    ap.add_argument("--error-heads", type=int, default=2)
     ap.add_argument("--max-math-gb", type=float, default=2.0)
     ap.add_argument("--epi-a", type=float, default=1.25)
     ap.add_argument("--epi-b", type=float, default=0.5)
-    ap.add_argument("--seed", type=int, default=424242)
+    ap.add_argument("--input-dir", required=True, help="the folder of the input files e16_input_d<D>_s<S>_bh<BH>.bin of the FKL program")
     a = ap.parse_args()
     dev = torch.device("cuda", 0)
     gpu = torch.cuda.get_device_name(0)
@@ -239,7 +255,7 @@ def main():
             from torch import _dynamo   # not "import torch._dynamo": inside a function that would make `torch` a local name of main()
             _dynamo.config.cache_size_limit = 256   # one compiled graph per configuration (the default of 8 would silently fall back to eager)
             _dynamo.config.accumulated_cache_size_limit = 1024
-            deq_compiled = torch.compile(lambda k8_, ks_, v8_, vs_: (k8_ * ks_[..., None], v8_ * vs_[..., None]), dynamic=False)
+            deq_compiled = torch.compile(lambda k8_, ks_, v8_, vs_: ((k8_ * ks_[..., None]).to(torch.bfloat16), (v8_ * vs_[..., None]).to(torch.bfloat16)), dynamic=False)
         except Exception as e:  # noqa: BLE001
             unavailable["dequant_compiled_flash"] = clean(f"torch.compile failed, {first_line(e)}")
             print(f"dequant_compiled_flash unavailable: {unavailable['dequant_compiled_flash']}")
@@ -250,13 +266,23 @@ def main():
     if triton_fwd is not None:
         calls["triton"] = lambda q, k, v, c: triton_fwd(q, k, v, c)
     if deq_compiled is not None:
-        calls["dequant_compiled_flash"] = lambda q, k, v, c: deq_compiled(torch.ones_like(k, dtype=torch.int8), torch.ones(k.shape[:-1], device=k.device, dtype=torch.bfloat16),
-                                                                             torch.ones_like(v, dtype=torch.int8), torch.ones(v.shape[:-1], device=v.device, dtype=torch.bfloat16))
+        calls["dequant_compiled_flash"] = lambda q, k, v, c: deq_compiled(torch.ones_like(k, dtype=torch.int8), torch.ones(k.shape[:-1], device=k.device, dtype=torch.float32),
+                                                                             torch.ones_like(v, dtype=torch.int8), torch.ones(v.shape[:-1], device=v.device, dtype=torch.float32))
+    # every configuration's input file is checked and hashed before the CSV is opened: a missing file must not leave a partial CSV
+    inputs = []
+    for d in [int(x) for x in a.dims.split(",")]:
+        for seq in [int(x) for x in a.seqs.split(",")]:
+            bh = a.bh if a.bh > 0 else max(a.min_bh, a.tokens // seq)
+            path = os.path.join(a.input_dir, f"e16_input_d{d}_s{seq}_bh{bh}.bin")
+            size = 10 * bh * seq * d + 16 * bh * seq
+            if not os.path.isfile(path) or os.path.getsize(path) != size:
+                raise SystemExit(f"{path}: missing or not {size} bytes (run an FKL E16 program with E16_INPUT_DIR={a.input_dir} first)")
+            inputs.append((path, size, file_sha256(path)))
     probes = probe(dev, calls)
     for name, result in probes.items():
         print(f"probe {name}: {result}", flush=True)
     with open(a.out, "w", newline="") as f:
-        for line in header_lines(probes, unavailable):
+        for line in header_lines(probes, unavailable, inputs):
             f.write(line + "\n")
         w = csv.writer(f)
         w.writerow(COLUMNS)
@@ -264,27 +290,36 @@ def main():
         for d in [int(x) for x in a.dims.split(",")]:
             for seq in [int(x) for x in a.seqs.split(",")]:
                 bh = a.bh if a.bh > 0 else max(a.min_bh, a.tokens // seq)
-                gen = torch.Generator(device=dev).manual_seed(a.seed + 1000 * d + seq)
-                q = torch.randn(1, bh, seq, d, device=dev, dtype=torch.bfloat16, generator=gen)
-                k = torch.randn(1, bh, seq, d, device=dev, dtype=torch.bfloat16, generator=gen)
-                v = torch.randn(1, bh, seq, d, device=dev, dtype=torch.bfloat16, generator=gen)
-                # int8 per-token compressed K and V (the scales as the cache would keep them, in bf16), and the 0-dim tensors of the epilogue
-                ks = (k.float().abs().amax(dim=-1) / 127.0).clamp_min(1e-8)
-                vs = (v.float().abs().amax(dim=-1) / 127.0).clamp_min(1e-8)
-                k8 = torch.round(k.float() / ks[..., None]).clamp(-127, 127).to(torch.int8)
-                v8 = torch.round(v.float() / vs[..., None]).clamp(-127, 127).to(torch.int8)
-                ks16, vs16 = ks.to(torch.bfloat16), vs.to(torch.bfloat16)
+                # the inputs of the FKL program: Q, K, V (bf16) and K and V in int8 with their fp32 per-token scales, read from its file (the layout is in the docstring)
+                path = os.path.join(a.input_dir, f"e16_input_d{d}_s{seq}_bh{bh}.bin")
+                n, tokens = bh * seq * d, bh * seq
+                raw = torch.from_file(path, shared=False, size=10 * n + 16 * tokens, dtype=torch.uint8)
+                offsets = {}
+                at = 0
+                for name, size in (("q", 2 * n), ("k", 2 * n), ("v", 2 * n), ("k8", n), ("ks", 4 * tokens), ("v8", n), ("vs", 4 * tokens)):
+                    offsets[name] = (at, at + size)
+                    at += size
+                part = lambda name: raw[offsets[name][0]:offsets[name][1]]
+                q = part("q").view(torch.bfloat16).reshape(1, bh, seq, d).to(dev)
+                k = part("k").view(torch.bfloat16).reshape(1, bh, seq, d).to(dev)
+                v = part("v").view(torch.bfloat16).reshape(1, bh, seq, d).to(dev)
+                k8 = part("k8").view(torch.int8).reshape(1, bh, seq, d).to(dev)
+                v8 = part("v8").view(torch.int8).reshape(1, bh, seq, d).to(dev)
+                ks = part("ks").view(torch.float32).reshape(1, bh, seq).to(dev)
+                vs = part("vs").view(torch.float32).reshape(1, bh, seq).to(dev)
+                del raw
+                # the 0-dim tensors of the epilogue
                 epi_a = torch.tensor(a.epi_a, device=dev, dtype=torch.bfloat16)
                 epi_b = torch.tensor(a.epi_b, device=dev, dtype=torch.bfloat16)
                 for causal in [bool(int(x)) for x in a.causal.split(",")]:
-                    heads = min(a.error_heads, bh)
+                    heads = [0, bh - 1] if bh > 1 else [0]   # the first and the last head, as the FKL program
                     ref = reference(q, k, v, causal, heads)
                     ref_deq = ref_epi = None
                     if "dequant_flash" in backends or deq_compiled is not None:
-                        kd32 = k8[:, :heads].float() * ks[:, :heads, :, None]
-                        vd32 = v8[:, :heads].float() * vs[:, :heads, :, None]
+                        kd32 = k8[:, heads].float() * ks[:, heads, :, None]
+                        vd32 = v8[:, heads].float() * vs[:, heads, :, None]
                         with sdpa_kernel(SDPBackend.MATH):
-                            ref_deq = F.scaled_dot_product_attention(q[:, :heads].float(), kd32, vd32, is_causal=causal)
+                            ref_deq = F.scaled_dot_product_attention(q[:, heads].float(), kd32, vd32, is_causal=causal)
                     if "epilogue_flash" in backends:
                         ref_epi = ref * a.epi_a + a.epi_b
 
@@ -299,10 +334,11 @@ def main():
                         try:
                             out = fn()
                             ms, lo, hi, single, reps, t0, t1 = measure(fn, a.warmup, a.iters, a.block_ms, a.warmup_ms)
-                            n, names = kernels_of(fn)
+                            nk, names = kernels_of(fn)
                             mx, mean = errors(out.reshape(1, bh, seq, d), ref if ref_for is None else ref_for, heads)
                             emit(name, position, blocks=a.iters, calls_per_block=reps, t_start_ms=t0, t_end_ms=t1, time_ms_median=f"{ms:.5f}", time_ms_min=f"{lo:.5f}", time_ms_max=f"{hi:.5f}", single_ms_median=f"{single:.5f}",
-                                 tflops_median=f"{flops(bh, seq, d, causal) / (ms * 1e-3) / 1e12:.3f}", max_abs_err=f"{mx:.6g}", mean_abs_err=f"{mean:.6g}", kernels=n, kernel_facts=clean(names))
+                                 tflops_median=f"{flops(bh, seq, d, causal) / (ms * 1e-3) / 1e12:.3f}", max_abs_err=f"{mx:.6g}", mean_abs_err=f"{mean:.6g}", kernels=nk, kernel_facts=clean(names),
+                                 prep_us_per_call="none")
                         except Exception as e:  # noqa: BLE001
                             emit(name, position, blocks=0, note=clean(first_line(e)))
                             torch.cuda.empty_cache()
@@ -317,13 +353,13 @@ def main():
                         return fn
 
                     def fn_deq():
-                        kk = k8 * ks16[..., None]    # int8 * bf16 -> bf16: one elementwise kernel
-                        vv = v8 * vs16[..., None]
+                        kk = torch.mul(k8, ks[..., None], out=torch.empty_like(k))    # int8 * fp32, rounded to bf16 in the same elementwise kernel
+                        vv = torch.mul(v8, vs[..., None], out=torch.empty_like(v))
                         with sdpa_kernel(SDPBackend.FLASH_ATTENTION):
                             return F.scaled_dot_product_attention(q, kk, vv, is_causal=causal)
 
                     def fn_deq_compiled():
-                        kk, vv = deq_compiled(k8, ks16, v8, vs16)    # compiled by TorchInductor
+                        kk, vv = deq_compiled(k8, ks, v8, vs)    # compiled by TorchInductor
                         with sdpa_kernel(SDPBackend.FLASH_ATTENTION):
                             return F.scaled_dot_product_attention(q, kk, vv, is_causal=causal)
 
@@ -368,7 +404,7 @@ def main():
                                 position += 1
                                 run(name, fn, ref_for, position)
                     config_index += 1
-                del q, k, v, k8, v8
+                del q, k, v, k8, v8, ks, vs
                 torch.cuda.empty_cache()
 
 
