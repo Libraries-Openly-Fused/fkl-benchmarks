@@ -13,8 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# E0: re-run the existing experiments of the paper on the RTX 4090, one at a time, from a build of this repository. Since 2026-11-07 only
-# e0-cpu-time-opencv, e0-cpu-time-npp and e0-npp run: the frozen 2025 experiments refuse to run (FROZEN below).
+# E0: re-run the existing experiments of the paper on the RTX 4090, one at a time, from a build of this repository. Only e0-cpu-time-opencv,
+# e0-cpu-time-npp and e0-npp run: the frozen 2025 experiments refuse to run (FROZEN below).
 #
 #   scripts/run_e0.sh --list
 #   scripts/run_e0.sh [--only NAME]...          (default: every experiment that is not frozen, in the order of --list; asking for a
@@ -23,7 +23,7 @@
 # Environment: source scripts/env-cuda13.4.sh with CUDA_VISIBLE_DEVICES set to the RTX 4090; BUILD=<build dir> (default
 # build/local-rtx4090). Each experiment runs in results/rtx4090/<name>/ (stdout.txt, stderr.txt, exit_code.txt, the CSVs the
 # benchmark writes in its working directory). Refuses to run when
-#   - the experiment is frozen (Oscar's rule of 2026-11-07, FROZEN below),
+#   - the experiment is frozen (FROZEN below: the paper keeps its published 2025 results),
 #   - the tracked files have uncommitted changes (the CSV header would say -dirty; set FKLB_ALLOW_DIRTY=1 to override),
 #   - another process uses the GPU (the measurement would be contended; the desktop session's own processes are ignored),
 #   - results/rtx4090/<name>/ already holds files (move them away; nothing is overwritten).
@@ -50,10 +50,10 @@ EXPERIMENTS=(
   "e0-vf-mul-add|benchmark_vertical_fusionCompareMulAdd_cu|VF + HF mul_add (batch 50) + CUDA Graphs (hours)"
 )
 
-# The frozen 2025 experiments: their programs are never run again, from any build and for any purpose (Oscar's rule of 2026-11-07, passed on by
-# the coordinator). Compiling them, reading them and comparing their SASS stay allowed; this runner only refuses to execute them.
+# The frozen 2025 experiments: the paper keeps their published results, so their programs are not run again, from any build and for any
+# purpose. Compiling them, reading them and comparing their SASS remain allowed; this runner only refuses to execute them.
 FROZEN="e0-latency-hiding e0-numinstructions e0-wrapper-overhead e0-data-type e0-data-size e0-hf e0-graph-instantiate e0-vf-mul-add1 e0-vf-mul1 e0-vf-mul-add"
-FROZEN_RULE="frozen 2025 experiment, never run again (Oscar's rule of 2026-11-07: \"Make sure the benchmark agents do not execute any of the benchmarks that I told you not to change in the paper.\")"
+FROZEN_RULE="frozen 2025 experiment: the paper keeps its published results, and this program is not run again (compiling it and comparing its SASS remain allowed)"
 is_frozen() { [[ " $FROZEN " == *" $1 "* ]]; }
 
 if [ "${1:-}" = "--list" ]; then
