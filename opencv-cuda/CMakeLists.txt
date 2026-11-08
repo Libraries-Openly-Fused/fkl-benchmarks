@@ -52,14 +52,15 @@ fklb_add_benchmark(opencv_parity_probe
     BACKENDS cu LIBS cvgs opencv
     SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/parity/opencv_parity_probe.cu")
 
-# E4a (batches of crops) and E4c (whole frames): the pre-processing chain of a DNN, FKL against OpenCV-CUDA and NPP. It needs common/resize_reference.h (fkl-benchmarks PR #2),
-# so the target exists only when that header is present.
+# E4a (batches of crops) and E4c (whole frames): the pre-processing chain of a DNN, FKL against OpenCV-CUDA and NPP; on the batches also FKL against the hand-written
+# kernels of E1c and cvGPUSpeedup (hence cvgs) against OpenCV-CUDA. It needs common/resize_reference.h (fkl-benchmarks PR #2), so the target exists only when that
+# header is present.
 if(EXISTS "${CMAKE_SOURCE_DIR}/common/resize_reference.h")
     set(E4A_BATCHES "10,20,30,40,50,60,70,80,90,100,110,120,130,140,150,160,170,180,190,200,210,220,230,240,250,260,270,280,290,300" CACHE STRING "E4a batch sizes (compile time)")
     string(REPLACE ";" "," E4A_BATCHES_LIST "${E4A_BATCHES}")
     configure_file("${CMAKE_CURRENT_SOURCE_DIR}/batched-preprocessing/e4_batches.h.in" "${CMAKE_CURRENT_BINARY_DIR}/e4_batches.h" @ONLY)
     fklb_add_benchmark(e4_preprocessing
-        BACKENDS cu LIBS fkl opencv npp
+        BACKENDS cu LIBS fkl cvgs opencv npp
         SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/batched-preprocessing/e4_preprocessing.cu"
         INCLUDE_DIRS "${CMAKE_CURRENT_BINARY_DIR}")
 else()
