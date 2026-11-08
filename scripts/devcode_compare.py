@@ -46,44 +46,48 @@ def code_object(llvm, arch, exe, tmpdir):
 
 
 def digest(lines):
-    """sha256 of the instruction text of a function, without the trailing '...' lines (llvm-objdump prints '...' for a run of 8 or more zero
-    bytes that it does not disassemble; after the last instruction of a function that is the padding before the next one, which moves with the
-    layout of the code object). A '...' inside a function is kept and compared."""
-    end = len(lines)
-    while end > 0 and lines[end - 1] == '...':
-        end -= 1
-    return hashlib.sha256('\n'.join(lines[:end]).encode()).hexdigest()
+    """sha256 of the instruction text of a symbol."""
+    return hashlib.sha256('\n'.join(lines).encode()).hexdigest()
 
 
 def functions(llvm, co, labels_as_symbols):
-    """{name: sha256 of the instruction text} of the code object."""
-    out = {}
-    cur, name = None, None
-    prev_name, prev_cur = None, None
+    """{name: sha256 of the instruction text} of the code object.
+
+    The symbols of the disassembly are grouped: a function, then the local branch targets (L<n>) inside it, up to the next function. Only the
+    '...' lines after the last instruction of a group are left out: llvm-objdump prints '...' for a run of 8 or more zero bytes that it does not
+    disassemble, and at the end of a function that is the padding before the next one, which moves with the layout of the code object. A '...'
+    anywhere else, also at the end of a branch-target block inside a function, is kept and compared. By default a function is hashed with the text
+    of its branch targets and their references normalised; with labels_as_symbols every symbol is hashed on its own, with its numbers."""
+    groups = []   # [[name, lines], ...] per function: the function first, then its branch targets
     p = subprocess.Popen([llvm + '/llvm-objdump', '-d', '--symbolize-operands', co], stdout=subprocess.PIPE, text=True,
                          errors='replace')
     for line in p.stdout:
         line = line.rstrip('\n')
         m = HEADER.match(line)
         if m:
-            if name is not None:
-                out[name] = digest(cur)
-            name, cur = CUID.sub('__hip_cuid_@', m.group(1)), []
-            if not labels_as_symbols and LABEL_NAME.fullmatch(name):
-                # a local branch target, not a function: its text belongs to the function before it
-                name, cur = prev_name, prev_cur
+            name = CUID.sub('__hip_cuid_@', m.group(1))
+            if LABEL_NAME.fullmatch(name) and groups:
+                groups[-1].append([name, []])
             else:
-                prev_name, prev_cur = name, cur
+                groups.append([[name, []]])
             continue
-        if name is None:
+        if not groups:
             continue
         code = line.split('//', 1)[0].strip()
         if code:
             code = CUID.sub('__hip_cuid_@', code)
-            cur.append(code if labels_as_symbols else LABEL.sub('L@', code))
-    if name is not None:
-        out[name] = digest(cur)
+            groups[-1][-1][1].append(code if labels_as_symbols else LABEL.sub('L@', code))
     p.wait()
+    out = {}
+    for group in groups:
+        last = group[-1][1]
+        while last and last[-1] == '...':   # the padding after the last instruction of the function
+            last.pop()
+        if labels_as_symbols:
+            for name, lines in group:
+                out[name] = digest(lines)
+        else:
+            out[group[0][0]] = digest([code for _, lines in group for code in lines])
     return out
 
 
