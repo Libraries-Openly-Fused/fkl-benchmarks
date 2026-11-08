@@ -24,7 +24,8 @@ in both.
     crops of any location and size, with its library-free CPU function `handRoiParameters`).
 
   The header of `rpp/benchmark_rpp_preprocessing.h` describes them.
-- **New columns:** each timing row also records the memory clock and the PCIe link speed and width, at the start of the warm-up, at the start of
+- **New columns:** each timing row also records the memory clock and the speed and width of the GPU function's own PCIe link (inside the card;
+  see "The PCIe columns" below), at the start of the warm-up, at the start of
   the timed runs and after them.
 
 **The FKL time of the hand ratios** is the `fkl_fused` of the same point. The rotation over eight variants puts it at another position than the
@@ -150,12 +151,30 @@ Each variant is compared with the median of its three runs at its batch.
 - **It is not only FKL.** In this run the hand-written kernels are faster in the same points too. The fused pipeline kernels are all affected,
   and the variants that are bound by many launches or copies are not. The effect is largest for the kernels with the largest parameter blocks.
 - **This revises the interim note.** In the hand_batch runs, `hand_batch` was not faster in FKL's fast points.
-- **The new columns do not explain it.**
-  - The PCIe link read 32 GT/s x16 at every reading of every row.
+- **The clock readings do not explain it.**
   - The memory clock was at 1,124 MHz in 12 of the 14 fast `fkl_fused` rows and in 71 of the 76 others.
   - The graphics clock at the start of the timed runs had a median of 3,113 MHz in the fast rows and 3,156 MHz in the others.
   - These are single readings at three moments, not during the timed runs.
+- **The PCIe columns cannot answer it.** They read the card-internal link (next section), which is constant by construction. They say nothing
+  about the link to the host.
 - **Cause:** unknown.
+
+## The PCIe columns read the card-internal link
+
+`pcie_gts_*` and `pcie_width_*` read `current_link_speed` and `current_link_width` of `/sys/class/drm/card1/device`, which is the GPU function
+itself. Its link is the one inside the card, to the card's own PCIe switch. The link to the host is a different one. The device's sysfs path,
+read the same day:
+
+| device | role | current link | maximum |
+|---|---|---|---|
+| 0000:0d:00.0 | the GPU function (`card1/device`) | 32 GT/s x16 | 32 GT/s x16 |
+| 0000:0c:00.0 | the card switch's downstream port | 32 GT/s x16 | 32 GT/s x16 |
+| 0000:0b:00.0 | the card switch's upstream port | **16 GT/s x16** | 32 GT/s x16 |
+| 0000:00:03.1 | the CPU's root port | **16 GT/s x16** | 16 GT/s x16 |
+
+So the columns' constant 32 GT/s x16 is the card-internal link. The host link, from the switch's upstream port to the root port, runs at 16 GT/s
+x16 (PCIe 4.0, the limit of the B550 platform), and these runs did not record it. They are no evidence about the host link or the fast state.
+The next change of the program adds columns for the host link.
 
 ## rpp_crop_batch_unsplit / fkl_fused
 
@@ -201,7 +220,7 @@ One run, so there is no spread.
 
 ## Clocks and warm-up
 
-| source | sclk at the start of the timed runs, MHz | mclk at the start of the timed runs, MHz | PCIe | warm-up, s | rows with warmup_steady = 0 |
+| source | sclk at the start of the timed runs, MHz | mclk at the start of the timed runs, MHz | card-internal PCIe link | warm-up, s | rows with warmup_steady = 0 |
 |---|---|---|---|---|---|
 | noise runs | 2267 .. 3420 | 456 .. 1124 | 32 GT/s x16 | 2.00 .. 2.75 | 0 of 720 |
 | natural image | 2855 .. 3413 | 772 .. 1124 | 32 GT/s x16 | 2.00 .. 2.00 | 0 of 240 |

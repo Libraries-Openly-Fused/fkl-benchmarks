@@ -11,6 +11,7 @@
 # is the median of the three runs and their spread the min .. max.
 # The program has eight variants now: the rotation of the variants of a point (the first is variant (index of the point + E5_ROTATE_OFFSET) mod
 # the number of variants) puts the six variants of the hand_batch runs at other positions than in those runs.
+# The pcie_* columns read the GPU function's own link, which is inside the card (to the card's PCIe switch), not the link to the host.
 # The fast state: the points of a run in which fkl_fused is more than 4 % faster than the median of the crop-batch runs
 # (results/rx9060/rpp-preprocessing-crop-batch/noise/new-run0..2, in which it was rare) at its batch.
 import csv
@@ -198,7 +199,7 @@ for v in NEW_VARIANTS:
 for name, sel in (('fast points', pts), ('other points', [(k, b) for k in range(3) for b in BATCHES if (k, b) not in pts])):
     rs = [DATA['new'][(b, 'fkl_fused')][k] for (k, b) in sel]
     print(f'\nfkl_fused rows in the {name}: mclk at the start of the timed runs {dict(Counter(int(num(r["mclk_timed_start_mhz"])) for r in rs))}, '
-          f'after them {dict(Counter(int(num(r["mclk_end_mhz"])) for r in rs))}; PCIe {dict(Counter((num(r["pcie_gts_timed_start"]), num(r["pcie_width_timed_start"])) for r in rs))}; '
+          f'after them {dict(Counter(int(num(r["mclk_end_mhz"])) for r in rs))}; card-internal PCIe link {dict(Counter((num(r["pcie_gts_timed_start"]), num(r["pcie_width_timed_start"])) for r in rs))}; '
           f'sclk median {statistics.median(num(r["sclk_timed_start_mhz"]) for r in rs):.0f} MHz')
 
 # ---- 6. RPP's ROI padding and pinned arrays (stdout of every run)
@@ -236,8 +237,8 @@ ch = [pct(stat('new natural', v, b)[0], stat('old natural', v, b)[0]) for v in O
 print(f'- the six variants against the hand_batch natural-image run: {min(ch):+.1f} .. {statistics.median(ch):+.1f} .. {max(ch):+.1f} %')
 
 # ---- 9. Clocks and warm-up
-print('\n### Clock, PCIe and warm-up columns (min .. max over every row of a source)\n')
-print('| source | sclk at the start of the timed runs, MHz | mclk at the start of the timed runs, MHz | PCIe GT/s x width | warm-up, s | rows with warmup_steady = 0 |')
+print('\n### Clock, card-internal PCIe link and warm-up columns (min .. max over every row of a source)\n')
+print('| source | sclk at the start of the timed runs, MHz | mclk at the start of the timed runs, MHz | card-internal PCIe link, GT/s x width | warm-up, s | rows with warmup_steady = 0 |')
 print('|---|---|---|---|---|---|')
 for source in ('new', 'new natural'):
     rs = [r for v in DATA[source].values() for r in v]
