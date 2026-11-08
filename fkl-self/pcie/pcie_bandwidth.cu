@@ -12,7 +12,7 @@
    See the License for the specific language governing permissions and
    limitations under the License. */
 
-// Link check: the bandwidth of host to device and device to host copies of E16_PCIE_MB (default 256) megabytes, from pinned and from pageable host memory, each direction for at least PCIE_SECONDS seconds (default 3,
+// Link check: the bandwidth of host to device and device to host copies of E16_PCIE_MB (default 256) MiB, from pinned and from pageable host memory, each direction for at least PCIE_SECONDS seconds (default 3,
 // pageable 1.5 s) so that a sampler of the link state (nvidia-smi pcie.link.gen.current, pcie.link.width.current, every 100 ms) sees the link busy. One CSV row per direction and memory kind: copies, seconds, GB/s (median, smallest,
 // largest of the single copies, each timed with CUDA events). A PCIe 4.0 x16 link gives about 25 GB/s each way from pinned memory, PCIe 3.0 x1 about 0.9 GB/s.
 #include <common/main.h>
@@ -89,7 +89,7 @@ int launch() {
             const Result r = run(c.dst, c.src, bytes, c.kind, c.secs);
             csv.row(c.direction, c.memory, bytes, r.copies, r.seconds, r.median, r.min, r.max);
             csv.flush();
-            std::cout << c.direction << " " << c.memory << ": " << r.copies << " copies of " << bytes / (1024 * 1024) << " MB in " << r.seconds << " s, median " << r.median << " GB/s (smallest " << r.min << ", largest " << r.max << ")" << std::endl;
+            std::cout << c.direction << " " << c.memory << ": " << r.copies << " copies of " << bytes / (1024 * 1024) << " MiB in " << r.seconds << " s, median " << r.median << " GB/s (smallest " << r.min << ", largest " << r.max << ")" << std::endl;
         }
         cudaFreeHost(pinned);
         cudaFree(dev);

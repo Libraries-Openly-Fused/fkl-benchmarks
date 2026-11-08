@@ -59,7 +59,7 @@ def main():
     if os.path.exists(bw):
         out.append("")
         for r in csv.DictReader([l for l in open(bw) if not l.startswith("#")]):
-            out.append(f"copies {r['direction']} {r['memory']:8s}: {r['copies']:>4s} copies of {int(r['bytes']) // 2**20} MB in {float(r['seconds']):.1f} s, median {float(r['gbps_median']):.2f} GB/s (smallest {float(r['gbps_min']):.2f}, largest {float(r['gbps_max']):.2f})")
+            out.append(f"copies {r['direction']} {r['memory']:8s}: {r['copies']:>4s} copies of {int(r['bytes']) // 2**20} MiB in {float(r['seconds']):.1f} s, median {float(r['gbps_median']):.2f} GB/s (smallest {float(r['gbps_min']):.2f}, largest {float(r['gbps_max']):.2f})")
     text = "\n".join(out) + "\n"
     open(os.path.join(folder, "pcie_check_summary.txt"), "w").write(text)
     print(text)

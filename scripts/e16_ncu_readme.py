@@ -119,7 +119,7 @@ def main():
              f"- I2F executed: fused int8 {count('1', 'I2F'):,.0f}, dequantKV {count('2', 'I2F'):,.0f}: ratio {count('1', 'I2F') / count('2', 'I2F'):.1f}; the number of query tiles per head is S / BLOCK_Q = 2048 / 64 = {2048 // 64}.\n"
              f"- DRAM (read + write): fused int8 {(m('1', 'dram__bytes_read.sum') + m('1', 'dram__bytes_write.sum')) / 1e6:.1f} MB; unfused pair {(m('2', 'dram__bytes_read.sum') + m('2', 'dram__bytes_write.sum') + m('3', 'dram__bytes_read.sum') + m('3', 'dram__bytes_write.sum')) / 1e6:.1f} MB. "
              f"Reads: mma_raw {m('0', 'dram__bytes_read.sum') / 1e6:.1f} MB (Q + K + V in bf16 are 3 x 67.1 MB); fused int8 {m('1', 'dram__bytes_read.sum') / 1e6:.1f} MB, that is Q (67.1 MB) plus {m('1', 'dram__bytes_read.sum') / 1e6 - 67.1:.1f} MB of K and V as int8 with their scales "
-             f"(computed in `../e16_summary_fusion.csv`: 69 MB). The writes are lower than the O (67.1 MB) and the bf16 K,V of dequantKV (134.2 MB) because lines still dirty in the 72 MB L2 at the end of a kernel are not counted by the DRAM counters.")
+             f"(computed in `../e16_summary_fusion.csv`: 69 MB). The writes are lower than the O (67.1 MB) and the bf16 K,V of dequantKV (134.2 MB) because lines still dirty in the 72 MiB L2 at the end of a kernel are not counted by the DRAM counters.")
     # the rules of the details page, verbatim, for ids 0, 1 and 2
     rules, seen = [], set()
     for r in csv.DictReader([l for l in open(os.path.join(folder, "ncu_details.csv")) if not l.startswith("==")]):
