@@ -1,0 +1,17 @@
+# experiment: benchmark_rpp_preprocessing_a
+# notes: FKL HIP vs RPP and a hand-written kernel; source: seeded noise (LCG, seed 12345); RPP 3.2.0 (ROCm package amdrocm-rpp), rppt tensor API, HIP back-end; rpp_crop_batch: the N crops copied into one dense batch (one hipMemcpy2DAsync per crop), then rppt_resize_mirror_normalize (BILINEAR, one ROI XYWH per crop: the whole crop, source U8 NHWC with batch stride CROP_H * CROP_W * 3, destination F32 NCHW, mirror off) and rppt_channel_permute (F32 NCHW); RPP has its own frame (dense hipMalloc) and its own hipStream_t; output widths are multiples of 8; FKL: fk::PerThreadRead::build(crop2D views).then(Resize) -> VectorReorder<float3, 2, 1, 0> -> Mul -> Sub -> Div -> TensorSplit, TransformDPP<GPU_AMD, TF::DISABLED>, the crop views and every operation built in every timed call; hand_batch: the hand-written fused kernel of E1c (handwritten-cuda/e1_preproc.cu: handPreproc) ported to HIP (__grid_constant__ dropped), one launch with 32x8 threads per block, ASYMMETRIC sampling; its own frame (hipMallocPitch, pitch 11520 bytes; FKL's frame: pitch 11520 bytes), output (hipMalloc) and hipStream_t; build = the crop pointers (its parameter block, 8 bytes per crop), compute = the launch, hipGetLastError and the stream synchronisation; wall clock on the host including the stream synchronisation; build_median_ms and compute_median_ms are the medians of the two parts of a run: FKL build = the crop views and the operations (host), compute = executeOperations and the synchronisation (no synchronisation between them); rpp_crop_batch build = the copies and a stream synchronisation, compute = the ROIs, the two RPP calls and a stream synchronisation, so its total has one synchronisation more than rpp_crop_batch_unsplit, which has no parts (nan); the median of the runs is not the sum of the medians of the parts; warm-up: 0 runs, at least 0.0 s and until the mean time of two consecutive windows of 0.25 s differs by at most 2 percent (cap 10 s; the columns warmup_s, warmup_steady and sclk_start_mhz, sclk_timed_start_mhz and sclk_end_mhz, the graphics clock at the start of the warm-up, at the start of the timed runs and after them, record it); the variants of a point are timed in a rotated order: the first one is variant ((index of the point + E5_ROTATE_OFFSET = 0) mod the number of variants)
+# repo: fkl-benchmarks 6dc05414a085a36c7bfa9483dca45bf21cf170d5
+# fkl: 64ad9195cd785d0c93a70b35e02d5a6c7c4a5048
+# cvGPUSpeedup: not checked out (pinned 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c)
+# FastNPP: not checked out (pinned a1b5e245d7dd70fba23dcb51a0aea80495dbc61d)
+# nvcc: none (none), architectures native, -fmad on, -lineinfo on
+# hip: 24.0.0 (/opt/rocm/core-10.1/bin/amdclang++), architectures gfx1200
+# host compiler: Clang 24.0.0, Release, -march=native, -ftemplate-depth=1000
+# opencv: none
+# cpu: AMD Ryzen 7 5800X3D 8-Core Processor
+# os: Ubuntu 26.04.1 LTS
+# kernel: Linux 7.0.0-38-generic
+# gpu: AMD Radeon RX 9060, gfx1200, 14 WGPs (28 CUs), wave32, 8144 MiB, PCI 0000:0d:00.0
+# hip driver: 7.16.26385, hip runtime: 7.16.26385
+# clocks (gfx, mem, max gfx, max mem, MHz): 663, 772, 2400, 1124
+# amd-smi: AMDSMI Tool: 27.1.0+7da43026 | AMDSMI Library version: 27.1.0 | ROCm version: 10.1.0 | amdgpu version: 7.1.9.31600000 | ionic version: N/A

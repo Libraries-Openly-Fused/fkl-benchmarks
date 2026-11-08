@@ -1,0 +1,498 @@
+# experiment: benchmark_rpp_preprocessing_a
+# notes: FKL HIP vs RPP and a hand-written kernel; source: natural image /home/cudeiro/rocm-fkl-benchmarks/e5-cpu/data/kodim23.ppm (768x512) tiled over the frame; Kodak Lossless True Color Image Suite kodim23.png https://r0k.us/graphics/kodak/kodak/kodim23.png sha256 e3111a2fd4da24af15d6459ef9eacfe54106b38e27b4a21821b75c3f5d2d5baf (released by Kodak for unrestricted usage); RPP 3.2.0 (ROCm package amdrocm-rpp), rppt tensor API, HIP back-end; rpp_crop_batch: the N crops copied into one dense batch (one hipMemcpy2DAsync per crop), then rppt_resize_mirror_normalize (BILINEAR, one ROI XYWH per crop: the whole crop, source U8 NHWC with batch stride CROP_H * CROP_W * 3, destination F32 NCHW, mirror off) and rppt_channel_permute (F32 NCHW); RPP has its own frame (dense hipMalloc) and its own hipStream_t; output widths are multiples of 8; FKL: fk::PerThreadRead::build(crop2D views).then(Resize) -> VectorReorder<float3, 2, 1, 0> -> Mul -> Sub -> Div -> TensorSplit, TransformDPP<GPU_AMD, TF::DISABLED>, the crop views and every operation built in every timed call; hand_batch: the hand-written fused kernel of E1c (handwritten-cuda/e1_preproc.cu: handPreproc) ported to HIP (__grid_constant__ dropped), one launch with 32x8 threads per block, ASYMMETRIC sampling; its own frame (hipMallocPitch, pitch 11520 bytes; FKL's frame: pitch 11520 bytes), output (hipMalloc) and hipStream_t; build = the crop pointers (its parameter block, 8 bytes per crop), compute = the launch, hipGetLastError and the stream synchronisation; wall clock on the host including the stream synchronisation; build_median_ms and compute_median_ms are the medians of the two parts of a run: FKL build = the crop views and the operations (host), compute = executeOperations and the synchronisation (no synchronisation between them); rpp_crop_batch build = the copies and a stream synchronisation, compute = the ROIs, the two RPP calls and a stream synchronisation, so its total has one synchronisation more than rpp_crop_batch_unsplit, which has no parts (nan); the median of the runs is not the sum of the medians of the parts; warm-up: 3 runs, at least 2.0 s and until the mean time of two consecutive windows of 0.25 s differs by at most 2 percent (cap 10 s; the columns warmup_s, warmup_steady and sclk_start_mhz, sclk_timed_start_mhz and sclk_end_mhz, the graphics clock at the start of the warm-up, at the start of the timed runs and after them, record it); the variants of a point are timed in a rotated order: the first one is variant ((index of the point + E5_ROTATE_OFFSET = 0) mod the number of variants); pass -1 = informational; tolerance 1e-4 absolute
+# repo: fkl-benchmarks 6dc05414a085a36c7bfa9483dca45bf21cf170d5
+# fkl: 64ad9195cd785d0c93a70b35e02d5a6c7c4a5048
+# cvGPUSpeedup: not checked out (pinned 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c)
+# FastNPP: not checked out (pinned a1b5e245d7dd70fba23dcb51a0aea80495dbc61d)
+# nvcc: none (none), architectures native, -fmad on, -lineinfo on
+# hip: 24.0.0 (/opt/rocm/core-10.1/bin/amdclang++), architectures gfx1200
+# host compiler: Clang 24.0.0, Release, -march=native, -ftemplate-depth=1000
+# opencv: none
+# cpu: AMD Ryzen 7 5800X3D 8-Core Processor
+# os: Ubuntu 26.04.1 LTS
+# kernel: Linux 7.0.0-38-generic
+# gpu: AMD Radeon RX 9060, gfx1200, 14 WGPs (28 CUs), wave32, 8144 MiB, PCI 0000:0d:00.0
+# hip driver: 7.16.26385, hip runtime: 7.16.26385
+# clocks (gfx, mem, max gfx, max mem, MHz): 58, 96, 2400, 1124
+# amd-smi: AMDSMI Tool: 27.1.0+7da43026 | AMDSMI Library version: 27.1.0 | ROCm version: 10.1.0 | amdgpu version: 7.1.9.31600000 | ionic version: N/A
+batch,comparison,region,max_abs_diff,mean_abs_diff,fraction_over_1e-4,pass,note
+10,fkl_fused vs scalar reference ASYMMETRIC,interior,7.62939453e-06,6.0457157e-07,0,1,
+10,fkl_fused vs scalar reference ASYMMETRIC,last 2 columns and rows,3.81469727e-06,5.45173361e-07,0,1,
+10,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,interior,7.62939453e-06,5.99429538e-07,0,1,
+10,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,last 2 columns and rows,3.81469727e-06,5.42653234e-07,0,1,
+10,fkl_perop_batch vs fkl_fused,interior,3.81469727e-06,1.88357392e-07,0,1,
+10,fkl_perop_batch vs fkl_fused,last 2 columns and rows,3.81469727e-06,1.54302831e-07,0,1,
+10,rpp_crop_batch vs scalar reference HALF_PIXEL,interior,1.90734863e-06,2.4477122e-07,0,1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference; the interior is a required check (RPP's output must be right to be timed)
+10,rpp_crop_batch vs scalar reference HALF_PIXEL,last 2 columns and rows,3.40625,0.172540103,0.920877193,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference; the interior is a required check (RPP's output must be right to be timed)
+10,rpp_crop_batch vs fkl_fused_halfpixel,interior,7.62939453e-06,7.25497075e-07,0,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+10,rpp_crop_batch vs fkl_fused_halfpixel,last 2 columns and rows,3.40625,0.172540109,0.920877193,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+10,rpp_crop_batch_unsplit vs rpp_crop_batch,interior,0,0,0,1,the same RPP calls
+10,rpp_crop_batch_unsplit vs rpp_crop_batch,last 2 columns and rows,0,0,0,1,the same RPP calls
+10,hand_batch vs scalar reference ASYMMETRIC,interior,7.62939453e-06,6.0457157e-07,0,1,
+10,hand_batch vs scalar reference ASYMMETRIC,last 2 columns and rows,3.81469727e-06,5.45173361e-07,0,1,
+10,hand_batch vs fkl_fused,interior,0,0,0,-1,the whole tensors: bitwise equal
+10,hand_batch vs fkl_fused,last 2 columns and rows,0,0,0,-1,the whole tensors: bitwise equal
+20,fkl_fused vs scalar reference ASYMMETRIC,interior,7.62939453e-06,5.9137111e-07,0,1,
+20,fkl_fused vs scalar reference ASYMMETRIC,last 2 columns and rows,3.81469727e-06,5.34350412e-07,0,1,
+20,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,interior,7.62939453e-06,5.88115185e-07,0,1,
+20,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,last 2 columns and rows,3.81469727e-06,5.27098513e-07,0,1,
+20,fkl_perop_batch vs fkl_fused,interior,3.81469727e-06,1.9668312e-07,0,1,
+20,fkl_perop_batch vs fkl_fused,last 2 columns and rows,3.81469727e-06,1.4187474e-07,0,1,
+20,rpp_crop_batch vs scalar reference HALF_PIXEL,interior,1.90734863e-06,2.20922749e-07,0,1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference; the interior is a required check (RPP's output must be right to be timed)
+20,rpp_crop_batch vs scalar reference HALF_PIXEL,last 2 columns and rows,3.4375,0.17196345,0.930263158,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference; the interior is a required check (RPP's output must be right to be timed)
+20,rpp_crop_batch vs fkl_fused_halfpixel,interior,7.62939453e-06,7.00426043e-07,0,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+20,rpp_crop_batch vs fkl_fused_halfpixel,last 2 columns and rows,3.4375,0.171963502,0.930263158,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+20,rpp_crop_batch_unsplit vs rpp_crop_batch,interior,0,0,0,1,the same RPP calls
+20,rpp_crop_batch_unsplit vs rpp_crop_batch,last 2 columns and rows,0,0,0,1,the same RPP calls
+20,hand_batch vs scalar reference ASYMMETRIC,interior,7.62939453e-06,5.9137111e-07,0,1,
+20,hand_batch vs scalar reference ASYMMETRIC,last 2 columns and rows,3.81469727e-06,5.34350412e-07,0,1,
+20,hand_batch vs fkl_fused,interior,0,0,0,-1,the whole tensors: bitwise equal
+20,hand_batch vs fkl_fused,last 2 columns and rows,0,0,0,-1,the whole tensors: bitwise equal
+30,fkl_fused vs scalar reference ASYMMETRIC,interior,7.62939453e-06,5.75855234e-07,0,1,
+30,fkl_fused vs scalar reference ASYMMETRIC,last 2 columns and rows,3.81469727e-06,5.31115727e-07,0,1,
+30,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,interior,7.62939453e-06,5.73394682e-07,0,1,
+30,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,last 2 columns and rows,3.81469727e-06,5.25716453e-07,0,1,
+30,fkl_perop_batch vs fkl_fused,interior,3.81469727e-06,1.98841529e-07,0,1,
+30,fkl_perop_batch vs fkl_fused,last 2 columns and rows,3.81469727e-06,1.35232831e-07,0,1,
+30,rpp_crop_batch vs scalar reference HALF_PIXEL,interior,1.90734863e-06,2.03612749e-07,0,1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference; the interior is a required check (RPP's output must be right to be timed)
+30,rpp_crop_batch vs scalar reference HALF_PIXEL,last 2 columns and rows,3.4375,0.163832484,0.931812865,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference; the interior is a required check (RPP's output must be right to be timed)
+30,rpp_crop_batch vs fkl_fused_halfpixel,interior,7.62939453e-06,6.77861342e-07,0,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+30,rpp_crop_batch vs fkl_fused_halfpixel,last 2 columns and rows,3.4375,0.16383252,0.931812865,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+30,rpp_crop_batch_unsplit vs rpp_crop_batch,interior,0,0,0,1,the same RPP calls
+30,rpp_crop_batch_unsplit vs rpp_crop_batch,last 2 columns and rows,0,0,0,1,the same RPP calls
+30,hand_batch vs scalar reference ASYMMETRIC,interior,7.62939453e-06,5.75855234e-07,0,1,
+30,hand_batch vs scalar reference ASYMMETRIC,last 2 columns and rows,3.81469727e-06,5.31115727e-07,0,1,
+30,hand_batch vs fkl_fused,interior,0,0,0,-1,the whole tensors: bitwise equal
+30,hand_batch vs fkl_fused,last 2 columns and rows,0,0,0,-1,the whole tensors: bitwise equal
+40,fkl_fused vs scalar reference ASYMMETRIC,interior,7.62939453e-06,5.66511553e-07,0,1,
+40,fkl_fused vs scalar reference ASYMMETRIC,last 2 columns and rows,3.81469727e-06,5.43008771e-07,0,1,
+40,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,interior,7.62939453e-06,5.63782852e-07,0,1,
+40,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,last 2 columns and rows,3.81469727e-06,5.31378022e-07,0,1,
+40,fkl_perop_batch vs fkl_fused,interior,3.81469727e-06,1.99649364e-07,0,1,
+40,fkl_perop_batch vs fkl_fused,last 2 columns and rows,3.81469727e-06,1.23935833e-07,0,1,
+40,rpp_crop_batch vs scalar reference HALF_PIXEL,interior,1.90734863e-06,1.94033262e-07,0,1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference; the interior is a required check (RPP's output must be right to be timed)
+40,rpp_crop_batch vs scalar reference HALF_PIXEL,last 2 columns and rows,3.5,0.163398089,0.931929825,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference; the interior is a required check (RPP's output must be right to be timed)
+40,rpp_crop_batch vs fkl_fused_halfpixel,interior,7.62939453e-06,6.65597789e-07,0,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+40,rpp_crop_batch vs fkl_fused_halfpixel,last 2 columns and rows,3.49999619,0.163398109,0.931929825,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+40,rpp_crop_batch_unsplit vs rpp_crop_batch,interior,0,0,0,1,the same RPP calls
+40,rpp_crop_batch_unsplit vs rpp_crop_batch,last 2 columns and rows,0,0,0,1,the same RPP calls
+40,hand_batch vs scalar reference ASYMMETRIC,interior,7.62939453e-06,5.66511553e-07,0,1,
+40,hand_batch vs scalar reference ASYMMETRIC,last 2 columns and rows,3.81469727e-06,5.43008771e-07,0,1,
+40,hand_batch vs fkl_fused,interior,0,0,0,-1,the whole tensors: bitwise equal
+40,hand_batch vs fkl_fused,last 2 columns and rows,0,0,0,-1,the whole tensors: bitwise equal
+50,fkl_fused vs scalar reference ASYMMETRIC,interior,7.62939453e-06,5.60162702e-07,0,1,
+50,fkl_fused vs scalar reference ASYMMETRIC,last 2 columns and rows,3.81469727e-06,5.45528897e-07,0,1,
+50,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,interior,7.62939453e-06,5.57947391e-07,0,1,
+50,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,last 2 columns and rows,3.81469727e-06,5.35569693e-07,0,1,
+50,fkl_perop_batch vs fkl_fused,interior,3.81469727e-06,1.9852121e-07,0,1,
+50,fkl_perop_batch vs fkl_fused,last 2 columns and rows,3.81469727e-06,1.31858023e-07,0,1,
+50,rpp_crop_batch vs scalar reference HALF_PIXEL,interior,1.90734863e-06,1.87394195e-07,0,1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference; the interior is a required check (RPP's output must be right to be timed)
+50,rpp_crop_batch vs scalar reference HALF_PIXEL,last 2 columns and rows,4.5,0.171105881,0.935368421,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference; the interior is a required check (RPP's output must be right to be timed)
+50,rpp_crop_batch vs fkl_fused_halfpixel,interior,7.62939453e-06,6.57861622e-07,0,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+50,rpp_crop_batch vs fkl_fused_halfpixel,last 2 columns and rows,4.5,0.171105876,0.935368421,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+50,rpp_crop_batch_unsplit vs rpp_crop_batch,interior,0,0,0,1,the same RPP calls
+50,rpp_crop_batch_unsplit vs rpp_crop_batch,last 2 columns and rows,0,0,0,1,the same RPP calls
+50,hand_batch vs scalar reference ASYMMETRIC,interior,7.62939453e-06,5.60162702e-07,0,1,
+50,hand_batch vs scalar reference ASYMMETRIC,last 2 columns and rows,3.81469727e-06,5.45528897e-07,0,1,
+50,hand_batch vs fkl_fused,interior,0,0,0,-1,the whole tensors: bitwise equal
+50,hand_batch vs fkl_fused,last 2 columns and rows,0,0,0,-1,the whole tensors: bitwise equal
+60,fkl_fused vs scalar reference ASYMMETRIC,interior,7.62939453e-06,5.56301795e-07,0,1,
+60,fkl_fused vs scalar reference ASYMMETRIC,last 2 columns and rows,3.81469727e-06,5.42327326e-07,0,1,
+60,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,interior,7.62939453e-06,5.54385677e-07,0,1,
+60,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,last 2 columns and rows,3.81469727e-06,5.37248731e-07,0,1,
+60,fkl_perop_batch vs fkl_fused,interior,3.81469727e-06,1.94480966e-07,0,1,
+60,fkl_perop_batch vs fkl_fused,last 2 columns and rows,3.81469727e-06,1.31670495e-07,0,1,
+60,rpp_crop_batch vs scalar reference HALF_PIXEL,interior,1.90734863e-06,1.81491599e-07,0,1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference; the interior is a required check (RPP's output must be right to be timed)
+60,rpp_crop_batch vs scalar reference HALF_PIXEL,last 2 columns and rows,4.5,0.181394055,0.938260234,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference; the interior is a required check (RPP's output must be right to be timed)
+60,rpp_crop_batch vs fkl_fused_halfpixel,interior,7.62939453e-06,6.51815974e-07,0,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+60,rpp_crop_batch vs fkl_fused_halfpixel,last 2 columns and rows,4.5,0.181394024,0.938260234,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+60,rpp_crop_batch_unsplit vs rpp_crop_batch,interior,0,0,0,1,the same RPP calls
+60,rpp_crop_batch_unsplit vs rpp_crop_batch,last 2 columns and rows,0,0,0,1,the same RPP calls
+60,hand_batch vs scalar reference ASYMMETRIC,interior,7.62939453e-06,5.56301795e-07,0,1,
+60,hand_batch vs scalar reference ASYMMETRIC,last 2 columns and rows,3.81469727e-06,5.42327326e-07,0,1,
+60,hand_batch vs fkl_fused,interior,0,0,0,-1,the whole tensors: bitwise equal
+60,hand_batch vs fkl_fused,last 2 columns and rows,0,0,0,-1,the whole tensors: bitwise equal
+70,fkl_fused vs scalar reference ASYMMETRIC,interior,7.62939453e-06,5.51985691e-07,0,1,
+70,fkl_fused vs scalar reference ASYMMETRIC,last 2 columns and rows,7.62939453e-06,5.25493371e-07,0,1,
+70,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,interior,7.62939453e-06,5.50077566e-07,0,1,
+70,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,last 2 columns and rows,7.62939453e-06,5.23894951e-07,0,1,
+70,fkl_perop_batch vs fkl_fused,interior,3.81469727e-06,1.9017701e-07,0,1,
+70,fkl_perop_batch vs fkl_fused,last 2 columns and rows,3.81469727e-06,1.38841476e-07,0,1,
+70,rpp_crop_batch vs scalar reference HALF_PIXEL,interior,1.90734863e-06,1.76702419e-07,0,1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference; the interior is a required check (RPP's output must be right to be timed)
+70,rpp_crop_batch vs scalar reference HALF_PIXEL,last 2 columns and rows,39.5000038,0.189212534,0.940325815,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference; the interior is a required check (RPP's output must be right to be timed)
+70,rpp_crop_batch vs fkl_fused_halfpixel,interior,7.62939453e-06,6.45365647e-07,0,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+70,rpp_crop_batch vs fkl_fused_halfpixel,last 2 columns and rows,39.5000038,0.18921253,0.940325815,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+70,rpp_crop_batch_unsplit vs rpp_crop_batch,interior,0,0,0,1,the same RPP calls
+70,rpp_crop_batch_unsplit vs rpp_crop_batch,last 2 columns and rows,0,0,0,1,the same RPP calls
+70,hand_batch vs scalar reference ASYMMETRIC,interior,7.62939453e-06,5.51985691e-07,0,1,
+70,hand_batch vs scalar reference ASYMMETRIC,last 2 columns and rows,7.62939453e-06,5.25493371e-07,0,1,
+70,hand_batch vs fkl_fused,interior,0,0,0,-1,the whole tensors: bitwise equal
+70,hand_batch vs fkl_fused,last 2 columns and rows,0,0,0,-1,the whole tensors: bitwise equal
+80,fkl_fused vs scalar reference ASYMMETRIC,interior,7.62939453e-06,5.46058762e-07,0,1,
+80,fkl_fused vs scalar reference ASYMMETRIC,last 2 columns and rows,7.62939453e-06,5.21969377e-07,0,1,
+80,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,interior,7.62939453e-06,5.44175134e-07,0,1,
+80,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,last 2 columns and rows,7.62939453e-06,5.24659429e-07,0,1,
+80,fkl_perop_batch vs fkl_fused,interior,7.62939453e-06,1.88159142e-07,0,1,
+80,fkl_perop_batch vs fkl_fused,last 2 columns and rows,7.62939453e-06,1.42140085e-07,0,1,
+80,rpp_crop_batch vs scalar reference HALF_PIXEL,interior,1.90734863e-06,1.73780755e-07,0,1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference; the interior is a required check (RPP's output must be right to be timed)
+80,rpp_crop_batch vs scalar reference HALF_PIXEL,last 2 columns and rows,49.5,0.22343619,0.941864035,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference; the interior is a required check (RPP's output must be right to be timed)
+80,rpp_crop_batch vs fkl_fused_halfpixel,interior,7.62939453e-06,6.39040011e-07,0,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+80,rpp_crop_batch vs fkl_fused_halfpixel,last 2 columns and rows,49.5,0.223436195,0.941864035,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+80,rpp_crop_batch_unsplit vs rpp_crop_batch,interior,0,0,0,1,the same RPP calls
+80,rpp_crop_batch_unsplit vs rpp_crop_batch,last 2 columns and rows,0,0,0,1,the same RPP calls
+80,hand_batch vs scalar reference ASYMMETRIC,interior,7.62939453e-06,5.46058762e-07,0,1,
+80,hand_batch vs scalar reference ASYMMETRIC,last 2 columns and rows,7.62939453e-06,5.21969377e-07,0,1,
+80,hand_batch vs fkl_fused,interior,0,0,0,-1,the whole tensors: bitwise equal
+80,hand_batch vs fkl_fused,last 2 columns and rows,0,0,0,-1,the whole tensors: bitwise equal
+90,fkl_fused vs scalar reference ASYMMETRIC,interior,7.62939453e-06,5.43202727e-07,0,1,
+90,fkl_fused vs scalar reference ASYMMETRIC,last 2 columns and rows,7.62939453e-06,5.32016187e-07,0,1,
+90,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,interior,7.62939453e-06,5.41493803e-07,0,1,
+90,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,last 2 columns and rows,7.62939453e-06,5.36498735e-07,0,1,
+90,fkl_perop_batch vs fkl_fused,interior,7.62939453e-06,1.86163998e-07,0,1,
+90,fkl_perop_batch vs fkl_fused,last 2 columns and rows,7.62939453e-06,1.44936885e-07,0,1,
+90,rpp_crop_batch vs scalar reference HALF_PIXEL,interior,1.90734863e-06,1.73116333e-07,0,1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference; the interior is a required check (RPP's output must be right to be timed)
+90,rpp_crop_batch vs scalar reference HALF_PIXEL,last 2 columns and rows,66.5312538,0.272913072,0.943645224,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference; the interior is a required check (RPP's output must be right to be timed)
+90,rpp_crop_batch vs fkl_fused_halfpixel,interior,7.62939453e-06,6.36901531e-07,0,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+90,rpp_crop_batch vs fkl_fused_halfpixel,last 2 columns and rows,66.5312538,0.272913077,0.943645224,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+90,rpp_crop_batch_unsplit vs rpp_crop_batch,interior,0,0,0,1,the same RPP calls
+90,rpp_crop_batch_unsplit vs rpp_crop_batch,last 2 columns and rows,0,0,0,1,the same RPP calls
+90,hand_batch vs scalar reference ASYMMETRIC,interior,7.62939453e-06,5.43202727e-07,0,1,
+90,hand_batch vs scalar reference ASYMMETRIC,last 2 columns and rows,7.62939453e-06,5.32016187e-07,0,1,
+90,hand_batch vs fkl_fused,interior,0,0,0,-1,the whole tensors: bitwise equal
+90,hand_batch vs fkl_fused,last 2 columns and rows,0,0,0,-1,the whole tensors: bitwise equal
+100,fkl_fused vs scalar reference ASYMMETRIC,interior,7.62939453e-06,5.43160729e-07,0,1,
+100,fkl_fused vs scalar reference ASYMMETRIC,last 2 columns and rows,7.62939453e-06,5.33926905e-07,0,1,
+100,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,interior,7.62939453e-06,5.41599451e-07,0,1,
+100,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,last 2 columns and rows,7.62939453e-06,5.39290278e-07,0,1,
+100,fkl_perop_batch vs fkl_fused,interior,7.62939453e-06,1.86130026e-07,0,1,
+100,fkl_perop_batch vs fkl_fused,last 2 columns and rows,7.62939453e-06,1.45480298e-07,0,1,
+100,rpp_crop_batch vs scalar reference HALF_PIXEL,interior,1.90734863e-06,1.74447251e-07,0,1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference; the interior is a required check (RPP's output must be right to be timed)
+100,rpp_crop_batch vs scalar reference HALF_PIXEL,last 2 columns and rows,66.5312538,0.323487402,0.946815789,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference; the interior is a required check (RPP's output must be right to be timed)
+100,rpp_crop_batch vs fkl_fused_halfpixel,interior,7.62939453e-06,6.38517428e-07,0,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+100,rpp_crop_batch vs fkl_fused_halfpixel,last 2 columns and rows,66.5312538,0.3234874,0.946815789,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+100,rpp_crop_batch_unsplit vs rpp_crop_batch,interior,0,0,0,1,the same RPP calls
+100,rpp_crop_batch_unsplit vs rpp_crop_batch,last 2 columns and rows,0,0,0,1,the same RPP calls
+100,hand_batch vs scalar reference ASYMMETRIC,interior,7.62939453e-06,5.43160729e-07,0,1,
+100,hand_batch vs scalar reference ASYMMETRIC,last 2 columns and rows,7.62939453e-06,5.33926905e-07,0,1,
+100,hand_batch vs fkl_fused,interior,0,0,0,-1,the whole tensors: bitwise equal
+100,hand_batch vs fkl_fused,last 2 columns and rows,0,0,0,-1,the whole tensors: bitwise equal
+110,fkl_fused vs scalar reference ASYMMETRIC,interior,7.62939453e-06,5.44276305e-07,0,1,
+110,fkl_fused vs scalar reference ASYMMETRIC,last 2 columns and rows,7.62939453e-06,5.3446734e-07,0,1,
+110,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,interior,7.62939453e-06,5.42936174e-07,0,1,
+110,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,last 2 columns and rows,7.62939453e-06,5.3867056e-07,0,1,
+110,fkl_perop_batch vs fkl_fused,interior,7.62939453e-06,1.8450948e-07,0,1,
+110,fkl_perop_batch vs fkl_fused,last 2 columns and rows,7.62939453e-06,1.46698724e-07,0,1,
+110,rpp_crop_batch vs scalar reference HALF_PIXEL,interior,1.90734863e-06,1.78238734e-07,0,1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference; the interior is a required check (RPP's output must be right to be timed)
+110,rpp_crop_batch vs scalar reference HALF_PIXEL,last 2 columns and rows,66.5312538,0.367836761,0.950079745,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference; the interior is a required check (RPP's output must be right to be timed)
+110,rpp_crop_batch vs fkl_fused_halfpixel,interior,7.62939453e-06,6.42690789e-07,0,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+110,rpp_crop_batch vs fkl_fused_halfpixel,last 2 columns and rows,66.5312538,0.367836761,0.950079745,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+110,rpp_crop_batch_unsplit vs rpp_crop_batch,interior,0,0,0,1,the same RPP calls
+110,rpp_crop_batch_unsplit vs rpp_crop_batch,last 2 columns and rows,0,0,0,1,the same RPP calls
+110,hand_batch vs scalar reference ASYMMETRIC,interior,7.62939453e-06,5.44276305e-07,0,1,
+110,hand_batch vs scalar reference ASYMMETRIC,last 2 columns and rows,7.62939453e-06,5.3446734e-07,0,1,
+110,hand_batch vs fkl_fused,interior,0,0,0,-1,the whole tensors: bitwise equal
+110,hand_batch vs fkl_fused,last 2 columns and rows,0,0,0,-1,the whole tensors: bitwise equal
+120,fkl_fused vs scalar reference ASYMMETRIC,interior,7.62939453e-06,5.47373475e-07,0,1,
+120,fkl_fused vs scalar reference ASYMMETRIC,last 2 columns and rows,7.62939453e-06,5.33688574e-07,0,1,
+120,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,interior,7.62939453e-06,5.46076861e-07,0,1,
+120,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,last 2 columns and rows,7.62939453e-06,5.40549644e-07,0,1,
+120,fkl_perop_batch vs fkl_fused,interior,7.62939453e-06,1.81280061e-07,0,1,
+120,fkl_perop_batch vs fkl_fused,last 2 columns and rows,7.62939453e-06,1.48471336e-07,0,1,
+120,rpp_crop_batch vs scalar reference HALF_PIXEL,interior,1.90734863e-06,1.83979747e-07,0,1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference; the interior is a required check (RPP's output must be right to be timed)
+120,rpp_crop_batch vs scalar reference HALF_PIXEL,last 2 columns and rows,66.5312538,0.441733884,0.952587719,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference; the interior is a required check (RPP's output must be right to be timed)
+120,rpp_crop_batch vs fkl_fused_halfpixel,interior,7.62939453e-06,6.49425151e-07,0,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+120,rpp_crop_batch vs fkl_fused_halfpixel,last 2 columns and rows,66.5312538,0.441733892,0.952587719,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+120,rpp_crop_batch_unsplit vs rpp_crop_batch,interior,0,0,0,1,the same RPP calls
+120,rpp_crop_batch_unsplit vs rpp_crop_batch,last 2 columns and rows,0,0,0,1,the same RPP calls
+120,hand_batch vs scalar reference ASYMMETRIC,interior,7.62939453e-06,5.47373475e-07,0,1,
+120,hand_batch vs scalar reference ASYMMETRIC,last 2 columns and rows,7.62939453e-06,5.33688574e-07,0,1,
+120,hand_batch vs fkl_fused,interior,0,0,0,-1,the whole tensors: bitwise equal
+120,hand_batch vs fkl_fused,last 2 columns and rows,0,0,0,-1,the whole tensors: bitwise equal
+130,fkl_fused vs scalar reference ASYMMETRIC,interior,7.62939453e-06,5.51960065e-07,0,1,
+130,fkl_fused vs scalar reference ASYMMETRIC,last 2 columns and rows,7.62939453e-06,5.3851047e-07,0,1,
+130,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,interior,7.62939453e-06,5.50862184e-07,0,1,
+130,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,last 2 columns and rows,7.62939453e-06,5.4497126e-07,0,1,
+130,fkl_perop_batch vs fkl_fused,interior,7.62939453e-06,1.78699819e-07,0,1,
+130,fkl_perop_batch vs fkl_fused,last 2 columns and rows,7.62939453e-06,1.47393197e-07,0,1,
+130,rpp_crop_batch vs scalar reference HALF_PIXEL,interior,1.90734863e-06,1.91051112e-07,0,1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference; the interior is a required check (RPP's output must be right to be timed)
+130,rpp_crop_batch vs scalar reference HALF_PIXEL,last 2 columns and rows,73.7968769,0.554340708,0.955641026,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference; the interior is a required check (RPP's output must be right to be timed)
+130,rpp_crop_batch vs fkl_fused_halfpixel,interior,7.62939453e-06,6.58699289e-07,0,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+130,rpp_crop_batch vs fkl_fused_halfpixel,last 2 columns and rows,73.7968693,0.554340718,0.955641026,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+130,rpp_crop_batch_unsplit vs rpp_crop_batch,interior,0,0,0,1,the same RPP calls
+130,rpp_crop_batch_unsplit vs rpp_crop_batch,last 2 columns and rows,0,0,0,1,the same RPP calls
+130,hand_batch vs scalar reference ASYMMETRIC,interior,7.62939453e-06,5.51960065e-07,0,1,
+130,hand_batch vs scalar reference ASYMMETRIC,last 2 columns and rows,7.62939453e-06,5.3851047e-07,0,1,
+130,hand_batch vs fkl_fused,interior,0,0,0,-1,the whole tensors: bitwise equal
+130,hand_batch vs fkl_fused,last 2 columns and rows,0,0,0,-1,the whole tensors: bitwise equal
+140,fkl_fused vs scalar reference ASYMMETRIC,interior,7.62939453e-06,5.59303312e-07,0,1,
+140,fkl_fused vs scalar reference ASYMMETRIC,last 2 columns and rows,7.62939453e-06,5.55592036e-07,0,1,
+140,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,interior,7.62939453e-06,5.58180638e-07,0,1,
+140,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,last 2 columns and rows,7.62939453e-06,5.61102851e-07,0,1,
+140,fkl_perop_batch vs fkl_fused,interior,7.62939453e-06,1.76648637e-07,0,1,
+140,fkl_perop_batch vs fkl_fused,last 2 columns and rows,7.62939453e-06,1.4831221e-07,0,1,
+140,rpp_crop_batch vs scalar reference HALF_PIXEL,interior,1.90734863e-06,1.99783786e-07,0,1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference; the interior is a required check (RPP's output must be right to be timed)
+140,rpp_crop_batch vs scalar reference HALF_PIXEL,last 2 columns and rows,73.7968769,0.655187197,0.957706767,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference; the interior is a required check (RPP's output must be right to be timed)
+140,rpp_crop_batch vs fkl_fused_halfpixel,interior,7.62939453e-06,6.71532803e-07,0,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+140,rpp_crop_batch vs fkl_fused_halfpixel,last 2 columns and rows,73.7968693,0.655187205,0.957706767,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+140,rpp_crop_batch_unsplit vs rpp_crop_batch,interior,0,0,0,1,the same RPP calls
+140,rpp_crop_batch_unsplit vs rpp_crop_batch,last 2 columns and rows,0,0,0,1,the same RPP calls
+140,hand_batch vs scalar reference ASYMMETRIC,interior,7.62939453e-06,5.59303312e-07,0,1,
+140,hand_batch vs scalar reference ASYMMETRIC,last 2 columns and rows,7.62939453e-06,5.55592036e-07,0,1,
+140,hand_batch vs fkl_fused,interior,0,0,0,-1,the whole tensors: bitwise equal
+140,hand_batch vs fkl_fused,last 2 columns and rows,0,0,0,-1,the whole tensors: bitwise equal
+150,fkl_fused vs scalar reference ASYMMETRIC,interior,7.62939453e-06,5.69421471e-07,0,1,
+150,fkl_fused vs scalar reference ASYMMETRIC,last 2 columns and rows,7.62939453e-06,5.72205461e-07,0,1,
+150,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,interior,7.62939453e-06,5.68476527e-07,0,1,
+150,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,last 2 columns and rows,7.62939453e-06,5.76225812e-07,0,1,
+150,fkl_perop_batch vs fkl_fused,interior,7.62939453e-06,1.75192156e-07,0,1,
+150,fkl_perop_batch vs fkl_fused,last 2 columns and rows,7.62939453e-06,1.47163258e-07,0,1,
+150,rpp_crop_batch vs scalar reference HALF_PIXEL,interior,1.90734863e-06,2.10305699e-07,0,1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference; the interior is a required check (RPP's output must be right to be timed)
+150,rpp_crop_batch vs scalar reference HALF_PIXEL,last 2 columns and rows,73.7968769,0.718544468,0.958625731,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference; the interior is a required check (RPP's output must be right to be timed)
+150,rpp_crop_batch vs fkl_fused_halfpixel,interior,7.62939453e-06,6.88143067e-07,0,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+150,rpp_crop_batch vs fkl_fused_halfpixel,last 2 columns and rows,73.7968693,0.718544475,0.958625731,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+150,rpp_crop_batch_unsplit vs rpp_crop_batch,interior,0,0,0,1,the same RPP calls
+150,rpp_crop_batch_unsplit vs rpp_crop_batch,last 2 columns and rows,0,0,0,1,the same RPP calls
+150,hand_batch vs scalar reference ASYMMETRIC,interior,7.62939453e-06,5.69421471e-07,0,1,
+150,hand_batch vs scalar reference ASYMMETRIC,last 2 columns and rows,7.62939453e-06,5.72205461e-07,0,1,
+150,hand_batch vs fkl_fused,interior,0,0,0,-1,the whole tensors: bitwise equal
+150,hand_batch vs fkl_fused,last 2 columns and rows,0,0,0,-1,the whole tensors: bitwise equal
+160,fkl_fused vs scalar reference ASYMMETRIC,interior,7.62939453e-06,5.80969505e-07,0,1,
+160,fkl_fused vs scalar reference ASYMMETRIC,last 2 columns and rows,7.62939453e-06,5.88165988e-07,0,1,
+160,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,interior,7.62939453e-06,5.80308702e-07,0,1,
+160,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,last 2 columns and rows,7.62939453e-06,5.93227155e-07,0,1,
+160,fkl_perop_batch vs fkl_fused,interior,7.62939453e-06,1.73722839e-07,0,1,
+160,fkl_perop_batch vs fkl_fused,last 2 columns and rows,7.62939453e-06,1.49017412e-07,0,1,
+160,rpp_crop_batch vs scalar reference HALF_PIXEL,interior,1.90734863e-06,2.21728242e-07,0,1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference; the interior is a required check (RPP's output must be right to be timed)
+160,rpp_crop_batch vs scalar reference HALF_PIXEL,last 2 columns and rows,73.7968769,0.743400461,0.95973136,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference; the interior is a required check (RPP's output must be right to be timed)
+160,rpp_crop_batch vs fkl_fused_halfpixel,interior,7.62939453e-06,7.05938935e-07,0,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+160,rpp_crop_batch vs fkl_fused_halfpixel,last 2 columns and rows,73.7968693,0.743400463,0.95973136,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+160,rpp_crop_batch_unsplit vs rpp_crop_batch,interior,0,0,0,1,the same RPP calls
+160,rpp_crop_batch_unsplit vs rpp_crop_batch,last 2 columns and rows,0,0,0,1,the same RPP calls
+160,hand_batch vs scalar reference ASYMMETRIC,interior,7.62939453e-06,5.80969505e-07,0,1,
+160,hand_batch vs scalar reference ASYMMETRIC,last 2 columns and rows,7.62939453e-06,5.88165988e-07,0,1,
+160,hand_batch vs fkl_fused,interior,0,0,0,-1,the whole tensors: bitwise equal
+160,hand_batch vs fkl_fused,last 2 columns and rows,0,0,0,-1,the whole tensors: bitwise equal
+170,fkl_fused vs scalar reference ASYMMETRIC,interior,7.62939453e-06,5.92772944e-07,0,1,
+170,fkl_fused vs scalar reference ASYMMETRIC,last 2 columns and rows,7.62939453e-06,6.01450694e-07,0,1,
+170,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,interior,7.62939453e-06,5.92267486e-07,0,1,
+170,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,last 2 columns and rows,7.62939453e-06,6.07572319e-07,0,1,
+170,fkl_perop_batch vs fkl_fused,interior,7.62939453e-06,1.73150527e-07,0,1,
+170,fkl_perop_batch vs fkl_fused,last 2 columns and rows,7.62939453e-06,1.5291444e-07,0,1,
+170,rpp_crop_batch vs scalar reference HALF_PIXEL,interior,1.90734863e-06,2.33806696e-07,0,1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference; the interior is a required check (RPP's output must be right to be timed)
+170,rpp_crop_batch vs scalar reference HALF_PIXEL,last 2 columns and rows,73.7968769,0.796455942,0.960846233,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference; the interior is a required check (RPP's output must be right to be timed)
+170,rpp_crop_batch vs fkl_fused_halfpixel,interior,7.62939453e-06,7.24462455e-07,0,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+170,rpp_crop_batch vs fkl_fused_halfpixel,last 2 columns and rows,73.7968693,0.796455943,0.960846233,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+170,rpp_crop_batch_unsplit vs rpp_crop_batch,interior,0,0,0,1,the same RPP calls
+170,rpp_crop_batch_unsplit vs rpp_crop_batch,last 2 columns and rows,0,0,0,1,the same RPP calls
+170,hand_batch vs scalar reference ASYMMETRIC,interior,7.62939453e-06,5.92772944e-07,0,1,
+170,hand_batch vs scalar reference ASYMMETRIC,last 2 columns and rows,7.62939453e-06,6.01450694e-07,0,1,
+170,hand_batch vs fkl_fused,interior,0,0,0,-1,the whole tensors: bitwise equal
+170,hand_batch vs fkl_fused,last 2 columns and rows,0,0,0,-1,the whole tensors: bitwise equal
+180,fkl_fused vs scalar reference ASYMMETRIC,interior,7.62939453e-06,6.03205641e-07,0,1,
+180,fkl_fused vs scalar reference ASYMMETRIC,last 2 columns and rows,7.62939453e-06,6.08399234e-07,0,1,
+180,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,interior,7.62939453e-06,6.03083305e-07,0,1,
+180,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,last 2 columns and rows,7.62939453e-06,6.13819033e-07,0,1,
+180,fkl_perop_batch vs fkl_fused,interior,7.62939453e-06,1.7292284e-07,0,1,
+180,fkl_perop_batch vs fkl_fused,last 2 columns and rows,7.62939453e-06,1.53670925e-07,0,1,
+180,rpp_crop_batch vs scalar reference HALF_PIXEL,interior,1.90734863e-06,2.45158316e-07,0,1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference; the interior is a required check (RPP's output must be right to be timed)
+180,rpp_crop_batch vs scalar reference HALF_PIXEL,last 2 columns and rows,73.7968769,0.815534968,0.962334308,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference; the interior is a required check (RPP's output must be right to be timed)
+180,rpp_crop_batch vs fkl_fused_halfpixel,interior,7.62939453e-06,7.41963838e-07,0,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+180,rpp_crop_batch vs fkl_fused_halfpixel,last 2 columns and rows,73.7968693,0.815534973,0.962334308,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+180,rpp_crop_batch_unsplit vs rpp_crop_batch,interior,0,0,0,1,the same RPP calls
+180,rpp_crop_batch_unsplit vs rpp_crop_batch,last 2 columns and rows,0,0,0,1,the same RPP calls
+180,hand_batch vs scalar reference ASYMMETRIC,interior,7.62939453e-06,6.03205641e-07,0,1,
+180,hand_batch vs scalar reference ASYMMETRIC,last 2 columns and rows,7.62939453e-06,6.08399234e-07,0,1,
+180,hand_batch vs fkl_fused,interior,0,0,0,-1,the whole tensors: bitwise equal
+180,hand_batch vs fkl_fused,last 2 columns and rows,0,0,0,-1,the whole tensors: bitwise equal
+190,fkl_fused vs scalar reference ASYMMETRIC,interior,7.62939453e-06,6.10639187e-07,0,1,
+190,fkl_fused vs scalar reference ASYMMETRIC,last 2 columns and rows,7.62939453e-06,6.10559949e-07,0,1,
+190,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,interior,7.62939453e-06,6.10792442e-07,0,1,
+190,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,last 2 columns and rows,7.62939453e-06,6.1695175e-07,0,1,
+190,fkl_perop_batch vs fkl_fused,interior,7.62939453e-06,1.71669684e-07,0,1,
+190,fkl_perop_batch vs fkl_fused,last 2 columns and rows,7.62939453e-06,1.49811337e-07,0,1,
+190,rpp_crop_batch vs scalar reference HALF_PIXEL,interior,1.90734863e-06,2.53645758e-07,0,1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference; the interior is a required check (RPP's output must be right to be timed)
+190,rpp_crop_batch vs scalar reference HALF_PIXEL,last 2 columns and rows,73.7968769,0.810569762,0.961574331,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference; the interior is a required check (RPP's output must be right to be timed)
+190,rpp_crop_batch vs fkl_fused_halfpixel,interior,7.62939453e-06,7.54782198e-07,0,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+190,rpp_crop_batch vs fkl_fused_halfpixel,last 2 columns and rows,73.7968693,0.810569763,0.961574331,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+190,rpp_crop_batch_unsplit vs rpp_crop_batch,interior,0,0,0,1,the same RPP calls
+190,rpp_crop_batch_unsplit vs rpp_crop_batch,last 2 columns and rows,0,0,0,1,the same RPP calls
+190,hand_batch vs scalar reference ASYMMETRIC,interior,7.62939453e-06,6.10639187e-07,0,1,
+190,hand_batch vs scalar reference ASYMMETRIC,last 2 columns and rows,7.62939453e-06,6.10559949e-07,0,1,
+190,hand_batch vs fkl_fused,interior,0,0,0,-1,the whole tensors: bitwise equal
+190,hand_batch vs fkl_fused,last 2 columns and rows,0,0,0,-1,the whole tensors: bitwise equal
+200,fkl_fused vs scalar reference ASYMMETRIC,interior,7.62939453e-06,6.14890781e-07,0,1,
+200,fkl_fused vs scalar reference ASYMMETRIC,last 2 columns and rows,7.62939453e-06,6.11062656e-07,0,1,
+200,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,interior,7.62939453e-06,6.15105508e-07,0,1,
+200,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,last 2 columns and rows,7.62939453e-06,6.16088097e-07,0,1,
+200,fkl_perop_batch vs fkl_fused,interior,7.62939453e-06,1.69618023e-07,0,1,
+200,fkl_perop_batch vs fkl_fused,last 2 columns and rows,7.62939453e-06,1.46777259e-07,0,1,
+200,rpp_crop_batch vs scalar reference HALF_PIXEL,interior,1.90734863e-06,2.59460416e-07,0,1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference; the interior is a required check (RPP's output must be right to be timed)
+200,rpp_crop_batch vs scalar reference HALF_PIXEL,last 2 columns and rows,73.7968769,0.803364375,0.959236842,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference; the interior is a required check (RPP's output must be right to be timed)
+200,rpp_crop_batch vs fkl_fused_halfpixel,interior,7.62939453e-06,7.63144794e-07,0,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+200,rpp_crop_batch vs fkl_fused_halfpixel,last 2 columns and rows,73.7968693,0.803364375,0.959236842,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+200,rpp_crop_batch_unsplit vs rpp_crop_batch,interior,0,0,0,1,the same RPP calls
+200,rpp_crop_batch_unsplit vs rpp_crop_batch,last 2 columns and rows,0,0,0,1,the same RPP calls
+200,hand_batch vs scalar reference ASYMMETRIC,interior,7.62939453e-06,6.14890781e-07,0,1,
+200,hand_batch vs scalar reference ASYMMETRIC,last 2 columns and rows,7.62939453e-06,6.11062656e-07,0,1,
+200,hand_batch vs fkl_fused,interior,0,0,0,-1,the whole tensors: bitwise equal
+200,hand_batch vs fkl_fused,last 2 columns and rows,0,0,0,-1,the whole tensors: bitwise equal
+210,fkl_fused vs scalar reference ASYMMETRIC,interior,7.62939453e-06,6.1697939e-07,0,1,
+210,fkl_fused vs scalar reference ASYMMETRIC,last 2 columns and rows,7.62939453e-06,6.12549737e-07,0,1,
+210,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,interior,7.62939453e-06,6.17017782e-07,0,1,
+210,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,last 2 columns and rows,7.62939453e-06,6.16705178e-07,0,1,
+210,fkl_perop_batch vs fkl_fused,interior,7.62939453e-06,1.66946618e-07,0,1,
+210,fkl_perop_batch vs fkl_fused,last 2 columns and rows,7.62939453e-06,1.43032657e-07,0,1,
+210,rpp_crop_batch vs scalar reference HALF_PIXEL,interior,1.90734863e-06,2.62535017e-07,0,1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference; the interior is a required check (RPP's output must be right to be timed)
+210,rpp_crop_batch vs scalar reference HALF_PIXEL,last 2 columns and rows,73.7968769,0.792570578,0.956992481,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference; the interior is a required check (RPP's output must be right to be timed)
+210,rpp_crop_batch vs fkl_fused_halfpixel,interior,7.62939453e-06,7.67800013e-07,0,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+210,rpp_crop_batch vs fkl_fused_halfpixel,last 2 columns and rows,73.7968693,0.792570579,0.956992481,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+210,rpp_crop_batch_unsplit vs rpp_crop_batch,interior,0,0,0,1,the same RPP calls
+210,rpp_crop_batch_unsplit vs rpp_crop_batch,last 2 columns and rows,0,0,0,1,the same RPP calls
+210,hand_batch vs scalar reference ASYMMETRIC,interior,7.62939453e-06,6.1697939e-07,0,1,
+210,hand_batch vs scalar reference ASYMMETRIC,last 2 columns and rows,7.62939453e-06,6.12549737e-07,0,1,
+210,hand_batch vs fkl_fused,interior,0,0,0,-1,the whole tensors: bitwise equal
+210,hand_batch vs fkl_fused,last 2 columns and rows,0,0,0,-1,the whole tensors: bitwise equal
+220,fkl_fused vs scalar reference ASYMMETRIC,interior,7.62939453e-06,6.18498588e-07,0,1,
+220,fkl_fused vs scalar reference ASYMMETRIC,last 2 columns and rows,7.62939453e-06,6.20645176e-07,0,1,
+220,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,interior,7.62939453e-06,6.18538329e-07,0,1,
+220,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,last 2 columns and rows,7.62939453e-06,6.23833968e-07,0,1,
+220,fkl_perop_batch vs fkl_fused,interior,7.62939453e-06,1.63308031e-07,0,1,
+220,fkl_perop_batch vs fkl_fused,last 2 columns and rows,7.62939453e-06,1.40065345e-07,0,1,
+220,rpp_crop_batch vs scalar reference HALF_PIXEL,interior,1.90734863e-06,2.63740326e-07,0,1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference; the interior is a required check (RPP's output must be right to be timed)
+220,rpp_crop_batch vs scalar reference HALF_PIXEL,last 2 columns and rows,73.7968769,0.790309669,0.955027911,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference; the interior is a required check (RPP's output must be right to be timed)
+220,rpp_crop_batch vs fkl_fused_halfpixel,interior,7.62939453e-06,7.70641062e-07,0,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+220,rpp_crop_batch vs fkl_fused_halfpixel,last 2 columns and rows,73.7968693,0.790309672,0.955027911,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+220,rpp_crop_batch_unsplit vs rpp_crop_batch,interior,0,0,0,1,the same RPP calls
+220,rpp_crop_batch_unsplit vs rpp_crop_batch,last 2 columns and rows,0,0,0,1,the same RPP calls
+220,hand_batch vs scalar reference ASYMMETRIC,interior,7.62939453e-06,6.18498588e-07,0,1,
+220,hand_batch vs scalar reference ASYMMETRIC,last 2 columns and rows,7.62939453e-06,6.20645176e-07,0,1,
+220,hand_batch vs fkl_fused,interior,0,0,0,-1,the whole tensors: bitwise equal
+220,hand_batch vs fkl_fused,last 2 columns and rows,0,0,0,-1,the whole tensors: bitwise equal
+230,fkl_fused vs scalar reference ASYMMETRIC,interior,7.62939453e-06,6.23284005e-07,0,1,
+230,fkl_fused vs scalar reference ASYMMETRIC,last 2 columns and rows,7.62939453e-06,6.43927389e-07,0,1,
+230,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,interior,7.62939453e-06,6.23121607e-07,0,1,
+230,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,last 2 columns and rows,7.62939453e-06,6.4649118e-07,0,1,
+230,fkl_perop_batch vs fkl_fused,interior,7.62939453e-06,1.5979548e-07,0,1,
+230,fkl_perop_batch vs fkl_fused,last 2 columns and rows,7.62939453e-06,1.37735384e-07,0,1,
+230,rpp_crop_batch vs scalar reference HALF_PIXEL,interior,1.90734863e-06,2.64684919e-07,0,1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference; the interior is a required check (RPP's output must be right to be timed)
+230,rpp_crop_batch vs scalar reference HALF_PIXEL,last 2 columns and rows,73.7968769,0.783904126,0.94826087,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference; the interior is a required check (RPP's output must be right to be timed)
+230,rpp_crop_batch vs fkl_fused_halfpixel,interior,7.62939453e-06,7.76036333e-07,0,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+230,rpp_crop_batch vs fkl_fused_halfpixel,last 2 columns and rows,73.7968693,0.783904148,0.94826087,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+230,rpp_crop_batch_unsplit vs rpp_crop_batch,interior,0,0,0,1,the same RPP calls
+230,rpp_crop_batch_unsplit vs rpp_crop_batch,last 2 columns and rows,0,0,0,1,the same RPP calls
+230,hand_batch vs scalar reference ASYMMETRIC,interior,7.62939453e-06,6.23284005e-07,0,1,
+230,hand_batch vs scalar reference ASYMMETRIC,last 2 columns and rows,7.62939453e-06,6.43927389e-07,0,1,
+230,hand_batch vs fkl_fused,interior,0,0,0,-1,the whole tensors: bitwise equal
+230,hand_batch vs fkl_fused,last 2 columns and rows,0,0,0,-1,the whole tensors: bitwise equal
+240,fkl_fused vs scalar reference ASYMMETRIC,interior,7.62939453e-06,6.34490743e-07,0,1,
+240,fkl_fused vs scalar reference ASYMMETRIC,last 2 columns and rows,7.62939453e-06,6.70394531e-07,0,1,
+240,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,interior,7.62939453e-06,6.34332162e-07,0,1,
+240,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,last 2 columns and rows,7.62939453e-06,6.73837794e-07,0,1,
+240,fkl_perop_batch vs fkl_fused,interior,7.62939453e-06,1.55775563e-07,0,1,
+240,fkl_perop_batch vs fkl_fused,last 2 columns and rows,7.62939453e-06,1.34022054e-07,0,1,
+240,rpp_crop_batch vs scalar reference HALF_PIXEL,interior,1.90734863e-06,2.66532263e-07,0,1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference; the interior is a required check (RPP's output must be right to be timed)
+240,rpp_crop_batch vs scalar reference HALF_PIXEL,last 2 columns and rows,73.7968769,0.771137509,0.938494152,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference; the interior is a required check (RPP's output must be right to be timed)
+240,rpp_crop_batch vs fkl_fused_halfpixel,interior,7.62939453e-06,7.88770067e-07,0,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+240,rpp_crop_batch vs fkl_fused_halfpixel,last 2 columns and rows,73.7968693,0.771137556,0.938494152,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+240,rpp_crop_batch_unsplit vs rpp_crop_batch,interior,0,0,0,1,the same RPP calls
+240,rpp_crop_batch_unsplit vs rpp_crop_batch,last 2 columns and rows,0,0,0,1,the same RPP calls
+240,hand_batch vs scalar reference ASYMMETRIC,interior,7.62939453e-06,6.34490743e-07,0,1,
+240,hand_batch vs scalar reference ASYMMETRIC,last 2 columns and rows,7.62939453e-06,6.70394531e-07,0,1,
+240,hand_batch vs fkl_fused,interior,0,0,0,-1,the whole tensors: bitwise equal
+240,hand_batch vs fkl_fused,last 2 columns and rows,0,0,0,-1,the whole tensors: bitwise equal
+250,fkl_fused vs scalar reference ASYMMETRIC,interior,7.62939453e-06,6.49877396e-07,0,1,
+250,fkl_fused vs scalar reference ASYMMETRIC,last 2 columns and rows,7.62939453e-06,6.84513962e-07,0,1,
+250,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,interior,7.62939453e-06,6.49434738e-07,0,1,
+250,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,last 2 columns and rows,7.62939453e-06,6.85930105e-07,0,1,
+250,fkl_perop_batch vs fkl_fused,interior,7.62939453e-06,1.51734362e-07,0,1,
+250,fkl_perop_batch vs fkl_fused,last 2 columns and rows,7.62939453e-06,1.32797592e-07,0,1,
+250,rpp_crop_batch vs scalar reference HALF_PIXEL,interior,1.90734863e-06,2.70256415e-07,0,1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference; the interior is a required check (RPP's output must be right to be timed)
+250,rpp_crop_batch vs scalar reference HALF_PIXEL,last 2 columns and rows,73.7968769,0.755464918,0.936438596,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference; the interior is a required check (RPP's output must be right to be timed)
+250,rpp_crop_batch vs fkl_fused_halfpixel,interior,7.62939453e-06,8.06982065e-07,0,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+250,rpp_crop_batch vs fkl_fused_halfpixel,last 2 columns and rows,73.7968693,0.755464977,0.936438596,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+250,rpp_crop_batch_unsplit vs rpp_crop_batch,interior,0,0,0,1,the same RPP calls
+250,rpp_crop_batch_unsplit vs rpp_crop_batch,last 2 columns and rows,0,0,0,1,the same RPP calls
+250,hand_batch vs scalar reference ASYMMETRIC,interior,7.62939453e-06,6.49877396e-07,0,1,
+250,hand_batch vs scalar reference ASYMMETRIC,last 2 columns and rows,7.62939453e-06,6.84513962e-07,0,1,
+250,hand_batch vs fkl_fused,interior,0,0,0,-1,the whole tensors: bitwise equal
+250,hand_batch vs fkl_fused,last 2 columns and rows,0,0,0,-1,the whole tensors: bitwise equal
+260,fkl_fused vs scalar reference ASYMMETRIC,interior,7.62939453e-06,6.660208e-07,0,1,
+260,fkl_fused vs scalar reference ASYMMETRIC,last 2 columns and rows,7.62939453e-06,6.92478479e-07,0,1,
+260,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,interior,7.62939453e-06,6.65546722e-07,0,1,
+260,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,last 2 columns and rows,7.62939453e-06,6.92361959e-07,0,1,
+260,fkl_perop_batch vs fkl_fused,interior,7.62939453e-06,1.48853532e-07,0,1,
+260,fkl_perop_batch vs fkl_fused,last 2 columns and rows,7.62939453e-06,1.34580551e-07,0,1,
+260,rpp_crop_batch vs scalar reference HALF_PIXEL,interior,1.90734863e-06,2.76703763e-07,0,1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference; the interior is a required check (RPP's output must be right to be timed)
+260,rpp_crop_batch vs scalar reference HALF_PIXEL,last 2 columns and rows,73.7968769,0.741118245,0.93782726,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference; the interior is a required check (RPP's output must be right to be timed)
+260,rpp_crop_batch vs fkl_fused_halfpixel,interior,7.62939453e-06,8.27594606e-07,0,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+260,rpp_crop_batch vs fkl_fused_halfpixel,last 2 columns and rows,73.7968693,0.741118311,0.93782726,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+260,rpp_crop_batch_unsplit vs rpp_crop_batch,interior,0,0,0,1,the same RPP calls
+260,rpp_crop_batch_unsplit vs rpp_crop_batch,last 2 columns and rows,0,0,0,1,the same RPP calls
+260,hand_batch vs scalar reference ASYMMETRIC,interior,7.62939453e-06,6.660208e-07,0,1,
+260,hand_batch vs scalar reference ASYMMETRIC,last 2 columns and rows,7.62939453e-06,6.92478479e-07,0,1,
+260,hand_batch vs fkl_fused,interior,0,0,0,-1,the whole tensors: bitwise equal
+260,hand_batch vs fkl_fused,last 2 columns and rows,0,0,0,-1,the whole tensors: bitwise equal
+270,fkl_fused vs scalar reference ASYMMETRIC,interior,7.62939453e-06,6.82209622e-07,0,1,
+270,fkl_fused vs scalar reference ASYMMETRIC,last 2 columns and rows,7.62939453e-06,6.94897608e-07,0,1,
+270,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,interior,7.62939453e-06,6.81662391e-07,0,1,
+270,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,last 2 columns and rows,7.62939453e-06,6.9555146e-07,0,1,
+270,fkl_perop_batch vs fkl_fused,interior,7.62939453e-06,1.46861455e-07,0,1,
+270,fkl_perop_batch vs fkl_fused,last 2 columns and rows,7.62939453e-06,1.31441363e-07,0,1,
+270,rpp_crop_batch vs scalar reference HALF_PIXEL,interior,1.90734863e-06,2.85506069e-07,0,1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference; the interior is a required check (RPP's output must be right to be timed)
+270,rpp_crop_batch vs scalar reference HALF_PIXEL,last 2 columns and rows,73.7968769,0.735503076,0.939395712,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference; the interior is a required check (RPP's output must be right to be timed)
+270,rpp_crop_batch vs fkl_fused_halfpixel,interior,7.62939453e-06,8.49395867e-07,0,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+270,rpp_crop_batch vs fkl_fused_halfpixel,last 2 columns and rows,73.7968693,0.735503145,0.939395712,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+270,rpp_crop_batch_unsplit vs rpp_crop_batch,interior,0,0,0,1,the same RPP calls
+270,rpp_crop_batch_unsplit vs rpp_crop_batch,last 2 columns and rows,0,0,0,1,the same RPP calls
+270,hand_batch vs scalar reference ASYMMETRIC,interior,7.62939453e-06,6.82209622e-07,0,1,
+270,hand_batch vs scalar reference ASYMMETRIC,last 2 columns and rows,7.62939453e-06,6.94897608e-07,0,1,
+270,hand_batch vs fkl_fused,interior,0,0,0,-1,the whole tensors: bitwise equal
+270,hand_batch vs fkl_fused,last 2 columns and rows,0,0,0,-1,the whole tensors: bitwise equal
+280,fkl_fused vs scalar reference ASYMMETRIC,interior,7.62939453e-06,6.96816412e-07,0,1,
+280,fkl_fused vs scalar reference ASYMMETRIC,last 2 columns and rows,7.62939453e-06,7.00985927e-07,0,1,
+280,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,interior,7.62939453e-06,6.96327093e-07,0,1,
+280,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,last 2 columns and rows,7.62939453e-06,6.99924829e-07,0,1,
+280,fkl_perop_batch vs fkl_fused,interior,7.62939453e-06,1.44889907e-07,0,1,
+280,fkl_perop_batch vs fkl_fused,last 2 columns and rows,7.62939453e-06,1.28136123e-07,0,1,
+280,rpp_crop_batch vs scalar reference HALF_PIXEL,interior,1.90734863e-06,2.95078497e-07,0,1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference; the interior is a required check (RPP's output must be right to be timed)
+280,rpp_crop_batch vs scalar reference HALF_PIXEL,last 2 columns and rows,73.7968769,0.724164784,0.940595238,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference; the interior is a required check (RPP's output must be right to be timed)
+280,rpp_crop_batch vs fkl_fused_halfpixel,interior,7.62939453e-06,8.70366128e-07,0,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+280,rpp_crop_batch vs fkl_fused_halfpixel,last 2 columns and rows,73.7968693,0.724164854,0.940595238,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+280,rpp_crop_batch_unsplit vs rpp_crop_batch,interior,0,0,0,1,the same RPP calls
+280,rpp_crop_batch_unsplit vs rpp_crop_batch,last 2 columns and rows,0,0,0,1,the same RPP calls
+280,hand_batch vs scalar reference ASYMMETRIC,interior,7.62939453e-06,6.96816412e-07,0,1,
+280,hand_batch vs scalar reference ASYMMETRIC,last 2 columns and rows,7.62939453e-06,7.00985927e-07,0,1,
+280,hand_batch vs fkl_fused,interior,0,0,0,-1,the whole tensors: bitwise equal
+280,hand_batch vs fkl_fused,last 2 columns and rows,0,0,0,-1,the whole tensors: bitwise equal
+290,fkl_fused vs scalar reference ASYMMETRIC,interior,7.62939453e-06,7.0863744e-07,0,1,
+290,fkl_fused vs scalar reference ASYMMETRIC,last 2 columns and rows,7.62939453e-06,7.08738362e-07,0,1,
+290,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,interior,7.62939453e-06,7.08141999e-07,0,1,
+290,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,last 2 columns and rows,7.62939453e-06,7.07820225e-07,0,1,
+290,fkl_perop_batch vs fkl_fused,interior,7.62939453e-06,1.42858149e-07,0,1,
+290,fkl_perop_batch vs fkl_fused,last 2 columns and rows,7.62939453e-06,1.24805881e-07,0,1,
+290,rpp_crop_batch vs scalar reference HALF_PIXEL,interior,1.90734863e-06,3.0347302e-07,0,1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference; the interior is a required check (RPP's output must be right to be timed)
+290,rpp_crop_batch vs scalar reference HALF_PIXEL,last 2 columns and rows,73.7968769,0.710979653,0.941675741,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference; the interior is a required check (RPP's output must be right to be timed)
+290,rpp_crop_batch vs fkl_fused_halfpixel,interior,7.62939453e-06,8.87418541e-07,0,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+290,rpp_crop_batch vs fkl_fused_halfpixel,last 2 columns and rows,73.7968693,0.710979724,0.941675741,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+290,rpp_crop_batch_unsplit vs rpp_crop_batch,interior,0,0,0,1,the same RPP calls
+290,rpp_crop_batch_unsplit vs rpp_crop_batch,last 2 columns and rows,0,0,0,1,the same RPP calls
+290,hand_batch vs scalar reference ASYMMETRIC,interior,7.62939453e-06,7.0863744e-07,0,1,
+290,hand_batch vs scalar reference ASYMMETRIC,last 2 columns and rows,7.62939453e-06,7.08738362e-07,0,1,
+290,hand_batch vs fkl_fused,interior,0,0,0,-1,the whole tensors: bitwise equal
+290,hand_batch vs fkl_fused,last 2 columns and rows,0,0,0,-1,the whole tensors: bitwise equal
+300,fkl_fused vs scalar reference ASYMMETRIC,interior,7.62939453e-06,7.1659409e-07,0,1,
+300,fkl_fused vs scalar reference ASYMMETRIC,last 2 columns and rows,7.62939453e-06,7.13709339e-07,0,1,
+300,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,interior,7.62939453e-06,7.16039034e-07,0,1,
+300,fkl_fused_halfpixel vs scalar reference HALF_PIXEL,last 2 columns and rows,7.62939453e-06,7.13930593e-07,0,1,
+300,fkl_perop_batch vs fkl_fused,interior,7.62939453e-06,1.40704986e-07,0,1,
+300,fkl_perop_batch vs fkl_fused,last 2 columns and rows,7.62939453e-06,1.21862526e-07,0,1,
+300,rpp_crop_batch vs scalar reference HALF_PIXEL,interior,1.90734863e-06,3.09337364e-07,0,1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference; the interior is a required check (RPP's output must be right to be timed)
+300,rpp_crop_batch vs scalar reference HALF_PIXEL,last 2 columns and rows,73.7968769,0.697606829,0.942444444,-1,RPP clamps the source coordinate to size-2: the last 2 columns and rows differ from the reference; the interior is a required check (RPP's output must be right to be timed)
+300,rpp_crop_batch vs fkl_fused_halfpixel,interior,7.62939453e-06,8.98277014e-07,0,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+300,rpp_crop_batch vs fkl_fused_halfpixel,last 2 columns and rows,73.7968693,0.6976069,0.942444444,-1,both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ
+300,rpp_crop_batch_unsplit vs rpp_crop_batch,interior,0,0,0,1,the same RPP calls
+300,rpp_crop_batch_unsplit vs rpp_crop_batch,last 2 columns and rows,0,0,0,1,the same RPP calls
+300,hand_batch vs scalar reference ASYMMETRIC,interior,7.62939453e-06,7.1659409e-07,0,1,
+300,hand_batch vs scalar reference ASYMMETRIC,last 2 columns and rows,7.62939453e-06,7.13709339e-07,0,1,
+300,hand_batch vs fkl_fused,interior,0,0,0,-1,the whole tensors: bitwise equal
+300,hand_batch vs fkl_fused,last 2 columns and rows,0,0,0,-1,the whole tensors: bitwise equal
