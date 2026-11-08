@@ -152,7 +152,7 @@ FLUSH_BYTES = 256 << 20
 
 
 def cuda_time_flushed(call, x, out, flush_buf):
-    """Mean and min GPU time (ms) of 100 calls with the L2 flushed before each one: a kernel that READS a 256 MB buffer (more than three times the 72 MB L2 of the RTX 4090; reading leaves
+    """Mean and min GPU time (ms) of 100 calls with the L2 flushed before each one: a kernel that READS a 256 MiB buffer (more than three times the 72 MiB L2 of the RTX 4090; reading leaves
     clean lines, so the output of the previous call is written back during the flush) runs on the same stream before the start event, outside the timed interval."""
     start, stop = torch.cuda.Event(enable_timing=True), torch.cuda.Event(enable_timing=True)
     times = []
@@ -323,7 +323,7 @@ def main():
     image = (f"the file {args.input} (written by e2_fkl_chain: std::mt19937_64 seed 20261030, as E1a)" if args.input else "torch.randint, torch.manual_seed 20261030")
     notes = (f"k values: {','.join(str(k) for k in ks)}; 4096x2160 uint8 noise ({image}) -> float32, alpha {ALPHA}, c {C}, k operations alternating mul and add; each (version, k) in its own process "
              f"with fresh Triton and Inductor caches (compile_s = the first call, cold); {ITERATIONS} timed calls after warm-up; kernels counted with torch.profiler; "
-             f"gpu_flushed_*: the same timing with the L2 flushed before every call (a kernel that reads 256 MB, outside the timed interval); "
+             f"gpu_flushed_*: the same timing with the L2 flushed before every call (a kernel that reads 256 MiB, outside the timed interval); "
              f"gpu_kernel_*: the warm calls queued behind a GPU spin of {SPIN_US:.0f} us (torch.cuda._sleep, no memory access) enqueued before the start event, so that the call is "
              f"queued when the GPU reaches the start event: its kernels without the host's dispatch (a call that enqueues more than the spin covers, as eager with one kernel per "
              f"operation at large k, keeps part of it; FKL: fkl_kernel_* of its program, the same method); "
