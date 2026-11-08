@@ -1,0 +1,31 @@
+# 2026-11-08T11:41:50+01:00 thread-fusion check starts (compile only)
+defines: -DENABLE_BENCHMARK
+flags: -O3 -DNDEBUG -std=c++17 "--generate-code=arch=compute_89,code=[compute_89,sm_89]" --threads 0 -rdc=false -split-compile=0 -ftemplate-depth=1000 -lineinfo
+includes: /home/oscar/tfkl-bench/worktrees/fkl-benchmarks-e4-series/build/local-rtx4090/opencv-cuda/CMakeFiles/e4_preprocessing_cu.dir/includes_CUDA.rsp
+# 2026-11-08T11:41:50+01:00 build default (TF_CHECK_EXECUTE_FALSE=0)
+# 2026-11-08T11:41:54+01:00 build tf-false (TF_CHECK_EXECUTE_FALSE=1)
+# 2026-11-08T11:41:58+01:00 builds ended
+default vs <false>, without the TF argument: kernels identical: 0, different: 0, only in A: 0, only in B: 0
+NOT IDENTICAL: see sass-default-vs-tf-false.txt
+e4_preprocessing_cu vs default: kernels identical: 0, different: 0, only in A: 0, only in B: 0
+THE DEFAULT KERNELS ARE NOT cvgs_fused's: see sass-e4-vs-default.txt
+default   batch 300 TF::ENABLED    280 instructions  sha256 b7d54e30cbbe8046  sass-default-batch300.txt
+default   batch 150 TF::ENABLED    280 instructions  sha256 5b31ae19e1522d24  sass-default-batch150.txt
+default   batch  10 TF::ENABLED    280 instructions  sha256 5c779f6cb755caec  sass-default-batch10.txt
+tf-false  batch 300 TF::DISABLED   280 instructions  sha256 b7d54e30cbbe8046  sass-tf-false-batch300.txt
+tf-false  batch 150 TF::DISABLED   280 instructions  sha256 5b31ae19e1522d24  sass-tf-false-batch150.txt
+tf-false  batch  10 TF::DISABLED   280 instructions  sha256 5c779f6cb755caec  sass-tf-false-batch10.txt
+batch 10: the normalised listings are byte-identical
+batch 150: the normalised listings are byte-identical
+batch 300: the normalised listings are byte-identical
+# 2026-11-08T11:41:59+01:00 thread-fusion check ended
+# 2026-11-08T11:42:21+01:00 comparisons again (tf-check-compare.sh): the objects marked executable
+default vs <false>, without the TF argument: kernels identical: 0, different: 0, only in A: 3, only in B: 3
+e4_preprocessing_cu vs default: kernels identical: 3, different: 0, only in A: 149, only in B: 0
+# 2026-11-08T11:42:22+01:00 comparisons ended
+# 2026-11-08T11:42:48+01:00 default vs <false> again (tf-check-compare2.sh): both TF arguments ignored in the pairing
+default vs <false>, without the two TF arguments: kernels identical: 0, different: 0, only in A: 3, only in B: 3
+# 2026-11-08T11:42:48+01:00 comparison ended
+# 2026-11-08T11:43:07+01:00 default vs <false> again (tf-check-compare3.sh): the E9 regexes for the two TF arguments
+default vs <false>, without the two TF arguments: kernels identical: 3, different: 0, only in A: 0, only in B: 0
+# 2026-11-08T11:43:08+01:00 comparison ended

@@ -1,0 +1,25 @@
+# experiment: E4a pre-processing: pairs of versions compared element by element
+# notes: the outputs of the checked call of each version (before its timing); bitwise_equal = 1 when the two outputs have the same bytes; within_tolerance = 1 when max_abs_diff <= 1e-4 (informational: each version's strict check is ok_own of the agreement CSV)
+# repo: fkl-benchmarks 2dac1c8ac467a45ff3076b4e25a0fb8160e5cca4
+# fkl: 64ad9195cd785d0c93a70b35e02d5a6c7c4a5048
+# cvGPUSpeedup: 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c
+# FastNPP: a1b5e245d7dd70fba23dcb51a0aea80495dbc61d
+# nvcc: 13.4.92 (/home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/nvcc), architectures 89, -fmad on, -lineinfo on
+# hip: none (none), architectures none
+# host compiler: GNU 15.2.0, Release, -march=native, -ftemplate-depth=1000
+# opencv: 4.14.0
+# cpu: AMD Ryzen 9 5950X 16-Core Processor
+# os: Ubuntu 26.04.1 LTS
+# kernel: Linux 7.0.0-38-generic
+# gpu: NVIDIA GeForce RTX 4090, cc 8.9, 128 SMs, 24106 MiB, PCI 0000:09:00.0
+# cuda driver api: 13.3, cuda runtime: 13.4
+# nvidia-smi driver: 610.43.02
+# clocks (sm, mem, max sm, max mem, MHz): 210 MHz, 405 MHz, 3105 MHz, 10501 MHz
+# power limit, temperature at start: 450.00 W, 40
+experiment,batch,version_a,version_b,bitwise_equal,max_abs_diff,within_tolerance
+E4a,300,fkl_fused_late,fkl_fused,1,0,1
+E4a,300,fkl_fused_after,fkl_fused,1,0,1
+E4a,300,hand_batch,fkl_fused,1,0,1
+E4a,300,hand_padded,fkl_fused,1,0,1
+E4a,300,cvgs_fused,fkl_fused,1,0,1
+E4a,300,cvgs_fused,opencv_percrop,0,7.62939453e-06,1
