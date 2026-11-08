@@ -36,18 +36,26 @@
 //   repetitions differ by at most 2 percent; at most 10 s (warmup_steady = 0 when the 10 s ended it).
 //   Repetitions: fused 100; baseline min(100, max(10, as many as fit in VFHF_BUDGET_SECONDS (30) s)), from the time of its last warm-up
 //   repetition (rep_estimate_ms). The column reps_rule says which applied: fixed (fused), budget, max (100) or min (10).
-//   Per point and side: mean, median, min and max; speedup = mean baseline / mean fused (the ratio of the means) and the ratio of the medians.
+//   Per point and side: mean, median, min and max, and every timed repetition (the repetitions CSV). Three speedups per point: the ratio of the
+//   means (speedup_mean), the ratio of the medians (speedup_median), and the mean of the per-repetition ratios baseline_i / fused_i over the
+//   first min(reps) repetitions of the two blocks (speedup_block_paired_mean_of_ratios). The last is the estimator of the 2025 harness ("Mean
+//   Speedup", opencv-cuda/testsCommon.cuh), which timed the two sides back to back in each iteration; here they are paired by index within two
+//   separately timed blocks.
 //   Clocks and links (common/hip_wallclock.h), read outside the timed intervals: at the start of the warm-up, at the start of the timed
 //   repetitions and after them, -1 where they cannot be read (an NVIDIA GPU). sclk_* and mclk_*: the graphics and the memory clock; card_link_*:
 //   the GPU function's own PCIe link (on the RX 9060 the link inside the card, to its PCIe switch); host_link_*: the link of the root port above
 //   the GPU, to the host.
 // Order: the fused side of a point first, then its baseline; VFHF_BASELINE_FIRST=1 times the baseline first.
 // Checks, once per point before the timing, tolerance 1e-4 absolute: fused against the double precision reference of the chain (required), fused
-// against the baseline (required), the baseline against the reference (informational). The chain converges to 0.54 / (1 - 0.54) = 1.1739.
+// against the baseline (required), the baseline against the reference (informational). The outputs of both sides are filled with NaN before the
+// checked repetition, so that an output a side does not write fails. The chain converges to its fixed point 0.54 / (1 - 0.54) = 1.1739 within the
+// tolerance after about 42 operations, so these rows cannot see its length beyond NUM_OPS = 2: the length is verified in the device code instead,
+// NUM_OPS / 2 FMA operations in each fused kernel (gfx1200 and sm_89).
 // Environment (checked: common/env_args.h): VFHF_BASELINE_FIRST (0 or 1), VFHF_WARMUP_SECONDS (2.0; 0 to 10), VFHF_BUDGET_SECONDS (30; 1 to 600),
 // VFHF_MAX_OPS (0: every point; otherwise the points with more operations are left out, for a short check).
 // CSVs in the working directory (<arch>: GPU_AMD or GPU_NVIDIA): benchmark_vfhf_max_speedup_<arch>.csv (a row per point and side),
-// benchmark_vfhf_max_speedup_speedup_<arch>.csv (a row per point) and benchmark_vfhf_max_speedup_agreement_<arch>.csv.
+// benchmark_vfhf_max_speedup_speedup_<arch>.csv (a row per point), benchmark_vfhf_max_speedup_reps_<arch>.csv (a row per timed repetition,
+// written after the timing of its point) and benchmark_vfhf_max_speedup_agreement_<arch>.csv.
 #include <common/csv_writer.h>
 #include <common/env_args.h>
 #include <common/hip_wallclock.h>
@@ -92,7 +100,7 @@ constexpr size_t FUSED_REPS = 100, MIN_REPS = 10, MAX_REPS = 100;
 constexpr double WINDOW_SECONDS = 0.25, STEADY = 0.02, MAX_WARMUP_SECONDS = 10.0;
 
 // The GPU time of one repetition of a side: an event recorded on its stream before the first call and one after the last call (timing
-// infrastructure: it calls no library)
+// infrastructure: it calls the HIP or CUDA event API and no FKL function)
 class EventTimer {
 public:
 #if defined(FK_HIP_BACKEND)
@@ -169,11 +177,13 @@ struct SideTimes {
     int warmupRuns{0};
     bool warmupSteady{false};
     Readings start, timed, end;   // at the start of the warm-up, at the start of the timed repetitions and after them
+    std::vector<double> times;    // the timed repetitions in the order they ran, ms
 };
 
 struct Outputs {
     fklb::CsvWriter* timing;
     fklb::CsvWriter* speedup;
+    fklb::CsvWriter* reps;
     fklb::CsvWriter* agreement;
     bool allPass{true};
 };
@@ -234,20 +244,21 @@ SideTimes timeSide(EventTimer& timer, const Run& run, const bool fixedReps, cons
         }
     }
     s.timed = readClocksAndLinks();
-    std::vector<double> times(s.reps);
-    for (double& t : times) {
+    s.times.resize(s.reps);
+    for (double& t : s.times) {
         t = once();
     }
     s.end = readClocksAndLinks();
     double sum = 0;
-    for (const double t : times) {
+    for (const double t : s.times) {
         sum += t;
     }
-    s.mean = sum / static_cast<double>(times.size());
-    std::sort(times.begin(), times.end());
-    s.min = times.front();
-    s.max = times.back();
-    s.median = times.size() % 2 ? times[times.size() / 2] : 0.5 * (times[times.size() / 2 - 1] + times[times.size() / 2]);
+    s.mean = sum / static_cast<double>(s.times.size());
+    std::vector<double> sorted = s.times;
+    std::sort(sorted.begin(), sorted.end());
+    s.min = sorted.front();
+    s.max = sorted.back();
+    s.median = sorted.size() % 2 ? sorted[sorted.size() / 2] : 0.5 * (sorted[sorted.size() / 2 - 1] + sorted[sorted.size() / 2]);
     return s;
 }
 
@@ -281,7 +292,14 @@ bool runPoint(fk::Stream_<fk::defaultParArch>& fusedStream, EventTimer& fusedTim
         }
     };
 
-    // ---- Checks: one repetition of each side, the outputs on the host
+    // ---- Checks: one repetition of each side, the outputs on the host. Both sides' outputs are filled with NaN first: from the third point on
+    // they would otherwise still hold the previous point's correct values (the fixed point of the chain), and an output that a side did not
+    // write would pass
+    constexpr float NOT_WRITTEN = std::numeric_limits<float>::quiet_NaN();
+    fk::setTo(NOT_WRITTEN, fusedOutput, fusedStream);
+    for (fk::Ptr2D<float>& image : baselineFloat) {
+        fk::setTo(NOT_WRITTEN, image, baselineStream);
+    }
     fusedRun();
     fusedOutput.download(fusedStream);
     baselineRun();
@@ -337,10 +355,26 @@ bool runPoint(fk::Stream_<fk::defaultParArch>& fusedStream, EventTimer& fusedTim
     };
     timingRow("fused", 1, settings.baselineFirst ? 2 : 1, f);
     timingRow("baseline", static_cast<size_t>(BATCH) * (1 + NUM_OPS), settings.baselineFirst ? 1 : 2, b);
-    out.speedup->row(NUM_OPS, b.mean / f.mean, b.median / f.median, f.mean, b.mean, f.median, b.median);
-    std::cout << "  speedup: " << b.mean / f.mean << " (means), " << b.median / f.median << " (medians)" << std::endl;
+    // The mean of the per-repetition ratios baseline_i / fused_i over the first min(reps) repetitions of the two blocks (see the header)
+    const size_t pairs = std::min(b.times.size(), f.times.size());
+    double ratioSum = 0;
+    for (size_t i = 0; i < pairs; ++i) {
+        ratioSum += b.times[i] / f.times[i];
+    }
+    const double blockPaired = ratioSum / static_cast<double>(pairs);
+    out.speedup->row(NUM_OPS, b.mean / f.mean, b.median / f.median, blockPaired, f.mean, b.mean, f.median, b.median);
+    std::cout << "  speedup: " << b.mean / f.mean << " (means), " << b.median / f.median << " (medians), " << blockPaired
+              << " (block-paired mean of " << pairs << " ratios)" << std::endl;
+    const auto repRows = [&](const char* side, const int position, const SideTimes& s) {
+        for (size_t i = 0; i < s.times.size(); ++i) {
+            out.reps->row(NUM_OPS, side, position, i, s.times[i]);
+        }
+    };
+    repRows("fused", settings.baselineFirst ? 2 : 1, f);
+    repRows("baseline", settings.baselineFirst ? 1 : 2, b);
     out.timing->flush();
     out.speedup->flush();
+    out.reps->flush();
     out.agreement->flush();
     return true;
 }
@@ -400,7 +434,10 @@ int launch() {
         "min(100, max(10, as many as fit in " + oneDecimal(settings.budgetSeconds) + " s from its last warm-up repetition)); order: " +
         (settings.baselineFirst ? "baseline first" : "fused first") + "; points (NUM_OPS): " + pointsText +
         (settings.maxOps ? "; only the points up to " + std::to_string(settings.maxOps) + " operations (VFHF_MAX_OPS)" : std::string()) +
-        "; speedup = mean baseline / mean fused and median baseline / median fused; sclk_* and mclk_*: the graphics and the memory clock of an "
+        "; speedup_mean = mean baseline / mean fused (the ratio of the means); speedup_median = median baseline / median fused; "
+        "speedup_block_paired_mean_of_ratios = the mean over i < min(reps) of baseline_i / fused_i, the i-th timed repetitions of the two blocks "
+        "(the estimator of the 2025 harness's Mean Speedup, which timed both sides back to back in each iteration; here the sides are timed in "
+        "separate blocks and paired by index); sclk_* and mclk_*: the graphics and the memory clock of an "
         "AMD GPU (MHz); card_link_gts_* and card_link_width_*: the speed (GT/s) and width (lanes) of the GPU function's own PCIe link, which on "
         "a card with its own PCIe switch is the link inside the card; host_link_gts_* and host_link_width_*: the same of the root port above the "
         "GPU, the link to the host; all read outside the timed intervals, at the start of the warm-up, at the start of the timed repetitions and "
@@ -414,12 +451,17 @@ int launch() {
                             "host_link_width_timed_start", "host_link_width_end"},
                            notes);
     fklb::CsvWriter speedup(std::string("benchmark_vfhf_max_speedup_speedup_") + ARCH_NAME + ".csv", "benchmark_vfhf_max_speedup",
-                            {"num_ops", "speedup_mean", "speedup_median", "fused_mean_ms", "baseline_mean_ms", "fused_median_ms", "baseline_median_ms"},
+                            {"num_ops", "speedup_mean", "speedup_median", "speedup_block_paired_mean_of_ratios", "fused_mean_ms", "baseline_mean_ms",
+                             "fused_median_ms", "baseline_median_ms"},
                             notes);
+    fklb::CsvWriter repetitions(std::string("benchmark_vfhf_max_speedup_reps_") + ARCH_NAME + ".csv", "benchmark_vfhf_max_speedup",
+                                {"num_ops", "side", "position", "rep", "ms"},
+                                notes + "; a row per timed repetition, in the order they ran (rep 0 first), written after the timing of its point");
     fklb::CsvWriter agreement(std::string("benchmark_vfhf_max_speedup_agreement_") + ARCH_NAME + ".csv", "benchmark_vfhf_max_speedup",
                               {"num_ops", "comparison", "max_abs_diff", "reference", "pass"},
-                              notes + "; checks once per point before the timing; tolerance 1e-4 absolute; pass -1 = informational");
-    Outputs out{&timing, &speedup, &agreement, true};
+                              notes + "; checks once per point before the timing, both sides' outputs filled with NaN before the checked repetition; "
+                                      "tolerance 1e-4 absolute; pass -1 = informational");
+    Outputs out{&timing, &speedup, &repetitions, &agreement, true};
     runAll(std::make_index_sequence<sizeof(POINTS) / sizeof(POINTS[0])>{}, fusedStream, fusedTimer, fusedImages, fusedOutput, baselineStream,
            baselineTimer, baselineImages, baselineFloat, settings, out);
     std::cout << (out.allPass ? "all required numerical checks passed" : "NUMERICAL CHECK FAILED") << std::endl;
