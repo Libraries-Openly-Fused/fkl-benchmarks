@@ -30,6 +30,9 @@
 // intervals (fkl_flushed_prep_* is the preparation of that run); the flush also keeps the GPU busy while the launch is enqueued.
 // fkl_kernel_*: the warm launches queued behind a GPU spin enqueued before the start event (e1::gpuSpin, E1_SPIN_US, no memory access, so the L2 stays
 // warm): the interval holds the kernel without the host's dispatch of the launch.
+// For every k the three passes run in the order of triton/e2_chain.py: warm, L2-flushed, kernel-only. The order matters at long chains: a pass that follows
+// the kernel-only pass (100 spins of nearly idle GPU) starts from another GPU state than one that follows the warm pass, so every implementation's flushed
+// pass follows its own warm pass.
 #include <common/main.h>
 #include <common/csv_writer.h>
 #include <common/cuda_timing.h>
@@ -136,9 +139,8 @@ bool runPoint(cudaStream_t cs, fk::Stream_<fk::ParArch::GPU_NVIDIA>& fkStream, f
     }
     fklb::Timing t, prep, tFlushed, prepFlushed, tKernel, prepKernel;
     if (!e1::profileMode()) {   // in profile mode the kernel is launched once, for the output above, and nothing is timed
+        // the passes in the order of triton/e2_chain.py: warm, L2-flushed, kernel-only (each pass starts from the state the one before it leaves the GPU in)
         fklb::timePreparedLaunch(cs, prepareFkl, launchFkl, t, prep);
-        const auto spin = [&] { e1::gpuSpin<<<1, 1, 0, cs>>>(e1::spinNs()); };
-        fklb::timePreparedLaunch(cs, prepareFkl, spin, launchFkl, tKernel, prepKernel);
         float4* flushBuf = nullptr;
         float* sink = nullptr;
         FKLB_CUDA_CHECK(cudaMalloc(reinterpret_cast<void**>(&flushBuf), FLUSH_BYTES));
@@ -148,6 +150,8 @@ bool runPoint(cudaStream_t cs, fk::Stream_<fk::ParArch::GPU_NVIDIA>& fkStream, f
         fklb::timePreparedLaunch(cs, prepareFkl, flush, launchFkl, tFlushed, prepFlushed);
         FKLB_CUDA_CHECK(cudaFree(flushBuf));
         FKLB_CUDA_CHECK(cudaFree(sink));
+        const auto spin = [&] { e1::gpuSpin<<<1, 1, 0, cs>>>(e1::spinNs()); };
+        fklb::timePreparedLaunch(cs, prepareFkl, spin, launchFkl, tKernel, prepKernel);
     }
     csv.row(K, PAIRS, e1::timed(t.mean), e1::timed(t.min), 1, path, e1::timed(tFlushed.mean), e1::timed(tFlushed.min), e1::timed(prep.mean), e1::timed(prep.min),
             e1::timed(prepFlushed.mean), e1::timed(prepFlushed.min), e1::timed(tKernel.mean), e1::timed(tKernel.min));
@@ -204,6 +208,7 @@ int launch() {
                         "that reads 256 MB, enqueued after the preparation and before the start event, outside both intervals); fkl_kernel_*: the warm launch with a GPU "
                         "spin of " + std::to_string(e1::spinNs() / 1000) + " us (no memory access) enqueued before the start event, so that the launch is queued when "
                         "the GPU reaches the start event: the kernel without the host's dispatch; "
+                        "the passes of every k in the order warm, L2-flushed, kernel-only (as triton/e2_chain.py); "
                         "outputs are raw float32 files, one per k, for the bitwise and ULP comparison of triton/e2_chain.py" + (e1::profileMode() ? "; PROFILE MODE: nothing was timed, the time columns are empty" : ""));
     const char* order = std::getenv("E2_ORDER");
     const bool reverse = order != nullptr && std::string(order) == "reverse";
