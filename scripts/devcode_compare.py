@@ -9,8 +9,9 @@
 # comments (addresses, encodings) removed and the __hip_cuid_<hash> names normalised. llvm-objdump prints the local branch
 # targets as symbols L<n>, numbered per code object: by default their text belongs to the function that contains them and the
 # references are normalised (a renumbering is not a code difference); --labels-as-symbols keeps them as separate symbols with
-# their numbers, the stricter form. The '...' lines with which llvm-objdump stands for a run of zero bytes (the padding after a function) are not
-# compared. --table writes <dir>/<executable>.tsv: function, sha256 in A, sha256 in B, same.
+# their numbers, the stricter form. The '...' lines with which llvm-objdump stands for a run of zero bytes are not compared when they come after
+# the last instruction of a function (the padding before the next one); a '...' inside a function is compared. --table writes
+# <dir>/<executable>.tsv: function, sha256 in A, sha256 in B, same.
 # Exit 0 = the same executables in both directories and every function of every executable identical.
 import argparse
 import fnmatch
@@ -44,6 +45,16 @@ def code_object(llvm, arch, exe, tmpdir):
     return None
 
 
+def digest(lines):
+    """sha256 of the instruction text of a function, without the trailing '...' lines (llvm-objdump prints '...' for a run of 8 or more zero
+    bytes that it does not disassemble; after the last instruction of a function that is the padding before the next one, which moves with the
+    layout of the code object). A '...' inside a function is kept and compared."""
+    end = len(lines)
+    while end > 0 and lines[end - 1] == '...':
+        end -= 1
+    return hashlib.sha256('\n'.join(lines[:end]).encode()).hexdigest()
+
+
 def functions(llvm, co, labels_as_symbols):
     """{name: sha256 of the instruction text} of the code object."""
     out = {}
@@ -56,7 +67,7 @@ def functions(llvm, co, labels_as_symbols):
         m = HEADER.match(line)
         if m:
             if name is not None:
-                out[name] = hashlib.sha256('\n'.join(cur).encode()).hexdigest()
+                out[name] = digest(cur)
             name, cur = CUID.sub('__hip_cuid_@', m.group(1)), []
             if not labels_as_symbols and LABEL_NAME.fullmatch(name):
                 # a local branch target, not a function: its text belongs to the function before it
@@ -67,11 +78,11 @@ def functions(llvm, co, labels_as_symbols):
         if name is None:
             continue
         code = line.split('//', 1)[0].strip()
-        if code and code != '...':   # llvm-objdump prints '...' for a run of zero bytes it skips (padding between functions), not an instruction
+        if code:
             code = CUID.sub('__hip_cuid_@', code)
             cur.append(code if labels_as_symbols else LABEL.sub('L@', code))
     if name is not None:
-        out[name] = hashlib.sha256('\n'.join(cur).encode()).hexdigest()
+        out[name] = digest(cur)
     p.wait()
     return out
 
