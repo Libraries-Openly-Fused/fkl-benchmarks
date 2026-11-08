@@ -23,11 +23,16 @@
 //   start of the run to split, and from split to its end) are reported as well; they are NaN when the run leaves split unset. The median of the
 //   whole runs is not the sum of the medians of the parts.
 //   Why the warm-up rule: a GPU that was at rest raises its clock during about a second of continuous work (an RX 9060 runs at 2.0 GHz for the
-//   first 0.7 s and at 3.0 GHz after 1 s), and a kernel that is bound by the core clock is 20 percent slower until then. The graphics clock is
-//   read at the start of the warm-up, at the start of the timed runs and after them, so that a file records it.
+//   first 0.7 s and at 3.0 GHz after 1 s), and a kernel that is bound by the core clock is 20 percent slower until then. The graphics clock, the
+//   memory clock and the PCIe link (speed and width) are read at the start of the warm-up, at the start of the timed runs and after them, so that
+//   a file records them.
 //
-// fklb::amdGpuClockMHz(): the graphics clock of the first AMD GPU in MHz (sysfs hwmon freq1_input of the device with the vendor 0x1002), -1 when
-// it cannot be read.
+// The device is the first AMD GPU (sysfs /sys/class/drm/card*/device with the vendor 0x1002) whose hwmon has freq1_input. Each function returns -1
+// when it cannot read its value:
+//   fklb::amdGpuClockMHz()     the graphics clock in MHz (hwmon freq1_input, labelled sclk);
+//   fklb::amdGpuMemClockMHz()  the memory clock in MHz (hwmon freq2_input, labelled mclk);
+//   fklb::amdPcieLinkGTs()     the current PCIe link speed in GT/s (current_link_speed of the device, for example "32.0 GT/s PCIe");
+//   fklb::amdPcieLinkWidth()   the current PCIe link width in lanes (current_link_width of the device).
 #pragma once
 
 #include <algorithm>
@@ -53,10 +58,18 @@ struct WallStats {
     double warmupSeconds{0};   // the warm-up that was run, in seconds
     bool warmupSteady{true};   // false: the cap of the warm-up was reached before the time of the runs stopped changing
     double gpuClockStartMHz{-1}, gpuClockTimedMHz{-1}, gpuClockEndMHz{-1};
+    double memClockStartMHz{-1}, memClockTimedMHz{-1}, memClockEndMHz{-1};
+    double pcieGTsStart{-1}, pcieGTsTimed{-1}, pcieGTsEnd{-1};
+    double pcieWidthStart{-1}, pcieWidthTimed{-1}, pcieWidthEnd{-1};
 };
 
-inline double amdGpuClockMHz() {
-    static const std::string path = [] {
+namespace detail {
+// The device directory of the first AMD GPU whose hwmon has freq1_input, and that hwmon directory; empty strings when there is none
+struct AmdGpuPaths {
+    std::string device, hwmon;
+};
+inline const AmdGpuPaths& amdGpuPaths() {
+    static const AmdGpuPaths paths = [] {
         std::error_code ec;
         for (const auto& card : std::filesystem::directory_iterator("/sys/class/drm", ec)) {
             const std::filesystem::path device = card.path() / "device";
@@ -67,18 +80,41 @@ inline double amdGpuClockMHz() {
             }
             for (const auto& hw : std::filesystem::directory_iterator(device / "hwmon", ec)) {
                 if (std::filesystem::exists(hw.path() / "freq1_input", ec)) {
-                    return (hw.path() / "freq1_input").string();
+                    return AmdGpuPaths{device.string(), hw.path().string()};
                 }
             }
         }
-        return std::string();
+        return AmdGpuPaths{};
     }();
-    if (path.empty()) {
+    return paths;
+}
+// the number at the start of a sysfs file ("32.0 GT/s PCIe" gives 32), -1 when the file is missing or does not start with a number
+inline double readLeadingNumber(const std::string& directory, const char* file) {
+    if (directory.empty()) {
         return -1.0;
     }
-    std::ifstream f(path);
-    double hz = 0;
-    return (f >> hz) ? hz / 1e6 : -1.0;
+    std::ifstream f(std::filesystem::path(directory) / file);
+    double value = 0;
+    return (f >> value) ? value : -1.0;
+}
+}  // namespace detail
+
+inline double amdGpuClockMHz() {
+    const double hz = detail::readLeadingNumber(detail::amdGpuPaths().hwmon, "freq1_input");
+    return hz < 0 ? -1.0 : hz / 1e6;
+}
+
+inline double amdGpuMemClockMHz() {
+    const double hz = detail::readLeadingNumber(detail::amdGpuPaths().hwmon, "freq2_input");
+    return hz < 0 ? -1.0 : hz / 1e6;
+}
+
+inline double amdPcieLinkGTs() {
+    return detail::readLeadingNumber(detail::amdGpuPaths().device, "current_link_speed");
+}
+
+inline double amdPcieLinkWidth() {
+    return detail::readLeadingNumber(detail::amdGpuPaths().device, "current_link_width");
 }
 
 namespace detail {
@@ -89,7 +125,8 @@ inline double medianOfSorted(const std::vector<double>& v) {
 
 inline WallStats measureWall(const std::function<void(WallClock::time_point&)>& run, const int warmup, const int iters,
                              const double minWarmupSeconds = 0.0, const bool steady = false, const double maxWarmupSeconds = 10.0) {
-    const double clockAtStart = amdGpuClockMHz();
+    const double clockAtStart = amdGpuClockMHz(), memClockAtStart = amdGpuMemClockMHz(), pcieGTsAtStart = amdPcieLinkGTs(),
+                 pcieWidthAtStart = amdPcieLinkWidth();
     const auto begin = WallClock::now();
     const auto elapsed = [&] { return std::chrono::duration<double>(WallClock::now() - begin).count(); };
     constexpr double WINDOW = 0.25, TOLERANCE_STEADY = 0.02;
@@ -113,7 +150,8 @@ inline WallStats measureWall(const std::function<void(WallClock::time_point&)>& 
         }
     }
     const double warmupSeconds = elapsed();
-    const double clockAtTimedStart = amdGpuClockMHz();
+    const double clockAtTimedStart = amdGpuClockMHz(), memClockAtTimedStart = amdGpuMemClockMHz(), pcieGTsAtTimedStart = amdPcieLinkGTs(),
+                 pcieWidthAtTimedStart = amdPcieLinkWidth();
     std::vector<double> total(static_cast<size_t>(iters)), first, second;
     bool everySplit = true;
     for (auto& t : total) {
@@ -151,6 +189,15 @@ inline WallStats measureWall(const std::function<void(WallClock::time_point&)>& 
     s.gpuClockStartMHz = clockAtStart;
     s.gpuClockTimedMHz = clockAtTimedStart;
     s.gpuClockEndMHz = amdGpuClockMHz();
+    s.memClockStartMHz = memClockAtStart;
+    s.memClockTimedMHz = memClockAtTimedStart;
+    s.memClockEndMHz = amdGpuMemClockMHz();
+    s.pcieGTsStart = pcieGTsAtStart;
+    s.pcieGTsTimed = pcieGTsAtTimedStart;
+    s.pcieGTsEnd = amdPcieLinkGTs();
+    s.pcieWidthStart = pcieWidthAtStart;
+    s.pcieWidthTimed = pcieWidthAtTimedStart;
+    s.pcieWidthEnd = amdPcieLinkWidth();
     return s;
 }
 
