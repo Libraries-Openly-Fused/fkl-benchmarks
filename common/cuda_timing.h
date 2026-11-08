@@ -15,9 +15,9 @@
 // CUDA event timing of launches. A failed CUDA call throws (common/status_check.h).
 //
 // fklb::timeIt(stream, launch, timing): one warm-up launch, then ITERATIONS launches, each between two CUDA events recorded on `stream` and
-//   synchronised; mean and min in ms. Whatever launch() does on the host before it enqueues its work is inside the interval: in a pipeline
-//   experiment, building the batch and the operations is part of the measured time, so launch() builds them. It always times; a program
-//   that must not time in a profiling pass says so where it calls.
+//   synchronised; mean and min in ms. Whatever launch() does on the host before it enqueues its work is inside the interval: to time a whole
+//   call of a pipeline, building the batch and the operations included, launch() builds them (E4's build-once variants build them before the
+//   timing, and say so where they call). It always times; a program that must not time in a profiling pass says so where it calls.
 //
 // fklb::timePreparedLaunch(stream, prepare, launch, gpu, host): for the kernel comparisons, which report the GPU time of each side's kernel
 //   and the host time of preparing its arguments separately. Every iteration has three intervals:
