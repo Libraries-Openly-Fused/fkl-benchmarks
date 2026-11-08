@@ -1,6 +1,8 @@
-# vfhf_compare.py <results dir>: the tables of results/rx9060/vfhf-max-speedup/README.md from the three runs of benchmark_vfhf_max_speedup
-# (<results dir>/runs/run0, run1, run2: run0 and run2 fused first, run1 baseline first), written to stdout, and <results dir>/comparison.csv
-# (a row per run and point).
+# vfhf_compare.py <results dir>: the tables of results/rx9060/vfhf-max-speedup/README.md from the three runs of benchmark_vfhf_max_speedup,
+# written to stdout, and <results dir>/comparison.csv (a row per run and point). <results dir> is the results folder itself (for example
+# results/rx9060/vfhf-max-speedup), not the repository root. It reads <results dir>/runs/run0, run1, run2 (run0 and run2 fused first, run1
+# baseline first) and, when it exists, <results dir>/runs-extra/run0, run1, run2: the extra points of a binary of their own, run in the same
+# order. Each extra run joins the run of the same name, and every table marks its points with "(extra)".
 #   The three speedups of a point: speedup_block_paired_mean_of_ratios (the estimator of the 2025 harness's "Mean Speedup", the one comparable
 #   with systems 1 to 5 of the GPU-size figure), speedup_ratio_of_means and speedup_ratio_of_medians, each as the median of the three runs
 #   (min .. max), the spread (max - min) / median and the 3 % and 5 % flags.
@@ -32,14 +34,23 @@ def med_range(values, fmt):
 
 def main():
     top = sys.argv[1]
-    runs = {r: os.path.join(top, 'runs', r) for r in RUNS}
-    S = {r: load(os.path.join(p, 'benchmark_vfhf_max_speedup_speedup_GPU_AMD.csv')) for r, p in runs.items()}
-    T = {r: load(os.path.join(p, 'benchmark_vfhf_max_speedup_GPU_AMD.csv')) for r, p in runs.items()}
-    P = {r: load(os.path.join(p, 'benchmark_vfhf_max_speedup_reps_GPU_AMD.csv')) for r, p in runs.items()}
-    A = {r: load(os.path.join(p, 'benchmark_vfhf_max_speedup_agreement_GPU_AMD.csv')) for r, p in runs.items()}
-    points = [int(x['num_ops']) for x in S['run0']]
-    if any([int(x['num_ops']) for x in S[r]] != points for r in RUNS):
+    sets = [s for s in ('runs', 'runs-extra') if os.path.isdir(os.path.join(top, s))]
+    runs = {(s, r): os.path.join(top, s, r) for s in sets for r in RUNS}
+    S, T, P, A = ({r: [] for r in RUNS} for _ in range(4))
+    of_set = {}   # NUM_OPS -> the set of runs that measured it
+    for (s, r), p in runs.items():
+        part = load(os.path.join(p, 'benchmark_vfhf_max_speedup_speedup_GPU_AMD.csv'))
+        for x in part:
+            if of_set.setdefault(int(x['num_ops']), s) != s:
+                sys.exit(f"NUM_OPS {x['num_ops']} is in more than one set of runs")
+        S[r] += part
+        T[r] += load(os.path.join(p, 'benchmark_vfhf_max_speedup_GPU_AMD.csv'))
+        P[r] += load(os.path.join(p, 'benchmark_vfhf_max_speedup_reps_GPU_AMD.csv'))
+        A[r] += load(os.path.join(p, 'benchmark_vfhf_max_speedup_agreement_GPU_AMD.csv'))
+    points = sorted(int(x['num_ops']) for x in S['run0'])
+    if any(sorted(int(x['num_ops']) for x in S[r]) != points for r in RUNS):
         sys.exit('the runs do not have the same points')
+    label = {n: f'{n} (extra)' if of_set[n] == 'runs-extra' else str(n) for n in points}
     sp = {(r, int(x['num_ops'])): {k: float(x[k]) for k, _ in EST} for r in RUNS for x in S[r]}
     tm = {(r, int(x['num_ops']), x['side']): x for r in RUNS for x in T[r]}
     reps = {}
@@ -60,7 +71,7 @@ def main():
             spreads[k] = (max(v) - min(v)) / statistics.median(v)
         s = spreads[EST[0][0]]
         flag = '> 5 %' if s > 0.05 else ('> 3 %' if s > 0.03 else '')
-        print(f'| {n} | ' + ' | '.join(cells) + f' | {100 * s:.1f} % | {flag} |')
+        print(f'| {label[n]} | ' + ' | '.join(cells) + f' | {100 * s:.1f} % | {flag} |')
         rows.append((n, spreads))
 
     # ---- The maximum over NUM_OPS
@@ -73,9 +84,9 @@ def main():
         per_run = []
         for r in RUNS:
             nr = max(points, key=lambda n: sp[(r, n)][k])
-            per_run.append(f'{sp[(r, nr)][k]:.0f} ({nr})')
+            per_run.append(f'{sp[(r, nr)][k]:.0f} ({label[nr]})')
         plateau = [n for n in points if medians[n] >= 0.95 * medians[nmax]]
-        print(f'| {name} | {medians[nmax]:.0f} ({nmax}) | ' + ' | '.join(per_run) + f' | {", ".join(map(str, plateau))} |')
+        print(f'| {name} | {medians[nmax]:.0f} ({label[nmax]}) | ' + ' | '.join(per_run) + f' | {", ".join(label[n] for n in plateau)} |')
 
     # ---- The times
     print('\n### The times (the mean of the timed repetitions of a side; the median of the three runs, min .. max)\n')
@@ -86,7 +97,7 @@ def main():
         b = [float(tm[(r, n, 'baseline')]['mean_ms']) for r in RUNS]
         calls = int(tm[('run0', n, 'baseline')]['calls_per_rep'])
         rp = sorted({f"{tm[(r, n, 'baseline')]['reps']} ({tm[(r, n, 'baseline')]['reps_rule']})" for r in RUNS})
-        print(f'| {n} | {med_range(f, "{:.4f}")} | {med_range(b, "{:.2f}")} | {1000 * statistics.median(b) / calls:.3f} | {", ".join(rp)} |')
+        print(f'| {label[n]} | {med_range(f, "{:.4f}")} | {med_range(b, "{:.2f}")} | {1000 * statistics.median(b) / calls:.3f} | {", ".join(rp)} |')
 
     # ---- The slow state of the fused kernel
     print(f'\n### The fused blocks: slow repetitions (more than {100 * SLOW:.0f} % above the fastest fused repetition of the three runs at the point), '
@@ -106,10 +117,10 @@ def main():
                 slow_blocks.append((r, n, slow))
             elif f[0] > (1 + SLOW) * fastest:
                 first_slow.append((r, n))
-        print(f'| {n} | ' + ' | '.join(cells) + ' |')
+        print(f'| {label[n]} | ' + ' | '.join(cells) + ' |')
     print(f'\nBlocks with at least half of their repetitions slow: {len(slow_blocks)} of {len(points) * len(RUNS)}: '
-          + ', '.join(f'{r} at {n} ({s} of 100)' for r, n, s in slow_blocks))
-    print(f'\nOther blocks whose first timed repetition is slow: {len(first_slow)}: ' + ', '.join(f'{r} at {n}' for r, n in first_slow))
+          + ', '.join(f'{r} at {label[n]} ({s} of 100)' for r, n, s in slow_blocks))
+    print(f'\nOther blocks whose first timed repetition is slow: {len(first_slow)}: ' + ', '.join(f'{r} at {label[n]}' for r, n in first_slow))
 
     # ---- The order
     print('\n### The order: run1 (baseline first) over the mean of run0 and run2 (fused first)\n')
@@ -121,7 +132,7 @@ def main():
              float(tm[('run1', n, 'fused')]['mean_ms']) / statistics.mean([float(tm[(r, n, 'fused')]['mean_ms']) for r in ('run0', 'run2')]),
              float(tm[('run1', n, 'baseline')]['mean_ms']) / statistics.mean([float(tm[(r, n, 'baseline')]['mean_ms']) for r in ('run0', 'run2')])]
         order.append(q)
-        print(f'| {n} | ' + ' | '.join(f'{100 * (x - 1):+.1f} %' for x in q) + ' |')
+        print(f'| {label[n]} | ' + ' | '.join(f'{100 * (x - 1):+.1f} %' for x in q) + ' |')
     for i, name in enumerate(('block-paired mean of ratios', 'fused mean', 'baseline mean')):
         v = [q[i] for q in order]
         print(f'\n{name}: median {100 * (statistics.median(v) - 1):+.1f} %, range {100 * (min(v) - 1):+.1f} .. {100 * (max(v) - 1):+.1f} %', end='')
@@ -138,7 +149,7 @@ def main():
         print(f"| {comp} | {max(float(x['max_abs_diff']) for x in xs):.3g} | {passed} |")
 
     # ---- Clocks, links, warm-ups
-    print('\n### The clocks, the links and the warm-ups (every timing row of the three runs)\n')
+    print('\n### The clocks, the links and the warm-ups (every timing row of the runs)\n')
     allrows = [x for r in RUNS for x in T[r]]
     for side in ('fused', 'baseline'):
         xs = [x for x in allrows if x['side'] == side]
@@ -156,17 +167,17 @@ def main():
                    f"card {float(x[f'card_link_gts_{m}']):g} x{float(x[f'card_link_width_{m}']):g}")
             links[key] = links.get(key, 0) + 1
     print(f'- the links at all {3 * len(allrows)} readings: ' + '; '.join(f'{h}, {c}: {k}' for (h, c), k in links.items()))
-    for r in RUNS:
+    for (st, r), path in runs.items():
         temps = []
         for when in ('before', 'after'):
-            m = re.search(r'edge (\d+) C', open(os.path.join(runs[r], f'machine-{when}.txt')).read())
+            m = re.search(r'edge (\d+) C', open(os.path.join(path, f'machine-{when}.txt')).read())
             temps.append(m.group(1) if m else '?')
-        print(f'- {r}: GPU edge temperature {temps[0]} C before the run, {temps[1]} C after it')
+        print(f'- {st}/{r}: GPU edge temperature {temps[0]} C before the run, {temps[1]} C after it')
 
     # ---- comparison.csv
     with open(os.path.join(top, 'comparison.csv'), 'w', newline='') as fh:
         w = csv.writer(fh)
-        w.writerow(['run', 'baseline_first', 'num_ops'] + [k for k, _ in EST] +
+        w.writerow(['set', 'run', 'baseline_first', 'num_ops'] + [k for k, _ in EST] +
                    ['fused_mean_ms', 'fused_median_ms', 'baseline_mean_ms', 'baseline_median_ms', 'baseline_reps', 'fused_slow_reps',
                     'fused_first_over_median', 'fused_sclk_timed_start_mhz', 'fused_mclk_timed_start_mhz', 'baseline_sclk_timed_start_mhz',
                     'baseline_mclk_timed_start_mhz'])
@@ -175,7 +186,7 @@ def main():
                 f, b = tm[(r, n, 'fused')], tm[(r, n, 'baseline')]
                 fr = reps[(r, n, 'fused')]
                 fastest = min(min(reps[(q, n, 'fused')]) for q in RUNS)
-                w.writerow([r, 1 if r == 'run1' else 0, n] + [f'{sp[(r, n)][k]:.6g}' for k, _ in EST] +
+                w.writerow([of_set[n], r, 1 if r == 'run1' else 0, n] + [f'{sp[(r, n)][k]:.6g}' for k, _ in EST] +
                            [f['mean_ms'], f['median_ms'], b['mean_ms'], b['median_ms'], b['reps'], sum(1 for x in fr if x > (1 + SLOW) * fastest),
                             f'{fr[0] / statistics.median(fr):.4f}', f['sclk_timed_start_mhz'], f['mclk_timed_start_mhz'], b['sclk_timed_start_mhz'],
                             b['mclk_timed_start_mhz']])

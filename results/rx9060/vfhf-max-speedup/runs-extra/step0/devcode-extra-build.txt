@@ -1,0 +1,10 @@
+== extra build (7b96c47, FKLB_VFHF_POINTS=15002;17002) vs the run build (7b96c47, the 18 points)
+A: 3 bundles, 10 functions, defined in more than one bundle: 2
+fused kernels: 2; (FMA operations, instructions): [(7501, 11318), (8501, 12818)]
+other kernels: 8; their FMA operations: [0, 0, 0, 0, 0, 0, 0, 0]
+B: 19 bundles, 26 functions; identical 6, different 2, only in A 2, only in B 18
+
+Note: the 2 "different" functions are the runtime stubs __cxa_deleted_virtual and __cxa_pure_virtual. Every bundle holds them, 3 here and 19 in
+the run build, and vfhf_devcode.py compares the list of a function's per-bundle hashes. Their code is the same in every bundle of both binaries:
+1 distinct hash each, the same in A and B. So all 8 functions common to the two builds are identical (the baseline's conversion, Mul and Add
+kernels, the three setTo kernels and the two stubs), and the two fused kernels are new: 7501 FMA operations at 15002 and 8501 at 17002 (NUM_OPS / 2).

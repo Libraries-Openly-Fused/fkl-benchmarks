@@ -1,0 +1,37 @@
+== extra_build
+source worktree: /home/cudeiro/rocm-fkl-benchmarks/tmp/wt-bench-vfhf
+  repo HEAD 7b96c472781e9ac71fd2d6b40bb1e449f1a74349, tracked changes: 0
+  external/fkl HEAD 64ad9195cd785d0c93a70b35e02d5a6c7c4a5048, tracked changes: 0
+points of the build (FKLB_VFHF_POINTS in the cache): 15002;17002
+build info (generated/fklb_build_info.h, printed in the CSV header):
+  FKLB_COMMIT_REPO "7b96c472781e9ac71fd2d6b40bb1e449f1a74349"
+  FKLB_COMMIT_FKL "64ad9195cd785d0c93a70b35e02d5a6c7c4a5048"
+  FKLB_COMMIT_CVGS "not checked out (pinned 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c)"
+  FKLB_COMMIT_FASTNPP "not checked out (pinned a1b5e245d7dd70fba23dcb51a0aea80495dbc61d)"
+  FKLB_NVCC_VERSION "none"
+  FKLB_NVCC_PATH "none"
+  FKLB_CUDA_ARCH "native"
+  FKLB_HIP_VERSION "24.0.0"
+  FKLB_HIP_PATH "/opt/rocm/core-10.1/bin/amdclang++"
+  FKLB_HIP_ARCH "gfx1200"
+  FKLB_CXX_COMPILER "Clang 24.0.0"
+  FKLB_BUILD_TYPE "Release"
+  FKLB_CPU_ARCH "native"
+  FKLB_FMAD "on"
+  FKLB_LINEINFO "on"
+  FKLB_TEMPLATE_DEPTH "1000"
+  FKLB_OPENCV_VERSION "none"
+commit strings compiled into the binary:
+  64ad9195cd785d0c93a70b35e02d5a6c7c4a5048
+  7b96c472781e9ac71fd2d6b40bb1e449f1a74349
+  not checked out (pinned 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c)
+  not checked out (pinned a1b5e245d7dd70fba23dcb51a0aea80495dbc61d)
+sha256: e49040dfc860f528882d15c0fa5f75283d52ba867dabc4e117902ab897f63a14  (384536 bytes)
+compile commands of the HIP objects (paths normalised; the 18 point translation units differ only in their file name):
+        1 /home/cudeiro/rocm-fkl-benchmarks/tmp/scripts/time_tu.sh <build>.tu.log /opt/rocm/core-10.1/bin/amdclang++  -DENABLE_BENCHMARK -DUSE_PROF_API=1 -D__HIP_PLATFORM_AMD__=1 -D__HIP_ROCclr__=1 -I<src>/fkl-self/vfhf -I<build>/fkl-self/vfhf/generated -I<src> -I<build>/generated -I<src>/external/fkl/include -O3 -DNDEBUG -std=c++17 --offload-arch=gfx1200 -Werror=c++20-extensions -ftemplate-depth=1000 -MD -MT fkl-self/vfhf/CMakeFiles/benchmark_vfhf_max_speedup_hip.dir/benchmark_vfhf_max_speedup_hip/launcher.hip.o -MF fkl-self/vfhf/CMakeFiles/benchmark_vfhf_max_speedup_hip.dir/benchmark_vfhf_max_speedup_hip/launcher.hip.o.d -o fkl-self/vfhf/CMakeFiles/benchmark_vfhf_max_speedup_hip.dir/benchmark_vfhf_max_speedup_hip/launcher.hip.o -x hip -c <build>/fkl-self/vfhf/benchmark_vfhf_max_speedup_hip/launcher.hip
+        2 /home/cudeiro/rocm-fkl-benchmarks/tmp/scripts/time_tu.sh <build>.tu.log /opt/rocm/core-10.1/bin/amdclang++  -DENABLE_BENCHMARK -DUSE_PROF_API=1 -D__HIP_PLATFORM_AMD__=1 -D__HIP_ROCclr__=1 -I<src>/fkl-self/vfhf -I<build>/fkl-self/vfhf/generated -I<src> -I<build>/generated -I<src>/external/fkl/include -O3 -DNDEBUG -std=c++17 --offload-arch=gfx1200 -Werror=c++20-extensions -ftemplate-depth=1000 -MD -MT fkl-self/vfhf/CMakeFiles/benchmark_vfhf_max_speedup_hip.dir/generated/vfhf_point_<N>.hip.o -MF fkl-self/vfhf/CMakeFiles/benchmark_vfhf_max_speedup_hip.dir/generated/vfhf_point_<N>.hip.o.d -o fkl-self/vfhf/CMakeFiles/benchmark_vfhf_max_speedup_hip.dir/generated/vfhf_point_<N>.hip.o -x hip -c <build>/fkl-self/vfhf/generated/vfhf_point_<N>.hip
+compile command of common/main.cpp:
+  /home/cudeiro/rocm-fkl-benchmarks/tmp/scripts/time_tu.sh <build>.tu.log /opt/rocm/core-10.1/bin/amdclang++ -DENABLE_BENCHMARK -DUSE_PROF_API=1 -D__HIP_PLATFORM_AMD__=1 -I<src>/fkl-self/vfhf -I<build>/fkl-self/vfhf/generated -I<src> -I<build>/generated -I<src>/external/fkl/include -isystem /opt/rocm/core-10.1/include -O3 -DNDEBUG -std=c++17 -march=native -mtune=native -ftemplate-depth=1000 -MD -MT fkl-self/vfhf/CMakeFiles/benchmark_vfhf_max_speedup_hip.dir/__/__/common/main.cpp.o -MF fkl-self/vfhf/CMakeFiles/benchmark_vfhf_max_speedup_hip.dir/__/__/common/main.cpp.o.d -o fkl-self/vfhf/CMakeFiles/benchmark_vfhf_max_speedup_hip.dir/__/__/common/main.cpp.o -c <src>/common/main.cpp
+  : && /opt/rocm/core-10.1/bin/amdclang++ -O3 -DNDEBUG --offload-arch=gfx1200 --hip-link --rtlib=compiler-rt -unwindlib=libgcc -Xlinker --dependency-file=fkl-self/vfhf/CMakeFiles/benchmark_vfhf_max_speedup_hip.dir/link.d fkl-self/vfhf/CMakeFiles/benchmark_vfhf_max_speedup_hip.dir/__/__/common/main.cpp.o fkl-self/vfhf/CMakeFiles/benchmark_vfhf_max_speedup_hip.dir/benchmark_vfhf_max_speedup_hip/launcher.hip.o fkl-self/vfhf/CMakeFiles/benchmark_vfhf_max_speedup_hip.dir/generated/vfhf_point_15002.hip.o fkl-self/vfhf/CMakeFiles/benchmark_vfhf_max_speedup_hip.dir/generated/vfhf_point_17002.hip.o -o bin/benchmark_vfhf_max_speedup_hip  /opt/rocm/core-10.1/lib/libamdhip64.so.7.16.26385-0000000  /opt/rocm/core-10.1/lib/llvm/lib/clang/24/lib/linux/libclang_rt.builtins-x86_64.a  /opt/rocm/core-10.1/lib/libamdhip64.so.7.16.26385-0000000  -lstdc++  -lm  -lgcc_s  -lc  -lgcc_s && :
+link command:
+  : && /opt/rocm/core-10.1/bin/amdclang++ -O3 -DNDEBUG --offload-arch=gfx1200 --hip-link --rtlib=compiler-rt -unwindlib=libgcc -Xlinker --dependency-file=fkl-self/vfhf/CMakeFiles/benchmark_vfhf_max_speedup_hip.dir/link.d fkl-self/vfhf/CMakeFiles/benchmark_vfhf_max_speedup_hip.dir/__/__/common/main.cpp.o fkl-self/vfhf/CMakeFiles/benchmark_vfhf_max_speedup_hip.dir/benchmark_vfhf_max_speedup_hip/launch
