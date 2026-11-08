@@ -32,6 +32,9 @@
 //                       a read of the frame -> Resize -> the same operations
 //   fkl_fused_half_pixel  the same with fk::ResizeSampling::HALF_PIXEL, the convention of NPP and cv::resize
 // On the batches of crops only (E4a):
+//   fkl_fused_late      a control: exactly the fkl_fused call (the same kernel), timed immediately before hand_batch. fkl_fused is the first version timed in a
+//                       batch and hand_batch comes after npp, so the ratio of hand_batch to FKL is also taken against an FKL time at the same place in the sequence,
+//                       and fkl_fused against fkl_fused_late shows the effect of the position, if there is one
 //   hand_batch          the hand-written fused kernel of E1c (handwritten-cuda/e1_preproc.cu, copied unchanged below), one launch for the batch: the crop pointers
 //                       in a __grid_constant__ array of 8 bytes per crop; the crop size, the output size and the constants of the chain are compile-time constants.
 //                       It reads its own copy of the frame (cudaMallocPitch, as in E1c) and writes its own output (cudaMalloc, the layout of the other outputs).
@@ -51,8 +54,8 @@
 // implementation does for a frame: the crop locations may change on every image, so it builds its batch (FKL: the crop views, the read and every operation;
 // OpenCV: the ROIs; NPP: the crop pointers; the hand-written kernels: the parameter block of crop pointers or crop descriptors; cvGPUSpeedup: the ROIs and every
 // operation) and enqueues its work, all inside the interval.
-// Pairs of versions (E4a): the outputs of the checked calls compared element by element, with the bitwise equality and the largest difference: hand_batch and
-// hand_padded against fkl_fused, cvgs_fused against fkl_fused and against opencv_percrop.
+// Pairs of versions (E4a): the outputs of the checked calls compared element by element, with the bitwise equality and the largest difference: fkl_fused_late,
+// hand_batch and hand_padded against fkl_fused, cvgs_fused against fkl_fused and against opencv_percrop.
 // Intermediate bytes: what the implementation allocates besides its frame and its output tensor (tallied from the allocations) and the change of free device memory
 // (cudaMemGetInfo). Host time of one call: host_enqueue_us (the call returns, stream idle before each of 100 calls) and host_launch_us (100 calls back to back without
 // synchronisation, wall time per call: when the GPU is slower than the host this is the GPU's pace, because the launch queue fills up).
@@ -586,6 +589,8 @@ void runCase(const Geometry& g, const std::vector<unsigned char>& noise, cudaStr
             handPreprocPadded<BATCH, PAD><<<grid, block, 0, cs>>>(params, hOut, pitch, imageStride, fx, fy);
             FKLB_CUDA_CHECK(cudaGetLastError());
         };
+        // the control: the fkl_fused call again, on FKL's own frame and output, timed immediately before hand_batch
+        const std::vector<float> outFklLate = measure(g, "fkl_fused_late", "ASYMMETRIC", cs, dTensor.ptr().data, launchFklAsym, 0, 0, refAsym, refHalf, w, allOk);
         const std::vector<float> outHand = measure(g, "hand_batch", "ASYMMETRIC", cs, hOut, launchHand, 0, 0, refAsym, refHalf, w, allOk);
         const std::vector<float> outHandPadded = measure(g, "hand_padded", "ASYMMETRIC", cs, hOut, launchHandPadded, 0, 0, refAsym, refHalf, w, allOk);
         FKLB_CUDA_CHECK(cudaFree(hSrc));
@@ -617,6 +622,7 @@ void runCase(const Geometry& g, const std::vector<unsigned char>& noise, cudaStr
         }
 
         // ---- Pairs of versions: the outputs of their checked calls
+        comparePair(g, "fkl_fused_late", outFklLate, "fkl_fused", outFkl, w);
         comparePair(g, "hand_batch", outHand, "fkl_fused", outFkl, w);
         comparePair(g, "hand_padded", outHandPadded, "fkl_fused", outFkl, w);
         comparePair(g, "cvgs_fused", outCvgs, "fkl_fused", outFkl, w);
@@ -638,7 +644,8 @@ int launch() {
     const std::string notes = std::string("thread fusion: off (fk::TF::DISABLED); source: seeded 8UC3 noise (LCG seed 12345, as the CPU rows), one copy per implementation; ") +
                               "timing: CUDA events around one call of the whole implementation, which builds its batch (FKL: crop views, read and operations; OpenCV: ROIs; NPP: crop pointers; "
                               "hand_batch and hand_padded: the parameter block of crop pointers or crop descriptors; cvgs_fused: ROIs and operations) and enqueues its work, because the "
-                              "crop locations may change on every image; 100 calls after one warm-up; hand_batch and hand_padded: the hand-written kernels of E1c "
+                              "crop locations may change on every image; 100 calls after one warm-up; fkl_fused_late: the fkl_fused call again, timed immediately before "
+                              "hand_batch (a control of the position in the sequence), E4a only; hand_batch and hand_padded: the hand-written kernels of E1c "
                               "(handwritten-cuda/e1_preproc.cu), E4a only; cvgs_fused: cvGPUSpeedup (cvGS::executeOperations, its default thread fusion), E4a only; sampling: "
                               "ASYMMETRIC = FKL default, cv::cuda::resize, the hand-written kernels and cvGPUSpeedup, HALF_PIXEL = NPP and fkl_fused_half_pixel; ok_own = max |output - "
                               "scalar double reference of the version's own convention| <= 1e-4" +
