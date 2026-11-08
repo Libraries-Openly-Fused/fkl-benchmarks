@@ -1,0 +1,36 @@
+# experiment: benchmark_vfhf_max_speedup
+# notes: FKL against itself, vertical and horizontal fusion of the 2025 mul_add chain: 50 images of 60x120 uchar, all 30; fused = one executeOperations (batch read of the 50 images, SaturateCast<uchar, float> then Mul(1), the NUM_OPS operations as fk::StaticLoop of Mul(0.54) then Add(0.54), PerThreadWrite into a 60x120x50 float tensor), thread fusion off; baseline = one executeOperations per operation and per image (the conversion into a float image, then NUM_OPS in place), 50 (1 + NUM_OPS) calls, every operation built in its call; GPU events on the side's own stream around all calls of one repetition; warm-up at least 2.0 s and 2 repetitions, until the mean of two consecutive windows of 0.25 s differs by at most 2 percent (repetitions shorter than 0.25 s) or two consecutive repetitions differ by at most 2 percent (longer ones), at most 10 s; repetitions: fused 100, baseline min(100, max(10, as many as fit in 30.0 s from its last warm-up repetition)); order: fused first; points (NUM_OPS): 2 102 502 1002 2002 3002 4002 5002 6002 7002 8002 9002 10002 12002 14002 16002 18002 19902; speedup_ratio_of_means = mean baseline / mean fused; speedup_ratio_of_medians = median baseline / median fused; speedup_block_paired_mean_of_ratios = the mean over i < min(reps) of baseline_i / fused_i, the i-th timed repetitions of the two blocks (the estimator of the 2025 harness's Mean Speedup, which timed both sides back to back in each iteration; here the sides are timed in separate blocks and paired by index); sclk_* and mclk_*: the graphics and the memory clock of an AMD GPU (MHz); card_link_gts_* and card_link_width_*: the speed (GT/s) and width (lanes) of the GPU function's own PCIe link, which on a card with its own PCIe switch is the link inside the card; host_link_gts_* and host_link_width_*: the same of the root port above the GPU, the link to the host; all read outside the timed intervals, at the start of the warm-up, at the start of the timed repetitions and after them (-1: not readable)
+# repo: fkl-benchmarks 7b96c472781e9ac71fd2d6b40bb1e449f1a74349
+# fkl: 64ad9195cd785d0c93a70b35e02d5a6c7c4a5048
+# cvGPUSpeedup: not checked out (pinned 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c)
+# FastNPP: not checked out (pinned a1b5e245d7dd70fba23dcb51a0aea80495dbc61d)
+# nvcc: none (none), architectures native, -fmad on, -lineinfo on
+# hip: 24.0.0 (/opt/rocm/core-10.1/bin/amdclang++), architectures gfx1200
+# host compiler: Clang 24.0.0, Release, -march=native, -ftemplate-depth=1000
+# opencv: none
+# cpu: AMD Ryzen 7 5800X3D 8-Core Processor
+# os: Ubuntu 26.04.1 LTS
+# kernel: Linux 7.0.0-38-generic
+# gpu: AMD Radeon RX 9060, gfx1200, 14 WGPs (28 CUs), wave32, 8144 MiB, PCI 0000:0d:00.0
+# hip driver: 7.16.26385, hip runtime: 7.16.26385
+# clocks (gfx, mem, max gfx, max mem, MHz): 64, 96, 2400, 1124
+# amd-smi: AMDSMI Tool: 27.1.0+7da43026 | AMDSMI Library version: 27.1.0 | ROCm version: 10.1.0 | amdgpu version: 7.1.9.31600000 | ionic version: N/A
+num_ops,speedup_ratio_of_means,speedup_ratio_of_medians,speedup_block_paired_mean_of_ratios,fused_mean_ms,baseline_mean_ms,fused_median_ms,baseline_median_ms
+2,22.6725582,22.6907466,22.6766956,0.01927179,0.436940779,0.0192009993,0.435685009
+102,692.091477,693.078896,692.434586,0.0211958198,14.6694462,0.0211599991,14.6655488
+502,2259.16741,2266.19208,2259.65644,0.0317023699,71.6209609,0.0316010006,71.6139374
+1002,3054.78028,3054.95781,3054.82196,0.0467280996,142.744077,0.0467199981,142.727623
+2002,3611.22936,3611.20277,3611.27627,0.0789288297,285.030107,0.0789209977,284.999725
+3002,3847.58234,3848.57377,3847.45978,0.111077959,427.381594,0.111041002,427.349487
+4002,3966.94734,3974.6891,3965.94139,0.14358992,569.61365,0.143302001,569.580902
+5002,4023.89774,4062.63933,4015.69492,0.17574507,707.180189,0.175242007,711.945068
+6002,3648.4206,3747.32978,3578.31422,0.23737215,866.033442,0.232122503,869.839569
+7002,4160.14925,4170.11875,4170.68766,0.239546979,996.551186,0.238962993,996.504059
+8002,4147.51865,4147.44647,4143.30704,0.274538119,1138.65197,0.274542987,1138.65234
+9002,4230.32407,4234.67748,4220.344,0.302845879,1281.13621,0.302522987,1281.08728
+10002,4259.40785,4262.95508,4244.02199,0.33420515,1423.51604,0.333903506,1423.41565
+12002,4269.59728,4271.5989,4265.7677,0.399963861,1707.68461,0.399764001,1707.63147
+14002,4226.54649,4279.84844,4269.80365,0.471415839,1992.46096,0.465544999,1992.46204
+16002,4293.60618,4292.41775,4295.23012,0.53024407,2276.65922,0.530405998,2276.72412
+18002,3880.26762,3799.48153,3805.20762,0.660494298,2562.89464,0.674227476,2561.71484
+19902,3917.09766,3876.49117,3911.7668,0.723128653,2832.56555,0.730727971,2832.66052

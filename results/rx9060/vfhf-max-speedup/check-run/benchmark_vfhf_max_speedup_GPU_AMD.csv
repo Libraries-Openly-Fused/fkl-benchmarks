@@ -1,0 +1,26 @@
+# experiment: benchmark_vfhf_max_speedup
+# notes: FKL against itself, vertical and horizontal fusion of the 2025 mul_add chain: 50 images of 60x120 uchar, all 30; fused = one executeOperations (batch read of the 50 images, SaturateCast<uchar, float> then Mul(1), the NUM_OPS operations as fk::StaticLoop of Mul(0.54) then Add(0.54), PerThreadWrite into a 60x120x50 float tensor), thread fusion off; baseline = one executeOperations per operation and per image (the conversion into a float image, then NUM_OPS in place), 50 (1 + NUM_OPS) calls, every operation built in its call; GPU events on the side's own stream around all calls of one repetition; warm-up at least 2.0 s and 2 repetitions, until the mean of two consecutive windows of 0.25 s differs by at most 2 percent (repetitions shorter than 0.25 s) or two consecutive repetitions differ by at most 2 percent (longer ones), at most 10 s; repetitions: fused 100, baseline min(100, max(10, as many as fit in 30.0 s from its last warm-up repetition)); order: fused first; points (NUM_OPS): 2 102 502 1002 2002 3002 4002 5002 6002 7002 8002 9002 10002 12002 14002 16002 18002 19902; only the points up to 1002 operations (VFHF_MAX_OPS); speedup_ratio_of_means = mean baseline / mean fused; speedup_ratio_of_medians = median baseline / median fused; speedup_block_paired_mean_of_ratios = the mean over i < min(reps) of baseline_i / fused_i, the i-th timed repetitions of the two blocks (the estimator of the 2025 harness's Mean Speedup, which timed both sides back to back in each iteration; here the sides are timed in separate blocks and paired by index); sclk_* and mclk_*: the graphics and the memory clock of an AMD GPU (MHz); card_link_gts_* and card_link_width_*: the speed (GT/s) and width (lanes) of the GPU function's own PCIe link, which on a card with its own PCIe switch is the link inside the card; host_link_gts_* and host_link_width_*: the same of the root port above the GPU, the link to the host; all read outside the timed intervals, at the start of the warm-up, at the start of the timed repetitions and after them (-1: not readable)
+# repo: fkl-benchmarks 7b96c472781e9ac71fd2d6b40bb1e449f1a74349
+# fkl: 64ad9195cd785d0c93a70b35e02d5a6c7c4a5048
+# cvGPUSpeedup: not checked out (pinned 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c)
+# FastNPP: not checked out (pinned a1b5e245d7dd70fba23dcb51a0aea80495dbc61d)
+# nvcc: none (none), architectures native, -fmad on, -lineinfo on
+# hip: 24.0.0 (/opt/rocm/core-10.1/bin/amdclang++), architectures gfx1200
+# host compiler: Clang 24.0.0, Release, -march=native, -ftemplate-depth=1000
+# opencv: none
+# cpu: AMD Ryzen 7 5800X3D 8-Core Processor
+# os: Ubuntu 26.04.1 LTS
+# kernel: Linux 7.0.0-38-generic
+# gpu: AMD Radeon RX 9060, gfx1200, 14 WGPs (28 CUs), wave32, 8144 MiB, PCI 0000:0d:00.0
+# hip driver: 7.16.26385, hip runtime: 7.16.26385
+# clocks (gfx, mem, max gfx, max mem, MHz): 18, 96, 2400, 1124
+# amd-smi: AMDSMI Tool: 27.1.0+7da43026 | AMDSMI Library version: 27.1.0 | ROCm version: 10.1.0 | amdgpu version: 7.1.9.31600000 | ionic version: N/A
+num_ops,side,calls_per_rep,position,reps,reps_rule,rep_estimate_ms,mean_ms,median_ms,min_ms,max_ms,warmup_s,warmup_runs,warmup_steady,sclk_start_mhz,sclk_timed_start_mhz,sclk_end_mhz,mclk_start_mhz,mclk_timed_start_mhz,mclk_end_mhz,card_link_gts_start,card_link_gts_timed_start,card_link_gts_end,card_link_width_start,card_link_width_timed_start,card_link_width_end,host_link_gts_start,host_link_gts_timed_start,host_link_gts_end,host_link_width_start,host_link_width_timed_start,host_link_width_end
+2,fused,1,1,100,fixed,nan,0.01998256,0.0198800005,0.0196400005,0.0248000007,2.00017588,47568,1,112,3039,3254,456,456,456,32,32,32,16,16,16,16,16,16,16,16,16
+2,baseline,150,2,100,max,0.438724011,0.436603347,0.4350245,0.432603985,0.458844006,2.00017491,4292,1,3254,3360,3462,456,456,456,32,32,32,16,16,16,16,16,16,16,16,16
+102,fused,1,1,100,fixed,nan,0.0217134,0.0214409996,0.0210800003,0.0238799993,2.00015545,46852,1,3462,3391,3418,456,456,456,32,32,32,16,16,16,16,16,16,16,16,16
+102,baseline,5150,2,100,max,14.6553421,14.6531942,14.6485815,14.6353817,14.9780254,2.01043731,137,1,3418,3471,3471,456,96,96,32,32,32,16,16,16,16,16,16,16,16,16
+502,fused,1,1,100,fixed,nan,0.0318439198,0.0315609984,0.0312399995,0.0363209993,2.00027158,37541,1,3272,3451,3457,96,96,96,32,32,32,16,16,16,16,16,16,16,16,16
+502,baseline,25150,2,100,max,71.486824,71.4932994,71.4881248,71.4545212,71.5972748,2.00256908,28,1,3457,3471,3471,96,96,96,32,32,32,16,16,16,16,16,16,16,16,16
+1002,fused,1,1,100,fixed,nan,0.0470224899,0.0466809981,0.0462399982,0.0538400002,2.00000865,29114,1,3353,3439,3442,96,96,96,32,32,32,16,16,16,16,16,16,16,16,16
+1002,baseline,50150,2,100,max,142.553696,142.602853,142.576996,142.52655,143.140594,2.14083888,15,1,3442,3470,3466,96,96,96,32,32,32,16,16,16,16,16,16,16,16,16
