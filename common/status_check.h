@@ -24,7 +24,7 @@
 //   FKLB_CUDA_CHECK(cudaGetLastError());                                    // after a kernel launch
 //   FKLB_NPP_CHECK(nppiConvert_8u32f_C3R_Ctx(src, srcStep, dst, dstStep, size, nppContext));
 //   FKLB_HIP_CHECK(hipMemcpy(dst, src, bytes, hipMemcpyHostToDevice));
-//   FKLB_RPP_CHECK(rppt_channel_permute_gpu(src, srcDesc, dst, dstDesc, order, handle));
+//   FKLB_RPP_CHECK(rppt_channel_permute(src, srcDesc, dst, dstDesc, order, handle, RppBackend::RPP_HIP_BACKEND));
 #pragma once
 
 #include <stdexcept>
