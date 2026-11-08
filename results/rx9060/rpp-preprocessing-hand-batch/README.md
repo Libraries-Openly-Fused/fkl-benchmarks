@@ -119,7 +119,9 @@ The parts (medians over the three runs, ms):
 | 300 | 0.1456 | 0.0119 | 0.1334 | 0.1149 | 0.0001 | 0.1148 |
 
 At N = 300, `fkl_fused` takes 30.7 us longer than `hand_batch`. Its build, the crop views and the operations, accounts for 11.8 us. The other
-18.6 us are in the compute part: the launch, the kernel and the synchronisation.
+18.6 us are in the compute part. For `fkl_fused` that part holds the launch, the kernel and the synchronisation, and also the release of its N
+crop views at the end of the call, which is host work. `hand_batch`'s compute part has no such release: its parameter block is a plain array.
+The program does not time that release on its own.
 
 The parameter blocks differ a lot. In the gfx1200 code-object metadata, FKL's fused kernel at N = 300 has 14,752 bytes of kernel arguments,
 48 bytes per crop. `e1c::handPreproc<300>` has 2,696 bytes, 8 per crop. FKL's kernel uses 21 VGPRs and the hand-written kernel 24. Neither uses
