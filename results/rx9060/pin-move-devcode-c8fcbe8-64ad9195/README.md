@@ -53,7 +53,7 @@ The two CMake caches are equal apart from the paths. So are the compile commands
 2. It disassembles it with `llvm-objdump -d --symbolize-operands`.
 3. It compares the sha256 of the instruction text of each function. Comments, which hold the addresses and the encodings, are removed, and the `__hip_cuid_<hash>` names are normalised.
 
-`llvm-objdump` names the local branch targets `L<n>`, numbered per code object. By default each one belongs to the function that contains it, and its number is not compared.
+`llvm-objdump` names the local branch targets `L<n>`, numbered per code object. By default each one belongs to the function that contains it, and its number is not compared. The `...` that `llvm-objdump` prints for the zero bytes after the last instruction of a function (the padding before the next one) is not compared either; a `...` inside a function would be. The tables in `functions/` were computed with `scripts/devcode_compare.py` as of 4acf63c, which also hashed the padding after each function. The script since the RPP rewrite (#32) leaves that padding out: with it, `devcode-compare.txt` and `devcode-compare-labels-as-symbols.txt` come out byte for byte the same, and the tables give the same verdicts (625 of 625; 1,505 of 1,505 with `--labels-as-symbols`) with other hash values. `git show 4acf63c:scripts/devcode_compare.py` reproduces the tables as committed.
 
 ```
 python3 -I scripts/devcode_compare.py <build c8fcbe8>/bin <build 64ad9195>/bin --glob '*_hip' --table functions > devcode-compare.txt

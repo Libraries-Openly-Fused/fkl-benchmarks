@@ -45,7 +45,7 @@ that the first results of this folder used ended on the ramp. What it did to the
 
 ## The rule
 
-For the pipeline of `rpp/` (`preproc::measure` in `fkl-self/pipelines/preproc_common.h`): a warm-up of at least 2 s and until the mean time of two consecutive
+For the pipeline of `rpp/` (`preproc::measure` in `fkl-self/pipelines/preproc_common.h` for the results of this folder; the same rule is `fklb::measureWall` in `common/hip_wallclock.h` since the RPP rewrite, 282f734): a warm-up of at least 2 s and until the mean time of two consecutive
 windows of 0.25 s differs by at most 2 percent (cap 10 s), then 30 timed runs; the variants of a point are timed in a rotated order (the first one is variant
 (index of the point + E5_ROTATE_OFFSET) mod the number of variants) and the whole run is repeated three times with the offsets 0, 1 and 2; the result is the median of
 the three medians and the CSV columns `warmup_s`, `warmup_steady`, `sclk_start_mhz`, `sclk_timed_start_mhz` and `sclk_end_mhz` give the warm-up that was run
