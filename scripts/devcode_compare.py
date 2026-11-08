@@ -2,27 +2,32 @@
 # function by function.
 #
 # usage: python3 -I scripts/devcode_compare.py <bin dir A> <bin dir B> [--glob '*_hip'] [--only name1,name2] [--arch gfx1200]
-#                [--llvm <dir of llvm-objcopy, clang-offload-bundler, llvm-objdump>] [--table <dir>] [--labels-as-symbols]
+#                [--llvm <dir of llvm-objcopy, llvm-objdump>] [--table <dir>] [--labels-as-symbols]
 #
-# For every executable that both directories have: llvm-objcopy --dump-section .hip_fatbin, then clang-offload-bundler --unbundle (the
-# code object of --arch) of every offload bundle in it, then llvm-objdump -d --symbolize-operands of every code object.
-#   .hip_fatbin holds one offload bundle per HIP translation unit of the executable. The bundles are read one after the other, with only zero
-#   bytes (the linker's alignment padding) allowed between them; the script stops, naming the executable, at anything else (a compressed
-#   bundle, for example), and when only some of the bundles have a code object of --arch. An executable with one bundle is unbundled from the
-#   section as a whole, as before.
+# For every executable that both directories have: llvm-objcopy --dump-section .hip_fatbin, the code object of --arch of every offload
+# bundle in it, then llvm-objdump -d --symbolize-operands of every code object.
+#   .hip_fatbin holds one offload bundle per HIP translation unit. The bundles are read from their headers, one after the other, with only zero
+#   bytes (the linker's alignment padding) allowed between them, and the code object of --arch (the entry hip- or hipv4-amdgcn-amd-amdhsa--<arch>)
+#   is copied out of each bundle as its header gives it. The script stops, naming the executable, at anything else: a compressed bundle, data
+#   that is not a bundle, a bundle with two entries of --arch, or only some of the bundles with a code object of --arch.
 #   The instruction text of each function is hashed (sha256), with the comments (addresses, encodings) removed and the __hip_cuid_<hash> names
 #   normalised. llvm-objdump prints the local branch targets as symbols L<n>, numbered per code object: by default their text belongs to the
 #   function that contains them and the references are normalised (a renumbering is not a code difference); --labels-as-symbols keeps them as
 #   separate symbols with their numbers, the stricter form. The '...' lines with which llvm-objdump stands for a run of zero bytes are not
 #   compared when they come after the last instruction of a function (the padding before the next one); a '...' inside a function is compared.
-#   With several code objects, the functions of all of them are compared by name. A name defined in more than one of them (the runtime stubs
-#   that every translation unit holds, a kernel instantiated in two translation units) is compared by the set of the distinct hashes of its
-#   definitions, not by their number; with --labels-as-symbols the branch targets are then named <function>:L<n>, since their numbers are per
-#   code object. The line of such an executable ends with the number of its code objects in A and in B.
-# --table writes <dir>/<executable>.tsv: function, sha256 in A, sha256 in B, same; a function with several distinct definitions has its sorted
-# hashes joined by ','.
+#   With one code object on each side, the functions are compared by name, as they always were. With more than one on a side:
+#   - when both sides have the same number of code objects, with the same triples, they are paired by position (the order of the bundles is
+#     the link order) and each function is compared code object by code object: the same name must have the same instruction text in the same
+#     code object;
+#   - otherwise each function is compared by the multiset of the hashes of its definitions over all the code objects (a name such as the
+#     runtime stubs that every translation unit holds then also differs when the number of its definitions differs);
+#   and with --labels-as-symbols the branch targets of both sides are named <function>:L<n>, since their numbers are per code object. The line
+#   of such an executable ends with the numbers of code objects and the mode.
+# --table writes <dir>/<executable>.tsv: function, sha256 in A, sha256 in B, same. With several code objects a hash cell is
+# "<position>:<sha256> ..." (paired by position) or "<sha256>*<count> ..." (multisets).
 # Exit 0 = the same executables in both directories and every function of every executable identical.
 import argparse
+import collections
 import fnmatch
 import hashlib
 import os
@@ -37,14 +42,15 @@ CUID = re.compile(r'__hip_cuid_[0-9a-f]+')
 LABEL = re.compile(r'\bL\d+\b')
 LABEL_NAME = re.compile(r'L\d+')
 MAGIC = b'__CLANG_OFFLOAD_BUNDLE__'
-PART = re.compile(r'^(b|co)\d+\.(bin|o)$')
+PART = re.compile(r'^co\d+\.o$')
 
 
-def bundle_ranges(data):
-    """[(start, end)] of the offload bundles of a .hip_fatbin, in order: uncompressed bundles one after the other, only zero bytes between and
-    after them. A bundle is the magic, the number of its entries (u64), then per entry its offset from the start of the bundle, its size and
-    the length of its target triple (u64 each) and the triple; it ends where its last entry ends. Raises ValueError on anything else."""
-    out, pos = [], 0
+def bundle_entries(data):
+    """The offload bundles of a .hip_fatbin in order, each as the list of its entries (target triple, start, size), start counted from the
+    start of the section. The section must be uncompressed bundles one after the other, with only zero bytes between and after them. A bundle
+    is the magic, the number of its entries (u64), then per entry its offset from the start of the bundle, its size and the length of its
+    triple (u64 each) and the triple; it ends where its header or its last entry ends, whichever is later. Raises ValueError on anything else."""
+    bundles, pos = [], 0
     while True:
         i = data.find(MAGIC, pos)
         gap = data[pos:] if i < 0 else data[pos:i]
@@ -52,40 +58,35 @@ def bundle_ranges(data):
             at = pos + len(gap) - len(gap.lstrip(b'\0'))
             raise ValueError(f'unrecognised data at offset {at} of .hip_fatbin, not an uncompressed offload bundle')
         if i < 0:
-            return out
+            return bundles
         p = i + len(MAGIC)
         try:
             (n,) = struct.unpack_from('<Q', data, p)
             p += 8
             if n > 1000:
                 raise ValueError(f'an offload bundle header at offset {i} of .hip_fatbin claims {n} entries')
-            end = p
+            entries = []
             for _ in range(n):
                 off, size, tlen = struct.unpack_from('<QQQ', data, p)
-                p += 24 + tlen
-                end = max(end, i + off + size)
+                p += 24
+                if p + tlen > len(data):
+                    raise struct.error
+                triple = data[p:p + tlen].decode('ascii', 'replace')
+                p += tlen
+                if i + off + size > len(data):
+                    raise ValueError(f'an entry of the offload bundle at offset {i} of .hip_fatbin ends beyond the section')
+                entries.append((triple, i + off, size))
         except struct.error:
             raise ValueError(f'a truncated offload bundle header at offset {i} of .hip_fatbin')
-        if end > len(data):
-            raise ValueError(f'the offload bundle at offset {i} of .hip_fatbin ends beyond the section')
-        out.append((i, end))
-        pos = end
-
-
-def unbundle(llvm, arch, fatbin, out):
-    """The code object of --arch of one offload bundle (the file fatbin), written to out, or None."""
-    for target in ('hip-amdgcn-amd-amdhsa--' + arch, 'hipv4-amdgcn-amd-amdhsa--' + arch):
-        subprocess.run([llvm + '/clang-offload-bundler', '--unbundle', '--type=o', '--targets=' + target, '--input=' + fatbin,
-                        '--output=' + out], capture_output=True, text=True)
-        if os.path.exists(out) and os.path.getsize(out) > 0:
-            return out
-    return None
+        bundles.append(entries)
+        pos = max([p] + [start + size for _, start, size in entries])
 
 
 def code_objects(llvm, arch, exe, tmpdir):
-    """The code objects of --arch of an executable, one per offload bundle of its .hip_fatbin, in the order of the bundles; None when it has no
-    .hip_fatbin or none of its bundles has a code object of --arch. Exits, naming the executable, when .hip_fatbin cannot be read as offload
-    bundles or when only some of them have a code object of --arch."""
+    """[(triple, path)]: the code object of --arch of every offload bundle of an executable's .hip_fatbin, in the order of the bundles, each
+    copied out of its bundle into tmpdir; None when the executable has no .hip_fatbin or none of its bundles has a code object of --arch.
+    Exits, naming the executable, when .hip_fatbin cannot be read as offload bundles, when a bundle has two entries of --arch, or when only some
+    of the bundles have one."""
     fb = os.path.join(tmpdir, 'fb.bin')
     for f in os.listdir(tmpdir):
         if f in ('fb.bin', 'co.o') or PART.match(f):
@@ -96,18 +97,23 @@ def code_objects(llvm, arch, exe, tmpdir):
     with open(fb, 'rb') as f:
         data = f.read()
     try:
-        ranges = bundle_ranges(data)
+        bundles = bundle_entries(data)
     except ValueError as e:
         sys.exit(f'{exe}: {e}')
-    if len(ranges) <= 1:   # one bundle (one HIP translation unit): unbundled from the section as a whole, as before
-        co = unbundle(llvm, arch, fb, os.path.join(tmpdir, 'co.o'))
-        return None if co is None else [co]
+    wanted = ('hip-amdgcn-amd-amdhsa--' + arch, 'hipv4-amdgcn-amd-amdhsa--' + arch)
     cos = []
-    for k, (start, end) in enumerate(ranges):
-        part = os.path.join(tmpdir, f'b{k}.bin')
-        with open(part, 'wb') as f:
-            f.write(data[start:end])
-        cos.append(unbundle(llvm, arch, part, os.path.join(tmpdir, f'co{k}.o')))
+    for k, entries in enumerate(bundles):
+        match = [(t, start, size) for t, start, size in entries if t in wanted and size > 0]
+        if len(match) > 1:
+            sys.exit(f'{exe}: offload bundle {k} of its .hip_fatbin has {len(match)} entries for {arch}')
+        if not match:
+            cos.append(None)
+            continue
+        triple, start, size = match[0]
+        path = os.path.join(tmpdir, f'co{k}.o')
+        with open(path, 'wb') as f:
+            f.write(data[start:start + size])
+        cos.append((triple, path))
     have = sum(1 for c in cos if c)
     if have == 0:
         return None
@@ -117,13 +123,13 @@ def code_objects(llvm, arch, exe, tmpdir):
 
 
 def code_object(llvm, arch, exe, tmpdir):
-    """The code object of --arch of an executable with one offload bundle (one HIP translation unit), or None. Exits, naming the executable,
-    when its .hip_fatbin holds more than one bundle: code_objects reads them all."""
+    """The path of the code object of --arch of an executable with one offload bundle (one HIP translation unit), or None. Exits, naming the
+    executable, when its .hip_fatbin holds more than one bundle with such a code object: code_objects reads them all."""
     cos = code_objects(llvm, arch, exe, tmpdir)
     if cos and len(cos) > 1:
         sys.exit(f'{exe}: its .hip_fatbin holds {len(cos)} offload bundles (one per HIP translation unit); code_object reads only one, '
                  'use code_objects')
-    return cos[0] if cos else None
+    return cos[0][1] if cos else None
 
 
 def digest(lines):
@@ -173,16 +179,31 @@ def functions(llvm, co, labels_as_symbols, qualify_labels=False):
     return out
 
 
-def functions_of(llvm, cos, labels_as_symbols):
-    """{name: hash} of the functions of all the code objects of an executable. With one code object, functions() of it. With several, a name
-    defined in more than one of them has the sorted distinct hashes of its definitions, joined by ','."""
-    if len(cos) == 1:
-        return functions(llvm, cos[0], labels_as_symbols)
-    seen = {}
-    for co in cos:
-        for name, h in functions(llvm, co, labels_as_symbols, qualify_labels=True).items():
-            seen.setdefault(name, set()).add(h)
-    return {name: ','.join(sorted(hs)) for name, hs in seen.items()}
+def compared(llvm, ca, cb, labels_as_symbols):
+    """({name: value} of A, {name: value} of B, mode) for the code objects ca and cb of one executable in A and B: two values are equal exactly
+    when the function's device code is the same. One code object on each side: the hashes, by name. Otherwise the branch targets are qualified
+    on both sides, and the values are the hashes per position when both sides have the same triples in the same order ("paired by position"),
+    or the multisets of the hashes over all the code objects ("multisets by name")."""
+    if len(ca) == 1 and len(cb) == 1:
+        return functions(llvm, ca[0][1], labels_as_symbols), functions(llvm, cb[0][1], labels_as_symbols), ''
+    ta = [functions(llvm, path, labels_as_symbols, qualify_labels=True) for _, path in ca]
+    tb = [functions(llvm, path, labels_as_symbols, qualify_labels=True) for _, path in cb]
+    if [t for t, _ in ca] == [t for t, _ in cb]:
+        def paired(tables):
+            out = {}
+            for k, table in enumerate(tables):
+                for name, h in table.items():
+                    out.setdefault(name, []).append(f'{k}:{h}')
+            return {name: ' '.join(v) for name, v in out.items()}
+        return paired(ta), paired(tb), 'paired by position'
+
+    def multisets(tables):
+        out = {}
+        for table in tables:
+            for name, h in table.items():
+                out.setdefault(name, collections.Counter())[h] += 1
+        return {name: ' '.join(f'{h}*{c}' for h, c in sorted(cnt.items())) for name, cnt in out.items()}
+    return multisets(ta), multisets(tb), 'multisets by name'
 
 
 def main():
@@ -226,7 +247,7 @@ def main():
                 tot['nocode'] += 1
                 print(f'  {n}: {args.arch} code object only in {"B" if ca is None else "A"}')
                 continue
-            fa, fb = functions_of(args.llvm, ca, args.labels_as_symbols), functions_of(args.llvm, cb, args.labels_as_symbols)
+            fa, fb, mode = compared(args.llvm, ca, cb, args.labels_as_symbols)
             same = sum(1 for k in fa if k in fb and fa[k] == fb[k])
             diff = [k for k in fa if k in fb and fa[k] != fb[k]]
             oa, ob = [k for k in fa if k not in fb], [k for k in fb if k not in fa]
@@ -236,7 +257,7 @@ def main():
             tot['onlyA'] += len(oa)
             tot['onlyB'] += len(ob)
             flag = '' if not (diff or oa or ob) else '   <-- DIFFERENCES'
-            objects = f' (code objects A {len(ca)}, B {len(cb)})' if len(ca) > 1 or len(cb) > 1 else ''
+            objects = f' (code objects A {len(ca)}, B {len(cb)}, {mode})' if mode else ''
             print(f'  {n}: functions A {len(fa)}, B {len(fb)}, identical {same}, different {len(diff)}, only A {len(oa)}, '
                   f'only B {len(ob)}{objects}{flag}')
             if diff or oa or ob:
