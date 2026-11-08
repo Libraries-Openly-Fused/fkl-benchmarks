@@ -20,6 +20,9 @@
 #                   the two must agree
 # Writes <out dir>/isa-table.csv and <out dir>/listings/<variant>-N<N>.txt: the instruction lines with the branch labels folded and no newline
 # after the last, so that the sha256 of the file is the hash scripts/devcode_compare.py computes for the function. Prints the README's table.
+# Also writes <out dir>/instruction-kinds.csv: the instructions of each kernel by kind (KINDS below; the first pattern that matches counts the
+# instruction), and how its listing differs from the listing of the same kernel at the first N: the number of lines that differ, and whether
+# every one of them is a scalar load (s_load_*) whose only change is its last operand, the immediate offset into the kernel arguments.
 import argparse
 import csv
 import math
@@ -120,6 +123,30 @@ def waves_formula(vgprs):
     return min(16, 1536 // (24 * math.ceil(vgprs / 24)))
 
 
+KINDS = (('scheduling', re.compile(r'^(s_wait_|s_delay_alu|s_clause|s_nop)')),   # waits, ALU delays, clause marks and no-ops
+         ('global_memory', re.compile(r'^global_')),
+         ('scalar_loads', re.compile(r'^s_(load|buffer_load)_')),                 # loads of the kernel arguments
+         ('vector_alu', re.compile(r'^v_')),
+         ('other_scalar', re.compile(r'^s_')),                                    # scalar ALU, branches, s_endpgm
+         ('other', re.compile(r'')))                                              # scratch_, flat_, buffer_, ds_, image_ and the rest
+
+
+def kinds(lines):
+    out = {k: 0 for k, _ in KINDS}
+    for x in lines:
+        if x != '...':
+            out[next(k for k, p in KINDS if p.match(x))] += 1
+    return out
+
+
+def offset_only_diff(a, b):
+    """(lines of b that differ from a, whether every difference is the last operand of a scalar load), or (None, False) if the lengths differ"""
+    if len(a) != len(b):
+        return None, False
+    d = [(x, y) for x, y in zip(a, b) if x != y]
+    return len(d), all(x.startswith('s_load_') and y.startswith('s_load_') and x.rsplit(',', 1)[0] == y.rsplit(',', 1)[0] for x, y in d)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('binary')
@@ -139,7 +166,7 @@ def main():
         ins = instruction_lines(a.llvm, co)
         rem = remarks(a.remark_log)
         os.makedirs(os.path.join(a.out, 'listings'), exist_ok=True)
-        rows = []
+        rows, kind_rows = [], []
         for variant, match, number in VARIANTS:
             found = {}
             for name in meta:
@@ -172,10 +199,21 @@ def main():
                              'wavefront_size': int(md['wavefront_size']), 'workgroup_processor_mode': kd.get('amdhsa_workgroup_processor_mode', ''),
                              'waves_per_simd': int(r['Occupancy [waves/SIMD]']), 'waves_formula': waves_formula(int(md['vgpr_count'])),
                              'listing_sha256': dc.digest(lines), 'kernel': name})
+                k = kinds(lines)
+                if sum(k.values()) != rows[-1]['instructions']:
+                    sys.exit(f'{variant} N = {n}: the kinds do not add up to the instruction count')
+                ndiff, offsets_only = offset_only_diff(ins[found[BATCHES[0]]], lines)
+                kind_rows.append({'variant': variant, 'batch': n, 'instructions': rows[-1]['instructions'], **k,
+                                  f'lines_differing_from_n{BATCHES[0]}': '' if ndiff is None else ndiff,
+                                  'only_scalar_load_offsets_differ': offsets_only})
     with open(os.path.join(a.out, 'isa-table.csv'), 'w', newline='') as f:
         w = csv.DictWriter(f, fieldnames=list(rows[0]))
         w.writeheader()
         w.writerows(rows)
+    with open(os.path.join(a.out, 'instruction-kinds.csv'), 'w', newline='') as f:
+        w = csv.DictWriter(f, fieldnames=list(kind_rows[0]))
+        w.writeheader()
+        w.writerows(kind_rows)
     print('| variant | N | instructions | VGPRs (allocated) | SGPRs | scratch, bytes | LDS, bytes | kernarg, bytes | waves per SIMD |')
     print('|---|---|---|---|---|---|---|---|---|')
     for r in rows:
@@ -184,6 +222,12 @@ def main():
     print(f"\nscratch in any of the {len(rows)} kernels: {any(r['scratch_bytes'] for r in rows)}; dynamic stack: "
           f"{sorted({r['dynamic_stack'] for r in rows})}; spills: {any(r['vgpr_spills'] or r['sgpr_spills'] for r in rows)}; LDS: "
           f"{any(r['lds_bytes'] for r in rows)}; wavefront sizes: {sorted({r['wavefront_size'] for r in rows})}")
+    print('\n| variant | N | instructions | ' + ' | '.join(k for k, _ in KINDS) + f' | lines differing from N = {BATCHES[0]} | '
+          'only scalar-load offsets differ |')
+    print('|---' * (len(KINDS) + 5) + '|')
+    for r in kind_rows:
+        print(f"| {r['variant']} | {r['batch']} | {r['instructions']} | " + ' | '.join(str(r[k]) for k, _ in KINDS) +
+              f" | {r[f'lines_differing_from_n{BATCHES[0]}']} | {r['only_scalar_load_offsets_differ']} |")
 
 
 if __name__ == '__main__':

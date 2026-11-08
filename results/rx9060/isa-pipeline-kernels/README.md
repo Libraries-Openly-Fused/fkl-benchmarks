@@ -4,8 +4,9 @@ This is the counterpart on the RX 9060 of the SASS review of Table III. It descr
 the code object of the measured binary. It is compile-only: nothing was run on the GPU for it.
 
 **Scratch.** None of these kernels uses scratch, the private segment that is AMD's counterpart of CUDA's local memory. The private segment is 0
-bytes in the code-object metadata and in the kernel descriptor of every kernel. None has a dynamic stack, none spills a VGPR or an SGPR, and none
-uses LDS either.
+bytes in the code-object metadata and in the kernel descriptor of every kernel. No listing holds a `scratch_`, `flat_`, `buffer_` or `ds_`
+instruction: the only memory instructions are global loads and stores, and scalar loads of the kernel arguments. None of the kernels has a
+dynamic stack, none spills a VGPR or an SGPR, and none uses LDS either.
 
 ## Source
 
@@ -46,12 +47,31 @@ uses LDS either.
 `isa-table.csv` has every column, the mangled kernel name and the hash of each listing. All kernels are wave32, none has a dynamic stack, and
 none spills.
 
+**Instructions by kind.** The counts are the same at 10, 150 and 300 crops (`instruction-kinds.csv`):
+
+| variant | instructions | scheduling | global memory | scalar loads | vector ALU | other scalar |
+|---|---|---|---|---|---|---|
+| fkl_fused | 202 | 50 | 11 | 9 | 109 | 23 |
+| fkl_fused_halfpixel | 212 | 53 | 11 | 9 | 116 | 23 |
+| hand_batch | 177 | 41 | 11 | 4 | 106 | 15 |
+| hand_padded | 180 | 45 | 11 | 4 | 102 | 18 |
+| hand_roi | 179 | 43 | 11 | 6 | 102 | 17 |
+| hand_roi_halfpixel | 192 | 50 | 11 | 6 | 108 | 17 |
+
+The kinds are:
+- **scheduling:** `s_wait_*`, `s_delay_alu`, `s_clause` and `s_nop`;
+- **scalar loads:** the loads of the kernel arguments;
+- **other scalar:** the rest of the `s_` instructions (scalar ALU, branches, `s_endpgm`).
+
+No instruction falls outside these kinds.
+
 ## How each column is obtained
 
 `scripts/isa_pipeline_kernels.py` stops if any of its cross-checks fails.
 
 - **instructions:** the lines of the function's disassembly (`llvm-objdump -d --symbolize-operands`), grouped as `scripts/devcode_compare.py` groups
-  them (the function with its branch-target blocks), without the `...` lines that stand for zero bytes.
+  them (the function with its branch-target blocks), without the `...` lines that stand for zero bytes. The count includes the scheduling
+  instructions.
 - **VGPRs:** `.vgpr_count` of the code-object metadata (`NT_AMDGPU_METADATA`). In parentheses is the allocation, `.amdhsa_next_free_vgpr` of the
   kernel descriptor, in whole granules of 24.
 - **SGPRs:** `.sgpr_count` of the metadata.
@@ -72,10 +92,11 @@ waves per SIMD = min(16, floor(1536 / (24 * ceil(VGPRs / 24))))     (wave32, no 
 
 - **wave32:** every kernel's metadata gives a wavefront size of 32.
 - **At most 16 waves per SIMD.**
-- **1,536 VGPRs per lane per SIMD in wave32** (192 KB per SIMD), allocated in **granules of 24**.
+- **A file of 1,536 VGPRs per SIMD in wave32** (each VGPR is 32 lanes of 4 bytes: 192 KB per SIMD), allocated in **granules of 24**.
 - **SGPRs** do not limit the occupancy on gfx10 and later in the compiler's model. **LDS** would, but these kernels use none.
 
-**Evidence for these limits.** `limits/pressure.hip` holds synthetic kernels that keep K floats live. Compiled for gfx1200 with the same remark
+**Evidence for these limits in the compiler's model of gfx1200.** `limits/pressure.hip` holds synthetic kernels that keep K floats live.
+Compiled for gfx1200 with the same remark
 (`limits/remarks.txt`), they give:
 
 | VGPRs in use | 17 to 91 | 97, 101 | 121, 129 | 161 | 193 | 251 |
@@ -87,7 +108,8 @@ fits.
 
 **What the formula leaves out.** It is the compiler's theoretical occupancy from the kernel's own resources. It leaves out the hardware's dynamic
 limits, such as the workgroup slots of a WGP. The kernels run in WGP mode (`.amdhsa_workgroup_processor_mode 1`), with workgroups of 32 x 8
-threads, i.e. 8 waves.
+threads, i.e. 8 waves. That is the hand-written kernels' block (`rpp/benchmark_rpp_preprocessing.h:497`), and line 132 asserts that it is
+FKL's default block for this output size.
 
 With 21 or 24 VGPRs (24 allocated), every kernel here reaches the maximum of 16. VGPRs would start to limit only above 96.
 
@@ -95,11 +117,15 @@ With 21 or 24 VGPRs (24 allocated), every kernel here reaches the maximum of 16.
 
 - **Same occupancy, no local memory.** All six kernels have the same theoretical occupancy, the maximum of 16 waves per SIMD. None uses scratch,
   LDS or spills.
-- **The code does not depend on the batch size.** Each kernel has the same number of instructions at every N; only the kernel-argument offsets
-  change with N (see the devcode comparisons of the runs).
+- **The code does not depend on the batch size.** Each kernel's listings at 10, 150 and 300 crops differ only in the immediate offsets of 2 to
+  6 scalar loads. These are the loads of the kernel arguments that follow the per-crop array; their offsets are N times the per-crop size plus a
+  constant.
   - FKL's fused kernel has 202 instructions (ASYMMETRIC) and 212 (HALF_PIXEL).
   - The hand-written kernels have 177 (`hand_batch`), 180 (`hand_padded`), 179 (`hand_roi`) and 192 (`hand_roi_halfpixel`).
-  - HALF_PIXEL adds 10 instructions to FKL's kernel and 13 to the hand-written one: the half-pixel offset and the clamp at 0 of the source position.
+  - HALF_PIXEL adds 10 instructions to FKL's kernel (7 vector, 3 scheduling) and 13 to the hand-written one (6 vector, 7 scheduling). The
+    vector instructions it adds are:
+    - a compare and a select for each coordinate (`v_cmp_le_f32`, `v_cndmask_b32`), the clamp at 0 of the source position;
+    - additions and subtractions for the ±0.5 offsets, with the multiply-adds rearranged around them.
 - **Registers.** FKL's fused kernels use fewer VGPRs (21) and more SGPRs (22) than the hand-written ones (24 VGPRs, 12 to 17 SGPRs).
 - **Kernel arguments.** They grow with N by:
   - 48 bytes per crop for FKL;
@@ -108,18 +134,27 @@ With 21 or 24 VGPRs (24 allocated), every kernel here reaches the maximum of 16.
   - 32 for `hand_roi` and `hand_roi_halfpixel`.
 
   At 300 crops that is 14,752 bytes for FKL against 9,880 for `hand_roi_halfpixel`.
-- **Figure 15's difference is not occupancy or scratch.** Built once, `hand_roi_halfpixel_once` is 1 to 3.5 percent faster than
-  `fkl_fused_halfpixel_once` up to 150 crops. The two kernels have the same occupancy and no scratch, so the difference does not come from those.
-  The differences that remain in the code are:
-  - 212 against 192 instructions;
-  - 22 against 12 SGPRs;
-  - 14,752 against 9,880 bytes of kernel arguments at 300 crops.
+- **Figure 15's difference is not occupancy or scratch.** Built once, the ratio `hand_roi_halfpixel_once` / `fkl_fused_halfpixel_once` (the
+  median of the three runs) is:
+  - 0.965 to 0.998 at 10 to 150 crops, i.e. 0.2 to 3.5 percent faster;
+  - 0.940 to 0.998 at 10 to 300 crops.
 
-  A kernel-only timing (the launch queued behind a GPU spin, as in Table III) would separate the kernel from its launch; it was not run.
+  All three runs are below 1 at 25 of the 30 batches (`results/rx9060/rpp-preprocessing-built-once/`). The two kernels have the same
+  theoretical occupancy and neither uses scratch, so neither explains the difference. What differs in their code:
+  - **Instructions:** 212 against 192. The global memory instructions are the same (8 loads and 3 stores). FKL's kernel has:
+    - 8 more vector instructions (116 against 108);
+    - 6 more other scalar ones (23 against 17: three integer multiplications, an addition, a shift and an or);
+    - 3 more scalar loads of kernel arguments (9 against 6);
+    - 3 more scheduling instructions (53 against 50).
+  - **SGPRs:** 22 against 12.
+  - **Kernel arguments:** 48 against 32 bytes per crop, i.e. 7,552 against 5,080 bytes at 150 crops and 14,752 against 9,880 at 300.
+
+  A kernel-only timing (the launch queued behind a GPU spin) would separate the kernel from its launch; it was not run.
 
 ## Files
 
 - **`isa-table.csv`:** the table with every column, the mangled kernel names and the listing hashes.
+- **`instruction-kinds.csv`:** the instructions of each kernel by kind, and how its listings differ between the batch sizes.
 - **`listings/<variant>-N<N>.txt`:** the instruction lines of each kernel, with the branch labels folded and no newline after the last line. The
   sha256 of each file is `scripts/devcode_compare.py`'s hash of the function (`hashes.txt`). All 18 equal that script's hashes in the step-0
   comparison of the built-once run.
