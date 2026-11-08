@@ -1,0 +1,28 @@
+# experiment: E4a/E4c pre-processing: FKL against OpenCV-CUDA and NPP; E4a also against the hand-written kernels of E1c, and cvGPUSpeedup
+# notes: thread fusion: off (fk::TF::DISABLED); source: seeded 8UC3 noise (LCG seed 12345, as the CPU rows), one copy per implementation; timing: CUDA events around one call of the whole implementation, which builds its batch (FKL: crop views, read and operations; OpenCV: ROIs; NPP: crop pointers; hand_batch and hand_padded: the parameter block of crop pointers or crop descriptors; cvgs_fused: ROIs and operations) and enqueues its work, because the crop locations may change on every image; 100 calls after one warm-up; fkl_fused_late and fkl_fused_after: the fkl_fused call again, timed immediately before hand_batch and immediately after hand_padded (controls of the position in the sequence), E4a only; hand_batch and hand_padded: the hand-written kernels of E1c (handwritten-cuda/e1_preproc.cu), E4a only; cvgs_fused: cvGPUSpeedup, cvGS::executeOperations with its default arguments, which request thread fusion; it cannot take effect in this chain (the batched resize read and TensorSplit do not support it; the same SASS as with executeOperations<false>), E4a only; sampling: ASYMMETRIC = FKL default, cv::cuda::resize, the hand-written kernels and cvGPUSpeedup, HALF_PIXEL = NPP and fkl_fused_half_pixel; ok_own = max |output - scalar double reference of the version's own convention| <= 1e-4
+# repo: fkl-benchmarks 2dac1c8ac467a45ff3076b4e25a0fb8160e5cca4
+# fkl: 64ad9195cd785d0c93a70b35e02d5a6c7c4a5048
+# cvGPUSpeedup: 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c
+# FastNPP: a1b5e245d7dd70fba23dcb51a0aea80495dbc61d
+# nvcc: 13.4.92 (/home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/nvcc), architectures 89, -fmad on, -lineinfo on
+# hip: none (none), architectures none
+# host compiler: GNU 15.2.0, Release, -march=native, -ftemplate-depth=1000
+# opencv: 4.14.0
+# cpu: AMD Ryzen 9 5950X 16-Core Processor
+# os: Ubuntu 26.04.1 LTS
+# kernel: Linux 7.0.0-38-generic
+# gpu: NVIDIA GeForce RTX 4090, cc 8.9, 128 SMs, 24106 MiB, PCI 0000:09:00.0
+# cuda driver api: 13.3, cuda runtime: 13.4
+# nvidia-smi driver: 610.43.02
+# clocks (sm, mem, max sm, max mem, MHz): 210 MHz, 405 MHz, 3105 MHz, 10501 MHz
+# power limit, temperature at start: 450.00 W, 40
+experiment,batch,src_w,src_h,crop_w,crop_h,out_w,out_h,version,convention,gpu_mean_ms,gpu_min_ms,intermediate_bytes,meminfo_delta_bytes,output_bytes,host_enqueue_us,host_launch_us
+E4a,300,3840,2160,60,120,64,128,fkl_fused,ASYMMETRIC,0.0287190402,0.027648,0,0,29491200,13.07076,12.72244
+E4a,300,3840,2160,60,120,64,128,fkl_fused_half_pixel,HALF_PIXEL,0.02827072,0.027648,0,0,29491200,12.30556,12.30134
+E4a,300,3840,2160,60,120,64,128,opencv_percrop,ASYMMETRIC,3.82670592,3.73145604,516096,2097152,29491200,3809.23681,3806.08663
+E4a,300,3840,2160,60,120,64,128,npp,HALF_PIXEL,3.89310335,3.78777599,115531200,119537664,29491200,3871.50314,3849.80609
+E4a,300,3840,2160,60,120,64,128,fkl_fused_late,ASYMMETRIC,0.0273238399,0.0266239997,0,0,29491200,12.33465,12.32874
+E4a,300,3840,2160,60,120,64,128,hand_batch,ASYMMETRIC,0.0165887999,0.0161279999,0,0,29491200,1.79597,1.76728
+E4a,300,3840,2160,60,120,64,128,hand_padded,ASYMMETRIC,0.0181164802,0.0174080003,0,0,29491200,2.6976,2.83377
+E4a,300,3840,2160,60,120,64,128,fkl_fused_after,ASYMMETRIC,0.0273014399,0.0265280008,0,0,29491200,12.34124,12.33265
+E4a,300,3840,2160,60,120,64,128,cvgs_fused,ASYMMETRIC,0.0286889603,0.027648,0,0,29491200,13.51421,13.60444
