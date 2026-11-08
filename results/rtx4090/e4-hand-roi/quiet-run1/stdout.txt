@@ -1,0 +1,530 @@
+E4a batch 10 3840x2160 -> 64x128  fkl_fused (ASYMMETRIC): 0.00377472 ms (min 0.003072), host enqueue 2.09816 us, back to back 2.08028 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 6.7666
+E4a batch 10 3840x2160 -> 64x128  fkl_fused_half_pixel (HALF_PIXEL): 0.00384608 ms (min 0.003072), host enqueue 2.11368 us, back to back 2.08077 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 6.76661, vs HALF_PIXEL 5.35117e-06
+E4a batch 10 3840x2160: frame steps (bytes) FKL 11776, OpenCV 11776; OpenCV output continuous 1
+E4a batch 10 3840x2160 -> 64x128  opencv_percrop (ASYMMETRIC): 0.129347 ms (min 0.125952), host enqueue 126.507 us, back to back 126.326 us, intermediates 516096 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 6.7666
+E4a batch 10 3840x2160: NPP steps (bytes) frame 11776, crop stack 1024, stacks 1024; NPP output dense, 256 bytes per row
+E4a batch 10 3840x2160 -> 64x128  npp (HALF_PIXEL): 0.130986 ms (min 0.128), host enqueue 129.017 us, back to back 129.848 us, intermediates 3851040 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 6.76661, vs HALF_PIXEL 5.35117e-06
+E4a batch 10 3840x2160 -> 64x128  fkl_fused_late (ASYMMETRIC): 0.00367392 ms (min 0.003072), host enqueue 2.01137 us, back to back 2.03178 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 6.7666
+E4a batch 10 3840x2160 -> 64x128  hand_batch (ASYMMETRIC): 0.00344192 ms (min 0.00288), host enqueue 1.56969 us, back to back 1.59828 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 6.7666
+E4a batch 10 3840x2160 -> 64x128  hand_padded (ASYMMETRIC): 0.00361376 ms (min 0.003072), host enqueue 1.61698 us, back to back 1.62138 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 6.7666
+E4a batch 10 3840x2160 -> 64x128  hand_roi (ASYMMETRIC): 0.00356736 ms (min 0.003072), host enqueue 1.57919 us, back to back 1.59788 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 6.7666
+E4a batch 10 3840x2160 -> 64x128  fkl_fused_after (ASYMMETRIC): 0.00376192 ms (min 0.003072), host enqueue 2.00118 us, back to back 2.06888 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 6.7666
+E4a batch 10 3840x2160 -> 64x128  cvgs_fused (ASYMMETRIC): 0.00379712 ms (min 0.003072), host enqueue 2.08529 us, back to back 2.09777 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 6.7666
+E4a batch 10  fkl_fused_late vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 10  fkl_fused_after vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 10  hand_batch vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 10  hand_padded vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 10  hand_roi vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 10  cvgs_fused vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 10  cvgs_fused vs opencv_percrop: not bitwise equal, max |difference| 7.62939e-06
+E4a batch 20 3840x2160 -> 64x128  fkl_fused (ASYMMETRIC): 0.00490944 ms (min 0.004096), host enqueue 2.39229 us, back to back 2.36057 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 6.77392
+E4a batch 20 3840x2160 -> 64x128  fkl_fused_half_pixel (HALF_PIXEL): 0.00487616 ms (min 0.004096), host enqueue 2.35426 us, back to back 2.37587 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 6.77393, vs HALF_PIXEL 5.35117e-06
+E4a batch 20 3840x2160 -> 64x128  opencv_percrop (ASYMMETRIC): 0.251808 ms (min 0.247808), host enqueue 251.643 us, back to back 250.363 us, intermediates 516096 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 6.77392
+E4a batch 20 3840x2160 -> 64x128  npp (HALF_PIXEL): 0.264338 ms (min 0.254976), host enqueue 258.238 us, back to back 255.095 us, intermediates 7702080 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 6.77393, vs HALF_PIXEL 5.35117e-06
+E4a batch 20 3840x2160 -> 64x128  fkl_fused_late (ASYMMETRIC): 0.00482112 ms (min 0.004096), host enqueue 2.44467 us, back to back 2.37688 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 6.77392
+E4a batch 20 3840x2160 -> 64x128  hand_batch (ASYMMETRIC): 0.00402272 ms (min 0.003072), host enqueue 1.63227 us, back to back 1.59948 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 6.77392
+E4a batch 20 3840x2160 -> 64x128  hand_padded (ASYMMETRIC): 0.00408544 ms (min 0.003072), host enqueue 1.66979 us, back to back 1.63058 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 6.77392
+E4a batch 20 3840x2160 -> 64x128  hand_roi (ASYMMETRIC): 0.00398496 ms (min 0.003072), host enqueue 1.62567 us, back to back 1.67468 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 6.77392
+E4a batch 20 3840x2160 -> 64x128  fkl_fused_after (ASYMMETRIC): 0.0049232 ms (min 0.004096), host enqueue 2.48027 us, back to back 2.45207 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 6.77392
+E4a batch 20 3840x2160 -> 64x128  cvgs_fused (ASYMMETRIC): 0.00494944 ms (min 0.004096), host enqueue 2.46267 us, back to back 2.45967 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 6.77392
+E4a batch 20  fkl_fused_late vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 20  fkl_fused_after vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 20  hand_batch vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 20  hand_padded vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 20  hand_roi vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 20  cvgs_fused vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 20  cvgs_fused vs opencv_percrop: not bitwise equal, max |difference| 7.62939e-06
+E4a batch 30 3840x2160 -> 64x128  fkl_fused (ASYMMETRIC): 0.00563488 ms (min 0.00512), host enqueue 2.67906 us, back to back 2.71827 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 6.77392
+E4a batch 30 3840x2160 -> 64x128  fkl_fused_half_pixel (HALF_PIXEL): 0.00566112 ms (min 0.00512), host enqueue 2.70518 us, back to back 2.68097 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 6.77393, vs HALF_PIXEL 5.35117e-06
+E4a batch 30 3840x2160 -> 64x128  opencv_percrop (ASYMMETRIC): 0.379397 ms (min 0.372416), host enqueue 379.347 us, back to back 375.998 us, intermediates 516096 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 6.77392
+E4a batch 30 3840x2160 -> 64x128  npp (HALF_PIXEL): 0.384638 ms (min 0.37888), host enqueue 384.189 us, back to back 382.043 us, intermediates 11553120 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 6.77393, vs HALF_PIXEL 5.35117e-06
+E4a batch 30 3840x2160 -> 64x128  fkl_fused_late (ASYMMETRIC): 0.00569728 ms (min 0.00512), host enqueue 2.70398 us, back to back 2.69957 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 6.77392
+E4a batch 30 3840x2160 -> 64x128  hand_batch (ASYMMETRIC): 0.00443936 ms (min 0.004032), host enqueue 1.63828 us, back to back 1.61938 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 6.77392
+E4a batch 30 3840x2160 -> 64x128  hand_padded (ASYMMETRIC): 0.00460928 ms (min 0.004096), host enqueue 1.66107 us, back to back 1.66068 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 6.77392
+E4a batch 30 3840x2160 -> 64x128  hand_roi (ASYMMETRIC): 0.00447904 ms (min 0.004032), host enqueue 1.64508 us, back to back 1.65308 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 6.77392
+E4a batch 30 3840x2160 -> 64x128  fkl_fused_after (ASYMMETRIC): 0.00564576 ms (min 0.00512), host enqueue 2.68735 us, back to back 2.69076 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 6.77392
+E4a batch 30 3840x2160 -> 64x128  cvgs_fused (ASYMMETRIC): 0.0059264 ms (min 0.00512), host enqueue 2.96218 us, back to back 2.95646 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 6.77392
+E4a batch 30  fkl_fused_late vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 30  fkl_fused_after vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 30  hand_batch vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 30  hand_padded vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 30  hand_roi vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 30  cvgs_fused vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 30  cvgs_fused vs opencv_percrop: not bitwise equal, max |difference| 7.62939e-06
+E4a batch 40 3840x2160 -> 64x128  fkl_fused (ASYMMETRIC): 0.00678592 ms (min 0.006016), host enqueue 3.08344 us, back to back 3.08337 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 6.98144
+E4a batch 40 3840x2160 -> 64x128  fkl_fused_half_pixel (HALF_PIXEL): 0.00677184 ms (min 0.006144), host enqueue 3.08664 us, back to back 3.11226 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 6.98145, vs HALF_PIXEL 5.35117e-06
+E4a batch 40 3840x2160 -> 64x128  opencv_percrop (ASYMMETRIC): 0.504174 ms (min 0.494304), host enqueue 503.504 us, back to back 501.391 us, intermediates 516096 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 6.98145
+E4a batch 40 3840x2160 -> 64x128  npp (HALF_PIXEL): 0.516751 ms (min 0.50752), host enqueue 508.966 us, back to back 511.04 us, intermediates 15404160 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 6.98145, vs HALF_PIXEL 5.35117e-06
+E4a batch 40 3840x2160 -> 64x128  fkl_fused_late (ASYMMETRIC): 0.006624 ms (min 0.006016), host enqueue 3.02977 us, back to back 3.04897 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 6.98144
+E4a batch 40 3840x2160 -> 64x128  hand_batch (ASYMMETRIC): 0.00493376 ms (min 0.004096), host enqueue 1.61277 us, back to back 1.59448 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 6.98144
+E4a batch 40 3840x2160 -> 64x128  hand_padded (ASYMMETRIC): 0.00518624 ms (min 0.004096), host enqueue 1.67349 us, back to back 1.67788 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 6.98144
+E4a batch 40 3840x2160 -> 64x128  hand_roi (ASYMMETRIC): 0.00507904 ms (min 0.004096), host enqueue 1.68508 us, back to back 1.69148 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 6.98144
+E4a batch 40 3840x2160 -> 64x128  fkl_fused_after (ASYMMETRIC): 0.006752 ms (min 0.00608), host enqueue 3.01378 us, back to back 3.07197 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 6.98144
+E4a batch 40 3840x2160 -> 64x128  cvgs_fused (ASYMMETRIC): 0.0070192 ms (min 0.006144), host enqueue 3.23256 us, back to back 3.23946 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 6.98144
+E4a batch 40  fkl_fused_late vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 40  fkl_fused_after vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 40  hand_batch vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 40  hand_padded vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 40  hand_roi vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 40  cvgs_fused vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 40  cvgs_fused vs opencv_percrop: not bitwise equal, max |difference| 7.62939e-06
+E4a batch 50 3840x2160 -> 64x128  fkl_fused (ASYMMETRIC): 0.00749504 ms (min 0.007072), host enqueue 3.38994 us, back to back 3.43346 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 50 3840x2160 -> 64x128  fkl_fused_half_pixel (HALF_PIXEL): 0.00754016 ms (min 0.006976), host enqueue 3.42376 us, back to back 3.44376 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 7.04688, vs HALF_PIXEL 5.35117e-06
+E4a batch 50 3840x2160 -> 64x128  opencv_percrop (ASYMMETRIC): 0.632012 ms (min 0.61952), host enqueue 627.854 us, back to back 627.438 us, intermediates 516096 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 50 3840x2160 -> 64x128  npp (HALF_PIXEL): 0.644478 ms (min 0.633856), host enqueue 637.141 us, back to back 637.555 us, intermediates 19255200 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 7.04687, vs HALF_PIXEL 5.35117e-06
+E4a batch 50 3840x2160 -> 64x128  fkl_fused_late (ASYMMETRIC): 0.00752352 ms (min 0.00512), host enqueue 3.39985 us, back to back 3.47716 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 50 3840x2160 -> 64x128  hand_batch (ASYMMETRIC): 0.00560992 ms (min 0.005088), host enqueue 1.61097 us, back to back 1.62159 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 50 3840x2160 -> 64x128  hand_padded (ASYMMETRIC): 0.00564192 ms (min 0.00512), host enqueue 1.7351 us, back to back 1.70608 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 50 3840x2160 -> 64x128  hand_roi (ASYMMETRIC): 0.00553216 ms (min 0.005024), host enqueue 1.7043 us, back to back 1.83208 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 50 3840x2160 -> 64x128  fkl_fused_after (ASYMMETRIC): 0.00755328 ms (min 0.007008), host enqueue 3.43546 us, back to back 3.43246 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 50 3840x2160 -> 64x128  cvgs_fused (ASYMMETRIC): 0.00795136 ms (min 0.007168), host enqueue 3.72027 us, back to back 3.79465 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 50  fkl_fused_late vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 50  fkl_fused_after vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 50  hand_batch vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 50  hand_padded vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 50  hand_roi vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 50  cvgs_fused vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 50  cvgs_fused vs opencv_percrop: not bitwise equal, max |difference| 7.62939e-06
+E4a batch 60 3840x2160 -> 64x128  fkl_fused (ASYMMETRIC): 0.00876256 ms (min 0.007168), host enqueue 3.89706 us, back to back 3.89695 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 60 3840x2160 -> 64x128  fkl_fused_half_pixel (HALF_PIXEL): 0.00844832 ms (min 0.007552), host enqueue 3.71395 us, back to back 3.72325 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 7.04688, vs HALF_PIXEL 5.35117e-06
+E4a batch 60 3840x2160 -> 64x128  opencv_percrop (ASYMMETRIC): 0.757472 ms (min 0.74512), host enqueue 755.321 us, back to back 751.81 us, intermediates 516096 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 60 3840x2160 -> 64x128  npp (HALF_PIXEL): 0.772647 ms (min 0.760832), host enqueue 764.609 us, back to back 769.566 us, intermediates 23106240 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 7.04687, vs HALF_PIXEL 5.35117e-06
+E4a batch 60 3840x2160 -> 64x128  fkl_fused_late (ASYMMETRIC): 0.00830496 ms (min 0.007168), host enqueue 3.71886 us, back to back 3.85445 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 60 3840x2160 -> 64x128  hand_batch (ASYMMETRIC): 0.00585312 ms (min 0.00512), host enqueue 1.68908 us, back to back 1.59148 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 60 3840x2160 -> 64x128  hand_padded (ASYMMETRIC): 0.00614848 ms (min 0.00512), host enqueue 1.80917 us, back to back 1.77028 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 60 3840x2160 -> 64x128  hand_roi (ASYMMETRIC): 0.00608384 ms (min 0.00512), host enqueue 1.75808 us, back to back 1.75408 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 60 3840x2160 -> 64x128  fkl_fused_after (ASYMMETRIC): 0.00827616 ms (min 0.007168), host enqueue 3.70555 us, back to back 3.71795 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 60 3840x2160 -> 64x128  cvgs_fused (ASYMMETRIC): 0.00914368 ms (min 0.008192), host enqueue 4.09107 us, back to back 3.98165 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 60  fkl_fused_late vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 60  fkl_fused_after vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 60  hand_batch vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 60  hand_padded vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 60  hand_roi vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 60  cvgs_fused vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 60  cvgs_fused vs opencv_percrop: not bitwise equal, max |difference| 7.62939e-06
+E4a batch 70 3840x2160 -> 64x128  fkl_fused (ASYMMETRIC): 0.0090912 ms (min 0.008192), host enqueue 4.08394 us, back to back 4.14985 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 70 3840x2160 -> 64x128  fkl_fused_half_pixel (HALF_PIXEL): 0.00915872 ms (min 0.008192), host enqueue 4.07997 us, back to back 4.09145 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 7.04688, vs HALF_PIXEL 5.35117e-06
+E4a batch 70 3840x2160 -> 64x128  opencv_percrop (ASYMMETRIC): 0.880343 ms (min 0.817152), host enqueue 879.8 us, back to back 877.277 us, intermediates 516096 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 70 3840x2160 -> 64x128  npp (HALF_PIXEL): 0.901795 ms (min 0.876544), host enqueue 889.61 us, back to back 889.387 us, intermediates 26957280 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 7.04687, vs HALF_PIXEL 5.35117e-06
+E4a batch 70 3840x2160 -> 64x128  fkl_fused_late (ASYMMETRIC): 0.00929184 ms (min 0.008192), host enqueue 4.16223 us, back to back 4.10155 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 70 3840x2160 -> 64x128  hand_batch (ASYMMETRIC): 0.0063584 ms (min 0.005824), host enqueue 1.62157 us, back to back 1.63878 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 70 3840x2160 -> 64x128  hand_padded (ASYMMETRIC): 0.00656288 ms (min 0.006144), host enqueue 1.77768 us, back to back 1.81708 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 70 3840x2160 -> 64x128  hand_roi (ASYMMETRIC): 0.00650912 ms (min 0.00592), host enqueue 1.7924 us, back to back 1.78228 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 70 3840x2160 -> 64x128  fkl_fused_after (ASYMMETRIC): 0.0091056 ms (min 0.008192), host enqueue 4.07525 us, back to back 4.13335 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 70 3840x2160 -> 64x128  cvgs_fused (ASYMMETRIC): 0.00949632 ms (min 0.009184), host enqueue 4.53953 us, back to back 4.60115 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 70  fkl_fused_late vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 70  fkl_fused_after vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 70  hand_batch vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 70  hand_padded vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 70  hand_roi vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 70  cvgs_fused vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 70  cvgs_fused vs opencv_percrop: not bitwise equal, max |difference| 7.62939e-06
+E4a batch 80 3840x2160 -> 64x128  fkl_fused (ASYMMETRIC): 0.0100019 ms (min 0.009216), host enqueue 4.46324 us, back to back 4.46555 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 80 3840x2160 -> 64x128  fkl_fused_half_pixel (HALF_PIXEL): 0.00995264 ms (min 0.009216), host enqueue 4.46823 us, back to back 4.40715 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 7.04688, vs HALF_PIXEL 5.35117e-06
+E4a batch 80 3840x2160 -> 64x128  opencv_percrop (ASYMMETRIC): 1.00715 ms (min 0.99328), host enqueue 1008.03 us, back to back 1005.35 us, intermediates 516096 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 80 3840x2160 -> 64x128  npp (HALF_PIXEL): 1.02535 ms (min 1.01456), host enqueue 1016.28 us, back to back 1017.66 us, intermediates 30808320 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 7.04687, vs HALF_PIXEL 5.35117e-06
+E4a batch 80 3840x2160 -> 64x128  fkl_fused_late (ASYMMETRIC): 0.0099632 ms (min 0.009216), host enqueue 4.41865 us, back to back 4.45235 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 80 3840x2160 -> 64x128  hand_batch (ASYMMETRIC): 0.00697952 ms (min 0.006144), host enqueue 1.61888 us, back to back 1.60068 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 80 3840x2160 -> 64x128  hand_padded (ASYMMETRIC): 0.00691616 ms (min 0.006144), host enqueue 1.82507 us, back to back 1.80808 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 80 3840x2160 -> 64x128  hand_roi (ASYMMETRIC): 0.00705344 ms (min 0.006144), host enqueue 1.87047 us, back to back 1.85928 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 80 3840x2160 -> 64x128  fkl_fused_after (ASYMMETRIC): 0.00988928 ms (min 0.009216), host enqueue 4.40437 us, back to back 4.43604 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 80 3840x2160 -> 64x128  cvgs_fused (ASYMMETRIC): 0.0102179 ms (min 0.009216), host enqueue 5.01191 us, back to back 4.81445 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 80  fkl_fused_late vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 80  fkl_fused_after vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 80  hand_batch vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 80  hand_padded vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 80  hand_roi vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 80  cvgs_fused vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 80  cvgs_fused vs opencv_percrop: not bitwise equal, max |difference| 7.62939e-06
+E4a batch 90 3840x2160 -> 64x128  fkl_fused (ASYMMETRIC): 0.0111139 ms (min 0.01024), host enqueue 5.38682 us, back to back 5.05034 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 90 3840x2160 -> 64x128  fkl_fused_half_pixel (HALF_PIXEL): 0.0110374 ms (min 0.01024), host enqueue 4.93615 us, back to back 5.00504 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 7.04688, vs HALF_PIXEL 5.35117e-06
+E4a batch 90 3840x2160 -> 64x128  opencv_percrop (ASYMMETRIC): 1.13278 ms (min 1.03526), host enqueue 1132.83 us, back to back 1129.3 us, intermediates 516096 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 90 3840x2160 -> 64x128  npp (HALF_PIXEL): 1.15078 ms (min 1.11411), host enqueue 1144.37 us, back to back 1144.07 us, intermediates 34659360 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 7.04687, vs HALF_PIXEL 5.35117e-06
+E4a batch 90 3840x2160 -> 64x128  fkl_fused_late (ASYMMETRIC): 0.0109645 ms (min 0.01024), host enqueue 4.87523 us, back to back 4.91504 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 90 3840x2160 -> 64x128  hand_batch (ASYMMETRIC): 0.00732768 ms (min 0.006144), host enqueue 1.66906 us, back to back 1.62298 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 90 3840x2160 -> 64x128  hand_padded (ASYMMETRIC): 0.00763072 ms (min 0.007072), host enqueue 1.85628 us, back to back 1.85038 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 90 3840x2160 -> 64x128  hand_roi (ASYMMETRIC): 0.00749248 ms (min 0.007136), host enqueue 1.92117 us, back to back 1.94987 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 90 3840x2160 -> 64x128  fkl_fused_after (ASYMMETRIC): 0.0108637 ms (min 0.01024), host enqueue 4.89704 us, back to back 4.93564 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 90 3840x2160 -> 64x128  cvgs_fused (ASYMMETRIC): 0.0113197 ms (min 0.01024), host enqueue 5.38423 us, back to back 5.47943 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 90  fkl_fused_late vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 90  fkl_fused_after vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 90  hand_batch vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 90  hand_padded vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 90  hand_roi vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 90  cvgs_fused vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 90  cvgs_fused vs opencv_percrop: not bitwise equal, max |difference| 7.62939e-06
+E4a batch 100 3840x2160 -> 64x128  fkl_fused (ASYMMETRIC): 0.0116128 ms (min 0.010912), host enqueue 5.09983 us, back to back 5.13794 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 100 3840x2160 -> 64x128  fkl_fused_half_pixel (HALF_PIXEL): 0.0116253 ms (min 0.0112), host enqueue 5.15004 us, back to back 5.11294 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 7.04688, vs HALF_PIXEL 5.35117e-06
+E4a batch 100 3840x2160 -> 64x128  opencv_percrop (ASYMMETRIC): 1.25383 ms (min 1.16656), host enqueue 1256.99 us, back to back 1285.07 us, intermediates 516096 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 100 3840x2160 -> 64x128  npp (HALF_PIXEL): 1.32978 ms (min 1.23597), host enqueue 1276.65 us, back to back 1273.27 us, intermediates 38510400 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 7.04687, vs HALF_PIXEL 5.35117e-06
+E4a batch 100 3840x2160 -> 64x128  fkl_fused_late (ASYMMETRIC): 0.0116454 ms (min 0.011104), host enqueue 5.07724 us, back to back 5.10664 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 100 3840x2160 -> 64x128  hand_batch (ASYMMETRIC): 0.00774272 ms (min 0.007168), host enqueue 1.6768 us, back to back 1.62148 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 100 3840x2160 -> 64x128  hand_padded (ASYMMETRIC): 0.00810016 ms (min 0.007168), host enqueue 1.88066 us, back to back 1.88967 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 100 3840x2160 -> 64x128  hand_roi (ASYMMETRIC): 0.00812192 ms (min 0.007168), host enqueue 1.95028 us, back to back 1.97377 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 100 3840x2160 -> 64x128  fkl_fused_after (ASYMMETRIC): 0.0115683 ms (min 0.01104), host enqueue 5.08103 us, back to back 5.10334 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 100 3840x2160 -> 64x128  cvgs_fused (ASYMMETRIC): 0.0119357 ms (min 0.011264), host enqueue 5.60131 us, back to back 5.62624 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 100  fkl_fused_late vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 100  fkl_fused_after vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 100  hand_batch vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 100  hand_padded vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 100  hand_roi vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 100  cvgs_fused vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 100  cvgs_fused vs opencv_percrop: not bitwise equal, max |difference| 7.62939e-06
+E4a batch 110 3840x2160 -> 64x128  fkl_fused (ASYMMETRIC): 0.0125322 ms (min 0.011936), host enqueue 5.61955 us, back to back 5.57403 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 110 3840x2160 -> 64x128  fkl_fused_half_pixel (HALF_PIXEL): 0.0125859 ms (min 0.011264), host enqueue 5.61674 us, back to back 5.57433 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 7.04688, vs HALF_PIXEL 5.35117e-06
+E4a batch 110 3840x2160 -> 64x128  opencv_percrop (ASYMMETRIC): 1.38299 ms (min 1.36704), host enqueue 1387.88 us, back to back 1383.36 us, intermediates 516096 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 110 3840x2160 -> 64x128  npp (HALF_PIXEL): 1.4091 ms (min 1.38611), host enqueue 1404.86 us, back to back 1407.17 us, intermediates 42361440 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 7.04687, vs HALF_PIXEL 5.35117e-06
+E4a batch 110 3840x2160 -> 64x128  fkl_fused_late (ASYMMETRIC): 0.012384 ms (min 0.011264), host enqueue 5.61255 us, back to back 5.58583 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 110 3840x2160 -> 64x128  hand_batch (ASYMMETRIC): 0.0082608 ms (min 0.007168), host enqueue 1.67879 us, back to back 1.62958 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 110 3840x2160 -> 64x128  hand_padded (ASYMMETRIC): 0.00872192 ms (min 0.008192), host enqueue 1.93309 us, back to back 1.96038 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 110 3840x2160 -> 64x128  hand_roi (ASYMMETRIC): 0.00866624 ms (min 0.008128), host enqueue 2.00163 us, back to back 2.11848 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 110 3840x2160 -> 64x128  fkl_fused_after (ASYMMETRIC): 0.012584 ms (min 0.011264), host enqueue 5.60024 us, back to back 5.58233 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 110 3840x2160 -> 64x128  cvgs_fused (ASYMMETRIC): 0.0130416 ms (min 0.012288), host enqueue 6.18033 us, back to back 6.28913 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 110  fkl_fused_late vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 110  fkl_fused_after vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 110  hand_batch vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 110  hand_padded vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 110  hand_roi vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 110  cvgs_fused vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 110  cvgs_fused vs opencv_percrop: not bitwise equal, max |difference| 7.62939e-06
+E4a batch 120 3840x2160 -> 64x128  fkl_fused (ASYMMETRIC): 0.0131453 ms (min 0.012288), host enqueue 5.75574 us, back to back 5.87733 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 120 3840x2160 -> 64x128  fkl_fused_half_pixel (HALF_PIXEL): 0.0131139 ms (min 0.012288), host enqueue 5.80673 us, back to back 5.85133 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 7.04688, vs HALF_PIXEL 5.35117e-06
+E4a batch 120 3840x2160 -> 64x128  opencv_percrop (ASYMMETRIC): 1.50939 ms (min 1.49094), host enqueue 1507.47 us, back to back 1505.36 us, intermediates 516096 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 120 3840x2160 -> 64x128  npp (HALF_PIXEL): 1.53629 ms (min 1.47456), host enqueue 1525.52 us, back to back 1533.92 us, intermediates 46212480 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 7.04687, vs HALF_PIXEL 5.35117e-06
+E4a batch 120 3840x2160 -> 64x128  fkl_fused_late (ASYMMETRIC): 0.0130915 ms (min 0.012288), host enqueue 5.78933 us, back to back 5.78573 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 120 3840x2160 -> 64x128  hand_batch (ASYMMETRIC): 0.0089648 ms (min 0.008192), host enqueue 1.64057 us, back to back 1.63978 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 120 3840x2160 -> 64x128  hand_padded (ASYMMETRIC): 0.00927264 ms (min 0.008544), host enqueue 1.99237 us, back to back 2.08447 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 120 3840x2160 -> 64x128  hand_roi (ASYMMETRIC): 0.00927776 ms (min 0.008192), host enqueue 2.11567 us, back to back 2.05097 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 120 3840x2160 -> 64x128  fkl_fused_after (ASYMMETRIC): 0.0132733 ms (min 0.012288), host enqueue 5.92503 us, back to back 5.88343 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 120 3840x2160 -> 64x128  cvgs_fused (ASYMMETRIC): 0.0140042 ms (min 0.013312), host enqueue 6.73273 us, back to back 6.61762 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 120  fkl_fused_late vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 120  fkl_fused_after vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 120  hand_batch vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 120  hand_padded vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 120  hand_roi vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 120  cvgs_fused vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 120  cvgs_fused vs opencv_percrop: not bitwise equal, max |difference| 7.62939e-06
+E4a batch 130 3840x2160 -> 64x128  fkl_fused (ASYMMETRIC): 0.0141821 ms (min 0.013312), host enqueue 6.45783 us, back to back 6.58122 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 130 3840x2160 -> 64x128  fkl_fused_half_pixel (HALF_PIXEL): 0.0142045 ms (min 0.013312), host enqueue 6.54532 us, back to back 6.55672 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 7.04688, vs HALF_PIXEL 5.35117e-06
+E4a batch 130 3840x2160 -> 64x128  opencv_percrop (ASYMMETRIC): 1.62729 ms (min 1.61094), host enqueue 1635.18 us, back to back 1632.69 us, intermediates 516096 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 130 3840x2160 -> 64x128  npp (HALF_PIXEL): 1.66241 ms (min 1.65373), host enqueue 1663.3 us, back to back 1651.01 us, intermediates 50063520 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 7.04687, vs HALF_PIXEL 5.35117e-06
+E4a batch 130 3840x2160 -> 64x128  fkl_fused_late (ASYMMETRIC): 0.0140608 ms (min 0.013312), host enqueue 6.44703 us, back to back 6.51862 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 130 3840x2160 -> 64x128  hand_batch (ASYMMETRIC): 0.00915072 ms (min 0.008192), host enqueue 1.66519 us, back to back 1.63308 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 130 3840x2160 -> 64x128  hand_padded (ASYMMETRIC): 0.00967808 ms (min 0.009152), host enqueue 2.10008 us, back to back 2.00947 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 130 3840x2160 -> 64x128  hand_roi (ASYMMETRIC): 0.00957408 ms (min 0.009056), host enqueue 2.04177 us, back to back 2.08988 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 130 3840x2160 -> 64x128  fkl_fused_after (ASYMMETRIC): 0.0140214 ms (min 0.013312), host enqueue 6.40703 us, back to back 6.50322 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 130 3840x2160 -> 64x128  cvgs_fused (ASYMMETRIC): 0.014873 ms (min 0.013984), host enqueue 7.25243 us, back to back 7.14511 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 130  fkl_fused_late vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 130  fkl_fused_after vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 130  hand_batch vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 130  hand_padded vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 130  hand_roi vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 130  cvgs_fused vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 130  cvgs_fused vs opencv_percrop: not bitwise equal, max |difference| 7.62939e-06
+E4a batch 140 3840x2160 -> 64x128  fkl_fused (ASYMMETRIC): 0.0146707 ms (min 0.014208), host enqueue 6.62086 us, back to back 6.65232 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 140 3840x2160 -> 64x128  fkl_fused_half_pixel (HALF_PIXEL): 0.0146419 ms (min 0.013984), host enqueue 6.59141 us, back to back 6.67692 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 7.04688, vs HALF_PIXEL 5.35117e-06
+E4a batch 140 3840x2160 -> 64x128  opencv_percrop (ASYMMETRIC): 1.75487 ms (min 1.73773), host enqueue 1770.88 us, back to back 1765.86 us, intermediates 516096 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 140 3840x2160 -> 64x128  npp (HALF_PIXEL): 1.78711 ms (min 1.77664), host enqueue 1775.18 us, back to back 1772.8 us, intermediates 53914560 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 7.04687, vs HALF_PIXEL 5.35117e-06
+E4a batch 140 3840x2160 -> 64x128  fkl_fused_late (ASYMMETRIC): 0.0145987 ms (min 0.013696), host enqueue 6.66318 us, back to back 6.72352 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 140 3840x2160 -> 64x128  hand_batch (ASYMMETRIC): 0.00955456 ms (min 0.009088), host enqueue 1.67988 us, back to back 1.65948 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 140 3840x2160 -> 64x128  hand_padded (ASYMMETRIC): 0.0101069 ms (min 0.009216), host enqueue 2.06967 us, back to back 2.04468 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 140 3840x2160 -> 64x128  hand_roi (ASYMMETRIC): 0.0100774 ms (min 0.009216), host enqueue 2.07699 us, back to back 2.06547 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 140 3840x2160 -> 64x128  fkl_fused_after (ASYMMETRIC): 0.0145523 ms (min 0.009216), host enqueue 6.56181 us, back to back 6.60592 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 140 3840x2160 -> 64x128  cvgs_fused (ASYMMETRIC): 0.0153024 ms (min 0.014336), host enqueue 7.16835 us, back to back 7.19361 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 140  fkl_fused_late vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 140  fkl_fused_after vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 140  hand_batch vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 140  hand_padded vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 140  hand_roi vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 140  cvgs_fused vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 140  cvgs_fused vs opencv_percrop: not bitwise equal, max |difference| 7.62939e-06
+E4a batch 150 3840x2160 -> 64x128  fkl_fused (ASYMMETRIC): 0.0156454 ms (min 0.015072), host enqueue 7.0646 us, back to back 7.08831 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 150 3840x2160 -> 64x128  fkl_fused_half_pixel (HALF_PIXEL): 0.0158006 ms (min 0.0152), host enqueue 7.16421 us, back to back 7.35231 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 7.04688, vs HALF_PIXEL 5.35117e-06
+E4a batch 150 3840x2160 -> 64x128  opencv_percrop (ASYMMETRIC): 1.87932 ms (min 1.8657), host enqueue 1891.36 us, back to back 1880.96 us, intermediates 516096 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 150 3840x2160 -> 64x128  npp (HALF_PIXEL): 1.9183 ms (min 1.90662), host enqueue 1902.21 us, back to back 1903.16 us, intermediates 57765600 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 7.04687, vs HALF_PIXEL 5.35117e-06
+E4a batch 150 3840x2160 -> 64x128  fkl_fused_late (ASYMMETRIC): 0.015592 ms (min 0.014336), host enqueue 7.1404 us, back to back 7.12991 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 150 3840x2160 -> 64x128  hand_batch (ASYMMETRIC): 0.0099696 ms (min 0.009216), host enqueue 1.66437 us, back to back 1.69828 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 150 3840x2160 -> 64x128  hand_padded (ASYMMETRIC): 0.0106522 ms (min 0.01024), host enqueue 2.13079 us, back to back 2.10477 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 150 3840x2160 -> 64x128  hand_roi (ASYMMETRIC): 0.0105027 ms (min 0.010016), host enqueue 2.10727 us, back to back 2.09657 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 150 3840x2160 -> 64x128  fkl_fused_after (ASYMMETRIC): 0.0155894 ms (min 0.015008), host enqueue 7.10374 us, back to back 7.11121 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 150 3840x2160 -> 64x128  cvgs_fused (ASYMMETRIC): 0.0165181 ms (min 0.016), host enqueue 7.95459 us, back to back 7.96731 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 150  fkl_fused_late vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 150  fkl_fused_after vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 150  hand_batch vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 150  hand_padded vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 150  hand_roi vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 150  cvgs_fused vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 150  cvgs_fused vs opencv_percrop: not bitwise equal, max |difference| 7.62939e-06
+E4a batch 160 3840x2160 -> 64x128  fkl_fused (ASYMMETRIC): 0.0164144 ms (min 0.01536), host enqueue 7.20102 us, back to back 7.28571 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 160 3840x2160 -> 64x128  fkl_fused_half_pixel (HALF_PIXEL): 0.0164893 ms (min 0.01536), host enqueue 7.23662 us, back to back 7.26801 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 7.04688, vs HALF_PIXEL 5.35117e-06
+E4a batch 160 3840x2160 -> 64x128  opencv_percrop (ASYMMETRIC): 2.00496 ms (min 1.9937), host enqueue 2007.11 us, back to back 2004.51 us, intermediates 516096 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 160 3840x2160 -> 64x128  npp (HALF_PIXEL): 2.04272 ms (min 2.03366), host enqueue 2029.34 us, back to back 2043.88 us, intermediates 61616640 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 7.04687, vs HALF_PIXEL 5.35117e-06
+E4a batch 160 3840x2160 -> 64x128  fkl_fused_late (ASYMMETRIC): 0.0163898 ms (min 0.01536), host enqueue 7.24111 us, back to back 7.32381 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 160 3840x2160 -> 64x128  hand_batch (ASYMMETRIC): 0.0105203 ms (min 0.01008), host enqueue 1.68617 us, back to back 1.64748 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 160 3840x2160 -> 64x128  hand_padded (ASYMMETRIC): 0.0112998 ms (min 0.01024), host enqueue 2.16038 us, back to back 2.15918 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 160 3840x2160 -> 64x128  hand_roi (ASYMMETRIC): 0.0111475 ms (min 0.01024), host enqueue 2.16008 us, back to back 2.14468 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 160 3840x2160 -> 64x128  fkl_fused_after (ASYMMETRIC): 0.0163786 ms (min 0.01536), host enqueue 7.25721 us, back to back 7.29311 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 160 3840x2160 -> 64x128  cvgs_fused (ASYMMETRIC): 0.0170602 ms (min 0.016384), host enqueue 7.92701 us, back to back 7.9826 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 160  fkl_fused_late vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 160  fkl_fused_after vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 160  hand_batch vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 160  hand_padded vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 160  hand_roi vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 160  cvgs_fused vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 160  cvgs_fused vs opencv_percrop: not bitwise equal, max |difference| 7.62939e-06
+E4a batch 170 3840x2160 -> 64x128  fkl_fused (ASYMMETRIC): 0.0173792 ms (min 0.016384), host enqueue 7.79662 us, back to back 7.8695 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 170 3840x2160 -> 64x128  fkl_fused_half_pixel (HALF_PIXEL): 0.0173891 ms (min 0.016384), host enqueue 7.79411 us, back to back 7.8177 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 7.04688, vs HALF_PIXEL 5.35117e-06
+E4a batch 170 3840x2160 -> 64x128  opencv_percrop (ASYMMETRIC): 2.12911 ms (min 2.11533), host enqueue 2141.95 us, back to back 2138.64 us, intermediates 516096 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 170 3840x2160 -> 64x128  npp (HALF_PIXEL): 2.17136 ms (min 2.16246), host enqueue 2158.05 us, back to back 2158.56 us, intermediates 65467680 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 7.04687, vs HALF_PIXEL 5.35117e-06
+E4a batch 170 3840x2160 -> 64x128  fkl_fused_late (ASYMMETRIC): 0.017288 ms (min 0.016384), host enqueue 7.79891 us, back to back 7.8652 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 170 3840x2160 -> 64x128  hand_batch (ASYMMETRIC): 0.0109222 ms (min 0.01024), host enqueue 1.68738 us, back to back 1.68718 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 170 3840x2160 -> 64x128  hand_padded (ASYMMETRIC): 0.0118259 ms (min 0.011264), host enqueue 2.25777 us, back to back 2.23577 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 170 3840x2160 -> 64x128  hand_roi (ASYMMETRIC): 0.0115312 ms (min 0.011104), host enqueue 2.17857 us, back to back 2.19597 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 170 3840x2160 -> 64x128  fkl_fused_after (ASYMMETRIC): 0.0174307 ms (min 0.016384), host enqueue 7.82331 us, back to back 7.85961 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 170 3840x2160 -> 64x128  cvgs_fused (ASYMMETRIC): 0.0183808 ms (min 0.017408), host enqueue 8.86039 us, back to back 8.86369 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 170  fkl_fused_late vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 170  fkl_fused_after vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 170  hand_batch vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 170  hand_padded vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 170  hand_roi vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 170  cvgs_fused vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 170  cvgs_fused vs opencv_percrop: not bitwise equal, max |difference| 7.62939e-06
+E4a batch 180 3840x2160 -> 64x128  fkl_fused (ASYMMETRIC): 0.0179459 ms (min 0.017056), host enqueue 7.7629 us, back to back 7.79891 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 180 3840x2160 -> 64x128  fkl_fused_half_pixel (HALF_PIXEL): 0.0179574 ms (min 0.017408), host enqueue 7.77262 us, back to back 7.8189 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 7.04688, vs HALF_PIXEL 5.35117e-06
+E4a batch 180 3840x2160 -> 64x128  opencv_percrop (ASYMMETRIC): 2.25942 ms (min 2.24051), host enqueue 2253.29 us, back to back 2251.85 us, intermediates 516096 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 180 3840x2160 -> 64x128  npp (HALF_PIXEL): 2.29959 ms (min 2.28659), host enqueue 2285.32 us, back to back 2282.55 us, intermediates 69318720 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 7.04687, vs HALF_PIXEL 5.35117e-06
+E4a batch 180 3840x2160 -> 64x128  fkl_fused_late (ASYMMETRIC): 0.0180054 ms (min 0.017408), host enqueue 7.75971 us, back to back 7.81621 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 180 3840x2160 -> 64x128  hand_batch (ASYMMETRIC): 0.0116202 ms (min 0.010976), host enqueue 1.68837 us, back to back 1.66918 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 180 3840x2160 -> 64x128  hand_padded (ASYMMETRIC): 0.0123066 ms (min 0.011264), host enqueue 2.24879 us, back to back 2.21708 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 180 3840x2160 -> 64x128  hand_roi (ASYMMETRIC): 0.0121011 ms (min 0.011264), host enqueue 2.23086 us, back to back 2.21587 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 180 3840x2160 -> 64x128  fkl_fused_after (ASYMMETRIC): 0.0180067 ms (min 0.017408), host enqueue 7.75771 us, back to back 7.86861 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 180 3840x2160 -> 64x128  cvgs_fused (ASYMMETRIC): 0.0186086 ms (min 0.018144), host enqueue 8.68083 us, back to back 8.69809 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 180  fkl_fused_late vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 180  fkl_fused_after vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 180  hand_batch vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 180  hand_padded vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 180  hand_roi vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 180  cvgs_fused vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 180  cvgs_fused vs opencv_percrop: not bitwise equal, max |difference| 7.62939e-06
+E4a batch 190 3840x2160 -> 64x128  fkl_fused (ASYMMETRIC): 0.0187907 ms (min 0.018144), host enqueue 8.19789 us, back to back 8.1857 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 190 3840x2160 -> 64x128  fkl_fused_half_pixel (HALF_PIXEL): 0.0188538 ms (min 0.018272), host enqueue 8.22033 us, back to back 8.1842 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 7.04688, vs HALF_PIXEL 5.35117e-06
+E4a batch 190 3840x2160 -> 64x128  opencv_percrop (ASYMMETRIC): 2.37973 ms (min 2.36646), host enqueue 2390.96 us, back to back 2379.39 us, intermediates 516096 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 190 3840x2160 -> 64x128  npp (HALF_PIXEL): 2.42628 ms (min 2.41562), host enqueue 2412.39 us, back to back 2414.73 us, intermediates 73169760 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 7.04687, vs HALF_PIXEL 5.35117e-06
+E4a batch 190 3840x2160 -> 64x128  fkl_fused_late (ASYMMETRIC): 0.0187757 ms (min 0.018048), host enqueue 8.20459 us, back to back 8.2232 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 190 3840x2160 -> 64x128  hand_batch (ASYMMETRIC): 0.0118086 ms (min 0.011264), host enqueue 1.71449 us, back to back 1.68478 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 190 3840x2160 -> 64x128  hand_padded (ASYMMETRIC): 0.012801 ms (min 0.012192), host enqueue 2.36397 us, back to back 2.23747 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 190 3840x2160 -> 64x128  hand_roi (ASYMMETRIC): 0.0125997 ms (min 0.012064), host enqueue 2.26558 us, back to back 2.30737 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 190 3840x2160 -> 64x128  fkl_fused_after (ASYMMETRIC): 0.0188128 ms (min 0.01824), host enqueue 8.19012 us, back to back 8.22111 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 190 3840x2160 -> 64x128  cvgs_fused (ASYMMETRIC): 0.0201536 ms (min 0.019456), host enqueue 9.57939 us, back to back 9.64118 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.04688
+E4a batch 190  fkl_fused_late vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 190  fkl_fused_after vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 190  hand_batch vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 190  hand_padded vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 190  hand_roi vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 190  cvgs_fused vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 190  cvgs_fused vs opencv_percrop: not bitwise equal, max |difference| 7.62939e-06
+E4a batch 200 3840x2160 -> 64x128  fkl_fused (ASYMMETRIC): 0.0194586 ms (min 0.018432), host enqueue 8.62662 us, back to back 8.62369 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.12158
+E4a batch 200 3840x2160 -> 64x128  fkl_fused_half_pixel (HALF_PIXEL): 0.019537 ms (min 0.018656), host enqueue 8.56589 us, back to back 8.63059 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 7.12158, vs HALF_PIXEL 5.35117e-06
+E4a batch 200 3840x2160 -> 64x128  opencv_percrop (ASYMMETRIC): 2.50622 ms (min 2.48915), host enqueue 2508.48 us, back to back 2504.37 us, intermediates 516096 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.12158
+E4a batch 200 3840x2160 -> 64x128  npp (HALF_PIXEL): 2.56057 ms (min 2.5488), host enqueue 2545.38 us, back to back 2543.56 us, intermediates 77020800 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 7.12158, vs HALF_PIXEL 5.35117e-06
+E4a batch 200 3840x2160 -> 64x128  fkl_fused_late (ASYMMETRIC): 0.0194093 ms (min 0.018432), host enqueue 8.59481 us, back to back 8.6165 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.12158
+E4a batch 200 3840x2160 -> 64x128  hand_batch (ASYMMETRIC): 0.0121184 ms (min 0.011264), host enqueue 1.68908 us, back to back 1.66848 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.12158
+E4a batch 200 3840x2160 -> 64x128  hand_padded (ASYMMETRIC): 0.0131914 ms (min 0.012288), host enqueue 2.27087 us, back to back 2.33517 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.12158
+E4a batch 200 3840x2160 -> 64x128  hand_roi (ASYMMETRIC): 0.013047 ms (min 0.012288), host enqueue 2.31367 us, back to back 2.31137 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.12158
+E4a batch 200 3840x2160 -> 64x128  fkl_fused_after (ASYMMETRIC): 0.0194154 ms (min 0.018432), host enqueue 8.52578 us, back to back 8.6176 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.12158
+E4a batch 200 3840x2160 -> 64x128  cvgs_fused (ASYMMETRIC): 0.0206342 ms (min 0.019456), host enqueue 9.60568 us, back to back 9.50419 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.12158
+E4a batch 200  fkl_fused_late vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 200  fkl_fused_after vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 200  hand_batch vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 200  hand_padded vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 200  hand_roi vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 200  cvgs_fused vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 200  cvgs_fused vs opencv_percrop: not bitwise equal, max |difference| 7.62939e-06
+E4a batch 210 3840x2160 -> 64x128  fkl_fused (ASYMMETRIC): 0.0203491 ms (min 0.019456), host enqueue 8.98289 us, back to back 8.98299 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.12158
+E4a batch 210 3840x2160 -> 64x128  fkl_fused_half_pixel (HALF_PIXEL): 0.0203472 ms (min 0.019456), host enqueue 9.0097 us, back to back 8.95549 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 7.12158, vs HALF_PIXEL 5.35117e-06
+E4a batch 210 3840x2160 -> 64x128  opencv_percrop (ASYMMETRIC): 2.63432 ms (min 2.61309), host enqueue 2637.23 us, back to back 2632.45 us, intermediates 516096 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.12158
+E4a batch 210 3840x2160 -> 64x128  npp (HALF_PIXEL): 2.68778 ms (min 2.67366), host enqueue 2670.88 us, back to back 2670.51 us, intermediates 80871840 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 7.12158, vs HALF_PIXEL 5.35117e-06
+E4a batch 210 3840x2160 -> 64x128  fkl_fused_late (ASYMMETRIC): 0.0202877 ms (min 0.019456), host enqueue 8.9899 us, back to back 9.11799 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.12158
+E4a batch 210 3840x2160 -> 64x128  hand_batch (ASYMMETRIC): 0.0125965 ms (min 0.012128), host enqueue 1.70957 us, back to back 1.68618 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.12158
+E4a batch 210 3840x2160 -> 64x128  hand_padded (ASYMMETRIC): 0.0137174 ms (min 0.013184), host enqueue 2.3675 us, back to back 2.37017 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.12158
+E4a batch 210 3840x2160 -> 64x128  hand_roi (ASYMMETRIC): 0.0134589 ms (min 0.012288), host enqueue 2.43039 us, back to back 2.32757 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.12158
+E4a batch 210 3840x2160 -> 64x128  fkl_fused_after (ASYMMETRIC): 0.0203469 ms (min 0.019456), host enqueue 8.9704 us, back to back 8.99269 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.12158
+E4a batch 210 3840x2160 -> 64x128  cvgs_fused (ASYMMETRIC): 0.0217411 ms (min 0.02128), host enqueue 10.533 us, back to back 10.5071 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.12158
+E4a batch 210  fkl_fused_late vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 210  fkl_fused_after vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 210  hand_batch vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 210  hand_padded vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 210  hand_roi vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 210  cvgs_fused vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 210  cvgs_fused vs opencv_percrop: not bitwise equal, max |difference| 7.62939e-06
+E4a batch 220 3840x2160 -> 64x128  fkl_fused (ASYMMETRIC): 0.0210173 ms (min 0.020352), host enqueue 9.38321 us, back to back 9.41248 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.12158
+E4a batch 220 3840x2160 -> 64x128  fkl_fused_half_pixel (HALF_PIXEL): 0.021007 ms (min 0.020448), host enqueue 9.42061 us, back to back 9.46118 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 7.12158, vs HALF_PIXEL 5.35117e-06
+E4a batch 220 3840x2160 -> 64x128  opencv_percrop (ASYMMETRIC): 2.76167 ms (min 2.73818), host enqueue 2787.9 us, back to back 2760.41 us, intermediates 516096 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.12158
+E4a batch 220 3840x2160 -> 64x128  npp (HALF_PIXEL): 2.81708 ms (min 2.80371), host enqueue 2798.44 us, back to back 2798.43 us, intermediates 84722880 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 7.12158, vs HALF_PIXEL 5.35117e-06
+E4a batch 220 3840x2160 -> 64x128  fkl_fused_late (ASYMMETRIC): 0.0209424 ms (min 0.020448), host enqueue 9.42739 us, back to back 9.42558 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.12158
+E4a batch 220 3840x2160 -> 64x128  hand_batch (ASYMMETRIC): 0.0130675 ms (min 0.012288), host enqueue 1.74607 us, back to back 1.68648 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.12158
+E4a batch 220 3840x2160 -> 64x128  hand_padded (ASYMMETRIC): 0.0142675 ms (min 0.013312), host enqueue 2.39348 us, back to back 2.32457 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.12158
+E4a batch 220 3840x2160 -> 64x128  hand_roi (ASYMMETRIC): 0.0140656 ms (min 0.013312), host enqueue 2.42488 us, back to back 2.36847 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.12158
+E4a batch 220 3840x2160 -> 64x128  fkl_fused_after (ASYMMETRIC): 0.0210189 ms (min 0.02048), host enqueue 9.3656 us, back to back 9.40288 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.12158
+E4a batch 220 3840x2160 -> 64x128  cvgs_fused (ASYMMETRIC): 0.0219427 ms (min 0.021408), host enqueue 10.2616 us, back to back 10.3127 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.12158
+E4a batch 220  fkl_fused_late vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 220  fkl_fused_after vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 220  hand_batch vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 220  hand_padded vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 220  hand_roi vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 220  cvgs_fused vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 220  cvgs_fused vs opencv_percrop: not bitwise equal, max |difference| 7.62939e-06
+E4a batch 230 3840x2160 -> 64x128  fkl_fused (ASYMMETRIC): 0.0217594 ms (min 0.020736), host enqueue 9.77576 us, back to back 9.78478 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.12158
+E4a batch 230 3840x2160 -> 64x128  fkl_fused_half_pixel (HALF_PIXEL): 0.021792 ms (min 0.02048), host enqueue 9.77628 us, back to back 9.85058 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 7.12158, vs HALF_PIXEL 5.35117e-06
+E4a batch 230 3840x2160 -> 64x128  opencv_percrop (ASYMMETRIC): 2.8843 ms (min 2.86822), host enqueue 2896.92 us, back to back 2882.58 us, intermediates 516096 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.12158
+E4a batch 230 3840x2160 -> 64x128  npp (HALF_PIXEL): 2.94021 ms (min 2.92627), host enqueue 2923.06 us, back to back 2923.1 us, intermediates 88573920 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 7.12158, vs HALF_PIXEL 5.35117e-06
+E4a batch 230 3840x2160 -> 64x128  fkl_fused_late (ASYMMETRIC): 0.0216221 ms (min 0.02048), host enqueue 9.77517 us, back to back 9.78108 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.12158
+E4a batch 230 3840x2160 -> 64x128  hand_batch (ASYMMETRIC): 0.0135072 ms (min 0.01312), host enqueue 1.7718 us, back to back 1.73828 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.12158
+E4a batch 230 3840x2160 -> 64x128  hand_padded (ASYMMETRIC): 0.0147376 ms (min 0.014208), host enqueue 2.37495 us, back to back 2.41707 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.12158
+E4a batch 230 3840x2160 -> 64x128  hand_roi (ASYMMETRIC): 0.0145376 ms (min 0.013312), host enqueue 2.45127 us, back to back 2.44297 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.12158
+E4a batch 230 3840x2160 -> 64x128  fkl_fused_after (ASYMMETRIC): 0.0216182 ms (min 0.021216), host enqueue 9.74639 us, back to back 9.77789 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.12158
+E4a batch 230 3840x2160 -> 64x128  cvgs_fused (ASYMMETRIC): 0.0233754 ms (min 0.022528), host enqueue 11.286 us, back to back 11.2912 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.12158
+E4a batch 230  fkl_fused_late vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 230  fkl_fused_after vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 230  hand_batch vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 230  hand_padded vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 230  hand_roi vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 230  cvgs_fused vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 230  cvgs_fused vs opencv_percrop: not bitwise equal, max |difference| 7.62939e-06
+E4a batch 240 3840x2160 -> 64x128  fkl_fused (ASYMMETRIC): 0.0226909 ms (min 0.021504), host enqueue 9.9455 us, back to back 9.99158 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.12158
+E4a batch 240 3840x2160 -> 64x128  fkl_fused_half_pixel (HALF_PIXEL): 0.0226243 ms (min 0.021504), host enqueue 9.94759 us, back to back 10.0366 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 7.12158, vs HALF_PIXEL 5.35117e-06
+E4a batch 240 3840x2160 -> 64x128  opencv_percrop (ASYMMETRIC): 3.00874 ms (min 2.99315), host enqueue 3014.32 us, back to back 3006.26 us, intermediates 516096 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.12158
+E4a batch 240 3840x2160 -> 64x128  npp (HALF_PIXEL): 3.06808 ms (min 3.05766), host enqueue 3056.42 us, back to back 3050.3 us, intermediates 92424960 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 7.12158, vs HALF_PIXEL 5.35117e-06
+E4a batch 240 3840x2160 -> 64x128  fkl_fused_late (ASYMMETRIC): 0.0226342 ms (min 0.02176), host enqueue 9.98339 us, back to back 9.98848 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.12158
+E4a batch 240 3840x2160 -> 64x128  hand_batch (ASYMMETRIC): 0.0141533 ms (min 0.013312), host enqueue 1.73027 us, back to back 1.70428 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.12158
+E4a batch 240 3840x2160 -> 64x128  hand_padded (ASYMMETRIC): 0.015311 ms (min 0.014336), host enqueue 2.44847 us, back to back 2.43467 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.12158
+E4a batch 240 3840x2160 -> 64x128  hand_roi (ASYMMETRIC): 0.0152592 ms (min 0.014336), host enqueue 2.50187 us, back to back 2.48027 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.12158
+E4a batch 240 3840x2160 -> 64x128  fkl_fused_after (ASYMMETRIC): 0.0225651 ms (min 0.021504), host enqueue 9.97397 us, back to back 9.99518 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.12158
+E4a batch 240 3840x2160 -> 64x128  cvgs_fused (ASYMMETRIC): 0.023815 ms (min 0.022528), host enqueue 11.1147 us, back to back 11.1036 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.12158
+E4a batch 240  fkl_fused_late vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 240  fkl_fused_after vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 240  hand_batch vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 240  hand_padded vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 240  hand_roi vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 240  cvgs_fused vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 240  cvgs_fused vs opencv_percrop: not bitwise equal, max |difference| 7.62939e-06
+E4a batch 250 3840x2160 -> 64x128  fkl_fused (ASYMMETRIC): 0.0234947 ms (min 0.022528), host enqueue 10.4765 us, back to back 10.4393 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.12158
+E4a batch 250 3840x2160 -> 64x128  fkl_fused_half_pixel (HALF_PIXEL): 0.0234496 ms (min 0.022528), host enqueue 10.4362 us, back to back 10.4147 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 7.12158, vs HALF_PIXEL 5.35117e-06
+E4a batch 250 3840x2160 -> 64x128  opencv_percrop (ASYMMETRIC): 3.14155 ms (min 3.11706), host enqueue 3152.02 us, back to back 3141.85 us, intermediates 516096 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.12158
+E4a batch 250 3840x2160 -> 64x128  npp (HALF_PIXEL): 3.19881 ms (min 3.18566), host enqueue 3178.82 us, back to back 3179.26 us, intermediates 96276000 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 7.12158, vs HALF_PIXEL 5.35117e-06
+E4a batch 250 3840x2160 -> 64x128  fkl_fused_late (ASYMMETRIC): 0.0234586 ms (min 0.022528), host enqueue 10.4019 us, back to back 10.4413 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.12158
+E4a batch 250 3840x2160 -> 64x128  hand_batch (ASYMMETRIC): 0.0145453 ms (min 0.014176), host enqueue 1.73088 us, back to back 1.69898 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.12158
+E4a batch 250 3840x2160 -> 64x128  hand_padded (ASYMMETRIC): 0.0158579 ms (min 0.01536), host enqueue 2.55698 us, back to back 2.73747 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.12158
+E4a batch 250 3840x2160 -> 64x128  hand_roi (ASYMMETRIC): 0.0157914 ms (min 0.015168), host enqueue 2.55117 us, back to back 2.56367 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.12158
+E4a batch 250 3840x2160 -> 64x128  fkl_fused_after (ASYMMETRIC): 0.0235082 ms (min 0.022528), host enqueue 10.4303 us, back to back 10.4105 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.12158
+E4a batch 250 3840x2160 -> 64x128  cvgs_fused (ASYMMETRIC): 0.0253274 ms (min 0.024576), host enqueue 12.2096 us, back to back 12.2584 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.12158
+E4a batch 250  fkl_fused_late vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 250  fkl_fused_after vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 250  hand_batch vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 250  hand_padded vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 250  hand_roi vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 250  cvgs_fused vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 250  cvgs_fused vs opencv_percrop: not bitwise equal, max |difference| 7.62939e-06
+E4a batch 260 3840x2160 -> 64x128  fkl_fused (ASYMMETRIC): 0.0244102 ms (min 0.023552), host enqueue 10.6797 us, back to back 10.7122 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.20166
+E4a batch 260 3840x2160 -> 64x128  fkl_fused_half_pixel (HALF_PIXEL): 0.0244349 ms (min 0.023552), host enqueue 10.6044 us, back to back 10.6966 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 7.20166, vs HALF_PIXEL 5.35117e-06
+E4a batch 260 3840x2160 -> 64x128  opencv_percrop (ASYMMETRIC): 3.26427 ms (min 3.2471), host enqueue 3275.3 us, back to back 3267.54 us, intermediates 516096 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.20166
+E4a batch 260 3840x2160 -> 64x128  npp (HALF_PIXEL): 3.32397 ms (min 3.29728), host enqueue 3325.16 us, back to back 3324.24 us, intermediates 100127040 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 7.20166, vs HALF_PIXEL 5.35117e-06
+E4a batch 260 3840x2160 -> 64x128  fkl_fused_late (ASYMMETRIC): 0.024343 ms (min 0.023552), host enqueue 10.6074 us, back to back 10.7267 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.20166
+E4a batch 260 3840x2160 -> 64x128  hand_batch (ASYMMETRIC): 0.0147107 ms (min 0.014304), host enqueue 1.7204 us, back to back 1.74548 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.20166
+E4a batch 260 3840x2160 -> 64x128  hand_padded (ASYMMETRIC): 0.0161226 ms (min 0.01536), host enqueue 2.55317 us, back to back 2.56957 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.20166
+E4a batch 260 3840x2160 -> 64x128  hand_roi (ASYMMETRIC): 0.0160742 ms (min 0.01536), host enqueue 2.60248 us, back to back 2.62836 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.20166
+E4a batch 260 3840x2160 -> 64x128  fkl_fused_after (ASYMMETRIC): 0.0243341 ms (min 0.023552), host enqueue 10.6215 us, back to back 10.6972 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.20166
+E4a batch 260 3840x2160 -> 64x128  cvgs_fused (ASYMMETRIC): 0.0254099 ms (min 0.024576), host enqueue 12.007 us, back to back 11.9616 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.20166
+E4a batch 260  fkl_fused_late vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 260  fkl_fused_after vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 260  hand_batch vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 260  hand_padded vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 260  hand_roi vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 260  cvgs_fused vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 260  cvgs_fused vs opencv_percrop: not bitwise equal, max |difference| 7.62939e-06
+E4a batch 270 3840x2160 -> 64x128  fkl_fused (ASYMMETRIC): 0.0251536 ms (min 0.024576), host enqueue 11.0752 us, back to back 11.0073 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.20166
+E4a batch 270 3840x2160 -> 64x128  fkl_fused_half_pixel (HALF_PIXEL): 0.0251706 ms (min 0.024544), host enqueue 10.9592 us, back to back 10.9914 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 7.20166, vs HALF_PIXEL 5.35117e-06
+E4a batch 270 3840x2160 -> 64x128  opencv_percrop (ASYMMETRIC): 3.39007 ms (min 3.37229), host enqueue 3399.38 us, back to back 3382.33 us, intermediates 516096 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.20166
+E4a batch 270 3840x2160 -> 64x128  npp (HALF_PIXEL): 3.4651 ms (min 3.44269), host enqueue 3441.35 us, back to back 3442.52 us, intermediates 103978080 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 7.20166, vs HALF_PIXEL 5.35117e-06
+E4a batch 270 3840x2160 -> 64x128  fkl_fused_late (ASYMMETRIC): 0.0251354 ms (min 0.024512), host enqueue 10.9975 us, back to back 11.0361 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.20166
+E4a batch 270 3840x2160 -> 64x128  hand_batch (ASYMMETRIC): 0.0152547 ms (min 0.014336), host enqueue 1.83547 us, back to back 1.77857 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.20166
+E4a batch 270 3840x2160 -> 64x128  hand_padded (ASYMMETRIC): 0.0166861 ms (min 0.01632), host enqueue 2.61764 us, back to back 2.55977 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.20166
+E4a batch 270 3840x2160 -> 64x128  hand_roi (ASYMMETRIC): 0.0165459 ms (min 0.01536), host enqueue 2.63037 us, back to back 2.69007 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.20166
+E4a batch 270 3840x2160 -> 64x128  fkl_fused_after (ASYMMETRIC): 0.0251133 ms (min 0.024384), host enqueue 10.9799 us, back to back 11.0073 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.20166
+E4a batch 270 3840x2160 -> 64x128  cvgs_fused (ASYMMETRIC): 0.026776 ms (min 0.026368), host enqueue 13.1828 us, back to back 13.0938 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.20166
+E4a batch 270  fkl_fused_late vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 270  fkl_fused_after vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 270  hand_batch vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 270  hand_padded vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 270  hand_roi vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 270  cvgs_fused vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 270  cvgs_fused vs opencv_percrop: not bitwise equal, max |difference| 7.62939e-06
+E4a batch 280 3840x2160 -> 64x128  fkl_fused (ASYMMETRIC): 0.0258931 ms (min 0.025376), host enqueue 11.4336 us, back to back 11.6169 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.20166
+E4a batch 280 3840x2160 -> 64x128  fkl_fused_half_pixel (HALF_PIXEL): 0.026009 ms (min 0.02528), host enqueue 11.4963 us, back to back 11.5026 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 7.20166, vs HALF_PIXEL 5.35117e-06
+E4a batch 280 3840x2160 -> 64x128  opencv_percrop (ASYMMETRIC): 3.51271 ms (min 3.49162), host enqueue 3511.49 us, back to back 3510.7 us, intermediates 516096 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.20166
+E4a batch 280 3840x2160 -> 64x128  npp (HALF_PIXEL): 3.58822 ms (min 3.56966), host enqueue 3567.48 us, back to back 3570.26 us, intermediates 107829120 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 7.20166, vs HALF_PIXEL 5.35117e-06
+E4a batch 280 3840x2160 -> 64x128  fkl_fused_late (ASYMMETRIC): 0.0259565 ms (min 0.02528), host enqueue 11.4904 us, back to back 11.4875 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.20166
+E4a batch 280 3840x2160 -> 64x128  hand_batch (ASYMMETRIC): 0.0156621 ms (min 0.01504), host enqueue 1.82647 us, back to back 1.71678 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.20166
+E4a batch 280 3840x2160 -> 64x128  hand_padded (ASYMMETRIC): 0.0171277 ms (min 0.016384), host enqueue 2.58965 us, back to back 2.54747 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.20166
+E4a batch 280 3840x2160 -> 64x128  hand_roi (ASYMMETRIC): 0.0170474 ms (min 0.016384), host enqueue 2.66839 us, back to back 2.65346 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.20166
+E4a batch 280 3840x2160 -> 64x128  fkl_fused_after (ASYMMETRIC): 0.0258483 ms (min 0.025248), host enqueue 11.428 us, back to back 11.4918 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.20166
+E4a batch 280 3840x2160 -> 64x128  cvgs_fused (ASYMMETRIC): 0.0270838 ms (min 0.02656), host enqueue 12.9494 us, back to back 12.9466 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.20166
+E4a batch 280  fkl_fused_late vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 280  fkl_fused_after vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 280  hand_batch vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 280  hand_padded vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 280  hand_roi vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 280  cvgs_fused vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 280  cvgs_fused vs opencv_percrop: not bitwise equal, max |difference| 7.62939e-06
+E4a batch 290 3840x2160 -> 64x128  fkl_fused (ASYMMETRIC): 0.0267238 ms (min 0.0256), host enqueue 11.8401 us, back to back 12.0426 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.20166
+E4a batch 290 3840x2160 -> 64x128  fkl_fused_half_pixel (HALF_PIXEL): 0.0267971 ms (min 0.0256), host enqueue 11.8228 us, back to back 11.8554 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 7.20166, vs HALF_PIXEL 5.35117e-06
+E4a batch 290 3840x2160 -> 64x128  opencv_percrop (ASYMMETRIC): 3.61533 ms (min 3.6001), host enqueue 3645.42 us, back to back 3641.91 us, intermediates 516096 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.20166
+E4a batch 290 3840x2160 -> 64x128  npp (HALF_PIXEL): 3.71699 ms (min 3.70154), host enqueue 3698.34 us, back to back 3699.14 us, intermediates 111680160 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 7.20166, vs HALF_PIXEL 5.35117e-06
+E4a batch 290 3840x2160 -> 64x128  fkl_fused_late (ASYMMETRIC): 0.0266592 ms (min 0.0256), host enqueue 11.7807 us, back to back 11.8972 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.20166
+E4a batch 290 3840x2160 -> 64x128  hand_batch (ASYMMETRIC): 0.0162074 ms (min 0.01536), host enqueue 1.77427 us, back to back 1.72778 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.20166
+E4a batch 290 3840x2160 -> 64x128  hand_padded (ASYMMETRIC): 0.0176333 ms (min 0.017184), host enqueue 2.68875 us, back to back 2.60357 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.20166
+E4a batch 290 3840x2160 -> 64x128  hand_roi (ASYMMETRIC): 0.0175696 ms (min 0.016384), host enqueue 2.69357 us, back to back 2.69917 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.20166
+E4a batch 290 3840x2160 -> 64x128  fkl_fused_after (ASYMMETRIC): 0.0266822 ms (min 0.0256), host enqueue 11.8034 us, back to back 11.8822 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.20166
+E4a batch 290 3840x2160 -> 64x128  cvgs_fused (ASYMMETRIC): 0.0287123 ms (min 0.027648), host enqueue 13.8743 us, back to back 13.9486 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.20166
+E4a batch 290  fkl_fused_late vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 290  fkl_fused_after vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 290  hand_batch vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 290  hand_padded vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 290  hand_roi vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 290  cvgs_fused vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 290  cvgs_fused vs opencv_percrop: not bitwise equal, max |difference| 7.62939e-06
+E4a batch 300 3840x2160 -> 64x128  fkl_fused (ASYMMETRIC): 0.028423 ms (min 0.027648), host enqueue 12.3084 us, back to back 12.3751 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.20166
+E4a batch 300 3840x2160 -> 64x128  fkl_fused_half_pixel (HALF_PIXEL): 0.0285357 ms (min 0.027648), host enqueue 12.3292 us, back to back 12.3374 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 7.20166, vs HALF_PIXEL 5.35117e-06
+E4a batch 300 3840x2160 -> 64x128  opencv_percrop (ASYMMETRIC): 3.76396 ms (min 3.74672), host enqueue 3783.32 us, back to back 3783.06 us, intermediates 516096 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.20166
+E4a batch 300 3840x2160 -> 64x128  npp (HALF_PIXEL): 3.84837 ms (min 3.8328), host enqueue 3826.15 us, back to back 3826.47 us, intermediates 115531200 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 7.20166, vs HALF_PIXEL 5.35117e-06
+E4a batch 300 3840x2160 -> 64x128  fkl_fused_late (ASYMMETRIC): 0.0283005 ms (min 0.027648), host enqueue 12.3191 us, back to back 12.3261 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.20166
+E4a batch 300 3840x2160 -> 64x128  hand_batch (ASYMMETRIC): 0.0165853 ms (min 0.016064), host enqueue 1.79378 us, back to back 1.75457 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.20166
+E4a batch 300 3840x2160 -> 64x128  hand_padded (ASYMMETRIC): 0.0181136 ms (min 0.017408), host enqueue 2.66516 us, back to back 2.68897 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.20166
+E4a batch 300 3840x2160 -> 64x128  hand_roi (ASYMMETRIC): 0.0181594 ms (min 0.01728), host enqueue 2.75196 us, back to back 2.73376 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.20166
+E4a batch 300 3840x2160 -> 64x128  fkl_fused_after (ASYMMETRIC): 0.0283632 ms (min 0.027648), host enqueue 12.3716 us, back to back 12.3978 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.20166
+E4a batch 300 3840x2160 -> 64x128  cvgs_fused (ASYMMETRIC): 0.0287414 ms (min 0.027648), host enqueue 13.6123 us, back to back 13.5472 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.20166
+E4a batch 300  fkl_fused_late vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 300  fkl_fused_after vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 300  hand_batch vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 300  hand_padded vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 300  hand_roi vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 300  cvgs_fused vs fkl_fused: bitwise equal, max |difference| 0
+E4a batch 300  cvgs_fused vs opencv_percrop: not bitwise equal, max |difference| 7.62939e-06
+E4c batch 1 720x480 -> 768x512  fkl_fused (ASYMMETRIC): 0.00525888 ms (min 0.004096), host enqueue 1.59107 us, back to back 1.63028 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.01367
+E4c batch 1 720x480 -> 768x512  fkl_fused_half_pixel (HALF_PIXEL): 0.00528672 ms (min 0.0048), host enqueue 1.60288 us, back to back 1.59438 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 7.01367, vs HALF_PIXEL 5.35117e-06
+E4c batch 1 720x480: frame steps (bytes) FKL 2560, OpenCV 2560; OpenCV output continuous 1
+E4c batch 1 720x480 -> 768x512  opencv_percrop (ASYMMETRIC): 0.0276886 ms (min 0.02688), host enqueue 12.4334 us, back to back 12.2754 us, intermediates 18333696 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.01367
+E4c batch 1 720x480: NPP steps (bytes) frame 2560, crop stack 8704, stacks 9216; NPP output dense, 3072 bytes per row
+E4c batch 1 720x480 -> 768x512  npp (HALF_PIXEL): 0.0361782 ms (min 0.035552), host enqueue 14.3398 us, back to back 14.1404 us, intermediates 13615104 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 7.01367, vs HALF_PIXEL 5.35117e-06
+E4c batch 1 1920x1080 -> 2048x1152  fkl_fused (ASYMMETRIC): 0.0155312 ms (min 0.015104), host enqueue 1.66138 us, back to back 1.59378 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.63184
+E4c batch 1 1920x1080 -> 2048x1152  fkl_fused_half_pixel (HALF_PIXEL): 0.0156474 ms (min 0.015072), host enqueue 1.59748 us, back to back 1.62378 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 7.63184, vs HALF_PIXEL 5.35117e-06
+E4c batch 1 1920x1080: frame steps (bytes) FKL 6144, OpenCV 6144; OpenCV output continuous 1
+E4c batch 1 1920x1080 -> 2048x1152  opencv_percrop (ASYMMETRIC): 0.174488 ms (min 0.171008), host enqueue 12.5355 us, back to back 12.2615 us, intermediates 109817856 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.63184
+E4c batch 1 1920x1080: NPP steps (bytes) frame 6144, crop stack 23040, stacks 24576; NPP output dense, 8192 bytes per row
+E4c batch 1 1920x1080 -> 2048x1152  npp (HALF_PIXEL): 0.155426 ms (min 0.152576), host enqueue 14.3989 us, back to back 14.1462 us, intermediates 81506304 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 7.63184, vs HALF_PIXEL 5.35117e-06
+E4c batch 1 3840x2160 -> 4096x2304  fkl_fused (ASYMMETRIC): 0.157793 ms (min 0.153248), host enqueue 1.67876 us, back to back 1.58258 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.51221
+E4c batch 1 3840x2160 -> 4096x2304  fkl_fused_half_pixel (HALF_PIXEL): 0.157787 ms (min 0.153984), host enqueue 1.62449 us, back to back 1.61948 us, intermediates 0 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 7.51221, vs HALF_PIXEL 5.35117e-06
+E4c batch 1 3840x2160: frame steps (bytes) FKL 11776, OpenCV 11776; OpenCV output continuous 1
+E4c batch 1 3840x2160 -> 4096x2304  opencv_percrop (ASYMMETRIC): 1.60484 ms (min 1.59744), host enqueue 12.8173 us, back to back 12.1838 us, intermediates 439271424 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 5.35117e-06, vs HALF_PIXEL 7.51221
+E4c batch 1 3840x2160: NPP steps (bytes) frame 11776, crop stack 46080, stacks 49152; NPP output dense, 16384 bytes per row
+E4c batch 1 3840x2160 -> 4096x2304  npp (HALF_PIXEL): 1.84832 ms (min 1.84115), host enqueue 14.5937 us, back to back 14.2252 us, intermediates 326025216 B, max |err| vs own reference 5.35117e-06, vs ASYMMETRIC 7.51221, vs HALF_PIXEL 5.35117e-06

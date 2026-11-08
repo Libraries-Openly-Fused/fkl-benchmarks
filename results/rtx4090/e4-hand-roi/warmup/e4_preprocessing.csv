@@ -1,0 +1,29 @@
+# experiment: E4a/E4c pre-processing: FKL against OpenCV-CUDA and NPP; E4a also against the hand-written kernels of E1c, and cvGPUSpeedup
+# notes: thread fusion: off (fk::TF::DISABLED); source: seeded 8UC3 noise (LCG seed 12345, as the CPU rows), one copy per implementation; timing: CUDA events around one call of the whole implementation, which builds its batch (FKL: crop views, read and operations; OpenCV: ROIs; NPP: crop pointers; hand_batch and hand_padded: the parameter block of crop pointers or crop descriptors; hand_roi: its CPU function on the crop rectangles; cvgs_fused: ROIs and operations) and enqueues its work, because the crop locations may change on every image; 100 calls after one warm-up; fkl_fused_late and fkl_fused_after: the fkl_fused call again, timed immediately before hand_batch and immediately after hand_roi (controls of the position in the sequence), E4a only; hand_batch and hand_padded: the hand-written kernels of E1c (handwritten-cuda/e1_preproc.cu), E4a only; hand_roi: the hand-written kernel for crops of any location and size, whose CPU function (plain C++, no library) computes every crop's pointer, size, pitch and resize factors in the call, E4a only; cvgs_fused: cvGPUSpeedup, cvGS::executeOperations with its default arguments, which request thread fusion; it cannot take effect in this chain (the batched resize read and TensorSplit do not support it; the same SASS as with executeOperations<false>), E4a only; sampling: ASYMMETRIC = FKL default, cv::cuda::resize, the hand-written kernels and cvGPUSpeedup, HALF_PIXEL = NPP and fkl_fused_half_pixel; ok_own = max |output - scalar double reference of the version's own convention| <= 1e-4
+# repo: fkl-benchmarks 469aa6df965f4728101076121d33b9b04d0def6b
+# fkl: 64ad9195cd785d0c93a70b35e02d5a6c7c4a5048
+# cvGPUSpeedup: 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c
+# FastNPP: a1b5e245d7dd70fba23dcb51a0aea80495dbc61d
+# nvcc: 13.4.92 (/home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/nvcc), architectures 89, -fmad on, -lineinfo on
+# hip: none (none), architectures none
+# host compiler: GNU 15.2.0, Release, -march=native, -ftemplate-depth=1000
+# opencv: 4.14.0
+# cpu: AMD Ryzen 9 5950X 16-Core Processor
+# os: Ubuntu 26.04.1 LTS
+# kernel: Linux 7.0.0-38-generic
+# gpu: NVIDIA GeForce RTX 4090, cc 8.9, 128 SMs, 24106 MiB, PCI 0000:09:00.0
+# cuda driver api: 13.3, cuda runtime: 13.4
+# nvidia-smi driver: 610.43.02
+# clocks (sm, mem, max sm, max mem, MHz): 210 MHz, 405 MHz, 3105 MHz, 10501 MHz
+# power limit, temperature at start: 450.00 W, 39
+experiment,batch,src_w,src_h,crop_w,crop_h,out_w,out_h,version,convention,gpu_mean_ms,gpu_min_ms,intermediate_bytes,meminfo_delta_bytes,output_bytes,host_enqueue_us,host_launch_us
+E4a,300,3840,2160,60,120,64,128,fkl_fused,ASYMMETRIC,0.0286688002,0.027648,0,0,29491200,12.70074,12.50575
+E4a,300,3840,2160,60,120,64,128,fkl_fused_half_pixel,HALF_PIXEL,0.0284899202,0.027648,0,0,29491200,12.12416,12.15936
+E4a,300,3840,2160,60,120,64,128,opencv_percrop,ASYMMETRIC,3.76139712,3.7130239,516096,2097152,29491200,3767.95728,3747.78741
+E4a,300,3840,2160,60,120,64,128,npp,HALF_PIXEL,3.83967007,3.76012802,115531200,119537664,29491200,3817.20123,3820.50704
+E4a,300,3840,2160,60,120,64,128,fkl_fused_late,ASYMMETRIC,0.0275478399,0.0266239997,0,0,29491200,12.16294,12.17675
+E4a,300,3840,2160,60,120,64,128,hand_batch,ASYMMETRIC,0.0165766399,0.0153599996,0,0,29491200,1.81287,1.74078
+E4a,300,3840,2160,60,120,64,128,hand_padded,ASYMMETRIC,0.0181228802,0.0174080003,0,0,29491200,2.66766,2.67097
+E4a,300,3840,2160,60,120,64,128,hand_roi,ASYMMETRIC,0.0180992003,0.0174080003,0,0,29491200,2.74186,2.74706
+E4a,300,3840,2160,60,120,64,128,fkl_fused_after,ASYMMETRIC,0.0273657599,0.0253120009,0,0,29491200,12.20386,12.19105
+E4a,300,3840,2160,60,120,64,128,cvgs_fused,ASYMMETRIC,0.0296368003,0.0286720004,0,0,29491200,14.40138,14.35153
