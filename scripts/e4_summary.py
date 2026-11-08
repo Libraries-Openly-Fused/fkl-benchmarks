@@ -19,7 +19,9 @@
 Writes e4_summary.csv (one row per experiment, batch, frame width and version: median of gpu_mean_ms over the runs, the smallest and the largest of the runs, spread_pct = (largest - smallest) / median,
 the smallest single call of all runs, the median host_enqueue_us and host_launch_us, intermediate_bytes) and e4_speedups.csv (per point: the median over the runs of the per-run ratio of the baseline
 to the fused kernel, with the smallest and largest per-run ratio; the baselines of the sampling convention of the fused kernel: fkl_fused (ASYMMETRIC) against opencv_percrop,
-fkl_fused_half_pixel (HALF_PIXEL) against npp).
+fkl_fused_half_pixel (HALF_PIXEL) against npp; and, in the runs that have the build-once variants of E4a, the same baselines against fkl_fused_once and
+fkl_fused_half_pixel_once, and cvgs_fused_once against opencv_percrop). A pair whose two versions are not both in the runs is left out, so the folders measured
+before the build-once variants give the same files as before.
 """
 import csv
 import glob
@@ -28,6 +30,8 @@ import statistics as stats
 import sys
 
 BASELINES = [("opencv_percrop", "fkl_fused"), ("npp", "fkl_fused_half_pixel")]   # the batched OpenCV-CUDA baseline is not a baseline of the paper (no batched OpenCV-CUDA interface)
+# the build-once variants of E4a (their operations built once, before the timing; valid only while the crop positions do not change) against the same baselines
+BASELINES += [("opencv_percrop", "fkl_fused_once"), ("npp", "fkl_fused_half_pixel_once"), ("opencv_percrop", "cvgs_fused_once")]
 
 
 def rd(path):
