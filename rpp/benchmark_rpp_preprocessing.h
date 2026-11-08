@@ -35,7 +35,9 @@
 //   FKL: build = the crop views and every operation (on the host); compute = executeOperations and the synchronisation, with no synchronisation
 //        between them. The release of the crop views at the end of the call is part of compute.
 //   rpp_crop_batch: build = the copies and a stream synchronisation; compute = the ROIs, the two RPP calls and a stream synchronisation. Its
-//        total therefore includes one stream synchronisation more than rpp_crop_batch_unsplit, which has no parts (NaN).
+//        total therefore includes one stream synchronisation more than rpp_crop_batch_unsplit, which has no parts (NaN). In every call
+//        rppt_resize_mirror_normalize itself clears its output and synchronises its stream (RPP 3.2.0), so in rpp_crop_batch_unsplit RPP waits
+//        for the copies inside that call.
 // RPP has no per-channel multiply: the normalize of rppt_resize_mirror_normalize covers the multiply, the subtraction and the division, with
 // mean = sub / 0.3 and std = div / 0.3. Output widths are multiples of 8.
 // Environment: E5_ITERS, E5_WARMUP, E5_WARMUP_SECONDS, E5_ROTATE_OFFSET (checked: common/env_args.h), E5_IMAGE (a binary PPM tiled over the
@@ -190,16 +192,14 @@ void runA(fk::Stream_<fk::ParArch::GPU_AMD>& fkStream, fk::Ptr2D<fk::uchar3>& fk
     std::cout << "(a) batch " << N << std::endl;
 
     // ---- Set up once for this batch size. Nothing here depends on the location of the crops: the output tensors and the intermediate tensors of
-    // fkl_perop_batch depend on N and the output size; RPP's handles and descriptors, its buffers and its per-image parameter arrays (output
+    // fkl_perop_batch depend on N and the output size; RPP's handle and descriptors, its buffers and its per-image parameter arrays (output
     // size, mean, standard deviation, mirror, channel order) depend on N, the crop size and the output size.
     fk::Tensor<float> fusedOut(OUT_W, OUT_H, N, 3), halfOut(OUT_W, OUT_H, N, 3), batchOut(OUT_W, OUT_H, N, 3);
     fk::Tensor<fk::float3> tmpA(OUT_W, OUT_H, N, 1), tmpB(OUT_W, OUT_H, N, 1);
 
-    // rppCreate's batch size is the number of images RPP processes: the N crops. One handle per RPP call: the parameters of a call are copied
-    // asynchronously to buffers of its handle, which a second call on the same handle would overwrite while the first kernel may still read them.
-    rppHandle_t resizeHandle{}, permuteHandle{};
-    FKLB_RPP_CHECK(rppCreate(&resizeHandle, N, 0, rppStream, RppBackend::RPP_HIP_BACKEND));
-    FKLB_RPP_CHECK(rppCreate(&permuteHandle, N, 0, rppStream, RppBackend::RPP_HIP_BACKEND));
+    // One RPP handle for both calls, on RPP's stream. rppCreate's batch size is the number of images RPP processes: the N crops.
+    rppHandle_t handle{};
+    FKLB_RPP_CHECK(rppCreate(&handle, N, 0, rppStream, RppBackend::RPP_HIP_BACKEND));
     // The batch: N dense crops, 8 bit NHWC, one after the other (the RpptDesc constructor sets the batch stride nStride = CROP_H * CROP_W * 3);
     // the output: N float NCHW images
     RpptDesc cropDesc(N, 3, CROP_H, CROP_W, RpptDataType::U8, RpptLayout::NHWC);
@@ -212,7 +212,8 @@ void runA(fk::Stream_<fk::ParArch::GPU_AMD>& fkStream, fk::Ptr2D<fk::uchar3>& fk
     FKLB_HIP_CHECK(hipMalloc(&cropBatch, cropBytes * N));
     FKLB_HIP_CHECK(hipMalloc(&resized, outBytes));
     FKLB_HIP_CHECK(hipMalloc(&rppOut, outBytes));
-    // The parameter arrays of the two RPP calls, in pinned host memory (RPP copies them to the device asynchronously)
+    // The parameter arrays of the two RPP calls, in pinned host memory: RPP's kernels read them in place on the GPU, so they must not change until
+    // the kernels of a call have finished (every call ends with a synchronisation of RPP's stream)
     RpptImagePatch* outSizes = nullptr;
     RpptROI* rois = nullptr;
     Rpp32f* mean = nullptr;
@@ -317,11 +318,12 @@ void runA(fk::Stream_<fk::ParArch::GPU_AMD>& fkStream, fk::Ptr2D<fk::uchar3>& fk
             rois[i].xywhROI = {{0, 0}, CROP_W, CROP_H};
         }
         FKLB_RPP_CHECK(rppt_resize_mirror_normalize(cropBatch, &cropDesc, resized, &outDesc, outSizes, RpptInterpolationType::BILINEAR, mean, stdDev,
-                                                    mirror, rois, RpptRoiType::XYWH, resizeHandle, RppBackend::RPP_HIP_BACKEND));
-        FKLB_RPP_CHECK(rppt_channel_permute(resized, &outDesc, rppOut, &outDesc, channelOrder, permuteHandle, RppBackend::RPP_HIP_BACKEND));
+                                                    mirror, rois, RpptRoiType::XYWH, handle, RppBackend::RPP_HIP_BACKEND));
+        FKLB_RPP_CHECK(rppt_channel_permute(resized, &outDesc, rppOut, &outDesc, channelOrder, handle, RppBackend::RPP_HIP_BACKEND));
         FKLB_HIP_CHECK(hipStreamSynchronize(rppStream));
     };
-    // The same work without the synchronisation between the copies and the RPP calls, which only the measurement of the parts needs
+    // The same work without the synchronisation between the copies and the RPP calls, which only the measurement of the parts needs (the copies
+    // are on RPP's stream, before the RPP calls, and rppt_resize_mirror_normalize synchronises that stream itself)
     auto rppCropBatchUnsplit = [&](fklb::WallClock::time_point&) {
         for (int i = 0; i < N; ++i) {
             FKLB_HIP_CHECK(hipMemcpy2DAsync(cropBatch + cropBytes * i, static_cast<size_t>(CROP_W) * 3,
@@ -332,8 +334,8 @@ void runA(fk::Stream_<fk::ParArch::GPU_AMD>& fkStream, fk::Ptr2D<fk::uchar3>& fk
             rois[i].xywhROI = {{0, 0}, CROP_W, CROP_H};
         }
         FKLB_RPP_CHECK(rppt_resize_mirror_normalize(cropBatch, &cropDesc, resized, &outDesc, outSizes, RpptInterpolationType::BILINEAR, mean, stdDev,
-                                                    mirror, rois, RpptRoiType::XYWH, resizeHandle, RppBackend::RPP_HIP_BACKEND));
-        FKLB_RPP_CHECK(rppt_channel_permute(resized, &outDesc, rppOut, &outDesc, channelOrder, permuteHandle, RppBackend::RPP_HIP_BACKEND));
+                                                    mirror, rois, RpptRoiType::XYWH, handle, RppBackend::RPP_HIP_BACKEND));
+        FKLB_RPP_CHECK(rppt_channel_permute(resized, &outDesc, rppOut, &outDesc, channelOrder, handle, RppBackend::RPP_HIP_BACKEND));
         FKLB_HIP_CHECK(hipStreamSynchronize(rppStream));
     };
 
@@ -349,6 +351,8 @@ void runA(fk::Stream_<fk::ParArch::GPU_AMD>& fkStream, fk::Ptr2D<fk::uchar3>& fk
     std::vector<float> rppSplitOut(static_cast<size_t>(N) * 3 * PLANE), rppUnsplitOut(rppSplitOut.size());
     rppCropBatch(unused);
     FKLB_HIP_CHECK(hipMemcpy(rppSplitOut.data(), rppOut, outBytes, hipMemcpyDeviceToHost));
+    // The unsplit run starts from an empty batch and an empty output, so that its row checks its own copies
+    FKLB_HIP_CHECK(hipMemset(cropBatch, 0, cropBytes * N));
     FKLB_HIP_CHECK(hipMemset(rppOut, 0, outBytes));
     rppCropBatchUnsplit(unused);
     FKLB_HIP_CHECK(hipMemcpy(rppUnsplitOut.data(), rppOut, outBytes, hipMemcpyDeviceToHost));
@@ -376,8 +380,7 @@ void runA(fk::Stream_<fk::ParArch::GPU_AMD>& fkStream, fk::Ptr2D<fk::uchar3>& fk
     out.timing->flush();
     out.agreement->flush();
 
-    FKLB_RPP_CHECK(rppDestroy(resizeHandle, RppBackend::RPP_HIP_BACKEND));
-    FKLB_RPP_CHECK(rppDestroy(permuteHandle, RppBackend::RPP_HIP_BACKEND));
+    FKLB_RPP_CHECK(rppDestroy(handle, RppBackend::RPP_HIP_BACKEND));
     FKLB_HIP_CHECK(hipFree(cropBatch));
     FKLB_HIP_CHECK(hipFree(resized));
     FKLB_HIP_CHECK(hipFree(rppOut));
