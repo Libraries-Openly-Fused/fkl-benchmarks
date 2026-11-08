@@ -60,3 +60,6 @@ fklb_add_benchmark(e6_fused_vs_unfused
 if(TARGET e6_fused_vs_unfused_cu)
     target_compile_options(e6_fused_vs_unfused_cu PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler=-ffp-contract=off>)
 endif()
+
+# benchmark_vfhf_max_speedup (fkl-self/vfhf/): the maximum vertical + horizontal fusion speedup, one generated translation unit per point
+add_subdirectory(vfhf)
