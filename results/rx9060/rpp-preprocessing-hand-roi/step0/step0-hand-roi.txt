@@ -1,0 +1,35 @@
+== hand_roi
+source worktree: /home/cudeiro/rocm-fkl-benchmarks/tmp/wt-run-roi
+  repo HEAD 151d5176015536da51025eb78fc3c73315faa1aa, tracked changes: 0
+  external/fkl HEAD 64ad9195cd785d0c93a70b35e02d5a6c7c4a5048, tracked changes: 0
+build info (generated/fklb_build_info.h, printed in the CSV header):
+  FKLB_COMMIT_REPO "151d5176015536da51025eb78fc3c73315faa1aa"
+  FKLB_COMMIT_FKL "64ad9195cd785d0c93a70b35e02d5a6c7c4a5048"
+  FKLB_COMMIT_CVGS "not checked out (pinned 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c)"
+  FKLB_COMMIT_FASTNPP "not checked out (pinned a1b5e245d7dd70fba23dcb51a0aea80495dbc61d)"
+  FKLB_NVCC_VERSION "none"
+  FKLB_NVCC_PATH "none"
+  FKLB_CUDA_ARCH "native"
+  FKLB_HIP_VERSION "24.0.0"
+  FKLB_HIP_PATH "/opt/rocm/core-10.1/bin/amdclang++"
+  FKLB_HIP_ARCH "gfx1200"
+  FKLB_CXX_COMPILER "Clang 24.0.0"
+  FKLB_BUILD_TYPE "Release"
+  FKLB_CPU_ARCH "native"
+  FKLB_FMAD "on"
+  FKLB_LINEINFO "on"
+  FKLB_TEMPLATE_DEPTH "1000"
+  FKLB_OPENCV_VERSION "none"
+commit strings compiled into the binary:
+  151d5176015536da51025eb78fc3c73315faa1aa
+  64ad9195cd785d0c93a70b35e02d5a6c7c4a5048
+  not checked out (pinned 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c)
+  not checked out (pinned a1b5e245d7dd70fba23dcb51a0aea80495dbc61d)
+sha256: 435f35ff741260fbfcf23919d3c95e77751d6d6b4541041a27ebcac24e91e215  (3723168 bytes)
+compile command of the HIP object (paths normalised):
+  /opt/rocm/core-10.1/bin/amdclang++  -DENABLE_BENCHMARK -DENABLE_SIMD_INTRINSICS=1 -DUSE_PROF_API=1 -D__HIP_PLATFORM_AMD__=1 -D__HIP_ROCclr__=1 -I<src>/rpp -I<src> -I<build>/generated -I<src>/external/fkl/include -I/opt/rocm/core-10.1/include/rpp -O3 -DNDEBUG -std=c++17 --offload-arch=gfx1200 -Werror=c++20-extensions -ftemplate-depth=1000 -MD -MT rpp/CMakeFiles/benchmark_rpp_preprocessing_hip.dir/benchmark_rpp_preprocessing_hip/launcher.hip.o -MF rpp/CMakeFiles/benchmark_rpp_preprocessing_hip.dir/benchmark_rpp_preprocessing_hip/launcher.hip.o.d -o rpp/CMakeFiles/benchmark_rpp_preprocessing_hip.dir/benchmark_rpp_preprocessing_hip/launcher.hip.o -x hip -c <build>/rpp/benchmark_rpp_preprocessing_hip/launcher.hip
+compile command of common/main.cpp:
+  /opt/rocm/core-10.1/bin/amdclang++ -DENABLE_BENCHMARK -DENABLE_SIMD_INTRINSICS=1 -DUSE_PROF_API=1 -D__HIP_PLATFORM_AMD__=1 -I<src>/rpp -I<src> -I<build>/generated -I<src>/external/fkl/include -I/opt/rocm/core-10.1/include/rpp -isystem /opt/rocm/core-10.1/include -O3 -DNDEBUG -std=c++17 -march=native -mtune=native -ftemplate-depth=1000 -MD -MT rpp/CMakeFiles/benchmark_rpp_preprocessing_hip.dir/__/common/main.cpp.o -MF rpp/CMakeFiles/benchmark_rpp_preprocessing_hip.dir/__/common/main.cpp.o.d -o rpp/CMakeFiles/benchmark_rpp_preprocessing_hip.dir/__/common/main.cpp.o -c <src>/common/main.cpp
+  : && /opt/rocm/core-10.1/bin/amdclang++ -O3 -DNDEBUG --offload-arch=gfx1200 --hip-link --rtlib=compiler-rt -unwindlib=libgcc -Xlinker --dependency-file=rpp/CMakeFiles/benchmark_rpp_preprocessing_hip.dir/link.d rpp/CMakeFiles/benchmark_rpp_preprocessing_hip.dir/__/common/main.cpp.o rpp/CMakeFiles/benchmark_rpp_preprocessing_hip.dir/benchmark_rpp_preprocessing_hip/launcher.hip.o -o bin/benchmark_rpp_preprocessing_hip  /opt/rocm/core-10.1/lib/librpp.so.3.2.0  /opt/rocm/core-10.1/lib/libamdhip64.so.7.16.26385-0000000  /opt/rocm/core-10.1/lib/llvm/lib/clang/24/lib/linux/libclang_rt.builtins-x86_64.a  /opt/rocm/core-10.1/lib/libamdhip64.so.7.16.26385-0000000  -lstdc++  -lm  -lgcc_s  -lc  -lgcc_s && :
+link command:
+  : && /opt/rocm/core-10.1/bin/amdclang++ -O3 -DNDEBUG --offload-arch=gfx1200 --hip-link --rtlib=compiler-rt -unwindlib=libgcc -Xlinker --dependency-file=rpp/CMakeFiles/benchmark_rpp_preprocessing_hip.dir/link.d rpp/CMakeFiles/benchmark_rpp_preprocessing_hip.dir/__/common/main.cpp.o rpp/CMakeFiles/benchmark_rpp_preprocessing_hip.dir/benchmark_rpp_preprocessing_hip/launcher.hip.o -o bin/benchmark_rpp
