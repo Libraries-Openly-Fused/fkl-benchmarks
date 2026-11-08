@@ -99,6 +99,8 @@ namespace e1c {
 constexpr int UP_W = OUT_W, UP_H = OUT_H;
 constexpr float SUB_X = SUB[0], SUB_Y = SUB[1], SUB_Z = SUB[2];
 constexpr float DIV_X = DIV[0], DIV_Y = DIV[1], DIV_Z = DIV[2];
+// loadPixel reads a pixel through a uchar3 pointer at any byte offset: HIP's uchar3 and float3 must have CUDA's layout
+static_assert(sizeof(uchar3) == 3 && alignof(uchar3) == 1 && sizeof(float3) == 12 && alignof(float3) == 4, "HIP's vector types have the layout of CUDA's");
 static_assert(fk::getDefaultBlockSize(UP_W, UP_H).x == 32 && fk::getDefaultBlockSize(UP_W, UP_H).y == 8,
               "the hand-written kernels are launched with the block FKL launches for an output image");
 
