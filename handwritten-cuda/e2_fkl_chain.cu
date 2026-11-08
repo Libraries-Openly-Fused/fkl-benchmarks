@@ -71,7 +71,7 @@ constexpr float ALPHA = 1.0f;
 constexpr float COEF = 0.54f;
 constexpr int KS[] = {E2_FKL_KS_LIST};
 
-// Flushing the L2 between launches: a kernel that READS a 256 MB buffer (more than three times the 72 MB L2 of the RTX 4090; reading leaves clean lines, so the dirty output of the previous
+// Flushing the L2 between launches: a kernel that READS a 256 MiB buffer (more than three times the 72 MiB L2 of the RTX 4090; reading leaves clean lines, so the dirty output of the previous
 // launch is written back during the flush and not during the timed launch). It runs on the same stream before the start event, so it is outside the timed interval.
 constexpr size_t FLUSH_BYTES = 256ull << 20;
 __global__ void l2Flush(const float4* __restrict__ p, const size_t n, float* sink) {
@@ -205,7 +205,7 @@ int launch() {
                         "alpha 1.0, c 0.54, k operations alternating Mul c and Add c; 32x8 threads per block (the block FKL picks); GPU columns: CUDA events around one "
                         "launch of operations built before it, 100 timed iterations after one warm-up; fkl_prep_*: host time (steady_clock) of building and releasing "
                         "the operations, done before every launch and outside the GPU interval; fkl_flushed_*: the same launch with the L2 flushed before it (a kernel "
-                        "that reads 256 MB, enqueued after the preparation and before the start event, outside both intervals); fkl_kernel_*: the warm launch with a GPU "
+                        "that reads 256 MiB, enqueued after the preparation and before the start event, outside both intervals); fkl_kernel_*: the warm launch with a GPU "
                         "spin of " + std::to_string(e1::spinNs() / 1000) + " us (no memory access) enqueued before the start event, so that the launch is queued when "
                         "the GPU reaches the start event: the kernel without the host's dispatch; "
                         "the passes of every k in the order warm, L2-flushed, kernel-only (as triton/e2_chain.py); "

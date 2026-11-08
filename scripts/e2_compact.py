@@ -19,7 +19,7 @@
 The first directory is written to (e2_compact.csv) and gives the columns that are not timings; with more directories every timing is the median of the means of the runs, spread_pct is (largest - smallest) / median
 of the means of the runs, min_ms is the smallest single call of all runs, runs the number of runs.
 
-Columns: k, impl, timing ("warm": the data of the previous call is still in the 72 MB L2; "L2-flushed": a kernel that reads 256 MB ran before the call, outside the timed interval; the
+Columns: k, impl, timing ("warm": the data of the previous call is still in the 72 MiB L2; "L2-flushed": a kernel that reads 256 MiB ran before the call, outside the timed interval; the
 flushed rows exist for FKL, Triton and the three Inductor variants, eager has warm rows only), kernels (launched per call), gpu_ms (CUDA events, mean of 100 calls), compile_s (cold: a fresh process and fresh caches; FKL: nvcc, one core),
 bitwise (fraction of output elements identical to FKL's), ulp_fkl (maximum difference to FKL in float32 ULPs of FKL's value), ulp_exact (maximum difference to an exact
 float64 evaluation in ULPs), host_us (host time to launch one call, no synchronisation; not measured for FKL).
