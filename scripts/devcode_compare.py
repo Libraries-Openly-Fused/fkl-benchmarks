@@ -9,7 +9,8 @@
 # comments (addresses, encodings) removed and the __hip_cuid_<hash> names normalised. llvm-objdump prints the local branch
 # targets as symbols L<n>, numbered per code object: by default their text belongs to the function that contains them and the
 # references are normalised (a renumbering is not a code difference); --labels-as-symbols keeps them as separate symbols with
-# their numbers, the stricter form. --table writes <dir>/<executable>.tsv: function, sha256 in A, sha256 in B, same.
+# their numbers, the stricter form. The '...' lines with which llvm-objdump stands for a run of zero bytes (the padding after a function) are not
+# compared. --table writes <dir>/<executable>.tsv: function, sha256 in A, sha256 in B, same.
 # Exit 0 = the same executables in both directories and every function of every executable identical.
 import argparse
 import fnmatch
@@ -65,9 +66,9 @@ def functions(llvm, co, labels_as_symbols):
             continue
         if name is None:
             continue
-        code = line.split('//', 1)[0].rstrip()
-        if code.strip():
-            code = CUID.sub('__hip_cuid_@', code.strip())
+        code = line.split('//', 1)[0].strip()
+        if code and code != '...':   # llvm-objdump prints '...' for a run of zero bytes it skips (padding between functions), not an instruction
+            code = CUID.sub('__hip_cuid_@', code)
             cur.append(code if labels_as_symbols else LABEL.sub('L@', code))
     if name is not None:
         out[name] = hashlib.sha256('\n'.join(cur).encode()).hexdigest()
