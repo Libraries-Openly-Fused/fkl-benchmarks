@@ -32,15 +32,15 @@
 //   rpp_crop_batch          RPP's documented batched use: the N crops are copied into one dense batch, one hipMemcpy2DAsync per crop, then
 //                           rppt_resize_mirror_normalize and rppt_channel_permute run on that batch. N + 2 calls
 //   rpp_crop_batch_unsplit  the same calls without the synchronisation between the copies and the RPP calls: the time a user pays. N + 2 calls
-//   hand                    the hand-written fused kernel of E1c (handwritten-cuda/e1_preproc.cu: handPreproc, the version hand_batch of its CSV),
+//   hand_batch              the hand-written fused kernel of E1c (handwritten-cuda/e1_preproc.cu: handPreproc, which E1c calls hand_batch),
 //                           ported to HIP (e1c:: below): one kernel for the whole batch, ASYMMETRIC sampling as fkl_fused, the crop pointers in its
 //                           parameter block (8 bytes per crop), the crop size, the output size and the constants known at compile time, 32 x 8
 //                           threads per block (the block FKL launches for a 64x128 output: checked at compile time). 1 call
 // The parts of a run, as the medians build_median_ms and compute_median_ms:
 //   FKL: build = the crop views and every operation (on the host); compute = executeOperations and the synchronisation, with no synchronisation
 //        between them. The release of the crop views at the end of the call is part of compute.
-//   hand: build = the crop pointers, the kernel's parameter block (on the host); compute = the launch, hipGetLastError (executeOperations checks
-//        its launch in the same way) and the synchronisation of its stream.
+//   hand_batch: build = the crop pointers, the kernel's parameter block (on the host); compute = the launch, hipGetLastError (executeOperations
+//        checks its launch in the same way) and the synchronisation of its stream.
 //   rpp_crop_batch: build = the copies and a stream synchronisation; compute = the ROIs, the two RPP calls and a stream synchronisation. Its
 //        total therefore includes one stream synchronisation more than rpp_crop_batch_unsplit, which has no parts (NaN). In every call
 //        rppt_resize_mirror_normalize itself clears its output and synchronises its stream (RPP 3.2.0), so in rpp_crop_batch_unsplit RPP waits
@@ -91,10 +91,11 @@ constexpr double TOLERANCE = 1e-4;
 constexpr float ALPHA = 0.3f;
 constexpr float SUB[3] = {1.f, 4.f, 3.2f}, DIV[3] = {3.2f, 0.6f, 11.8f};
 
-// ---- The hand-written fused kernel: E1c's version hand_batch (handwritten-cuda/e1_preproc.cu, handPreproc) ported to HIP. From the static_assert
-// to the end of handPreproc the text is E1c's with one HIP change: HIP has no __grid_constant__, and on an AMD GPU every kernel parameter is in
-// the constant kernel argument segment, so the qualifier is dropped (the gfx1200 code of the kernel compiled alone is the same with clang's
-// grid_constant attribute). The constants are this program's, under E1c's names; their values are E1c's.
+// ---- The hand-written fused kernel: E1c's version hand_batch (handwritten-cuda/e1_preproc.cu, handPreproc) ported to HIP. From E1c's
+// static_assert on the block (the second static_assert below; e1_preproc.cu l.87) to the end of handPreproc, the text is E1c's with one HIP
+// change: HIP has no __grid_constant__, and on an AMD GPU every kernel parameter is in the constant kernel argument segment, so the qualifier
+// is dropped (the gfx1200 code of the kernel compiled alone is the same with clang's grid_constant attribute). The first static_assert, on the
+// vector types, is the port's. The constants are this program's, under E1c's names; their values are E1c's.
 namespace e1c {
 constexpr int UP_W = OUT_W, UP_H = OUT_H;
 constexpr float SUB_X = SUB[0], SUB_Y = SUB[1], SUB_Z = SUB[2];
@@ -429,7 +430,7 @@ void runA(fk::Stream_<fk::ParArch::GPU_AMD>& fkStream, fk::Ptr2D<fk::uchar3>& fk
     };
     // The hand-written kernel as E1c prepares and launches it (prepareHand and launchHand there): its parameter block, the crop pointers into its
     // own frame, is built from the crop locations in every call
-    auto hand = [&](fklb::WallClock::time_point& split) {
+    auto handBatch = [&](fklb::WallClock::time_point& split) {
         e1c::CropPointers<N> crops;
         for (int i = 0; i < N; ++i) crops.data[i] = handFrame + i * handPitch + i * sizeof(uchar3);
         split = fklb::WallClock::now();
@@ -458,7 +459,7 @@ void runA(fk::Stream_<fk::ParArch::GPU_AMD>& fkStream, fk::Ptr2D<fk::uchar3>& fk
     // The hand-written kernel's run starts from an output of NaNs (every byte 0xFF), so that an element it does not write fails its rows
     std::vector<float> handHost(static_cast<size_t>(N) * 3 * PLANE);
     FKLB_HIP_CHECK(hipMemset(handOut, 0xFF, tensorBytes));
-    hand(unused);
+    handBatch(unused);
     FKLB_HIP_CHECK(hipMemcpy(handHost.data(), handOut, tensorBytes, hipMemcpyDeviceToHost));
     const std::vector<float> refAsym = referenceA(hostFrame, N, fklb::ResizeSampling::ASYMMETRIC);
     const std::vector<float> refHalf = referenceA(hostFrame, N, fklb::ResizeSampling::HALF_PIXEL);
@@ -473,8 +474,8 @@ void runA(fk::Stream_<fk::ParArch::GPU_AMD>& fkStream, fk::Ptr2D<fk::uchar3>& fk
     agreementRows(out, N, "rpp_crop_batch vs fkl_fused_halfpixel", rppSplitOut.data(), half, N, false,
                   "both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ");
     agreementRows(out, N, "rpp_crop_batch_unsplit vs rpp_crop_batch", rppUnsplitOut.data(), rppSplitOut.data(), N, true, "the same RPP calls");
-    agreementRows(out, N, "hand vs scalar reference ASYMMETRIC", handHost.data(), refAsym.data(), N, true, "");
-    // hand against fkl_fused: the differences, informational, and whether the two tensors are the same bits
+    agreementRows(out, N, "hand_batch vs scalar reference ASYMMETRIC", handHost.data(), refAsym.data(), N, true, "");
+    // hand_batch against fkl_fused: the differences, informational, and whether the two tensors are the same bits
     size_t handBitsDiffer = 0;
     for (size_t k = 0; k < handHost.size(); ++k) {
         handBitsDiffer += std::memcmp(&handHost[k], &fused[k], sizeof(float)) != 0 ? 1 : 0;
@@ -482,8 +483,8 @@ void runA(fk::Stream_<fk::ParArch::GPU_AMD>& fkStream, fk::Ptr2D<fk::uchar3>& fk
     const std::string handBits = "the whole tensors: " + (handBitsDiffer == 0 ? std::string("bitwise equal")
                                                                               : std::to_string(handBitsDiffer) + " of " + std::to_string(handHost.size()) +
                                                                                     " values differ in their bits");
-    agreementRows(out, N, "hand vs fkl_fused", handHost.data(), fused, N, false, handBits.c_str());
-    std::cout << "  hand vs fkl_fused: " << handBits << std::endl;
+    agreementRows(out, N, "hand_batch vs fkl_fused", handHost.data(), fused, N, false, handBits.c_str());
+    std::cout << "  hand_batch vs fkl_fused: " << handBits << std::endl;
 
     // ---- Timing
     timeRotated(out, N, N / 10 - 1,
@@ -492,7 +493,7 @@ void runA(fk::Stream_<fk::ParArch::GPU_AMD>& fkStream, fk::Ptr2D<fk::uchar3>& fk
                  {"fkl_perop_batch", 6, fklPerOp},
                  {"rpp_crop_batch", N + 2, rppCropBatch},
                  {"rpp_crop_batch_unsplit", N + 2, rppCropBatchUnsplit},
-                 {"hand", 1, hand}});
+                 {"hand_batch", 1, handBatch}});
     out.timing->flush();
     out.agreement->flush();
 
@@ -587,7 +588,7 @@ int launch() {
                                 "RPP has its own frame (dense hipMalloc) and its own hipStream_t; output widths are multiples of 8";
     const std::string fklText = "FKL: fk::PerThreadRead::build(crop2D views).then(Resize) -> VectorReorder<float3, 2, 1, 0> -> Mul -> Sub -> Div -> TensorSplit, "
                                 "TransformDPP<GPU_AMD, TF::DISABLED>, the crop views and every operation built in every timed call";
-    const std::string handText = "hand: the hand-written fused kernel of E1c (handwritten-cuda/e1_preproc.cu: handPreproc) ported to HIP (__grid_constant__ "
+    const std::string handText = "hand_batch: the hand-written fused kernel of E1c (handwritten-cuda/e1_preproc.cu: handPreproc) ported to HIP (__grid_constant__ "
                                  "dropped), one launch with 32x8 threads per block, ASYMMETRIC sampling; its own frame (hipMallocPitch, pitch " +
                                  std::to_string(handPitch) + " bytes; FKL's frame: pitch " + std::to_string(fklFrame.ptr().dims.pitch) +
                                  " bytes), output (hipMalloc) and hipStream_t; build = the crop pointers (its parameter block, 8 bytes per crop), "
