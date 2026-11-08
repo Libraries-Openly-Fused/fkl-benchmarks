@@ -1,0 +1,25 @@
+# experiment: E1a hand-written MAD chain vs FKL (4096x2160 uchar -> float)
+# notes: thread fusion: off (fk::TF::DISABLED, the default); input: seeded uint8 noise (std::mt19937_64 seed 20261030), uploaded to each side's own image (hand-written kernels: cudaMallocPitch; FKL: fk::Ptr2D); alpha 1.0, c 0.54; 32x8 threads per block (the block FKL launches for this image); GPU columns: CUDA events around one launch, 100 timed iterations after one warm-up; *_prep_*: host time (steady_clock) of building and releasing the arguments of one launch, done before every launch and outside the GPU interval (fkl: all its operations; hand_*: the kernel's argument values); *_total_mean_ms = GPU mean + preparation mean; *_kernel_*: the same launches with a GPU spin of 5000 us (no memory access) enqueued before the start event, so that the launch is queued when the GPU reaches the start event: the kernel without the host's dispatch of the launch; *_bitexact = bit-identical to hand_params; PROFILE MODE (E1_PROFILE=1): nothing was timed, the time columns are empty
+# repo: fkl-benchmarks 1a2535cf090893bebc82714a410be8c300dde916
+# fkl: 64ad9195cd785d0c93a70b35e02d5a6c7c4a5048
+# cvGPUSpeedup: 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c
+# FastNPP: a1b5e245d7dd70fba23dcb51a0aea80495dbc61d
+# nvcc: 13.4.92 (/home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/nvcc), architectures 89, -fmad on, -lineinfo off
+# hip: none (none), architectures none
+# host compiler: GNU 15.2.0, Release, -march=native, -ftemplate-depth=1000
+# opencv: none
+# cpu: AMD Ryzen 9 5950X 16-Core Processor
+# os: Ubuntu 26.04.1 LTS
+# kernel: Linux 7.0.0-38-generic
+# gpu: NVIDIA GeForce RTX 4090, cc 8.9, 128 SMs, 24106 MiB, PCI 0000:09:00.0
+# cuda driver api: 13.3, cuda runtime: 13.4
+# nvidia-smi driver: 610.43.02
+# clocks (sm, mem, max sm, max mem, MHz): 2685 MHz, 10501 MHz, 3105 MHz, 10501 MHz
+# power limit, temperature at start: 450.00 W, 48
+ops,pairs,hand_params_mean_ms,hand_params_min_ms,hand_imm_mean_ms,hand_imm_min_ms,fkl_mean_ms,fkl_min_ms,fkl_over_hand_params,fkl_bitexact,hand_imm_bitexact,fkl_prep_mean_ms,fkl_prep_min_ms,fkl_total_mean_ms,hand_params_prep_mean_ms,hand_params_prep_min_ms,hand_params_total_mean_ms,hand_imm_prep_mean_ms,hand_imm_prep_min_ms,hand_imm_total_mean_ms,hand_params_kernel_mean_ms,hand_params_kernel_min_ms,hand_imm_kernel_mean_ms,hand_imm_kernel_min_ms,fkl_kernel_mean_ms,fkl_kernel_min_ms
+2,1,,,,,,,,1,1,,,,,,,,,,,,,,,
+102,51,,,,,,,,1,1,,,,,,,,,,,,,,,
+1002,501,,,,,,,,1,1,,,,,,,,,,,,,,,
+5002,2501,,,,,,,,1,1,,,,,,,,,,,,,,,
+10002,5001,,,,,,,,1,1,,,,,,,,,,,,,,,
+19902,9951,,,,,,,,1,1,,,,,,,,,,,,,,,

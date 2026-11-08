@@ -1,0 +1,171 @@
+# experiment: E16 forward attention with FKL: the tensor-core DPP and the SIMT DPP against their unfused alternatives
+# notes: bf16 Q, K, V (BH, S, D) contiguous, normal(0, 1), fp32 accumulation, bf16 output; time_ms_* = per call, from `blocks` blocks of `calls_per_block` calls enqueued back to back between two CUDA events (the GPU time of the call, no host gap between calls; the block lasts about E16_BLOCK_MS), after a warm-up of at least E16_WARMUP_MS of GPU time; position = place of the variant in the order of its configuration (ORDER: groups rotated by configuration + E16_ROTATE, pair members swapped on odd shifts, SIMT last); t_start_ms and t_end_ms = wall clock of the blocks, for the join with the SM clock sampler; single_ms_median = median of `blocks` single calls, each between two events and synchronised (launch latency included); TFLOP/s = 4 BH S^2 D (halved for causal) / time_ms_median; error against an fp32 attention of the same (dequantised) inputs for the first and the last head; kernels and per-kernel facts from capturing one call into a CUDA graph; the library chooses the tiles (no tuning); mma_epilogue_*: o * 1.25 + 0.5; SCHEDULES (columns schedule, block_q, block_kv, num_warps, split_kv: from the template arguments of the attention kernel; the LDGSTS count of every instantiation is in e16_sass_counts.csv): mma_raw, mma_epilogue_* and the bf16 buffers of the *_unfused variants run the library's bf16 cp.async schedule (16-byte cp.async copies of K and V tiles); the fused int8 and fp8 variants run the library's quantised schedule: the raw quantised bytes are copied with cp.async (8 bytes) into a staging area of shared memory and dequantised shared memory to shared memory inside the kernel, the per-token scales are read from global memory; each path has its own tile sizes (the library's choice). A fused-against-unfused prologue pair therefore compares an in-kernel shared-memory dequantisation pass (half the global bytes for K and V) with a separate dequantisation kernel that writes bf16 to global memory, and the two kernels differ in schedule details and tile sizes as well as in fusion: it is not a pure fusion effect. The epilogue pair runs the same kernel and schedule and differs only in the epilogue
+# repo: fkl-benchmarks a5dd9fa54210f60d0b631ce34508e95c86c387ce
+# fkl: 64ad9195cd785d0c93a70b35e02d5a6c7c4a5048
+# cvGPUSpeedup: 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c
+# FastNPP: a1b5e245d7dd70fba23dcb51a0aea80495dbc61d
+# nvcc: 13.4.92 (/home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/nvcc), architectures 89, -fmad on, -lineinfo on
+# hip: none (none), architectures none
+# host compiler: GNU 15.2.0, Release, -march=native, -ftemplate-depth=1000
+# opencv: 4.14.0
+# cpu: AMD Ryzen 9 5950X 16-Core Processor
+# os: Ubuntu 26.04.1 LTS
+# kernel: Linux 7.0.0-38-generic
+# gpu: NVIDIA GeForce RTX 4090, cc 8.9, 128 SMs, 24106 MiB, PCI 0000:09:00.0
+# cuda driver api: 13.3, cuda runtime: 13.4
+# nvidia-smi driver: 610.43.02
+# clocks (sm, mem, max sm, max mem, MHz): 2685 MHz, 10501 MHz, 3105 MHz, 10501 MHz
+# power limit, temperature at start: 450.00 W, 44
+gpu,variant,d,seq,bh,causal,position,blocks,calls_per_block,t_start_ms,t_end_ms,time_ms_median,time_ms_min,time_ms_max,single_ms_median,tflops_median,max_abs_err,mean_abs_err,kernels,schedule,block_q,block_kv,num_warps,split_kv,kernel_facts,note
+NVIDIA GeForce RTX 4090,mma_raw,64,512,512,0,1,0,0,0,0,0,0,0,0,0,0.00183570385,0.000181680893,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_int8kv_fused,64,512,512,0,2,0,0,0,0,0,0,0,0,0,0.0025447607,0.000233587941,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_int8kv_unfused,64,512,512,0,3,0,0,0,0,0,0,0,0,0,0.0025447607,0.000233973714,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_fp8kv_fused,64,512,512,0,4,0,0,0,0,0,0,0,0,0,0.00260490179,0.000235514043,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_fp8kv_unfused,64,512,512,0,5,0,0,0,0,0,0,0,0,0,0.00260490179,0.00023533814,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_epilogue_fused,64,512,512,0,6,0,0,0,0,0,0,0,0,0,0.00408127904,0.000733786887,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_epilogue_separate,64,512,512,0,7,0,0,0,0,0,0,0,0,0,0.00495748967,0.000774007273,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,simt_raw,64,512,512,0,8,0,0,0,0,0,0,0,0,0,0.00183570385,0.000152025491,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_int8kv_unfused,64,512,512,1,1,0,0,0,0,0,0,0,0,0,0.0075686574,0.000356156714,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_int8kv_fused,64,512,512,1,2,0,0,0,0,0,0,0,0,0,0.0075686574,0.000355255082,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_fp8kv_unfused,64,512,512,1,3,0,0,0,0,0,0,0,0,0,0.0100568533,0.000355919488,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_fp8kv_fused,64,512,512,1,4,0,0,0,0,0,0,0,0,0,0.0100568533,0.000355255668,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_epilogue_separate,64,512,512,1,5,0,0,0,0,0,0,0,0,0,0.0118682683,0.000827934126,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_epilogue_fused,64,512,512,1,6,0,0,0,0,0,0,0,0,0,0.0078125,0.000762439357,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_raw,64,512,512,1,7,0,0,0,0,0,0,0,0,0,0.0054243803,0.000257712212,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,simt_raw,64,512,512,1,8,0,0,0,0,0,0,0,0,0,0.00388658047,0.00020288245,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_fp8kv_fused,64,1024,256,0,1,0,0,0,0,0,0,0,0,0,0.00189435482,0.000191311278,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_fp8kv_unfused,64,1024,256,0,2,0,0,0,0,0,0,0,0,0,0.00189435482,0.000191449836,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_epilogue_fused,64,1024,256,0,3,0,0,0,0,0,0,0,0,0,0.00391060114,0.00073243753,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_epilogue_separate,64,1024,256,0,4,0,0,0,0,0,0,0,0,0,0.00411846489,0.000766776282,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_raw,64,1024,256,0,5,0,0,0,0,0,0,0,0,0,0.00180119276,0.000157006848,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_int8kv_fused,64,1024,256,0,6,0,0,0,0,0,0,0,0,0,0.00199067593,0.000190002076,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_int8kv_unfused,64,1024,256,0,7,0,0,0,0,0,0,0,0,0,0.00199067593,0.000190160242,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,simt_raw,64,1024,256,0,8,0,0,0,0,0,0,0,0,0,0.00180119276,0.000137621601,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_epilogue_separate,64,1024,256,1,1,0,0,0,0,0,0,0,0,0,0.013407588,0.000792994175,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_epilogue_fused,64,1024,256,1,2,0,0,0,0,0,0,0,0,0,0.0078125,0.000740838071,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_raw,64,1024,256,1,3,0,0,0,0,0,0,0,0,0,0.00752234459,0.000211499084,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_int8kv_unfused,64,1024,256,1,4,0,0,0,0,0,0,0,0,0,0.00881195068,0.000282039461,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_int8kv_fused,64,1024,256,1,5,0,0,0,0,0,0,0,0,0,0.00881195068,0.000281075131,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_fp8kv_unfused,64,1024,256,1,6,0,0,0,0,0,0,0,0,0,0.00814545155,0.000281130692,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_fp8kv_fused,64,1024,256,1,7,0,0,0,0,0,0,0,0,0,0.00814545155,0.000279904685,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,simt_raw,64,1024,256,1,8,0,0,0,0,0,0,0,0,0,0.00752234459,0.000171652202,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_raw,64,2048,128,0,1,0,0,0,0,0,0,0,0,0,0.00114414096,0.000142133287,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_int8kv_fused,64,2048,128,0,2,0,0,0,0,0,0,0,0,0,0.00162413716,0.000162644658,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_int8kv_unfused,64,2048,128,0,3,0,0,0,0,0,0,0,0,0,0.00162413716,0.000162603446,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_fp8kv_fused,64,2048,128,0,4,0,0,0,0,0,0,0,0,0,0.00172054768,0.000162894682,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_fp8kv_unfused,64,2048,128,0,5,0,0,0,0,0,0,0,0,0,0.00172054768,0.000162939709,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_epilogue_fused,64,2048,128,0,6,0,0,0,0,0,0,0,0,0,0.00388212502,0.000730349068,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_epilogue_separate,64,2048,128,0,7,0,0,0,0,0,0,0,0,0,0.00464035571,0.000760356797,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,simt_raw,64,2048,128,0,8,0,0,0,0,0,0,0,0,0,0.000976800919,0.000129625112,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_int8kv_unfused,64,2048,128,1,1,0,0,0,0,0,0,0,0,0,0.00761175156,0.000227830481,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_int8kv_fused,64,2048,128,1,2,0,0,0,0,0,0,0,0,0,0.00761175156,0.000227293075,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_fp8kv_unfused,64,2048,128,1,3,0,0,0,0,0,0,0,0,0,0.00767087936,0.00022603575,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_fp8kv_fused,64,2048,128,1,4,0,0,0,0,0,0,0,0,0,0.00767087936,0.000225403164,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_epilogue_separate,64,2048,128,1,5,0,0,0,0,0,0,0,0,0,0.0125926435,0.000780360859,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_epilogue_fused,64,2048,128,1,6,0,0,0,0,0,0,0,0,0,0.00797760487,0.000740574166,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_raw,64,2048,128,1,7,0,0,0,0,0,0,0,0,0,0.00598073006,0.000179194469,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,simt_raw,64,2048,128,1,8,0,0,0,0,0,0,0,0,0,0.00598073006,0.000151441726,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_fp8kv_fused,64,4096,64,0,1,0,0,0,0,0,0,0,0,0,0.00130316615,0.000145037896,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_fp8kv_unfused,64,4096,64,0,2,0,0,0,0,0,0,0,0,0,0.00126963854,0.000145013867,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_epilogue_fused,64,4096,64,0,3,0,0,0,0,0,0,0,0,0,0.00393858552,0.000725755575,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_epilogue_separate,64,4096,64,0,4,0,0,0,0,0,0,0,0,0,0.00468301028,0.000754433339,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_raw,64,4096,64,0,5,0,0,0,0,0,0,0,0,0,0.00109645724,0.000132423636,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_int8kv_fused,64,4096,64,0,6,0,0,0,0,0,0,0,0,0,0.00126057863,0.000145027362,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_int8kv_unfused,64,4096,64,0,7,0,0,0,0,0,0,0,0,0,0.00126057863,0.000145025919,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_epilogue_separate,64,4096,64,1,1,0,0,0,0,0,0,0,0,0,0.01137802,0.000769006952,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_epilogue_fused,64,4096,64,1,2,0,0,0,0,0,0,0,0,0,0.00791293383,0.000734172935,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_raw,64,4096,64,1,3,0,0,0,0,0,0,0,0,0,0.00472068787,0.000157082694,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_int8kv_unfused,64,4096,64,1,4,0,0,0,0,0,0,0,0,0,0.0111191273,0.000188672404,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_int8kv_fused,64,4096,64,1,5,0,0,0,0,0,0,0,0,0,0.0111191273,0.000188575039,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_fp8kv_unfused,64,4096,64,1,6,0,0,0,0,0,0,0,0,0,0.0078548193,0.000187936421,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_fp8kv_fused,64,4096,64,1,7,0,0,0,0,0,0,0,0,0,0.0078548193,0.000187764718,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_raw,64,8192,32,0,1,0,0,0,0,0,0,0,0,0,0.00106856227,0.000127191414,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_int8kv_fused,64,8192,32,0,2,0,0,0,0,0,0,0,0,0,0.00122022629,0.000134752054,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_int8kv_unfused,64,8192,32,0,3,0,0,0,0,0,0,0,0,0,0.00120803714,0.000134750473,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_fp8kv_fused,64,8192,32,0,4,0,0,0,0,0,0,0,0,0,0.00121083856,0.000134507203,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_fp8kv_unfused,64,8192,32,0,5,0,0,0,0,0,0,0,0,0,0.00121083856,0.000134519313,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_epilogue_fused,64,8192,32,0,6,0,0,0,0,0,0,0,0,0,0.00388332456,0.000724285449,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_epilogue_separate,64,8192,32,0,7,0,0,0,0,0,0,0,0,0,0.00433901697,0.00075279032,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_int8kv_unfused,64,8192,32,1,1,0,0,0,0,0,0,0,0,0,0.00734055042,0.000164439521,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_int8kv_fused,64,8192,32,1,2,0,0,0,0,0,0,0,0,0,0.00734055042,0.000164377747,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_fp8kv_unfused,64,8192,32,1,3,0,0,0,0,0,0,0,0,0,0.00848865509,0.000163661747,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_fp8kv_fused,64,8192,32,1,4,0,0,0,0,0,0,0,0,0,0.00848865509,0.000163534628,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_epilogue_separate,64,8192,32,1,5,0,0,0,0,0,0,0,0,0,0.0121178925,0.000756435367,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_epilogue_fused,64,8192,32,1,6,0,0,0,0,0,0,0,0,0,0.00836330652,0.000724413564,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_raw,64,8192,32,1,7,0,0,0,0,0,0,0,0,0,0.00453209877,0.000143406925,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_fp8kv_fused,128,512,512,0,1,0,0,0,0,0,0,0,0,0,0.00236839056,0.000212701446,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_fp8kv_unfused,128,512,512,0,2,0,0,0,0,0,0,0,0,0,0.00236839056,0.000212629185,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_epilogue_fused,128,512,512,0,3,0,0,0,0,0,0,0,0,0,0.00374526531,0.00074021579,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_epilogue_separate,128,512,512,0,4,0,0,0,0,0,0,0,0,0,0.00456483662,0.000764216237,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_raw,128,512,512,0,5,0,0,0,0,0,0,0,0,0,0.00181800127,0.000155807159,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_int8kv_fused,128,512,512,0,6,0,0,0,0,0,0,0,0,0,0.00339436531,0.000210816532,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_int8kv_unfused,128,512,512,0,7,0,0,0,0,0,0,0,0,0,0.00339436531,0.000211337853,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,simt_raw,128,512,512,0,8,0,0,0,0,0,0,0,0,0,0.00181800127,0.000123623399,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_epilogue_separate,128,512,512,1,1,0,0,0,0,0,0,0,0,0,0.0102474391,0.000809529366,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_epilogue_fused,128,512,512,1,2,0,0,0,0,0,0,0,0,0,0.0078125,0.000758654467,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_raw,128,512,512,1,3,0,0,0,0,0,0,0,0,0,0.00572180748,0.000230429256,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_int8kv_unfused,128,512,512,1,4,0,0,0,0,0,0,0,0,0,0.0110702515,0.000337268067,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_int8kv_fused,128,512,512,1,5,0,0,0,0,0,0,0,0,0,0.0110702515,0.000335690359,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_fp8kv_unfused,128,512,512,1,6,0,0,0,0,0,0,0,0,0,0.00943005085,0.000333116845,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_fp8kv_fused,128,512,512,1,7,0,0,0,0,0,0,0,0,0,0.00943005085,0.000332152205,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,simt_raw,128,512,512,1,8,0,0,0,0,0,0,0,0,0,0.00547909737,0.000173830247,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_raw,128,1024,256,0,1,0,0,0,0,0,0,0,0,0,0.00121387839,0.000130919796,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_int8kv_fused,128,1024,256,0,2,0,0,0,0,0,0,0,0,0,0.00161889195,0.000166598979,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_int8kv_unfused,128,1024,256,0,3,0,0,0,0,0,0,0,0,0,0.00161889195,0.000166706192,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_fp8kv_fused,128,1024,256,0,4,0,0,0,0,0,0,0,0,0,0.00179311633,0.000168572487,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_fp8kv_unfused,128,1024,256,0,5,0,0,0,0,0,0,0,0,0,0.00179311633,0.000168697202,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_epilogue_fused,128,1024,256,0,6,0,0,0,0,0,0,0,0,0,0.00258488208,0.000738316562,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_epilogue_separate,128,1024,256,0,7,0,0,0,0,0,0,0,0,0,0.00347047299,0.000756766108,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,simt_raw,128,1024,256,0,8,0,0,0,0,0,0,0,0,0,0.000976204872,0.00010956063,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_int8kv_unfused,128,1024,256,1,1,0,0,0,0,0,0,0,0,0,0.00827771425,0.000258398306,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_int8kv_fused,128,1024,256,1,2,0,0,0,0,0,0,0,0,0,0.00827771425,0.000257655558,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_fp8kv_unfused,128,1024,256,1,3,0,0,0,0,0,0,0,0,0,0.00941431522,0.000259653793,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_fp8kv_fused,128,1024,256,1,4,0,0,0,0,0,0,0,0,0,0.00941431522,0.000258979768,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_epilogue_separate,128,1024,256,1,5,0,0,0,0,0,0,0,0,0,0.0112475157,0.000784257493,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_epilogue_fused,128,1024,256,1,6,0,0,0,0,0,0,0,0,0,0.00820767879,0.00074935506,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_raw,128,1024,256,1,7,0,0,0,0,0,0,0,0,0,0.00528669357,0.000185384179,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,simt_raw,128,1024,256,1,8,0,0,0,0,0,0,0,0,0,0.00528669357,0.000144136768,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_fp8kv_fused,128,2048,128,0,1,0,0,0,0,0,0,0,0,0,0.00143539906,0.000139154517,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_fp8kv_unfused,128,2048,128,0,2,0,0,0,0,0,0,0,0,0,0.00143539906,0.000139171059,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_epilogue_fused,128,2048,128,0,3,0,0,0,0,0,0,0,0,0,0.00222101994,0.000734278193,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_epilogue_separate,128,2048,128,0,4,0,0,0,0,0,0,0,0,0,0.00325198472,0.000749813811,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_raw,128,2048,128,0,5,0,0,0,0,0,0,0,0,0,0.00114032626,0.00011555133,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_int8kv_fused,128,2048,128,0,6,0,0,0,0,0,0,0,0,0,0.00128269196,0.000137956199,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_int8kv_unfused,128,2048,128,0,7,0,0,0,0,0,0,0,0,0,0.00128269196,0.000137967618,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,simt_raw,128,2048,128,0,8,0,0,0,0,0,0,0,0,0,0.000976294279,0.000101894826,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_epilogue_separate,128,2048,128,1,1,0,0,0,0,0,0,0,0,0,0.0118943751,0.000768347631,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_epilogue_fused,128,2048,128,1,2,0,0,0,0,0,0,0,0,0,0.00892224908,0.000742526872,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_raw,128,2048,128,1,3,0,0,0,0,0,0,0,0,0,0.00687193871,0.000153944579,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_int8kv_unfused,128,2048,128,1,4,0,0,0,0,0,0,0,0,0,0.010645628,0.0002052536,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_int8kv_fused,128,2048,128,1,5,0,0,0,0,0,0,0,0,0,0.010645628,0.000204961335,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_fp8kv_unfused,128,2048,128,1,6,0,0,0,0,0,0,0,0,0,0.00751435757,0.000204854679,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_fp8kv_fused,128,2048,128,1,7,0,0,0,0,0,0,0,0,0,0.00751435757,0.000204453113,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,simt_raw,128,2048,128,1,8,0,0,0,0,0,0,0,0,0,0.00687193871,0.00012499894,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_raw,128,4096,64,0,1,0,0,0,0,0,0,0,0,0,0.00106149912,0.000106157341,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_int8kv_fused,128,4096,64,0,2,0,0,0,0,0,0,0,0,0,0.00127732754,0.000119733112,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_int8kv_unfused,128,4096,64,0,3,0,0,0,0,0,0,0,0,0,0.00127732754,0.000119720087,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_fp8kv_fused,128,4096,64,0,4,0,0,0,0,0,0,0,0,0,0.0012101531,0.000120083629,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_fp8kv_unfused,128,4096,64,0,5,0,0,0,0,0,0,0,0,0,0.0012101531,0.000120093028,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_epilogue_fused,128,4096,64,0,6,0,0,0,0,0,0,0,0,0,0.00215115398,0.000734265848,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_epilogue_separate,128,4096,64,0,7,0,0,0,0,0,0,0,0,0,0.00321074575,0.000748897365,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_int8kv_unfused,128,4096,64,1,1,0,0,0,0,0,0,0,0,0,0.00778746605,0.0001659688,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_int8kv_fused,128,4096,64,1,2,0,0,0,0,0,0,0,0,0,0.00778746605,0.000165821355,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_fp8kv_unfused,128,4096,64,1,3,0,0,0,0,0,0,0,0,0,0.0088019371,0.000166743268,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_fp8kv_fused,128,4096,64,1,4,0,0,0,0,0,0,0,0,0,0.0088019371,0.000166643921,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_epilogue_separate,128,4096,64,1,5,0,0,0,0,0,0,0,0,0,0.0100805759,0.00075807709,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_epilogue_fused,128,4096,64,1,6,0,0,0,0,0,0,0,0,0,0.00809642673,0.000737352354,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_raw,128,4096,64,1,7,0,0,0,0,0,0,0,0,0,0.00517511368,0.000131916656,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_fp8kv_fused,128,8192,32,0,1,0,0,0,0,0,0,0,0,0,0.00114879012,0.000109128994,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_fp8kv_unfused,128,8192,32,0,2,0,0,0,0,0,0,0,0,0,0.00114879012,0.000109148488,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_epilogue_fused,128,8192,32,0,3,0,0,0,0,0,0,0,0,0,0.00207387377,0.00073051991,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_epilogue_separate,128,8192,32,0,4,0,0,0,0,0,0,0,0,0,0.00316645205,0.000744458001,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_raw,128,8192,32,0,5,0,0,0,0,0,0,0,0,0,0.00105848908,0.000100435544,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_int8kv_fused,128,8192,32,0,6,0,0,0,0,0,0,0,0,0,0.00114956498,0.000108607327,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_int8kv_unfused,128,8192,32,0,7,0,0,0,0,0,0,0,0,0,0.00114956498,0.000108610735,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_epilogue_separate,128,8192,32,1,1,0,0,0,0,0,0,0,0,0,0.0117630363,0.00075006004,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_epilogue_fused,128,8192,32,1,2,0,0,0,0,0,0,0,0,0,0.00781604648,0.00073246075,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_raw,128,8192,32,1,3,0,0,0,0,0,0,0,0,0,0.00766444206,0.000117687427,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_int8kv_unfused,128,8192,32,1,4,0,0,0,0,0,0,0,0,0,0.00951504707,0.000139722495,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_int8kv_fused,128,8192,32,1,5,0,0,0,0,0,0,0,0,0,0.00951504707,0.0001396513,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_fp8kv_unfused,128,8192,32,1,6,0,0,0,0,0,0,0,0,0,0.0104193687,0.000140462363,-1,,0,0,0,,,profile run: one call; not timed
+NVIDIA GeForce RTX 4090,mma_fp8kv_fused,128,8192,32,1,7,0,0,0,0,0,0,0,0,0,0.0104193687,0.000140333538,-1,,0,0,0,,,profile run: one call; not timed

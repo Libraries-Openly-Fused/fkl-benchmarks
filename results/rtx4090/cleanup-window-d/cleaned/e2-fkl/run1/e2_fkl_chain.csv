@@ -1,0 +1,25 @@
+# experiment: E2 element-wise chain through FKL (4096x2160 uchar -> float)
+# notes: thread fusion: off (fk::TF::DISABLED, the default); input: /home/oscar/tfkl-bench/e2-work/e2_input.u8 (uint8 noise, std::mt19937_64 seed 20261030 as E1a, uniform 0..255, row after row); alpha 1.0, c 0.54, k operations alternating Mul c and Add c; 32x8 threads per block (the block FKL picks); GPU columns: CUDA events around one launch of operations built before it, 100 timed iterations after one warm-up; fkl_prep_*: host time (steady_clock) of building and releasing the operations, done before every launch and outside the GPU interval; fkl_flushed_*: the same launch with the L2 flushed before it (a kernel that reads 256 MB, enqueued after the preparation and before the start event, outside both intervals); fkl_kernel_*: the warm launch with a GPU spin of 5000 us (no memory access) enqueued before the start event, so that the launch is queued when the GPU reaches the start event: the kernel without the host's dispatch; outputs are raw float32 files, one per k, for the bitwise and ULP comparison of triton/e2_chain.py
+# repo: fkl-benchmarks 1a2535cf090893bebc82714a410be8c300dde916
+# fkl: 64ad9195cd785d0c93a70b35e02d5a6c7c4a5048
+# cvGPUSpeedup: 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c
+# FastNPP: a1b5e245d7dd70fba23dcb51a0aea80495dbc61d
+# nvcc: 13.4.92 (/home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/nvcc), architectures 89, -fmad on, -lineinfo on
+# hip: none (none), architectures none
+# host compiler: GNU 15.2.0, Release, -march=native, -ftemplate-depth=1000
+# opencv: 4.14.0
+# cpu: AMD Ryzen 9 5950X 16-Core Processor
+# os: Ubuntu 26.04.1 LTS
+# kernel: Linux 7.0.0-38-generic
+# gpu: NVIDIA GeForce RTX 4090, cc 8.9, 128 SMs, 24106 MiB, PCI 0000:09:00.0
+# cuda driver api: 13.3, cuda runtime: 13.4
+# nvidia-smi driver: 610.43.02
+# clocks (sm, mem, max sm, max mem, MHz): 2670 MHz, 10501 MHz, 3105 MHz, 10501 MHz
+# power limit, temperature at start: 450.00 W, 54
+ops,pairs,fkl_mean_ms,fkl_min_ms,kernels,output_file,fkl_flushed_mean_ms,fkl_flushed_min_ms,fkl_prep_mean_ms,fkl_prep_min_ms,fkl_flushed_prep_mean_ms,fkl_flushed_prep_min_ms,fkl_kernel_mean_ms,fkl_kernel_min_ms
+2,1,0.0203379196,0.0194559991,1,/home/oscar/tfkl-bench/e2-work-cleanup-d/cleaned-run1/fkl_out_k2.f32,0.0259247996,0.0255040005,3.99e-05,3e-05,3.9e-05,3e-05,0.0204799995,0.0204799995
+10,5,0.0204268797,0.0194559991,1,/home/oscar/tfkl-bench/e2-work-cleanup-d/cleaned-run1/fkl_out_k10.f32,0.0262479997,0.0255999994,3.83e-05,2e-05,3.92e-05,3e-05,0.0204825595,0.0204799995
+50,25,0.0227750401,0.0222079996,1,/home/oscar/tfkl-bench/e2-work-cleanup-d/cleaned-run1/fkl_out_k50.f32,0.0278374401,0.0274240002,3.84e-05,2e-05,3.94e-05,3e-05,0.0228144002,0.0225280002
+100,50,0.0255571197,0.0245760009,1,/home/oscar/tfkl-bench/e2-work-cleanup-d/cleaned-run1/fkl_out_k100.f32,0.0300758401,0.0295679998,3.9e-05,2e-05,4e-05,3e-05,0.0257043197,0.0255999994
+500,250,0.0646380793,0.0641599968,1,/home/oscar/tfkl-bench/e2-work-cleanup-d/cleaned-run1/fkl_out_k500.f32,0.0692787211,0.0686080009,4.04e-05,2e-05,3.94e-05,3e-05,0.0655052798,0.0645119995
+5002,2501,0.531570554,0.521408021,1,/home/oscar/tfkl-bench/e2-work-cleanup-d/cleaned-run1/fkl_out_k5002.f32,0.526355852,0.525312006,9.789e-05,3e-05,3.92e-05,3e-05,0.525054072,0.522239983

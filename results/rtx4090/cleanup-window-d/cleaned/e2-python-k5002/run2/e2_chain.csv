@@ -1,0 +1,24 @@
+# experiment: E2a element-wise chain: Triton and TorchInductor
+# notes: k values: 5002; 4096x2160 uint8 noise (the file /home/oscar/tfkl-bench/e2-work/e2_input.u8 (written by e2_fkl_chain: std::mt19937_64 seed 20261030, as E1a)) -> float32, alpha 1.0, c 0.54, k operations alternating mul and add; each (version, k) in its own process with fresh Triton and Inductor caches (compile_s = the first call, cold); 100 timed calls after warm-up; kernels counted with torch.profiler; gpu_flushed_*: the same timing with the L2 flushed before every call (a kernel that reads 256 MB, outside the timed interval); gpu_kernel_*: the warm calls queued behind a GPU spin of 5000 us (torch.cuda._sleep, no memory access) enqueued before the start event, so that the call is queued when the GPU reaches the start event: its kernels without the host's dispatch (a call that enqueues more than the spin covers, as eager with one kernel per operation at large k, keeps part of it; FKL: fkl_kernel_* of its program, the same method); ULP error against an exact float64 evaluation (max_ulp_vs_exact) and against the FKL output (max_ulp_vs_fkl, in ULPs of the FKL value; bitexact_fraction_vs_fkl); FKL row: time from /home/oscar/tfkl-bench/fkl-benchmarks/results/rtx4090/cleanup-window-d/cleaned/e2-fkl/run2/e2_fkl_chain.csv, cold compile time from None; timeout 1800 s per point
+# repo: 1a2535cf090893bebc82714a410be8c300dde916
+# fkl: 64ad9195cd785d0c93a70b35e02d5a6c7c4a5048
+# cvGPUSpeedup: 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c
+# FastNPP: a1b5e245d7dd70fba23dcb51a0aea80495dbc61d
+# python: 3.12.13, torch: 2.14.1+cu130, torch.version.cuda: 13.0
+# triton: 3.8.0; ptxas /home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/ptxas (release 13.4); ptxas_blackwell /home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/ptxas (release 13.4); cuobjdump /home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/cuobjdump (release 13.4); nvdisasm /home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/nvdisasm (release 13.4)
+# flash_attn: 2.8.3.post2
+# os: Ubuntu 26.04.1 LTS
+# kernel: Linux 7.0.0-38-generic
+# gpu: NVIDIA GeForce RTX 4090, cc 8.9, 128 SMs, 24106 MiB
+# cuda_visible_devices: 1 (device 0, pci 00000000:05:00.0)
+# nvidia-smi driver: 610.43.02
+# clocks (sm, mem, max sm, max mem, MHz): 180 MHz, 405 MHz, 3090 MHz, 10001 MHz
+# power limit, temperature at start: 130.00 W, 32
+ops,version,status,why,gpu_mean_ms,gpu_min_ms,host_launch_us,kernels,compile_s,max_ulp_vs_exact,bitexact_fraction_vs_triton_hand,bitexact_fraction_vs_fkl,max_ulp_vs_fkl,sass_ffma,sass_fmul,sass_fadd,gpu_flushed_mean_ms,gpu_flushed_min_ms,gpu_kernel_mean_ms,gpu_kernel_min_ms
+5002,triton_hand,ok,,0.7956428802013398,0.7840319871902466,9.265409898944199,1,4.986218006990384,1.6521739102900028,1.0,1.0,0.0,20008,8,0,0.7356012815237045,0.7219200134277344,0.7490630412101745,0.737280011177063
+5002,fkl,ok,,0.528609598,0.522047997,,1,,1.6521739102900028,1.0,1.0,0.0,,,,0.52651137,0.525312006,0.524249911,0.522239983
+5002,eager,ok,,137.05226608276368,136.88003540039062,136783.86947023682,5004,0.16992175299674273,1.6521739102900028,0.992124080657959,0.992124080657959,1.0,,,,137.15049697875978,136.9352264404297,137.16191818237306,136.94053649902344
+5002,inductor_default,ok,,0.5685276764631272,0.564191997051239,25.302499998360872,1,26.047529520990793,1.6521739102900028,1.0,1.0,0.0,5002,0,0,0.5297116899490356,0.5181440114974976,0.516497278213501,0.5150719881057739
+5002,inductor_wide,ok,,0.5454896038770676,0.5396479964256287,26.117090019397438,1,26.265872879012022,1.6521739102900028,1.0,1.0,0.0,5002,0,0,0.518656011223793,0.51801598072052,0.5160003167390823,0.5149120092391968
+5002,inductor_graphs,ok,,0.582110081911087,0.5754879713058472,39.29484053514898,1,27.48791787895607,1.6521739102900028,1.0,1.0,0.0,5002,0,0,0.5295379251241684,0.5160959959030151,0.5153711938858032,0.5144000053405762
+5002,eager_graphs,ok,,128.87693420410156,128.68287658691406,5.378529895097017,5004,0.20945244299946353,1.6521739102900028,0.992124080657959,0.992124080657959,1.0,,,,128.905323638916,128.77005004882812,128.93691528320312,128.8151092529297

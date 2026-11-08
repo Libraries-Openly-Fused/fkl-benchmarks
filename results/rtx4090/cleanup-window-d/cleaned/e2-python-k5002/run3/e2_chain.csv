@@ -1,0 +1,24 @@
+# experiment: E2a element-wise chain: Triton and TorchInductor
+# notes: k values: 5002; 4096x2160 uint8 noise (the file /home/oscar/tfkl-bench/e2-work/e2_input.u8 (written by e2_fkl_chain: std::mt19937_64 seed 20261030, as E1a)) -> float32, alpha 1.0, c 0.54, k operations alternating mul and add; each (version, k) in its own process with fresh Triton and Inductor caches (compile_s = the first call, cold); 100 timed calls after warm-up; kernels counted with torch.profiler; gpu_flushed_*: the same timing with the L2 flushed before every call (a kernel that reads 256 MB, outside the timed interval); gpu_kernel_*: the warm calls queued behind a GPU spin of 5000 us (torch.cuda._sleep, no memory access) enqueued before the start event, so that the call is queued when the GPU reaches the start event: its kernels without the host's dispatch (a call that enqueues more than the spin covers, as eager with one kernel per operation at large k, keeps part of it; FKL: fkl_kernel_* of its program, the same method); ULP error against an exact float64 evaluation (max_ulp_vs_exact) and against the FKL output (max_ulp_vs_fkl, in ULPs of the FKL value; bitexact_fraction_vs_fkl); FKL row: time from /home/oscar/tfkl-bench/fkl-benchmarks/results/rtx4090/cleanup-window-d/cleaned/e2-fkl/run3/e2_fkl_chain.csv, cold compile time from None; timeout 1800 s per point
+# repo: 1a2535cf090893bebc82714a410be8c300dde916
+# fkl: 64ad9195cd785d0c93a70b35e02d5a6c7c4a5048
+# cvGPUSpeedup: 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c
+# FastNPP: a1b5e245d7dd70fba23dcb51a0aea80495dbc61d
+# python: 3.12.13, torch: 2.14.1+cu130, torch.version.cuda: 13.0
+# triton: 3.8.0; ptxas /home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/ptxas (release 13.4); ptxas_blackwell /home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/ptxas (release 13.4); cuobjdump /home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/cuobjdump (release 13.4); nvdisasm /home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/nvdisasm (release 13.4)
+# flash_attn: 2.8.3.post2
+# os: Ubuntu 26.04.1 LTS
+# kernel: Linux 7.0.0-38-generic
+# gpu: NVIDIA GeForce RTX 4090, cc 8.9, 128 SMs, 24106 MiB
+# cuda_visible_devices: 1 (device 0, pci 00000000:05:00.0)
+# nvidia-smi driver: 610.43.02
+# clocks (sm, mem, max sm, max mem, MHz): 180 MHz, 405 MHz, 3090 MHz, 10001 MHz
+# power limit, temperature at start: 130.00 W, 30
+ops,version,status,why,gpu_mean_ms,gpu_min_ms,host_launch_us,kernels,compile_s,max_ulp_vs_exact,bitexact_fraction_vs_triton_hand,bitexact_fraction_vs_fkl,max_ulp_vs_fkl,sass_ffma,sass_fmul,sass_fadd,gpu_flushed_mean_ms,gpu_flushed_min_ms,gpu_kernel_mean_ms,gpu_kernel_min_ms
+5002,triton_hand,ok,,0.7604975986480713,0.7485439777374268,9.237990016117692,1,4.963597121997736,1.6521739102900028,1.0,1.0,0.0,20008,8,0,0.7340313547849655,0.7178239822387695,0.7496563214063644,0.7321599721908569
+5002,fkl,ok,,0.539227837,0.521888018,,1,,1.6521739102900028,1.0,1.0,0.0,,,,0.525995849,0.525312006,0.523584632,0.522239983
+5002,eager,ok,,136.99092178344728,136.85845947265625,136748.21774009615,5004,0.16922867199173197,1.6521739102900028,0.992124080657959,0.992124080657959,1.0,,,,137.12864990234374,136.85350036621094,137.13570190429687,136.8810272216797
+5002,inductor_default,ok,,0.570787518620491,0.5662720203399658,25.699289981275797,1,26.017419420997612,1.6521739102900028,1.0,1.0,0.0,5002,0,0,0.5372134470939636,0.5171200037002563,0.5162540763616562,0.5150719881057739
+5002,inductor_wide,ok,,0.568619841337204,0.5652480125427246,25.07171011529863,1,25.931623262993526,1.6521739102900028,1.0,1.0,0.0,5002,0,0,0.5199385684728622,0.5171200037002563,0.5158774358034134,0.5150719881057739
+5002,inductor_graphs,ok,,0.5787273555994034,0.5754240155220032,39.873209898360074,1,27.09999734198209,1.6521739102900028,1.0,1.0,0.0,5002,0,0,0.5176297587156296,0.5150719881057739,0.5142761486768722,0.5136640071868896
+5002,eager_graphs,ok,,128.8570065307617,128.72703552246094,5.6150497402995825,5004,0.2093339409912005,1.6521739102900028,0.992124080657959,0.992124080657959,1.0,,,,128.81283584594726,128.6983642578125,128.85210388183594,128.65638732910156

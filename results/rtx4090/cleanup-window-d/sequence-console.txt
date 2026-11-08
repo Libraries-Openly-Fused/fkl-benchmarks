@@ -1,0 +1,80 @@
+# 2026-11-08T01:18:10+01:00 sequence starts
+# 2026-11-08T01:18:10+01:00 step 0 of window D starts (compile only); main = f27c6051c6d2a94e9f7f6e32307abcc1b3c43ec1
+Preparing worktree (detached HEAD f27c605)
+HEAD is now at f27c605 Results of the cleanup window C (E1 and E2, RTX 4090, 2026-11-08)
+Cloning into '/home/oscar/tfkl-bench/worktrees/fkl-benchmarks-window-d/external/FastNPP'...
+done.
+Cloning into '/home/oscar/tfkl-bench/worktrees/fkl-benchmarks-window-d/external/cvGPUSpeedup'...
+done.
+Cloning into '/home/oscar/tfkl-bench/worktrees/fkl-benchmarks-window-d/external/fkl'...
+done.
+Submodule path 'external/FastNPP': checked out 'a1b5e245d7dd70fba23dcb51a0aea80495dbc61d'
+Submodule path 'external/cvGPUSpeedup': checked out '6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c'
+Submodule path 'external/fkl': checked out '64ad9195cd785d0c93a70b35e02d5a6c7c4a5048'
+Cloning into '/home/oscar/tfkl-bench/worktrees/fkl-benchmarks-window-d/external/fkl/thread-pool'...
+done.
+Submodule path 'thread-pool': checked out '27e733f50f7f40f171fd84655e05d5acf1fdfbee'
+external/fkl 64ad9195cd785d0c93a70b35e02d5a6c7c4a5048 (reference checkout 64ad9195cd785d0c93a70b35e02d5a6c7c4a5048)
+external/FastNPP a1b5e245d7dd70fba23dcb51a0aea80495dbc61d (reference checkout a1b5e245d7dd70fba23dcb51a0aea80495dbc61d)
+external/cvGPUSpeedup 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c (reference checkout 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c)
+external/fkl/thread-pool 27e733f50f7f40f171fd84655e05d5acf1fdfbee (reference checkout 27e733f50f7f40f171fd84655e05d5acf1fdfbee)
+no tracked change in the checkout or its submodules (before the build)
+# 2026-11-08T01:18:13+01:00 build starts
+# 2026-11-08T01:18:27+01:00 build ended
+no tracked change in the checkout or its submodules (after the build)
+build info f27c6051c6d2a94e9f7f6e32307abcc1b3c43ec1 without -dirty, otherwise as /home/oscar/tfkl-bench/fkl-benchmarks/build/local-rtx4090; cache options and compile flags as the reference; the binary carries the commit
+E16: kernels identical: 41, different: 0, only in A: 5, only in B: 0
+dc67710a080805366b3c9f14db4b9dea8e6ae442961bb2355c0c05fd7e76ad8c  /home/oscar/tfkl-bench/fkl-benchmarks/build/local-rtx4090/bin/e16_attention_cu
+268c78adf599b94b519c88cb49f91031ca7de486a21358d59600e6062ab18ccc  /home/oscar/tfkl-bench/worktrees/fkl-benchmarks-window-d/build/local-rtx4090/bin/e16_attention_cu
+# 2026-11-08T01:18:30+01:00 step 0 ended: all checks passed
+# 2026-11-08T01:19:00+01:00 pre-window steps of window D start (untimed; no measurement)
+# 2026-11-08T01:19:21+01:00 cleaned profile pass (writes the inputs): exit 0 after 21 s
+339738624 e16_input_d128_s1024_bh256.bin
+339738624 e16_input_d128_s2048_bh128.bin
+339738624 e16_input_d128_s4096_bh64.bin
+339738624 e16_input_d128_s512_bh512.bin
+339738624 e16_input_d128_s8192_bh32.bin
+171966464 e16_input_d64_s1024_bh256.bin
+171966464 e16_input_d64_s2048_bh128.bin
+171966464 e16_input_d64_s4096_bh64.bin
+171966464 e16_input_d64_s512_bh512.bin
+171966464 e16_input_d64_s8192_bh32.bin
+total bytes: 2558525440
+input files: 10 (expected 10); sizes as 10 n + 16 BH S and as in the CSV notes, hashes as in the CSV notes: True
+# 2026-11-08T01:19:25+01:00 reference profile pass: exit 0 after 3 s
+FKL error columns equal to the reference's in 152 of 152 rows (cleaned rows: 152)
+# 2026-11-08T01:23:11+01:00 k = 5002 warm-up of the Python driver: exit 0 after 226 s; rows ok 7
+# 2026-11-08T01:23:11+01:00 pre-window steps ended: all checks passed
+# 2026-11-08T01:25:14+01:00 GPU window cleanup-d starts; load before: 0.13 0.50 0.43; no compile job, transfer or measurement running (checked); the desktop session runs; clock sampler pid 1118506
+# os: Ubuntu 26.04.1 LTS
+# kernel: Linux 7.0.0-38-generic
+# 2026-11-08T01:25:15+01:00 E16 round 0 (E16_ROTATE=0, --rotate 0)
+# 2026-11-08T01:27:01+01:00 reference/e16-attention/run1 E16_ROTATE=0: exit 0 after 106 s; INCOMPLETE in: 0
+# 2026-11-08T01:28:56+01:00 cleaned/e16-attention/run1 E16_ROTATE=0 E16_INPUT_DIR=/home/oscar/tfkl-bench/e16-work/inputs: exit 0 after 115 s; INCOMPLETE in: 0
+# 2026-11-08T01:32:23+01:00 reference/e16-baselines/run1 e16_baselines.py --out e16_baselines.csv --rotate 0: exit 0 after 207 s; data lines: e16_baselines.csv 181 
+# 2026-11-08T01:35:51+01:00 cleaned/e16-baselines/run1 e16_baselines.py --out e16_baselines.csv --rotate 0 --input-dir /home/oscar/tfkl-bench/e16-work/inputs: exit 0 after 208 s; data lines: e16_baselines.csv 181 
+# 2026-11-08T01:35:51+01:00 E16 round 1 (E16_ROTATE=1, --rotate 1)
+# 2026-11-08T01:39:16+01:00 cleaned/e16-baselines/run2 e16_baselines.py --out e16_baselines.csv --rotate 1 --input-dir /home/oscar/tfkl-bench/e16-work/inputs: exit 0 after 205 s; data lines: e16_baselines.csv 181 
+# 2026-11-08T01:42:40+01:00 reference/e16-baselines/run2 e16_baselines.py --out e16_baselines.csv --rotate 1: exit 0 after 204 s; data lines: e16_baselines.csv 181 
+# 2026-11-08T01:44:35+01:00 cleaned/e16-attention/run2 E16_ROTATE=1 E16_INPUT_DIR=/home/oscar/tfkl-bench/e16-work/inputs: exit 0 after 115 s; INCOMPLETE in: 0
+# 2026-11-08T01:46:21+01:00 reference/e16-attention/run2 E16_ROTATE=1: exit 0 after 106 s; INCOMPLETE in: 0
+# 2026-11-08T01:46:21+01:00 E16 round 2 (E16_ROTATE=2, --rotate 2)
+# 2026-11-08T01:48:07+01:00 reference/e16-attention/run3 E16_ROTATE=2: exit 0 after 106 s; INCOMPLETE in: 0
+# 2026-11-08T01:50:03+01:00 cleaned/e16-attention/run3 E16_ROTATE=2 E16_INPUT_DIR=/home/oscar/tfkl-bench/e16-work/inputs: exit 0 after 116 s; INCOMPLETE in: 0
+# 2026-11-08T01:53:27+01:00 reference/e16-baselines/run3 e16_baselines.py --out e16_baselines.csv --rotate 2: exit 0 after 204 s; data lines: e16_baselines.csv 181 
+# 2026-11-08T01:56:53+01:00 cleaned/e16-baselines/run3 e16_baselines.py --out e16_baselines.csv --rotate 2 --input-dir /home/oscar/tfkl-bench/e16-work/inputs: exit 0 after 206 s; data lines: e16_baselines.csv 181 
+# 2026-11-08T01:56:54+01:00 reference/e2-fkl/run1 E2_INPUT=/home/oscar/tfkl-bench/e2-work/e2_input.u8 E2_OUT_DIR=/home/oscar/tfkl-bench/e2-work-cleanup-d/reference-run1: exit 0 after 1 s; INCOMPLETE in: 0
+# 2026-11-08T01:56:58+01:00 cleaned/e2-fkl/run1 E2_INPUT=/home/oscar/tfkl-bench/e2-work/e2_input.u8 E2_OUT_DIR=/home/oscar/tfkl-bench/e2-work-cleanup-d/cleaned-run1: exit 0 after 4 s; INCOMPLETE in: 0
+# 2026-11-08T01:57:02+01:00 cleaned/e2-fkl/run2 E2_INPUT=/home/oscar/tfkl-bench/e2-work/e2_input.u8 E2_OUT_DIR=/home/oscar/tfkl-bench/e2-work-cleanup-d/cleaned-run2: exit 0 after 4 s; INCOMPLETE in: 0
+# 2026-11-08T01:57:03+01:00 reference/e2-fkl/run2 E2_INPUT=/home/oscar/tfkl-bench/e2-work/e2_input.u8 E2_OUT_DIR=/home/oscar/tfkl-bench/e2-work-cleanup-d/reference-run2: exit 0 after 1 s; INCOMPLETE in: 0
+# 2026-11-08T01:57:04+01:00 reference/e2-fkl/run3 E2_INPUT=/home/oscar/tfkl-bench/e2-work/e2_input.u8 E2_OUT_DIR=/home/oscar/tfkl-bench/e2-work-cleanup-d/reference-run3: exit 0 after 1 s; INCOMPLETE in: 0
+# 2026-11-08T01:57:09+01:00 cleaned/e2-fkl/run3 E2_INPUT=/home/oscar/tfkl-bench/e2-work/e2_input.u8 E2_OUT_DIR=/home/oscar/tfkl-bench/e2-work-cleanup-d/cleaned-run3: exit 0 after 4 s; INCOMPLETE in: 0
+# 2026-11-08T02:00:57+01:00 cleaned/e2-python-k5002/run1 e2_chain.py --ks 5002 --out e2_chain.csv --input /home/oscar/tfkl-bench/e2-work/e2_input.u8 --fkl-dir /home/oscar/tfkl-bench/e2-work-cleanup-d/cleaned-run1 --fkl-csv /home/oscar/tfkl-bench/fkl-benchmarks/results/rtx4090/cleanup-window-d/cleaned/e2-fkl/run1/e2_fkl_chain.csv: exit 0 after 228 s; data lines: e2_chain.csv 8 
+# 2026-11-08T02:04:45+01:00 cleaned/e2-python-k5002/run2 e2_chain.py --ks 5002 --out e2_chain.csv --input /home/oscar/tfkl-bench/e2-work/e2_input.u8 --fkl-dir /home/oscar/tfkl-bench/e2-work-cleanup-d/cleaned-run2 --fkl-csv /home/oscar/tfkl-bench/fkl-benchmarks/results/rtx4090/cleanup-window-d/cleaned/e2-fkl/run2/e2_fkl_chain.csv: exit 0 after 228 s; data lines: e2_chain.csv 8 
+# 2026-11-08T02:08:32+01:00 cleaned/e2-python-k5002/run3 e2_chain.py --ks 5002 --out e2_chain.csv --input /home/oscar/tfkl-bench/e2-work/e2_input.u8 --fkl-dir /home/oscar/tfkl-bench/e2-work-cleanup-d/cleaned-run3 --fkl-csv /home/oscar/tfkl-bench/fkl-benchmarks/results/rtx4090/cleanup-window-d/cleaned/e2-fkl/run3/e2_fkl_chain.csv: exit 0 after 227 s; data lines: e2_chain.csv 8 
+# 2026-11-08T02:08:34+01:00 ncu e1-vf-chain (mangled names): exit 0 after 2 s; kernel rows 18; mangled: 18
+# 2026-11-08T02:08:36+01:00 ncu e1-hf-batch (mangled names): exit 0 after 2 s; kernel rows 15; mangled: 15
+# 2026-11-08T02:08:38+01:00 ncu e1-preproc (mangled names): exit 0 after 2 s; kernel rows 20; mangled: 20
+# 2026-11-08T02:08:43+01:00 GPU window cleanup-d ended; clock samples: 26044
+cleanup-d window end 2026-11-08T02:08:43+01:00
+# 2026-11-08T02:08:43+01:00 sequence ended
