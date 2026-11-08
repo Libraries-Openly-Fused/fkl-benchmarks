@@ -36,20 +36,34 @@
 //                           ported to HIP (e1c:: below): one kernel for the whole batch, ASYMMETRIC sampling as fkl_fused, the crop pointers in its
 //                           parameter block (8 bytes per crop), the crop size, the output size and the constants known at compile time, 32 x 8
 //                           threads per block (the block FKL launches for a 64x128 output: checked at compile time). 1 call
+//   hand_padded             E1c's diagnostic (handPreprocPadded): hand_batch's arithmetic on crop descriptors (pointer, width, height, pitch),
+//                           with its parameter block padded to the size of FKL's read IOp (checked at compile time), so that it has FKL's
+//                           kernel-argument size and the hand-written code. 1 call
+//   hand_roi                the hand-written kernel of E4 for crops of any location and size (opencv-cuda/batched-preprocessing/e4_preprocessing.cu:
+//                           handPreprocRoi): its CPU function handRoiParameters (plain C++, no library, used by hand_roi only) computes in every
+//                           call, from the crop rectangles, each crop's pointer, width, height, pitch and resize factors (32 bytes per crop, the
+//                           factors with FKL's per-crop formula written out), and the kernel reads them per crop; the output size and the
+//                           constants of the chain are known at compile time. 1 call
+// The hand-written kernels share their frame (a hipMallocPitch image), their output and their stream.
 // The parts of a run, as the medians build_median_ms and compute_median_ms:
 //   FKL: build = the crop views and every operation (on the host); compute = executeOperations and the synchronisation, with no synchronisation
 //        between them. The release of the crop views at the end of the call is part of compute.
-//   hand_batch: build = the crop pointers, the kernel's parameter block (on the host); compute = the launch, hipGetLastError (executeOperations
-//        checks its launch in the same way) and the synchronisation of its stream.
+//   hand_batch, hand_padded, hand_roi: build = the kernel's parameter block (hand_batch the crop pointers, hand_padded the crop descriptors,
+//        hand_roi the crop rectangles and handRoiParameters; on the host); compute = the launch, hipGetLastError (executeOperations checks its
+//        launch in the same way) and the synchronisation of its stream. Their compute part has no release of crop views.
 //   rpp_crop_batch: build = the copies and a stream synchronisation; compute = the ROIs, the two RPP calls and a stream synchronisation. Its
 //        total therefore includes one stream synchronisation more than rpp_crop_batch_unsplit, which has no parts (NaN). In every call
 //        rppt_resize_mirror_normalize itself clears its output and synchronises its stream (RPP 3.2.0), so in rpp_crop_batch_unsplit RPP waits
 //        for the copies inside that call.
 // RPP has no per-channel multiply: the normalize of rppt_resize_mirror_normalize covers the multiply, the subtraction and the division, with
-// mean = sub / 0.3 and std = div / 0.3. Output widths are multiples of 8.
+// mean = sub / 0.3 and std = div / 0.3. Output widths are multiples of 8: the kernels of both RPP calls (RPP 3.2.0) write 8 pixels per thread
+// and check only the first against the width. RPP's ROI array has padding for the ROI overflow of RPP 3.2.0 (see runA), and after RPP's calls
+// the program checks that RPP's other pinned arrays are unchanged.
 // Environment: E5_ITERS, E5_WARMUP, E5_WARMUP_SECONDS, E5_ROTATE_OFFSET (checked: common/env_args.h), E5_IMAGE (a binary PPM tiled over the
 // frame instead of seeded noise), E5_IMAGE_INFO.
-// CSVs in the working directory: benchmark_rpp_preprocessing_a_GPU_AMD.csv and benchmark_rpp_preprocessing_a_agreement_GPU_AMD.csv.
+// CSVs in the working directory: benchmark_rpp_preprocessing_a_GPU_AMD.csv and benchmark_rpp_preprocessing_a_agreement_GPU_AMD.csv. Each timing
+// row records the graphics clock, the memory clock and the PCIe link speed and width at the start of the warm-up, at the start of the timed
+// runs and after them (common/hip_wallclock.h).
 #include <common/csv_writer.h>
 #include <common/env_args.h>
 #include <common/hip_wallclock.h>
@@ -91,11 +105,14 @@ constexpr double TOLERANCE = 1e-4;
 constexpr float ALPHA = 0.3f;
 constexpr float SUB[3] = {1.f, 4.f, 3.2f}, DIV[3] = {3.2f, 0.6f, 11.8f};
 
-// ---- The hand-written fused kernel: E1c's version hand_batch (handwritten-cuda/e1_preproc.cu, handPreproc) ported to HIP. From E1c's
-// static_assert on the block (the second static_assert below; e1_preproc.cu l.87) to the end of handPreproc, the text is E1c's with one HIP
-// change: HIP has no __grid_constant__, and on an AMD GPU every kernel parameter is in the constant kernel argument segment, so the qualifier
-// is dropped (the gfx1200 code of the kernel compiled alone is the same with clang's grid_constant attribute). The first static_assert, on the
-// vector types, is the port's. The constants are this program's, under E1c's names; their values are E1c's.
+// ---- The hand-written fused kernels, ported to HIP: E1c's versions hand_batch (handPreproc) and hand_padded (handPreprocPadded) from
+// handwritten-cuda/e1_preproc.cu, and E4's hand_roi (handPreprocRoi, with its CPU function handRoiParameters) from
+// opencv-cuda/batched-preprocessing/e4_preprocessing.cu. From E1c's static_assert on the block (the second static_assert below; e1_preproc.cu
+// l.87) to the end of handPreprocPadded the text is E1c's, and the hand_roi part is E4's, with one HIP change in each kernel: HIP has no
+// __grid_constant__, and on an AMD GPU every kernel parameter is in the constant kernel argument segment, so the qualifier is dropped (the
+// gfx1200 code of handPreproc compiled alone is the same with clang's grid_constant attribute). In E4's comment "the CUDA runtime" reads "the
+// HIP runtime". The first static_assert, on the vector types, is the port's. The constants are this program's, under E1c's names; their values
+// are E1c's.
 namespace e1c {
 constexpr int UP_W = OUT_W, UP_H = OUT_H;
 constexpr float SUB_X = SUB[0], SUB_Y = SUB[1], SUB_Z = SUB[2];
@@ -108,6 +125,12 @@ static_assert(fk::getDefaultBlockSize(UP_W, UP_H).x == 32 && fk::getDefaultBlock
 template <int BATCH>
 struct CropPointers {
     const unsigned char* data[BATCH];
+};
+
+template <int BATCH>
+struct CropDescriptors {
+    struct Crop { const unsigned char* data; unsigned int width, height, pitch; };
+    Crop crop[BATCH];
 };
 
 __device__ __forceinline__ float3 loadPixel(const unsigned char* base, const size_t pitch, const int x, const int y) {
@@ -155,6 +178,65 @@ __global__ void handPreproc(const CropPointers<BATCH> crops, const size_t inPitc
     const int z = blockIdx.z;
     if (x >= UP_W || y >= UP_H) return;
     preprocess(crops.data[z], inPitch, CROP_W, CROP_H, fx, fy, x, y, z, tensor, pitch, imageStride, UP_W * UP_H);
+}
+
+template <int BATCH, size_t PAD>
+struct PaddedCropDescriptors {
+    CropDescriptors<BATCH> descriptors;
+    unsigned char padding[PAD];
+};
+
+template <int BATCH, size_t PAD>
+__global__ void handPreprocPadded(const PaddedCropDescriptors<BATCH, PAD> params, float* __restrict__ tensor, const size_t pitch,
+                                  const size_t imageStride, const float fx, const float fy) {
+    const int x = blockIdx.x * blockDim.x + threadIdx.x;
+    const int y = blockIdx.y * blockDim.y + threadIdx.y;
+    const int z = blockIdx.z;
+    if (x >= UP_W || y >= UP_H) return;
+    const auto& c = params.descriptors.crop[z];
+    preprocess(c.data, c.pitch, static_cast<int>(c.width), static_cast<int>(c.height), fx, fy, x, y, z, tensor, pitch, imageStride, UP_W * UP_H);
+}
+
+// hand_roi comes from E4 (opencv-cuda/batched-preprocessing/e4_preprocessing.cu l.206-245), with E1c's preprocess above.
+// ---- hand_roi: the hand-written kernel for crops whose location and size may change on every image. Its CPU function is part of the hand-written code: plain
+// C++ and the HIP runtime, with no type or call of any library, used by hand_roi only.
+
+// a crop as a detector gives it: the top-left corner and the size, in pixels of the frame
+struct CropRect {
+    int x, y, width, height;
+};
+
+// the parameter block of hand_roi: per crop, its pointer into the frame, its width, height and pitch, and its resize factors (32 bytes per crop)
+template <int BATCH>
+struct CropRois {
+    struct Crop { const unsigned char* data; unsigned int width, height, pitch; float fx, fy; };
+    Crop crop[BATCH];
+};
+
+// The CPU function of hand_roi: for every crop rectangle of this image, the crop's pointer into the frame (3 bytes per pixel), its width, height and pitch, and
+// its resize factors, written into the parameter block. The factors are FKL's per-crop formula written out: the ratio of the output size to the crop size in
+// double, then its inverse as a float.
+template <int BATCH>
+void handRoiParameters(const unsigned char* frame, const size_t framePitch, const std::array<CropRect, BATCH>& rects, CropRois<BATCH>& params) {
+    for (int i = 0; i < BATCH; ++i) {
+        const CropRect& r = rects[i];
+        const double cfx = static_cast<double>(UP_W) / static_cast<double>(r.width);
+        const double cfy = static_cast<double>(UP_H) / static_cast<double>(r.height);
+        params.crop[i] = {frame + static_cast<size_t>(r.y) * framePitch + static_cast<size_t>(r.x) * 3, static_cast<unsigned int>(r.width),
+                          static_cast<unsigned int>(r.height), static_cast<unsigned int>(framePitch), static_cast<float>(1.0 / cfx), static_cast<float>(1.0 / cfy)};
+    }
+}
+
+// E1c's arithmetic on the per-crop parameters: the crop's size and resize factors are read at run time, the output size and the constants of the chain are
+// compile-time constants
+template <int BATCH>
+__global__ void handPreprocRoi(const CropRois<BATCH> rois, float* __restrict__ tensor, const size_t pitch, const size_t imageStride) {
+    const int x = blockIdx.x * blockDim.x + threadIdx.x;
+    const int y = blockIdx.y * blockDim.y + threadIdx.y;
+    const int z = blockIdx.z;
+    if (x >= UP_W || y >= UP_H) return;
+    const auto& c = rois.crop[z];
+    preprocess(c.data, c.pitch, static_cast<int>(c.width), static_cast<int>(c.height), c.fx, c.fy, x, y, z, tensor, pitch, imageStride, UP_W * UP_H);
 }
 } // namespace e1c
 
@@ -233,7 +315,8 @@ struct Variant {
 inline void timeVariant(Output& out, const int batch, const Variant& v) {
     const fklb::WallStats s = fklb::measureWall(v.run, out.warmup, out.iters, out.warmupSeconds, true);
     out.timing->row(batch, v.name, v.calls, s.median, s.min, s.max, s.mean, s.firstMedian, s.secondMedian, s.iters, s.warmupSeconds,
-                    s.warmupSteady ? 1 : 0, s.gpuClockStartMHz, s.gpuClockTimedMHz, s.gpuClockEndMHz);
+                    s.warmupSteady ? 1 : 0, s.gpuClockStartMHz, s.gpuClockTimedMHz, s.gpuClockEndMHz, s.memClockStartMHz, s.memClockTimedMHz,
+                    s.memClockEndMHz, s.pcieGTsStart, s.pcieGTsTimed, s.pcieGTsEnd, s.pcieWidthStart, s.pcieWidthTimed, s.pcieWidthEnd);
     std::cout << "  " << v.name << ": median " << s.median << " ms (min " << s.min << ", max " << s.max << "; build " << s.firstMedian << ", compute "
               << s.secondMedian << ")" << std::endl;
 }
@@ -289,7 +372,8 @@ void runA(fk::Stream_<fk::ParArch::GPU_AMD>& fkStream, fk::Ptr2D<fk::uchar3>& fk
     FKLB_HIP_CHECK(hipMalloc(&resized, outBytes));
     FKLB_HIP_CHECK(hipMalloc(&rppOut, outBytes));
     // The parameter arrays of the two RPP calls, in pinned host memory: RPP's kernels read them in place on the GPU, so they must not change until
-    // the kernels of a call have finished (every call ends with a synchronisation of RPP's stream)
+    // the kernels of a call have finished (every call ends with a synchronisation of RPP's stream). RPP 3.2.0's header documents the output sizes
+    // (dstImgSizes) as host memory, but its kernel reads them on the GPU, so they are pinned too.
     RpptImagePatch* outSizes = nullptr;
     RpptROI* rois = nullptr;
     Rpp32f* mean = nullptr;
@@ -297,7 +381,12 @@ void runA(fk::Stream_<fk::ParArch::GPU_AMD>& fkStream, fk::Ptr2D<fk::uchar3>& fk
     Rpp32u* mirror = nullptr;
     Rpp32u* channelOrder = nullptr;
     FKLB_HIP_CHECK(hipHostMalloc(&outSizes, sizeof(RpptImagePatch) * N));
-    FKLB_HIP_CHECK(hipHostMalloc(&rois, sizeof(RpptROI) * N));
+    // RPP 3.2.0: the kernel of rppt_resize_mirror_normalize that converts the ROIs from XYWH to LTRB in place has no bounds check. It runs
+    // 256 * ceil(N / 256) threads that rewrite one ROI each, so it writes (256 * ceil(N / 256) - N) * 16 bytes past the N ROIs of the batch (3,392
+    // bytes at N = 300). The array has 256 * ceil(N / 256) entries; the ones after the first N are padding that only RPP writes (zeros at first).
+    const size_t roiEntries = 256 * ((static_cast<size_t>(N) + 255) / 256);
+    FKLB_HIP_CHECK(hipHostMalloc(&rois, sizeof(RpptROI) * roiEntries));
+    std::memset(rois, 0, sizeof(RpptROI) * roiEntries);
     FKLB_HIP_CHECK(hipHostMalloc(&mean, sizeof(Rpp32f) * 3 * N));
     FKLB_HIP_CHECK(hipHostMalloc(&stdDev, sizeof(Rpp32f) * 3 * N));
     FKLB_HIP_CHECK(hipHostMalloc(&mirror, sizeof(Rpp32u) * N));
@@ -314,6 +403,27 @@ void runA(fk::Stream_<fk::ParArch::GPU_AMD>& fkStream, fk::Ptr2D<fk::uchar3>& fk
             channelOrder[i * 3 + c] = 2 - c;
         }
     }
+    // RPP must not change its other pinned arrays. checkRppArrays compares them byte by byte with these host copies, and checks that none of them
+    // lies in the range the ROI conversion writes past the N ROIs of the batch, [rois + N, rois + roiEntries); it throws otherwise.
+    const std::vector<RpptImagePatch> outSizesCopy(outSizes, outSizes + N);
+    const std::vector<Rpp32f> meanCopy(mean, mean + 3 * N), stdDevCopy(stdDev, stdDev + 3 * N);
+    const std::vector<Rpp32u> mirrorCopy(mirror, mirror + N), channelOrderCopy(channelOrder, channelOrder + 3 * N);
+    const auto checkRppArrays = [&](const char* when) {
+        if (std::memcmp(outSizes, outSizesCopy.data(), sizeof(RpptImagePatch) * N) != 0 || std::memcmp(mean, meanCopy.data(), sizeof(Rpp32f) * 3 * N) != 0 ||
+            std::memcmp(stdDev, stdDevCopy.data(), sizeof(Rpp32f) * 3 * N) != 0 || std::memcmp(mirror, mirrorCopy.data(), sizeof(Rpp32u) * N) != 0 ||
+            std::memcmp(channelOrder, channelOrderCopy.data(), sizeof(Rpp32u) * 3 * N) != 0) {
+            throw std::runtime_error(std::string("RPP changed one of its pinned parameter arrays ") + when + " (batch " + std::to_string(N) + ")");
+        }
+        const std::uintptr_t padBegin = reinterpret_cast<std::uintptr_t>(rois + N), padEnd = reinterpret_cast<std::uintptr_t>(rois + roiEntries);
+        const auto inPadding = [&](const void* p, const size_t bytes) {
+            const std::uintptr_t b = reinterpret_cast<std::uintptr_t>(p);
+            return b < padEnd && b + bytes > padBegin;
+        };
+        if (inPadding(outSizes, sizeof(RpptImagePatch) * N) || inPadding(mean, sizeof(Rpp32f) * 3 * N) || inPadding(stdDev, sizeof(Rpp32f) * 3 * N) ||
+            inPadding(mirror, sizeof(Rpp32u) * N) || inPadding(channelOrder, sizeof(Rpp32u) * 3 * N)) {
+            throw std::runtime_error("a pinned parameter array of RPP lies in the padding of the ROI array");
+        }
+    };
     // The hand-written kernel's output, a dense hipMalloc tensor with the strides of fk::Tensor (checked, as in E1c), and its launch configuration:
     // the resize factors exactly as fk::Resize::build computes them, and E1c's block and grid
     const size_t outPitch = OUT_W * sizeof(float), imageStride = outPitch * OUT_H * 3, tensorBytes = imageStride * N;
@@ -438,6 +548,38 @@ void runA(fk::Stream_<fk::ParArch::GPU_AMD>& fkStream, fk::Ptr2D<fk::uchar3>& fk
         FKLB_HIP_CHECK(hipGetLastError());
         FKLB_HIP_CHECK(hipStreamSynchronize(handStream));
     };
+    // hand_padded, E1c's diagnostic, as E1c prepares and launches it: hand_batch's arithmetic on crop descriptors (pointer, width, height,
+    // pitch), with its parameter block padded to the size of FKL's read IOp (which holds the per-crop pointers, sizes and resize parameters), so
+    // that it separates the size of the parameter block from the generated code
+    constexpr size_t PAD = 24 * N + 16;
+    static_assert(sizeof(e1c::CropDescriptors<N>) + PAD ==
+                      sizeof(fk::PerThreadRead<fk::ND::_2D, fk::uchar3>::build(std::declval<std::array<fk::Ptr2D<fk::uchar3>, N>&>())
+                                 .then(fk::Resize<fk::InterpolationType::INTER_LINEAR>::build(fk::Size(OUT_W, OUT_H)))),
+                  "hand_padded's parameter block is as large as FKL's read IOp");
+    auto handPadded = [&](fklb::WallClock::time_point& split) {
+        e1c::PaddedCropDescriptors<N, PAD> params;
+        for (int i = 0; i < N; ++i) {
+            params.descriptors.crop[i] = {handFrame + i * handPitch + i * sizeof(uchar3), static_cast<unsigned int>(CROP_W), static_cast<unsigned int>(CROP_H),
+                                          static_cast<unsigned int>(handPitch)};
+        }
+        split = fklb::WallClock::now();
+        e1c::handPreprocPadded<N, PAD><<<grid, block, 0, handStream>>>(params, handOut, outPitch, imageStride, fx, fy);
+        FKLB_HIP_CHECK(hipGetLastError());
+        FKLB_HIP_CHECK(hipStreamSynchronize(handStream));
+    };
+    // hand_roi, as E4 prepares and launches it: every call takes the crop rectangles (the location and the size of every crop may change on every
+    // image; here those of the other variants), computes the parameter block with the CPU function handRoiParameters, then launches the kernel
+    // and checks the launch
+    auto handRoi = [&](fklb::WallClock::time_point& split) {
+        std::array<e1c::CropRect, N> rects;
+        for (int i = 0; i < N; ++i) rects[i] = {i, i, CROP_W, CROP_H};
+        e1c::CropRois<N> cropRois;
+        e1c::handRoiParameters<N>(handFrame, handPitch, rects, cropRois);
+        split = fklb::WallClock::now();
+        e1c::handPreprocRoi<N><<<grid, block, 0, handStream>>>(cropRois, handOut, outPitch, imageStride);
+        FKLB_HIP_CHECK(hipGetLastError());
+        FKLB_HIP_CHECK(hipStreamSynchronize(handStream));
+    };
 
     // ---- Agreement: one run of every variant, the outputs on the host
     fklb::WallClock::time_point unused{};
@@ -456,11 +598,25 @@ void runA(fk::Stream_<fk::ParArch::GPU_AMD>& fkStream, fk::Ptr2D<fk::uchar3>& fk
     FKLB_HIP_CHECK(hipMemset(rppOut, 0, outBytes));
     rppCropBatchUnsplit(unused);
     FKLB_HIP_CHECK(hipMemcpy(rppUnsplitOut.data(), rppOut, outBytes, hipMemcpyDeviceToHost));
-    // The hand-written kernel's run starts from an output of NaNs (every byte 0xFF), so that an element it does not write fails its rows
-    std::vector<float> handHost(static_cast<size_t>(N) * 3 * PLANE);
-    FKLB_HIP_CHECK(hipMemset(handOut, 0xFF, tensorBytes));
-    handBatch(unused);
-    FKLB_HIP_CHECK(hipMemcpy(handHost.data(), handOut, tensorBytes, hipMemcpyDeviceToHost));
+    // RPP's other pinned arrays are unchanged after these calls, and RPP rewrote the padding of the ROI array (its ROI overflow)
+    checkRppArrays("in the checked runs");
+    size_t paddingRewritten = 0;
+    const unsigned char zeroRoi[sizeof(RpptROI)] = {};
+    for (size_t k = N; k < roiEntries; ++k) {
+        paddingRewritten += std::memcmp(&rois[k], zeroRoi, sizeof(RpptROI)) != 0 ? 1 : 0;
+    }
+    std::cout << "  RPP's other pinned parameter arrays are unchanged after its calls; RPP rewrote " << paddingRewritten << " of the " << roiEntries - N
+              << " padding ROIs" << std::endl;
+    // The hand-written kernels' runs start from an output of NaNs (every byte 0xFF), so that an element a kernel does not write fails its rows
+    std::vector<float> handBatchHost(static_cast<size_t>(N) * 3 * PLANE), handPaddedHost(handBatchHost.size()), handRoiHost(handBatchHost.size());
+    const auto handChecked = [&](auto& run, std::vector<float>& host) {
+        FKLB_HIP_CHECK(hipMemset(handOut, 0xFF, tensorBytes));
+        run(unused);
+        FKLB_HIP_CHECK(hipMemcpy(host.data(), handOut, tensorBytes, hipMemcpyDeviceToHost));
+    };
+    handChecked(handBatch, handBatchHost);
+    handChecked(handPadded, handPaddedHost);
+    handChecked(handRoi, handRoiHost);
     const std::vector<float> refAsym = referenceA(hostFrame, N, fklb::ResizeSampling::ASYMMETRIC);
     const std::vector<float> refHalf = referenceA(hostFrame, N, fklb::ResizeSampling::HALF_PIXEL);
     const float* fused = fusedOut.ptrPinned().data;
@@ -474,17 +630,23 @@ void runA(fk::Stream_<fk::ParArch::GPU_AMD>& fkStream, fk::Ptr2D<fk::uchar3>& fk
     agreementRows(out, N, "rpp_crop_batch vs fkl_fused_halfpixel", rppSplitOut.data(), half, N, false,
                   "both HALF_PIXEL; RPP clamps the source coordinate to size-2: the last 2 columns and rows differ");
     agreementRows(out, N, "rpp_crop_batch_unsplit vs rpp_crop_batch", rppUnsplitOut.data(), rppSplitOut.data(), N, true, "the same RPP calls");
-    agreementRows(out, N, "hand_batch vs scalar reference ASYMMETRIC", handHost.data(), refAsym.data(), N, true, "");
-    // hand_batch against fkl_fused: the differences, informational, and whether the two tensors are the same bits
-    size_t handBitsDiffer = 0;
-    for (size_t k = 0; k < handHost.size(); ++k) {
-        handBitsDiffer += std::memcmp(&handHost[k], &fused[k], sizeof(float)) != 0 ? 1 : 0;
-    }
-    const std::string handBits = "the whole tensors: " + (handBitsDiffer == 0 ? std::string("bitwise equal")
-                                                                              : std::to_string(handBitsDiffer) + " of " + std::to_string(handHost.size()) +
-                                                                                    " values differ in their bits");
-    agreementRows(out, N, "hand_batch vs fkl_fused", handHost.data(), fused, N, false, handBits.c_str());
-    std::cout << "  hand_batch vs fkl_fused: " << handBits << std::endl;
+    // Each hand-written kernel against the reference (required) and against fkl_fused: the differences, informational, and whether the two
+    // tensors are the same bits
+    const auto handRows = [&](const std::string& name, const std::vector<float>& host) {
+        agreementRows(out, N, name + " vs scalar reference ASYMMETRIC", host.data(), refAsym.data(), N, true, "");
+        size_t bitsDiffer = 0;
+        for (size_t k = 0; k < host.size(); ++k) {
+            bitsDiffer += std::memcmp(&host[k], &fused[k], sizeof(float)) != 0 ? 1 : 0;
+        }
+        const std::string bits = "the whole tensors: " + (bitsDiffer == 0 ? std::string("bitwise equal")
+                                                                          : std::to_string(bitsDiffer) + " of " + std::to_string(host.size()) +
+                                                                                " values differ in their bits");
+        agreementRows(out, N, name + " vs fkl_fused", host.data(), fused, N, false, bits.c_str());
+        std::cout << "  " << name << " vs fkl_fused: " << bits << std::endl;
+    };
+    handRows("hand_batch", handBatchHost);
+    handRows("hand_padded", handPaddedHost);
+    handRows("hand_roi", handRoiHost);
 
     // ---- Timing
     timeRotated(out, N, N / 10 - 1,
@@ -493,7 +655,10 @@ void runA(fk::Stream_<fk::ParArch::GPU_AMD>& fkStream, fk::Ptr2D<fk::uchar3>& fk
                  {"fkl_perop_batch", 6, fklPerOp},
                  {"rpp_crop_batch", N + 2, rppCropBatch},
                  {"rpp_crop_batch_unsplit", N + 2, rppCropBatchUnsplit},
-                 {"hand_batch", 1, handBatch}});
+                 {"hand_batch", 1, handBatch},
+                 {"hand_padded", 1, handPadded},
+                 {"hand_roi", 1, handRoi}});
+    checkRppArrays("in the timed calls");
     out.timing->flush();
     out.agreement->flush();
 
@@ -592,8 +757,13 @@ int launch() {
                                  "dropped), one launch with 32x8 threads per block, ASYMMETRIC sampling; its own frame (hipMallocPitch, pitch " +
                                  std::to_string(handPitch) + " bytes; FKL's frame: pitch " + std::to_string(fklFrame.ptr().dims.pitch) +
                                  " bytes), output (hipMalloc) and hipStream_t; build = the crop pointers (its parameter block, 8 bytes per crop), "
-                                 "compute = the launch, hipGetLastError and the stream synchronisation";
-    const std::string notes = "FKL HIP vs RPP and a hand-written kernel; source: " + sourceText + "; " + rppText + "; " + fklText + "; " + handText +
+                                 "compute = the launch, hipGetLastError and the stream synchronisation; hand_padded: E1c's diagnostic handPreprocPadded "
+                                 "(crop descriptors, the parameter block padded to the size of FKL's read IOp), build = the descriptors; hand_roi: the "
+                                 "hand-written kernel of E4 (opencv-cuda/batched-preprocessing/e4_preprocessing.cu: handPreprocRoi) for crops of any "
+                                 "location and size, build = the crop rectangles and its CPU function handRoiParameters (plain C++, no library: per crop "
+                                 "the pointer, width, height, pitch and resize factors, 32 bytes); the three hand-written kernels share their frame, "
+                                 "output and stream, and their compute part has no release of crop views";
+    const std::string notes = "FKL HIP vs RPP and hand-written kernels; source: " + sourceText + "; " + rppText + "; " + fklText + "; " + handText +
                               "; wall clock on the host including the stream synchronisation; build_median_ms and compute_median_ms are the medians of the "
                               "two parts of a run: FKL build = the crop views and the operations (host), compute = executeOperations and the "
                               "synchronisation (no synchronisation between them); rpp_crop_batch build = the copies and a stream synchronisation, compute = "
@@ -602,14 +772,17 @@ int launch() {
                               "warm-up: " + std::to_string(warmup) + " runs, at least " +
                               std::to_string(warmupSeconds).substr(0, std::to_string(warmupSeconds).find('.') + 2) +
                               " s and until the mean time of two consecutive windows of 0.25 s differs by at most 2 percent (cap 10 s; the columns "
-                              "warmup_s, warmup_steady and sclk_start_mhz, sclk_timed_start_mhz and sclk_end_mhz, the graphics clock at the start of the "
-                              "warm-up, at the start of the timed runs and after them, record it); the variants of a point are timed in a rotated order: "
+                              "warmup_s and warmup_steady record it); sclk_*, mclk_*, pcie_gts_* and pcie_width_*: the graphics clock, the memory clock "
+                              "(MHz) and the PCIe link speed (GT/s) and width (lanes) at the start of the warm-up, at the start of the timed runs and "
+                              "after them (-1: not readable); the variants of a point are timed in a rotated order: "
                               "the first one is variant ((index of the point + E5_ROTATE_OFFSET = " + std::to_string(rotateOffset) +
                               ") mod the number of variants)";
 
     fklb::CsvWriter timingA("benchmark_rpp_preprocessing_a_GPU_AMD.csv", "benchmark_rpp_preprocessing_a",
                             {"batch", "variant", "calls", "median_ms", "min_ms", "max_ms", "mean_ms", "build_median_ms", "compute_median_ms", "iters",
-                             "warmup_s", "warmup_steady", "sclk_start_mhz", "sclk_timed_start_mhz", "sclk_end_mhz"},
+                             "warmup_s", "warmup_steady", "sclk_start_mhz", "sclk_timed_start_mhz", "sclk_end_mhz", "mclk_start_mhz", "mclk_timed_start_mhz",
+                             "mclk_end_mhz", "pcie_gts_start", "pcie_gts_timed_start", "pcie_gts_end", "pcie_width_start", "pcie_width_timed_start",
+                             "pcie_width_end"},
                             notes);
     fklb::CsvWriter agreeA("benchmark_rpp_preprocessing_a_agreement_GPU_AMD.csv", "benchmark_rpp_preprocessing_a",
                            {"batch", "comparison", "region", "max_abs_diff", "mean_abs_diff", "fraction_over_1e-4", "pass", "note"},
