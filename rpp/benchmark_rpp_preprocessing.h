@@ -44,6 +44,13 @@
 //                           call, from the crop rectangles, each crop's pointer, width, height, pitch and resize factors (32 bytes per crop, the
 //                           factors with FKL's per-crop formula written out), and the kernel reads them per crop; the output size and the
 //                           constants of the chain are known at compile time. 1 call
+//   fkl_fused_halfpixel_once, hand_roi_halfpixel_once
+//                           the BUILT-ONCE variants, for the comparison with RPP in HALF_PIXEL sampling: fkl_fused_halfpixel with its crop
+//                           views and operations built once, and hand_roi in FKL's HALF_PIXEL sampling (e1c::handPreprocRoiHalfPixel) with
+//                           handRoiParameters run once, both before any timed call; each timed call is only the launch and the synchronisation.
+//                           They are valid only while the crops (their positions and sizes) do not change, and the build is left out on purpose:
+//                           they compare the kernels and their launch, not the builder API. fkl_fused_halfpixel_once runs fkl_fused_halfpixel's
+//                           kernel. 1 call each
 // The hand-written kernels share their frame (a hipMallocPitch image), their output and their stream.
 // The parts of a run, as the medians build_median_ms and compute_median_ms:
 //   FKL: build = the crop views and every operation (on the host); compute = executeOperations and the synchronisation, with no synchronisation
@@ -51,6 +58,8 @@
 //   hand_batch, hand_padded, hand_roi: build = the kernel's parameter block (hand_batch the crop pointers, hand_padded the crop descriptors,
 //        hand_roi the crop rectangles and handRoiParameters; on the host); compute = the launch, hipGetLastError (executeOperations checks its
 //        launch in the same way) and the synchronisation of its stream. Their compute part has no release of crop views.
+//   the built-once variants: build = nothing (build_median_ms is about 0); compute = the launch and the synchronisation, with no release of crop
+//        views either.
 //   rpp_crop_batch: build = the copies and a stream synchronisation; compute = the ROIs, the two RPP calls and a stream synchronisation. Its
 //        total therefore includes one stream synchronisation more than rpp_crop_batch_unsplit, which has no parts (NaN). In every call
 //        rppt_resize_mirror_normalize itself clears its output and synchronises its stream (RPP 3.2.0), so in rpp_crop_batch_unsplit RPP waits
@@ -62,8 +71,9 @@
 // Environment: E5_ITERS, E5_WARMUP, E5_WARMUP_SECONDS, E5_ROTATE_OFFSET (checked: common/env_args.h), E5_IMAGE (a binary PPM tiled over the
 // frame instead of seeded noise), E5_IMAGE_INFO.
 // CSVs in the working directory: benchmark_rpp_preprocessing_a_GPU_AMD.csv and benchmark_rpp_preprocessing_a_agreement_GPU_AMD.csv. Each timing
-// row records the graphics clock, the memory clock and the PCIe link speed and width at the start of the warm-up, at the start of the timed
-// runs and after them (common/hip_wallclock.h).
+// row records the graphics clock, the memory clock, and the speed and width of two PCIe links at the start of the warm-up, at the start of the
+// timed runs and after them (common/hip_wallclock.h): card_link_* is the GPU function's own link, which on the RX 9060 is the link inside the
+// card (to its PCIe switch), and host_link_* is the link of the root port above the GPU, the link to the host.
 #include <common/csv_writer.h>
 #include <common/env_args.h>
 #include <common/hip_wallclock.h>
@@ -238,6 +248,52 @@ __global__ void handPreprocRoi(const CropRois<BATCH> rois, float* __restrict__ t
     const auto& c = rois.crop[z];
     preprocess(c.data, c.pitch, static_cast<int>(c.width), static_cast<int>(c.height), c.fx, c.fy, x, y, z, tensor, pitch, imageStride, UP_W * UP_H);
 }
+
+// ---- hand_roi in FKL's HALF_PIXEL sampling, the port's addition for the built-once comparison with RPP (hand_roi_halfpixel_once). It is E1c's
+// preprocess and E4's handPreprocRoi with one change, the source position of FKL 64ad9195's HALF_PIXEL resize
+// (include/fused_kernel/algorithms/image_processing/resize.h l.128-129: cxp::max::f((thread.x + 0.5f) * params.src_conv_factors.x - 0.5f, 0.f),
+// with cxp::max::f(a, b) = a >= b ? a : b, core/constexpr_libs/constexpr_cmath.h l.323-330), written out with the same operations in the same
+// order; the rest of the arithmetic is E1c's, which FKL's HALF_PIXEL resize shares (interpolation.h). handPreprocRoi above is not changed.
+__device__ __forceinline__ void preprocessHalfPixel(const unsigned char* base, const size_t inPitch, const int srcW, const int srcH, const float fx, const float fy,
+                                                    const int x, const int y, const int z, float* tensor, const size_t pitch, const size_t imageStride,
+                                                    const int channelPixels) {
+    const float halfX = (x + 0.5f) * fx - 0.5f;
+    const float halfY = (y + 0.5f) * fy - 0.5f;
+    const float src_x = halfX >= 0.f ? halfX : 0.f;
+    const float src_y = halfY >= 0.f ? halfY : 0.f;
+    const int x1 = __float2int_rd(src_x);
+    const int y1 = __float2int_rd(src_y);
+    const int x2 = x1 + 1;
+    const int y2 = y1 + 1;
+    const int x2_read = min(x2, srcW - 1);
+    const int y2_read = min(y2, srcH - 1);
+    const float3 r00 = loadPixel(base, inPitch, x1, y1);
+    const float3 r10 = loadPixel(base, inPitch, x2_read, y1);
+    const float3 r01 = loadPixel(base, inPitch, x1, y2_read);
+    const float3 r11 = loadPixel(base, inPitch, x2_read, y2_read);
+    const float3 v = make_float3(
+        (r00.x * ((x2 - src_x) * (y2 - src_y))) + (r10.x * ((src_x - x1) * (y2 - src_y))) + (r01.x * ((x2 - src_x) * (src_y - y1))) + (r11.x * ((src_x - x1) * (src_y - y1))),
+        (r00.y * ((x2 - src_x) * (y2 - src_y))) + (r10.y * ((src_x - x1) * (y2 - src_y))) + (r01.y * ((x2 - src_x) * (src_y - y1))) + (r11.y * ((src_x - x1) * (src_y - y1))),
+        (r00.z * ((x2 - src_x) * (y2 - src_y))) + (r10.z * ((src_x - x1) * (y2 - src_y))) + (r01.z * ((x2 - src_x) * (src_y - y1))) + (r11.z * ((src_x - x1) * (src_y - y1))));
+    // RGB to BGR, then the three operations, each on the three channels
+    const float o0 = ((v.z * ALPHA) - SUB_X) / DIV_X;
+    const float o1 = ((v.y * ALPHA) - SUB_Y) / DIV_Y;
+    const float o2 = ((v.x * ALPHA) - SUB_Z) / DIV_Z;
+    float* const plane = reinterpret_cast<float*>(reinterpret_cast<char*>(tensor) + z * imageStride + y * pitch) + x;
+    plane[0] = o0;
+    plane[channelPixels] = o1;
+    plane[2 * channelPixels] = o2;
+}
+
+template <int BATCH>
+__global__ void handPreprocRoiHalfPixel(const CropRois<BATCH> rois, float* __restrict__ tensor, const size_t pitch, const size_t imageStride) {
+    const int x = blockIdx.x * blockDim.x + threadIdx.x;
+    const int y = blockIdx.y * blockDim.y + threadIdx.y;
+    const int z = blockIdx.z;
+    if (x >= UP_W || y >= UP_H) return;
+    const auto& c = rois.crop[z];
+    preprocessHalfPixel(c.data, c.pitch, static_cast<int>(c.width), static_cast<int>(c.height), c.fx, c.fy, x, y, z, tensor, pitch, imageStride, UP_W * UP_H);
+}
 } // namespace e1c
 
 struct Region {
@@ -316,7 +372,9 @@ inline void timeVariant(Output& out, const int batch, const Variant& v) {
     const fklb::WallStats s = fklb::measureWall(v.run, out.warmup, out.iters, out.warmupSeconds, true);
     out.timing->row(batch, v.name, v.calls, s.median, s.min, s.max, s.mean, s.firstMedian, s.secondMedian, s.iters, s.warmupSeconds,
                     s.warmupSteady ? 1 : 0, s.gpuClockStartMHz, s.gpuClockTimedMHz, s.gpuClockEndMHz, s.memClockStartMHz, s.memClockTimedMHz,
-                    s.memClockEndMHz, s.pcieGTsStart, s.pcieGTsTimed, s.pcieGTsEnd, s.pcieWidthStart, s.pcieWidthTimed, s.pcieWidthEnd);
+                    s.memClockEndMHz, s.cardLinkGTsStart, s.cardLinkGTsTimed, s.cardLinkGTsEnd, s.cardLinkWidthStart, s.cardLinkWidthTimed,
+                    s.cardLinkWidthEnd, s.hostLinkGTsStart, s.hostLinkGTsTimed, s.hostLinkGTsEnd, s.hostLinkWidthStart, s.hostLinkWidthTimed,
+                    s.hostLinkWidthEnd);
     std::cout << "  " << v.name << ": median " << s.median << " ms (min " << s.min << ", max " << s.max << "; build " << s.firstMedian << ", compute "
               << s.secondMedian << ")" << std::endl;
 }
@@ -354,6 +412,7 @@ void runA(fk::Stream_<fk::ParArch::GPU_AMD>& fkStream, fk::Ptr2D<fk::uchar3>& fk
     // fkl_perop_batch depend on N and the output size; RPP's handle and descriptors, its buffers and its per-image parameter arrays (output
     // size, mean, standard deviation, mirror, channel order) depend on N, the crop size and the output size.
     fk::Tensor<float> fusedOut(OUT_W, OUT_H, N, 3), halfOut(OUT_W, OUT_H, N, 3), batchOut(OUT_W, OUT_H, N, 3);
+    fk::Tensor<float> onceHalfOut(OUT_W, OUT_H, N, 3);   // fkl_fused_halfpixel_once's
     fk::Tensor<fk::float3> tmpA(OUT_W, OUT_H, N, 1), tmpB(OUT_W, OUT_H, N, 1);
 
     // One RPP handle for both calls, on RPP's stream. rppCreate's batch size is the number of images RPP processes: the N crops.
@@ -581,6 +640,40 @@ void runA(fk::Stream_<fk::ParArch::GPU_AMD>& fkStream, fk::Ptr2D<fk::uchar3>& fk
         FKLB_HIP_CHECK(hipStreamSynchronize(handStream));
     };
 
+    // ---- The built-once variants. Figure 15 leaves the host-side build of our implementations out, so these variants build their operations
+    // and parameter blocks once, here, before any timed call; each timed call holds only the launch and the synchronisation (build_median_ms is
+    // about 0). They are valid only while the crops (their positions and sizes) do not change: what is built once holds every crop's location and
+    // size, and for hand_roi_halfpixel_once also its pitch and resize factors, so crops that move or change size need a new build, which these
+    // variants leave out on purpose. fkl_fused_halfpixel_once runs fkl_fused_halfpixel's kernel on its own output; hand_roi_halfpixel_once runs
+    // e1c::handPreprocRoiHalfPixel, hand_roi in FKL's HALF_PIXEL sampling, with handRoiParameters run once.
+    std::array<fk::Ptr2D<fk::uchar3>, N> onceCrops;
+    for (int i = 0; i < N; ++i) {
+        onceCrops[i] = fklFrame.crop2D(fk::Rect(i, i, CROP_W, CROP_H));
+    }
+    const auto onceReadHalf = fk::PerThreadRead<fk::ND::_2D, fk::uchar3>::build(onceCrops).then(
+        fk::Resize<fk::InterpolationType::INTER_LINEAR, fk::AspectRatio::IGNORE_AR, NullType, fk::ResizeSampling::HALF_PIXEL>::build(fk::Size(OUT_W, OUT_H)));
+    const auto onceReorder = fk::VectorReorder<fk::float3, 2, 1, 0>::build();
+    const auto onceMul = fk::Mul<fk::float3>::build(fk::float3{ALPHA, ALPHA, ALPHA});
+    const auto onceSub = fk::Sub<fk::float3>::build(fk::float3{SUB[0], SUB[1], SUB[2]});
+    const auto onceDiv = fk::Div<fk::float3>::build(fk::float3{DIV[0], DIV[1], DIV[2]});
+    const auto onceWriteHalf = fk::TensorSplit<fk::float3>::build(onceHalfOut.ptr());
+    auto fklFusedHalfOnce = [&](fklb::WallClock::time_point& split) {
+        split = fklb::WallClock::now();
+        fk::executeOperations<fk::TransformDPP<fk::ParArch::GPU_AMD, fk::TF::DISABLED>>(fkStream, onceReadHalf, onceReorder, onceMul, onceSub, onceDiv,
+                                                                                       onceWriteHalf);
+        fkStream.sync();
+    };
+    std::array<e1c::CropRect, N> onceRects;
+    for (int i = 0; i < N; ++i) onceRects[i] = {i, i, CROP_W, CROP_H};
+    e1c::CropRois<N> onceRois;
+    e1c::handRoiParameters<N>(handFrame, handPitch, onceRects, onceRois);
+    auto handRoiHalfOnce = [&](fklb::WallClock::time_point& split) {
+        split = fklb::WallClock::now();
+        e1c::handPreprocRoiHalfPixel<N><<<grid, block, 0, handStream>>>(onceRois, handOut, outPitch, imageStride);
+        FKLB_HIP_CHECK(hipGetLastError());
+        FKLB_HIP_CHECK(hipStreamSynchronize(handStream));
+    };
+
     // ---- Agreement: one run of every variant, the outputs on the host
     fklb::WallClock::time_point unused{};
     fklFused(unused);
@@ -617,6 +710,13 @@ void runA(fk::Stream_<fk::ParArch::GPU_AMD>& fkStream, fk::Ptr2D<fk::uchar3>& fk
     handChecked(handBatch, handBatchHost);
     handChecked(handPadded, handPaddedHost);
     handChecked(handRoi, handRoiHost);
+    // The built-once variants' runs, each from an output of NaNs
+    std::vector<float> handRoiHalfOnceHost(handBatchHost.size());
+    handChecked(handRoiHalfOnce, handRoiHalfOnceHost);
+    FKLB_HIP_CHECK(hipMemset(onceHalfOut.ptr().data, 0xFF, tensorBytes));
+    fklFusedHalfOnce(unused);
+    onceHalfOut.download(fkStream);
+    fkStream.sync();
     const std::vector<float> refAsym = referenceA(hostFrame, N, fklb::ResizeSampling::ASYMMETRIC);
     const std::vector<float> refHalf = referenceA(hostFrame, N, fklb::ResizeSampling::HALF_PIXEL);
     const float* fused = fusedOut.ptrPinned().data;
@@ -647,6 +747,25 @@ void runA(fk::Stream_<fk::ParArch::GPU_AMD>& fkStream, fk::Ptr2D<fk::uchar3>& fk
     handRows("hand_batch", handBatchHost);
     handRows("hand_padded", handPaddedHost);
     handRows("hand_roi", handRoiHost);
+    // The built-once variants: fkl_fused_halfpixel_once against fkl_fused_halfpixel, which runs the same kernel (required, with the note whether
+    // the two tensors are the same bits); hand_roi_halfpixel_once against the HALF_PIXEL reference (required) and against fkl_fused_halfpixel
+    // (informational, with the same note)
+    const auto sameBits = [&](const float* a, const float* b) {
+        size_t bitsDiffer = 0;
+        for (size_t k = 0; k < static_cast<size_t>(N) * 3 * PLANE; ++k) {
+            bitsDiffer += std::memcmp(&a[k], &b[k], sizeof(float)) != 0 ? 1 : 0;
+        }
+        return "the whole tensors: " + (bitsDiffer == 0 ? std::string("bitwise equal")
+                                                        : std::to_string(bitsDiffer) + " of " + std::to_string(static_cast<size_t>(N) * 3 * PLANE) +
+                                                              " values differ in their bits");
+    };
+    const std::string onceBits = sameBits(onceHalfOut.ptrPinned().data, half);
+    agreementRows(out, N, "fkl_fused_halfpixel_once vs fkl_fused_halfpixel", onceHalfOut.ptrPinned().data, half, N, true, onceBits.c_str());
+    std::cout << "  fkl_fused_halfpixel_once vs fkl_fused_halfpixel: " << onceBits << std::endl;
+    agreementRows(out, N, "hand_roi_halfpixel_once vs scalar reference HALF_PIXEL", handRoiHalfOnceHost.data(), refHalf.data(), N, true, "");
+    const std::string handHalfBits = sameBits(handRoiHalfOnceHost.data(), half);
+    agreementRows(out, N, "hand_roi_halfpixel_once vs fkl_fused_halfpixel", handRoiHalfOnceHost.data(), half, N, false, handHalfBits.c_str());
+    std::cout << "  hand_roi_halfpixel_once vs fkl_fused_halfpixel: " << handHalfBits << std::endl;
 
     // ---- Timing
     timeRotated(out, N, N / 10 - 1,
@@ -657,7 +776,9 @@ void runA(fk::Stream_<fk::ParArch::GPU_AMD>& fkStream, fk::Ptr2D<fk::uchar3>& fk
                  {"rpp_crop_batch_unsplit", N + 2, rppCropBatchUnsplit},
                  {"hand_batch", 1, handBatch},
                  {"hand_padded", 1, handPadded},
-                 {"hand_roi", 1, handRoi}});
+                 {"hand_roi", 1, handRoi},
+                 {"fkl_fused_halfpixel_once", 1, fklFusedHalfOnce},
+                 {"hand_roi_halfpixel_once", 1, handRoiHalfOnce}});
     checkRppArrays("in the timed calls");
     out.timing->flush();
     out.agreement->flush();
@@ -762,7 +883,11 @@ int launch() {
                                  "hand-written kernel of E4 (opencv-cuda/batched-preprocessing/e4_preprocessing.cu: handPreprocRoi) for crops of any "
                                  "location and size, build = the crop rectangles and its CPU function handRoiParameters (plain C++, no library: per crop "
                                  "the pointer, width, height, pitch and resize factors, 32 bytes); the three hand-written kernels share their frame, "
-                                 "output and stream, and their compute part has no release of crop views";
+                                 "output and stream, and their compute part has no release of crop views; fkl_fused_halfpixel_once: "
+                                 "fkl_fused_halfpixel's kernel with the crop views and operations built once; hand_roi_halfpixel_once: hand_roi in "
+                                 "FKL's HALF_PIXEL sampling (e1c::handPreprocRoiHalfPixel) with handRoiParameters run once; both built before the timed "
+                                 "calls, each timed call only the launch and the synchronisation: valid only while the crops (their positions and sizes) "
+                                 "do not change, the build left out on purpose";
     const std::string notes = "FKL HIP vs RPP and hand-written kernels; source: " + sourceText + "; " + rppText + "; " + fklText + "; " + handText +
                               "; wall clock on the host including the stream synchronisation; build_median_ms and compute_median_ms are the medians of the "
                               "two parts of a run: FKL build = the crop views and the operations (host), compute = executeOperations and the "
@@ -772,17 +897,20 @@ int launch() {
                               "warm-up: " + std::to_string(warmup) + " runs, at least " +
                               std::to_string(warmupSeconds).substr(0, std::to_string(warmupSeconds).find('.') + 2) +
                               " s and until the mean time of two consecutive windows of 0.25 s differs by at most 2 percent (cap 10 s; the columns "
-                              "warmup_s and warmup_steady record it); sclk_*, mclk_*, pcie_gts_* and pcie_width_*: the graphics clock, the memory clock "
-                              "(MHz) and the PCIe link speed (GT/s) and width (lanes) at the start of the warm-up, at the start of the timed runs and "
-                              "after them (-1: not readable); the variants of a point are timed in a rotated order: "
+                              "warmup_s and warmup_steady record it); sclk_* and mclk_*: the graphics and the memory clock (MHz); card_link_gts_* and "
+                              "card_link_width_*: the speed (GT/s) and width (lanes) of the GPU function's own PCIe link, which on a card with its own "
+                              "PCIe switch is the link inside the card; host_link_gts_* and host_link_width_*: the same of the root port above the GPU, "
+                              "the link to the host; all at the start of the warm-up, at the start of the timed runs and after them (-1: not readable); "
+                              "the variants of a point are timed in a rotated order: "
                               "the first one is variant ((index of the point + E5_ROTATE_OFFSET = " + std::to_string(rotateOffset) +
                               ") mod the number of variants)";
 
     fklb::CsvWriter timingA("benchmark_rpp_preprocessing_a_GPU_AMD.csv", "benchmark_rpp_preprocessing_a",
                             {"batch", "variant", "calls", "median_ms", "min_ms", "max_ms", "mean_ms", "build_median_ms", "compute_median_ms", "iters",
                              "warmup_s", "warmup_steady", "sclk_start_mhz", "sclk_timed_start_mhz", "sclk_end_mhz", "mclk_start_mhz", "mclk_timed_start_mhz",
-                             "mclk_end_mhz", "pcie_gts_start", "pcie_gts_timed_start", "pcie_gts_end", "pcie_width_start", "pcie_width_timed_start",
-                             "pcie_width_end"},
+                             "mclk_end_mhz", "card_link_gts_start", "card_link_gts_timed_start", "card_link_gts_end", "card_link_width_start",
+                             "card_link_width_timed_start", "card_link_width_end", "host_link_gts_start", "host_link_gts_timed_start", "host_link_gts_end",
+                             "host_link_width_start", "host_link_width_timed_start", "host_link_width_end"},
                             notes);
     fklb::CsvWriter agreeA("benchmark_rpp_preprocessing_a_agreement_GPU_AMD.csv", "benchmark_rpp_preprocessing_a",
                            {"batch", "comparison", "region", "max_abs_diff", "mean_abs_diff", "fraction_over_1e-4", "pass", "note"},
