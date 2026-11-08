@@ -1,0 +1,212 @@
+s_clause 0x1
+s_load_b32 s4, s[0:1], 0x24c
+s_load_b64 s[2:3], s[0:1], 0x1e8
+v_and_b32_e32 v1, 0x3ff, v0
+v_bfe_u32 v0, v0, 10, 10
+s_and_b32 s5, ttmp7, 0xffff
+s_wait_kmcnt 0x0
+s_and_b32 s6, s4, 0xffff
+s_lshr_b32 s4, s4, 16
+v_mad_co_u64_u32 v[2:3], null, ttmp9, s6, v[1:2]
+v_mad_co_u64_u32 v[0:1], null, s5, s4, v[0:1]
+s_delay_alu instid0(VALU_DEP_2) | instskip(NEXT) | instid1(VALU_DEP_2)
+v_cmp_gt_u32_e32 vcc_lo, s2, v2
+v_cmp_gt_u32_e64 s2, s3, v0
+s_and_b32 s2, vcc_lo, s2
+s_wait_alu depctr_sa_sdst(0)
+s_and_saveexec_b32 s3, s2
+s_cbranch_execz L@
+s_mov_b32 s3, 0
+s_lshr_b32 s2, ttmp7, 16
+s_or_b32 s6, s0, 8
+s_wait_alu depctr_sa_sdst(0)
+s_mul_u64 s[4:5], s[2:3], 48
+s_mov_b32 s7, s1
+v_cvt_f32_i32_e32 v1, v0
+s_wait_alu depctr_sa_sdst(0)
+s_add_nc_u64 s[8:9], s[6:7], s[4:5]
+s_clause 0x1
+s_load_b96 s[16:18], s[0:1], 0x234
+s_load_b64 s[10:11], s[8:9], 0x8
+v_cvt_f32_i32_e32 v3, v2
+v_add_f32_e32 v1, 0.5, v1
+s_clause 0x3
+s_load_b96 s[4:6], s[8:9], 0x20
+s_load_b64 s[8:9], s[8:9], 0x18
+s_load_b32 s19, s[0:1], 0x21c
+s_load_b128 s[12:15], s[0:1], 0x220
+s_wait_kmcnt 0x0
+v_mul_lo_u32 v0, s17, v0
+v_fma_f32 v1, v1, s11, -0.5
+s_add_co_i32 s5, s5, -1
+s_add_co_i32 s4, s4, -1
+s_delay_alu instid0(VALU_DEP_1) | instskip(SKIP_2) | instid1(VALU_DEP_2)
+v_cmp_le_f32_e32 vcc_lo, 0, v1
+v_cndmask_b32_e32 v1, 0, v1, vcc_lo
+v_add_f32_e32 v3, 0.5, v3
+v_floor_f32_e32 v4, v1
+s_delay_alu instid0(VALU_DEP_2) | instskip(NEXT) | instid1(VALU_DEP_2)
+v_fma_f32 v3, v3, s10, -0.5
+v_cvt_i32_f32_e32 v12, v4
+s_delay_alu instid0(VALU_DEP_2) | instskip(NEXT) | instid1(VALU_DEP_2)
+v_cmp_le_f32_e32 vcc_lo, 0, v3
+v_add_nc_u32_e32 v13, 1, v12
+s_wait_alu depctr_va_vcc(0)
+v_cndmask_b32_e32 v11, 0, v3, vcc_lo
+v_mul_lo_u32 v4, s6, v12
+s_delay_alu instid0(VALU_DEP_2) | instskip(NEXT) | instid1(VALU_DEP_1)
+v_floor_f32_e32 v3, v11
+v_cvt_i32_f32_e32 v14, v3
+s_wait_alu depctr_sa_sdst(0)
+v_min_i32_e32 v3, s5, v13
+s_delay_alu instid0(VALU_DEP_2) | instskip(NEXT) | instid1(VALU_DEP_2)
+v_add_nc_u32_e32 v15, 1, v14
+v_mul_lo_u32 v5, v3, s6
+s_delay_alu instid0(VALU_DEP_2) | instskip(SKIP_3) | instid1(VALU_DEP_4)
+v_min_i32_e32 v9, s4, v15
+v_add_co_u32 v3, s4, s8, v4
+s_wait_alu depctr_va_sdst(0)
+v_add_co_ci_u32_e64 v4, null, s9, 0, s4
+v_add_co_u32 v5, s4, s8, v5
+s_wait_alu depctr_va_sdst(0)
+v_add_co_ci_u32_e64 v6, null, s9, 0, s4
+s_delay_alu instid0(VALU_DEP_3)
+v_mad_co_i64_i32 v[7:8], null, v9, 3, v[3:4]
+v_mad_co_i64_i32 v[3:4], null, v14, 3, v[3:4]
+s_load_b256 s[4:11], s[0:1], 0x1fc
+v_mad_co_i64_i32 v[9:10], null, v9, 3, v[5:6]
+v_mad_co_i64_i32 v[5:6], null, v14, 3, v[5:6]
+s_clause 0x7
+global_load_u8 v16, v[7:8], off offset:2
+global_load_u8 v17, v[3:4], off offset:2
+global_load_u16 v18, v[9:10], off
+global_load_u16 v19, v[5:6], off
+global_load_u16 v7, v[7:8], off
+global_load_u16 v3, v[3:4], off
+global_load_u8 v4, v[5:6], off offset:2
+global_load_u8 v5, v[9:10], off offset:2
+v_cvt_f32_i32_e32 v6, v14
+v_cvt_f32_i32_e32 v8, v13
+v_cvt_f32_i32_e32 v9, v12
+v_cvt_f32_i32_e32 v10, v15
+s_mul_i32 s0, s18, s2
+v_sub_f32_e32 v6, v11, v6
+v_sub_f32_e32 v8, v8, v1
+v_sub_f32_e32 v1, v1, v9
+v_sub_f32_e32 v9, v10, v11
+s_wait_alu depctr_sa_sdst(0)
+s_mul_i32 s2, s0, s16
+v_mul_f32_e32 v10, v6, v8
+v_mul_f32_e32 v6, v6, v1
+v_mul_f32_e32 v8, v9, v8
+v_mul_f32_e32 v1, v1, v9
+s_wait_alu depctr_sa_sdst(0)
+s_add_nc_u64 s[2:3], s[12:13], s[2:3]
+s_wait_alu depctr_sa_sdst(0)
+v_add_co_u32 v0, s2, s2, v0
+s_wait_alu depctr_va_sdst(0)
+v_add_co_ci_u32_e64 v20, null, s3, 0, s2
+s_wait_loadcnt 0x7
+v_cvt_f32_ubyte0_e32 v11, v16
+s_wait_loadcnt 0x6
+v_cvt_f32_ubyte0_e32 v9, v17
+s_wait_loadcnt 0x4
+v_cvt_f32_ubyte1_e32 v14, v19
+s_wait_loadcnt 0x3
+v_cvt_f32_ubyte1_e32 v12, v7
+v_mul_f32_e32 v11, v10, v11
+v_cvt_f32_ubyte0_e32 v7, v7
+s_wait_loadcnt 0x2
+v_cvt_f32_ubyte0_e32 v13, v3
+v_cvt_f32_ubyte1_e32 v3, v3
+s_wait_loadcnt 0x1
+v_cvt_f32_ubyte0_e32 v4, v4
+v_fmac_f32_e32 v11, v8, v9
+v_mul_f32_e32 v9, v10, v12
+v_mul_f32_e32 v7, v10, v7
+v_cvt_f32_ubyte0_e32 v12, v19
+s_wait_loadcnt 0x0
+v_cvt_f32_ubyte0_e32 v5, v5
+v_fmac_f32_e32 v11, v1, v4
+v_fmac_f32_e32 v9, v8, v3
+v_fmac_f32_e32 v7, v8, v13
+v_cvt_f32_ubyte1_e32 v3, v18
+v_cvt_f32_ubyte0_e32 v4, v18
+v_fmac_f32_e32 v11, v6, v5
+v_fmac_f32_e32 v9, v1, v14
+v_fmac_f32_e32 v7, v1, v12
+s_wait_kmcnt 0x0
+s_delay_alu instid0(VALU_DEP_3) | instskip(NEXT) | instid1(VALU_DEP_3)
+v_fma_f32 v5, s4, v11, -s7
+v_fmac_f32_e32 v9, v6, v3
+s_delay_alu instid0(VALU_DEP_3)
+v_fmac_f32_e32 v7, v6, v4
+v_ashrrev_i32_e32 v3, 31, v2
+s_mul_i32 s4, s14, s15
+v_div_scale_f32 v6, null, s10, s10, v5
+v_fma_f32 v4, s5, v9, -s8
+v_fma_f32 v7, s6, v7, -s9
+v_lshlrev_b64_e32 v[1:2], 2, v[2:3]
+v_div_scale_f32 v14, vcc_lo, v5, s10, v5
+v_rcp_f32_e32 v9, v6
+v_div_scale_f32 v8, null, s11, s11, v4
+v_div_scale_f32 v10, null, s19, s19, v7
+v_div_scale_f32 v15, s0, v4, s11, v4
+v_add_co_u32 v0, s2, v0, v1
+s_delay_alu instid0(VALU_DEP_4) | instskip(NEXT) | instid1(VALU_DEP_3)
+v_rcp_f32_e32 v11, v8
+v_rcp_f32_e32 v3, v10
+s_wait_alu depctr_va_sdst(0)
+v_add_co_ci_u32_e64 v1, null, v20, v2, s2
+v_fma_f32 v12, -v6, v9, 1.0
+s_wait_alu depctr_sa_sdst(0)
+s_ashr_i32 s5, s4, 31
+s_wait_alu depctr_sa_sdst(0)
+s_lshl_b64 s[4:5], s[4:5], 2
+v_fma_f32 v13, -v8, v11, 1.0
+v_fmac_f32_e32 v9, v12, v9
+v_fma_f32 v12, -v10, v3, 1.0
+s_delay_alu instid0(VALU_DEP_3) | instskip(SKIP_1) | instid1(VALU_DEP_3)
+v_fmac_f32_e32 v11, v13, v11
+v_div_scale_f32 v13, s1, v7, s19, v7
+v_dual_mul_f32 v16, v14, v9 :: v_dual_fmac_f32 v3, v12, v3
+s_delay_alu instid0(VALU_DEP_3) | instskip(NEXT) | instid1(VALU_DEP_2)
+v_mul_f32_e32 v12, v15, v11
+v_fma_f32 v17, -v6, v16, v14
+s_delay_alu instid0(VALU_DEP_3) | instskip(NEXT) | instid1(VALU_DEP_3)
+v_mul_f32_e32 v18, v13, v3
+v_fma_f32 v19, -v8, v12, v15
+s_delay_alu instid0(VALU_DEP_3) | instskip(NEXT) | instid1(VALU_DEP_3)
+v_fmac_f32_e32 v16, v17, v9
+v_fma_f32 v17, -v10, v18, v13
+s_delay_alu instid0(VALU_DEP_3) | instskip(NEXT) | instid1(VALU_DEP_3)
+v_fmac_f32_e32 v12, v19, v11
+v_fma_f32 v2, -v6, v16, v14
+s_delay_alu instid0(VALU_DEP_3) | instskip(NEXT) | instid1(VALU_DEP_3)
+v_fmac_f32_e32 v18, v17, v3
+v_fma_f32 v6, -v8, v12, v15
+s_wait_alu depctr_va_vcc(0)
+s_delay_alu instid0(VALU_DEP_3) | instskip(NEXT) | instid1(VALU_DEP_3)
+v_div_fmas_f32 v8, v2, v9, v16
+v_fma_f32 v2, -v10, v18, v13
+s_mov_b32 vcc_lo, s0
+s_wait_alu depctr_sa_sdst(0)
+v_div_fmas_f32 v6, v6, v11, v12
+s_mov_b32 vcc_lo, s1
+v_div_fixup_f32 v8, v8, s10, v5
+s_wait_alu depctr_sa_sdst(0)
+v_div_fmas_f32 v9, v2, v3, v18
+v_add_co_u32 v2, vcc_lo, v0, s4
+s_wait_alu depctr_va_vcc(0)
+v_add_co_ci_u32_e64 v3, null, s5, v1, vcc_lo
+v_div_fixup_f32 v6, v6, s11, v4
+s_delay_alu instid0(VALU_DEP_3)
+v_add_co_u32 v4, vcc_lo, v2, s4
+v_div_fixup_f32 v7, v9, s19, v7
+s_wait_alu depctr_va_vcc(0)
+v_add_co_ci_u32_e64 v5, null, s5, v3, vcc_lo
+s_clause 0x2
+global_store_b32 v[0:1], v8, off
+global_store_b32 v[2:3], v6, off
+global_store_b32 v[4:5], v7, off
+s_endpgm
