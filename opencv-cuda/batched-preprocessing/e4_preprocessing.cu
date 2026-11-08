@@ -52,19 +52,37 @@
 //                       is called with its default arguments, which request thread fusion; it cannot take effect in this chain (cvGS's batched resize read, a
 //                       BatchRead<CONDITIONAL_WITH_DEFAULT>, and TensorSplit do not support it), and the SASS is the same as with cvGS::executeOperations<false>
 //                       (checked at batch 10, 150 and 300)
+// The build-once variants (E4a only, timed after all the versions above), VALID ONLY WHILE THE CROPS (THEIR POSITIONS AND SIZES) DO NOT CHANGE: the crop views
+// (or the ROIs, or the parameter block) and every operation are built ONCE, before the timing, and every timed call is only the launch path. What is built
+// once holds every crop's position and size (for hand_roi_once also its pitch and resize factors). This is the condition of FastNPP's variant without CPU
+// overhead (npp/batchresize/benchmark_npp_batchresize_x_split3D.cu, test_npp_batchresize_x_split3D_No_CPU_Overhead), whose crop size is a compile-time
+// constant. The build is excluded on purpose: these variants measure the launch path and the kernel, not the building of a batch. They launch the kernels
+// of the versions above (the same instantiations), so they add no kernel.
+//   cvgs_fused_once     cvgs_fused with the ROIs and the cvGS operations built once; every call is cvGS::executeOperations with them (its default arguments)
+//   fkl_fused_half_pixel_once  fkl_fused_half_pixel with the crop views and every operation built once; every call is fk::executeOperations with them
+//   fkl_fused_once      fkl_fused with the crop views and every operation built once; every call is fk::executeOperations with them, timed immediately
+//                       before hand_roi_once
+//   hand_roi_once       hand_roi with its CPU function (handRoiParameters) run once; every call is the launch with that parameter block and cudaGetLastError.
+//                       It has its own copy of the frame and its own output, made as hand_roi's
+//   fkl_fused_once_after  the fkl_fused_once call again, timed immediately after hand_roi_once: fkl_fused_once and fkl_fused_once_after bracket hand_roi_once,
+//                       so that its ratio can be taken against the mean of the two FKL times next to it
 // Sampling convention of every implementation (the names are those of fk::ResizeSampling and of common/resize_reference.h):
-//   ASYMMETRIC (source position x * scale): FKL by default (fkl_fused), cv::cuda::resize (opencv_percrop), the hand-written kernels (hand_batch, hand_padded,
-//                                           hand_roi), cvGPUSpeedup (cvgs_fused, whose resize is FKL's with the default sampling)
-//   HALF_PIXEL ((x + 0.5) * scale - 0.5):   NPP (npp), FKL with ResizeSampling::HALF_PIXEL (fkl_fused_half_pixel); cv::resize on the CPU
+//   ASYMMETRIC (source position x * scale): FKL by default (fkl_fused, fkl_fused_once), cv::cuda::resize (opencv_percrop), the hand-written kernels (hand_batch,
+//                                           hand_padded, hand_roi, hand_roi_once), cvGPUSpeedup (cvgs_fused, cvgs_fused_once, whose resize is FKL's with the
+//                                           default sampling)
+//   HALF_PIXEL ((x + 0.5) * scale - 0.5):   NPP (npp), FKL with ResizeSampling::HALF_PIXEL (fkl_fused_half_pixel, fkl_fused_half_pixel_once); cv::resize on the CPU
 // The outputs of implementations with different conventions differ (the agreement between them is informational, written to the agreement CSV); each output is
 // checked against the scalar double-precision reference of its OWN convention (fklb::resizeBilinear + the element-wise chain in double): that check is strict,
 // max |output - reference| <= TOLERANCE (1e-4, as the CPU rows), and a version that exceeds it is reported (ok_own = 0), never hidden.
 // Timing: CUDA events around one call of the whole implementation, 100 calls after one warm-up, mean and min (common/cuda_timing.h). The call is everything the
 // implementation does for a frame: the crop locations may change on every image, so it builds its batch (FKL: the crop views, the read and every operation;
 // OpenCV: the ROIs; NPP: the crop pointers; the hand-written kernels: the parameter block of crop pointers or crop descriptors, and for hand_roi its CPU function
-// on the crop rectangles; cvGPUSpeedup: the ROIs and every operation) and enqueues its work, all inside the interval.
+// on the crop rectangles; cvGPUSpeedup: the ROIs and every operation) and enqueues its work, all inside the interval. The build-once variants are the exception:
+// their interval holds only the launch path and the kernel.
 // Pairs of versions (E4a): the outputs of the checked calls compared element by element, with the bitwise equality and the largest difference: fkl_fused_late,
-// fkl_fused_after, hand_batch, hand_padded and hand_roi against fkl_fused, cvgs_fused against fkl_fused and against opencv_percrop.
+// fkl_fused_after, hand_batch, hand_padded and hand_roi against fkl_fused, cvgs_fused against fkl_fused and against opencv_percrop; of the build-once
+// variants, cvgs_fused_once against fkl_fused and against opencv_percrop, fkl_fused_half_pixel_once against fkl_fused_half_pixel (its own convention), and
+// fkl_fused_once, hand_roi_once and fkl_fused_once_after against fkl_fused.
 // Intermediate bytes: what the implementation allocates besides its frame and its output tensor (tallied from the allocations) and the change of free device memory
 // (cudaMemGetInfo). Host time of one call: host_enqueue_us (the call returns, stream idle before each of 100 calls) and host_launch_us (100 calls back to back without
 // synchronisation, wall time per call: when the GPU is slower than the host this is the GPU's pace, because the launch queue fills up).
@@ -347,7 +365,8 @@ std::vector<float> measure(const Geometry& g, const char* version, const char* c
     fklb::Timing t;
     if (!profileMode()) fklb::timeIt(cs, launch, t);
     // Host time of one call, in two ways (microseconds):
-    //   host_enqueue_us  the time the call takes to return, with the stream idle before each call (mean of 100 calls, synchronised between them): what it costs the host to build and enqueue the call
+    //   host_enqueue_us  the time the call takes to return, with the stream idle before each call (mean of 100 calls, synchronised between them): what it costs the host to build and enqueue the call (the
+    //                    build-once variants build nothing in the call: for them it is the launch path alone)
     //   host_launch_us   100 calls back to back with no synchronisation between them, the wall time per call (as the host_launch_us of the E2 script): when the GPU is slower than the host, the
     //                    launch queue fills up and this is the time the GPU needs, not what the host spends
     double hostEnqueueUs = 0, hostLaunchUs = 0;
@@ -443,7 +462,7 @@ void runCase(const Geometry& g, const std::vector<unsigned char>& noise, cudaStr
         }
     };
     const std::vector<float> outFkl = measure(g, "fkl_fused", "ASYMMETRIC", cs, dTensor.ptr().data, launchFklAsym, 0, 0, refAsym, refHalf, w, allOk);
-    measure(g, "fkl_fused_half_pixel", "HALF_PIXEL", cs, dTensor.ptr().data, launchFklHalf, 0, 0, refAsym, refHalf, w, allOk);
+    const std::vector<float> outFklHalf = measure(g, "fkl_fused_half_pixel", "HALF_PIXEL", cs, dTensor.ptr().data, launchFklHalf, 0, 0, refAsym, refHalf, w, allOk);
 
     // ---- OpenCV-CUDA: its own copy of the frame (GpuMat::upload) and its own output (one continuous GpuMat, BATCH x 3 planes of outH rows)
     std::vector<float> outOpenCV;
@@ -662,7 +681,7 @@ void runCase(const Geometry& g, const std::vector<unsigned char>& noise, cudaStr
 
         // ---- cvGPUSpeedup: its own copy of the frame (GpuMat::upload) and its own output (one continuous GpuMat, one row per crop holding its three planes:
         // the layout of the other outputs, and the one cvGS::split writes)
-        std::vector<float> outCvgs;
+        std::vector<float> outCvgs, outCvgsOnce;
         {
             cv::cuda::Stream cvs = cv::cuda::StreamAccessor::wrapStream(cs);
             cv::cuda::GpuMat src;
@@ -683,6 +702,65 @@ void runCase(const Geometry& g, const std::vector<unsigned char>& noise, cudaStr
                                         cvGS::split<CV_32FC3>(out, outSize));
             };
             outCvgs = measure(g, "cvgs_fused", "ASYMMETRIC", cs, reinterpret_cast<float*>(out.data), launch, 0, 0, refAsym, refHalf, w, allOk);
+            // cvgs_fused_once, valid only while the crops (their positions and sizes) do not change: the ROIs and every operation are built ONCE, here, before
+            // the timing (the build is excluded on purpose); every timed call is cvGS::executeOperations with them, in the form of cvgs_fused's call
+            std::array<cv::cuda::GpuMat, BATCH> cropsOnce;
+            for (int i = 0; i < BATCH; ++i) cropsOnce[i] = src(cv::Rect(g.x0(i), g.y0(i), g.cropW, g.cropH));
+            const auto resizeOnce = cvGS::resize<CV_8UC3, cv::INTER_LINEAR, BATCH>(cropsOnce, outSize, BATCH);
+            const auto cvtColorOnce = cvGS::cvtColor<cv::COLOR_RGB2BGR, CV_32FC3>();
+            const auto multiplyOnce = cvGS::multiply<CV_32FC3>(alphaS);
+            const auto subtractOnce = cvGS::subtract<CV_32FC3>(subS);
+            const auto divideOnce = cvGS::divide<CV_32FC3>(divS);
+            const auto splitOnce = cvGS::split<CV_32FC3>(out, outSize);
+            auto launchOnce = [&] { cvGS::executeOperations(cvs, resizeOnce, cvtColorOnce, multiplyOnce, subtractOnce, divideOnce, splitOnce); };
+            outCvgsOnce = measure(g, "cvgs_fused_once", "ASYMMETRIC", cs, reinterpret_cast<float*>(out.data), launchOnce, 0, 0, refAsym, refHalf, w, allOk);
+        }
+
+        // ---- The build-once variants of FKL and of hand_roi, valid only while the crops (their positions and sizes) do not change: the crop views, every
+        // operation and hand_roi's parameter block are built ONCE, here, before the timing (the build is excluded on purpose), and every timed call is only
+        // the launch path, with the same kernels as fkl_fused, fkl_fused_half_pixel and hand_roi. fkl_fused_once and fkl_fused_once_after bracket hand_roi_once.
+        std::vector<float> outFklHalfOnce, outFklOnce, outHandRoiOnce, outFklOnceAfter;
+        {
+            // hand_roi_once's own copy of the frame and its own output, made as hand_roi's (cudaMallocPitch, uploaded from the same host bytes; cudaMalloc)
+            unsigned char* hSrcOnce = nullptr;
+            size_t hPitchOnce = 0;
+            FKLB_CUDA_CHECK(cudaMallocPitch(reinterpret_cast<void**>(&hSrcOnce), &hPitchOnce, hostRow, g.srcH));
+            FKLB_CUDA_CHECK(cudaMemcpy2D(hSrcOnce, hPitchOnce, noise.data(), hostRow, hostRow, g.srcH, cudaMemcpyHostToDevice));
+            float* hOutOnce = nullptr;
+            FKLB_CUDA_CHECK(cudaMalloc(reinterpret_cast<void**>(&hOutOnce), outBytes));
+            FKLB_CUDA_CHECK(cudaStreamSynchronize(cs));   // the upload of the frame is done before the first timed interval
+            std::array<fk::Ptr2D<uchar3>, BATCH> cropsOnce;
+            for (int i = 0; i < BATCH; ++i) cropsOnce[i] = dInput.crop2D(fk::Rect(g.x0(i), g.y0(i), g.cropW, g.cropH));
+            const auto readOnce =
+                fk::PerThreadRead<fk::ND::_2D, uchar3>::build(cropsOnce).then(fk::Resize<fk::InterpolationType::INTER_LINEAR>::build(fk::Size(g.outW, g.outH)));
+            const auto readHalfOnce = fk::PerThreadRead<fk::ND::_2D, uchar3>::build(cropsOnce).then(
+                fk::Resize<fk::InterpolationType::INTER_LINEAR, fk::AspectRatio::IGNORE_AR, NullType, fk::ResizeSampling::HALF_PIXEL>::build(fk::Size(g.outW, g.outH)));
+            const auto reorderOnce = fk::VectorReorder<float3, 2, 1, 0>::build();
+            const auto mulOnce = fk::Mul<float3>::build(make_float3(ALPHA, ALPHA, ALPHA));
+            const auto subOnce = fk::Sub<float3>::build(make_float3(SUBV[0], SUBV[1], SUBV[2]));
+            const auto divOnce = fk::Div<float3>::build(make_float3(DIVV[0], DIVV[1], DIVV[2]));
+            const auto splitOnce = fk::TensorSplit<float3>::build(dTensor.ptr());
+            auto launchFklOnce = [&] {
+                fk::executeOperations<fk::TransformDPP<fk::ParArch::GPU_NVIDIA, fk::TF::DISABLED>>(fkStream, readOnce, reorderOnce, mulOnce, subOnce, divOnce, splitOnce);
+            };
+            auto launchFklHalfOnce = [&] {
+                fk::executeOperations<fk::TransformDPP<fk::ParArch::GPU_NVIDIA, fk::TF::DISABLED>>(fkStream, readHalfOnce, reorderOnce, mulOnce, subOnce, divOnce,
+                                                                                                    splitOnce);
+            };
+            std::array<CropRect, BATCH> rectsOnce;
+            for (int i = 0; i < BATCH; ++i) rectsOnce[i] = {g.x0(i), g.y0(i), g.cropW, g.cropH};
+            CropRois<BATCH> roisOnce;
+            handRoiParameters<BATCH>(hSrcOnce, hPitchOnce, rectsOnce, roisOnce);
+            auto launchHandRoiOnce = [&] {
+                handPreprocRoi<BATCH><<<grid, block, 0, cs>>>(roisOnce, hOutOnce, pitch, imageStride);
+                FKLB_CUDA_CHECK(cudaGetLastError());
+            };
+            outFklHalfOnce = measure(g, "fkl_fused_half_pixel_once", "HALF_PIXEL", cs, dTensor.ptr().data, launchFklHalfOnce, 0, 0, refAsym, refHalf, w, allOk);
+            outFklOnce = measure(g, "fkl_fused_once", "ASYMMETRIC", cs, dTensor.ptr().data, launchFklOnce, 0, 0, refAsym, refHalf, w, allOk);
+            outHandRoiOnce = measure(g, "hand_roi_once", "ASYMMETRIC", cs, hOutOnce, launchHandRoiOnce, 0, 0, refAsym, refHalf, w, allOk);
+            outFklOnceAfter = measure(g, "fkl_fused_once_after", "ASYMMETRIC", cs, dTensor.ptr().data, launchFklOnce, 0, 0, refAsym, refHalf, w, allOk);
+            FKLB_CUDA_CHECK(cudaFree(hSrcOnce));
+            FKLB_CUDA_CHECK(cudaFree(hOutOnce));
         }
 
         // ---- Pairs of versions: the outputs of their checked calls
@@ -693,6 +771,12 @@ void runCase(const Geometry& g, const std::vector<unsigned char>& noise, cudaStr
         comparePair(g, "hand_roi", outHandRoi, "fkl_fused", outFkl, w);
         comparePair(g, "cvgs_fused", outCvgs, "fkl_fused", outFkl, w);
         comparePair(g, "cvgs_fused", outCvgs, "opencv_percrop", outOpenCV, w);
+        comparePair(g, "cvgs_fused_once", outCvgsOnce, "fkl_fused", outFkl, w);
+        comparePair(g, "cvgs_fused_once", outCvgsOnce, "opencv_percrop", outOpenCV, w);
+        comparePair(g, "fkl_fused_half_pixel_once", outFklHalfOnce, "fkl_fused_half_pixel", outFklHalf, w);
+        comparePair(g, "fkl_fused_once", outFklOnce, "fkl_fused", outFkl, w);
+        comparePair(g, "hand_roi_once", outHandRoiOnce, "fkl_fused", outFkl, w);
+        comparePair(g, "fkl_fused_once_after", outFklOnceAfter, "fkl_fused", outFkl, w);
     }
 }
 
@@ -708,7 +792,8 @@ int launch() {
     FKLB_CUDA_CHECK(cudaStreamCreate(&cs));
     fk::Stream_<fk::ParArch::GPU_NVIDIA> fkStream(cs);
     const std::string notes = std::string("thread fusion: off (fk::TF::DISABLED); source: seeded 8UC3 noise (LCG seed 12345, as the CPU rows), one copy per implementation; ") +
-                              "timing: CUDA events around one call of the whole implementation, which builds its batch (FKL: crop views, read and operations; OpenCV: ROIs; NPP: crop pointers; "
+                              "timing: CUDA events around one call of the whole implementation, which builds its batch (except the build-once variants, below) "
+                              "(FKL: crop views, read and operations; OpenCV: ROIs; NPP: crop pointers; "
                               "hand_batch and hand_padded: the parameter block of crop pointers or crop descriptors; hand_roi: its CPU function on the crop rectangles; "
                               "cvgs_fused: ROIs and operations) and enqueues its work, because the crop locations may change on every image; 100 calls after one warm-up; "
                               "fkl_fused_late and fkl_fused_after: the fkl_fused call again, timed immediately before hand_batch and immediately after hand_roi (controls of "
@@ -716,8 +801,16 @@ int launch() {
                               "E4a only; hand_roi: the hand-written kernel for crops of any location and size, whose CPU function (plain C++, no library) computes every "
                               "crop's pointer, size, pitch and resize factors in the call, E4a only; cvgs_fused: cvGPUSpeedup, cvGS::executeOperations "
                               "with its default arguments, which request thread fusion; it cannot take effect in this chain (the batched resize read and TensorSplit do not "
-                              "support it; the same SASS as with executeOperations<false>), E4a only; sampling: "
-                              "ASYMMETRIC = FKL default, cv::cuda::resize, the hand-written kernels and cvGPUSpeedup, HALF_PIXEL = NPP and fkl_fused_half_pixel; ok_own = max |output - "
+                              "support it; the same SASS as with executeOperations<false>), E4a only; build-once variants (E4a only, timed after the other versions): "
+                              "cvgs_fused_once, fkl_fused_half_pixel_once, fkl_fused_once and hand_roi_once build the crop views (cvgs_fused_once: the ROIs), every operation "
+                              "and the parameter block (hand_roi_once: its CPU function) ONCE, before the timing, and every timed call is only the launch path "
+                              "(executeOperations with them; hand_roi_once: the launch and cudaGetLastError), with the kernels of cvgs_fused, fkl_fused_half_pixel, fkl_fused "
+                              "and hand_roi: the build is excluded on purpose, and these variants are valid only while the crops (their positions and sizes) do not change "
+                              "(the condition of FastNPP's variant without CPU overhead, test_npp_batchresize_x_split3D_No_CPU_Overhead); hand_roi_once has its own copy of "
+                              "the frame and its own output; fkl_fused_once_after: the fkl_fused_once call again, timed immediately after hand_roi_once "
+                              "(fkl_fused_once is timed immediately before it); sampling: "
+                              "ASYMMETRIC = FKL default, cv::cuda::resize, the hand-written kernels and cvGPUSpeedup, HALF_PIXEL = NPP, fkl_fused_half_pixel and "
+                              "fkl_fused_half_pixel_once; ok_own = max |output - "
                               "scalar double reference of the version's own convention| <= 1e-4" +
                               (profileMode() ? "; PROFILE MODE: nothing was timed, the times are zero" : "");
     fklb::CsvWriter timing("e4_preprocessing.csv", "E4a/E4c pre-processing: FKL against OpenCV-CUDA and NPP; E4a also against the hand-written kernels of E1c, and cvGPUSpeedup",
