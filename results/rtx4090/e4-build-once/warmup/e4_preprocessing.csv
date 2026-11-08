@@ -1,0 +1,34 @@
+# experiment: E4a/E4c pre-processing: FKL against OpenCV-CUDA and NPP; E4a also against the hand-written kernels of E1c, and cvGPUSpeedup
+# notes: thread fusion: off (fk::TF::DISABLED); source: seeded 8UC3 noise (LCG seed 12345, as the CPU rows), one copy per implementation; timing: CUDA events around one call of the whole implementation, which builds its batch (except the build-once variants, below) (FKL: crop views, read and operations; OpenCV: ROIs; NPP: crop pointers; hand_batch and hand_padded: the parameter block of crop pointers or crop descriptors; hand_roi: its CPU function on the crop rectangles; cvgs_fused: ROIs and operations) and enqueues its work, because the crop locations may change on every image; 100 calls after one warm-up; fkl_fused_late and fkl_fused_after: the fkl_fused call again, timed immediately before hand_batch and immediately after hand_roi (controls of the position in the sequence), E4a only; hand_batch and hand_padded: the hand-written kernels of E1c (handwritten-cuda/e1_preproc.cu), E4a only; hand_roi: the hand-written kernel for crops of any location and size, whose CPU function (plain C++, no library) computes every crop's pointer, size, pitch and resize factors in the call, E4a only; cvgs_fused: cvGPUSpeedup, cvGS::executeOperations with its default arguments, which request thread fusion; it cannot take effect in this chain (the batched resize read and TensorSplit do not support it; the same SASS as with executeOperations<false>), E4a only; build-once variants (E4a only, timed after the other versions): cvgs_fused_once, fkl_fused_half_pixel_once, fkl_fused_once and hand_roi_once build the crop views (cvgs_fused_once: the ROIs), every operation and the parameter block (hand_roi_once: its CPU function) ONCE, before the timing, and every timed call is only the launch path (executeOperations with them; hand_roi_once: the launch and cudaGetLastError), with the kernels of cvgs_fused, fkl_fused_half_pixel, fkl_fused and hand_roi: the build is excluded on purpose, and these variants are valid only while the crops (their positions and sizes) do not change (the condition of FastNPP's variant without CPU overhead, test_npp_batchresize_x_split3D_No_CPU_Overhead); hand_roi_once has its own copy of the frame and its own output; fkl_fused_once_after: the fkl_fused_once call again, timed immediately after hand_roi_once (fkl_fused_once is timed immediately before it); sampling: ASYMMETRIC = FKL default, cv::cuda::resize, the hand-written kernels and cvGPUSpeedup, HALF_PIXEL = NPP, fkl_fused_half_pixel and fkl_fused_half_pixel_once; ok_own = max |output - scalar double reference of the version's own convention| <= 1e-4
+# repo: fkl-benchmarks f534a38ec6fa536658f8de91b1fae9afd08ec31a
+# fkl: 64ad9195cd785d0c93a70b35e02d5a6c7c4a5048
+# cvGPUSpeedup: 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c
+# FastNPP: a1b5e245d7dd70fba23dcb51a0aea80495dbc61d
+# nvcc: 13.4.92 (/home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/nvcc), architectures 89, -fmad on, -lineinfo on
+# hip: none (none), architectures none
+# host compiler: GNU 15.2.0, Release, -march=native, -ftemplate-depth=1000
+# opencv: 4.14.0
+# cpu: AMD Ryzen 9 5950X 16-Core Processor
+# os: Ubuntu 26.04.1 LTS
+# kernel: Linux 7.0.0-38-generic
+# gpu: NVIDIA GeForce RTX 4090, cc 8.9, 128 SMs, 24106 MiB, PCI 0000:09:00.0
+# cuda driver api: 13.3, cuda runtime: 13.4
+# nvidia-smi driver: 610.43.02
+# clocks (sm, mem, max sm, max mem, MHz): 210 MHz, 405 MHz, 3105 MHz, 10501 MHz
+# power limit, temperature at start: 450.00 W, 39
+experiment,batch,src_w,src_h,crop_w,crop_h,out_w,out_h,version,convention,gpu_mean_ms,gpu_min_ms,intermediate_bytes,meminfo_delta_bytes,output_bytes,host_enqueue_us,host_launch_us
+E4a,300,3840,2160,60,120,64,128,fkl_fused,ASYMMETRIC,0.0283654402,0.027648,0,0,29491200,12.11248,11.75916
+E4a,300,3840,2160,60,120,64,128,fkl_fused_half_pixel,HALF_PIXEL,0.02799328,0.0266239997,0,0,29491200,11.65036,11.59966
+E4a,300,3840,2160,60,120,64,128,opencv_percrop,ASYMMETRIC,3.8393389,3.7497921,516096,2097152,29491200,3758.74412,3754.67037
+E4a,300,3840,2160,60,120,64,128,npp,HALF_PIXEL,3.94023902,3.81337595,115531200,119537664,29491200,3875.59202,3830.65893
+E4a,300,3840,2160,60,120,64,128,fkl_fused_late,ASYMMETRIC,0.0271263998,0.0263679996,0,0,29491200,11.75488,11.62466
+E4a,300,3840,2160,60,120,64,128,hand_batch,ASYMMETRIC,0.0165984,0.0161279999,0,0,29491200,1.88007,1.79058
+E4a,300,3840,2160,60,120,64,128,hand_padded,ASYMMETRIC,0.0181836803,0.0174080003,0,0,29491200,2.74947,2.71266
+E4a,300,3840,2160,60,120,64,128,hand_roi,ASYMMETRIC,0.0180988803,0.0174080003,0,0,29491200,2.82737,2.84777
+E4a,300,3840,2160,60,120,64,128,fkl_fused_after,ASYMMETRIC,0.0271171199,0.0264960006,0,0,29491200,11.83576,11.81466
+E4a,300,3840,2160,60,120,64,128,cvgs_fused,ASYMMETRIC,0.0297542404,0.0286720004,0,0,29491200,14.72823,14.52422
+E4a,300,3840,2160,60,120,64,128,cvgs_fused_once,ASYMMETRIC,0.0184425604,0.0174080003,0,0,29491200,2.80239,2.72997
+E4a,300,3840,2160,60,120,64,128,fkl_fused_half_pixel_once,HALF_PIXEL,0.0185321603,0.0176320001,0,0,29491200,2.76935,2.71067
+E4a,300,3840,2160,60,120,64,128,fkl_fused_once,ASYMMETRIC,0.0183401604,0.0174080003,0,0,29491200,2.71767,2.68187
+E4a,300,3840,2160,60,120,64,128,hand_roi_once,ASYMMETRIC,0.0175027202,0.016384,0,0,29491200,2.20418,2.18468
+E4a,300,3840,2160,60,120,64,128,fkl_fused_once_after,ASYMMETRIC,0.0182988804,0.0174080003,0,0,29491200,2.72604,2.65256
