@@ -35,14 +35,18 @@
 //   fkl_fused_late      a control: exactly the fkl_fused call (the same kernel), timed immediately before hand_batch. fkl_fused is the first version timed in a
 //                       batch and hand_batch comes after npp, so the ratio of hand_batch to FKL is also taken against an FKL time at the same place in the sequence,
 //                       and fkl_fused against fkl_fused_late shows the effect of the position, if there is one
+//   fkl_fused_after     the same control, timed immediately after hand_padded: fkl_fused_late and fkl_fused_after bracket the two hand-written kernels, so that a
+//                       hand ratio can be taken against the mean of the two FKL times next to it
 //   hand_batch          the hand-written fused kernel of E1c (handwritten-cuda/e1_preproc.cu, copied unchanged below), one launch for the batch: the crop pointers
 //                       in a __grid_constant__ array of 8 bytes per crop; the crop size, the output size and the constants of the chain are compile-time constants.
 //                       It reads its own copy of the frame (cudaMallocPitch, as in E1c) and writes its own output (cudaMalloc, the layout of the other outputs).
 //   hand_padded         E1c's diagnostic: the same arithmetic on 24-byte crop descriptors, with the parameter block padded to the size of FKL's read IOp, so
 //                       that the size of the parameter block is separated from the generated code
 //   cvgs_fused          cvGPUSpeedup, one launch: an array of GpuMat ROIs -> cvGS::resize -> cvtColor (RGB to BGR) -> multiply -> subtract -> divide -> split into one
-//                       continuous GpuMat, the call of opencv-cuda/benchmark_CPU_OpenCV_vs_cvGS.cu, on its own copy of the frame (GpuMat::upload); cvGS::executeOperations
-//                       launches with its default, thread fusion enabled
+//                       continuous GpuMat, the call of opencv-cuda/benchmark_CPU_OpenCV_vs_cvGS.cu, on its own copy of the frame (GpuMat::upload). cvGS::executeOperations
+//                       is called with its default arguments, which request thread fusion; it cannot take effect in this chain (cvGS's batched resize read, a
+//                       BatchRead<CONDITIONAL_WITH_DEFAULT>, and TensorSplit do not support it), and the SASS is the same as with cvGS::executeOperations<false>
+//                       (checked at batch 10, 150 and 300)
 // Sampling convention of every implementation (the names are those of fk::ResizeSampling and of common/resize_reference.h):
 //   ASYMMETRIC (source position x * scale): FKL by default (fkl_fused), cv::cuda::resize (opencv_percrop), the hand-written kernels (hand_batch, hand_padded),
 //                                           cvGPUSpeedup (cvgs_fused, whose resize is FKL's with the default sampling)
@@ -55,7 +59,7 @@
 // OpenCV: the ROIs; NPP: the crop pointers; the hand-written kernels: the parameter block of crop pointers or crop descriptors; cvGPUSpeedup: the ROIs and every
 // operation) and enqueues its work, all inside the interval.
 // Pairs of versions (E4a): the outputs of the checked calls compared element by element, with the bitwise equality and the largest difference: fkl_fused_late,
-// hand_batch and hand_padded against fkl_fused, cvgs_fused against fkl_fused and against opencv_percrop.
+// fkl_fused_after, hand_batch and hand_padded against fkl_fused, cvgs_fused against fkl_fused and against opencv_percrop.
 // Intermediate bytes: what the implementation allocates besides its frame and its output tensor (tallied from the allocations) and the change of free device memory
 // (cudaMemGetInfo). Host time of one call: host_enqueue_us (the call returns, stream idle before each of 100 calls) and host_launch_us (100 calls back to back without
 // synchronisation, wall time per call: when the GPU is slower than the host this is the GPU's pace, because the launch queue fills up).
@@ -277,7 +281,7 @@ struct Writers {
 };
 
 // Runs one implementation: clears its output, launches it once and checks it, then times it. A failed call throws (common/status_check.h).
-// Returns the output of the checked call (empty when the implementation is not selected), for the comparison of pairs of versions.
+// Returns the output of the checked call, for the comparison of pairs of versions in E4a (empty when the implementation is not selected, and for a whole frame).
 template <typename Launch>
 std::vector<float> measure(const Geometry& g, const char* version, const char* convention, cudaStream_t cs, float* dOut, const Launch& launch,
                            const size_t intermediateBytes, const size_t meminfoDelta, const std::vector<double>& refAsym, const std::vector<double>& refHalf, Writers& w,
@@ -323,6 +327,7 @@ std::vector<float> measure(const Geometry& g, const char* version, const char* c
     std::cout << g.experiment << " batch " << g.batch << " " << g.srcW << "x" << g.srcH << " -> " << g.outW << "x" << g.outH << "  " << version << " (" << convention << "): "
               << t.mean << " ms (min " << t.min << "), host enqueue " << hostEnqueueUs << " us, back to back " << hostLaunchUs << " us, intermediates " << intermediateBytes << " B, max |err| vs own reference " << eOwn << (ok ? "" : "  EXCEEDS " + std::to_string(TOLERANCE))
               << ", vs ASYMMETRIC " << eAsym << ", vs HALF_PIXEL " << eHalf << std::endl;
+    if (!g.diagonal) return {};   // a whole frame (E4c) is not compared in pairs: its output is not kept
     return host;
 }
 
@@ -593,6 +598,8 @@ void runCase(const Geometry& g, const std::vector<unsigned char>& noise, cudaStr
         const std::vector<float> outFklLate = measure(g, "fkl_fused_late", "ASYMMETRIC", cs, dTensor.ptr().data, launchFklAsym, 0, 0, refAsym, refHalf, w, allOk);
         const std::vector<float> outHand = measure(g, "hand_batch", "ASYMMETRIC", cs, hOut, launchHand, 0, 0, refAsym, refHalf, w, allOk);
         const std::vector<float> outHandPadded = measure(g, "hand_padded", "ASYMMETRIC", cs, hOut, launchHandPadded, 0, 0, refAsym, refHalf, w, allOk);
+        // the second control: the fkl_fused call again, timed immediately after hand_padded
+        const std::vector<float> outFklAfter = measure(g, "fkl_fused_after", "ASYMMETRIC", cs, dTensor.ptr().data, launchFklAsym, 0, 0, refAsym, refHalf, w, allOk);
         FKLB_CUDA_CHECK(cudaFree(hSrc));
         FKLB_CUDA_CHECK(cudaFree(hOut));
 
@@ -623,6 +630,7 @@ void runCase(const Geometry& g, const std::vector<unsigned char>& noise, cudaStr
 
         // ---- Pairs of versions: the outputs of their checked calls
         comparePair(g, "fkl_fused_late", outFklLate, "fkl_fused", outFkl, w);
+        comparePair(g, "fkl_fused_after", outFklAfter, "fkl_fused", outFkl, w);
         comparePair(g, "hand_batch", outHand, "fkl_fused", outFkl, w);
         comparePair(g, "hand_padded", outHandPadded, "fkl_fused", outFkl, w);
         comparePair(g, "cvgs_fused", outCvgs, "fkl_fused", outFkl, w);
@@ -644,9 +652,11 @@ int launch() {
     const std::string notes = std::string("thread fusion: off (fk::TF::DISABLED); source: seeded 8UC3 noise (LCG seed 12345, as the CPU rows), one copy per implementation; ") +
                               "timing: CUDA events around one call of the whole implementation, which builds its batch (FKL: crop views, read and operations; OpenCV: ROIs; NPP: crop pointers; "
                               "hand_batch and hand_padded: the parameter block of crop pointers or crop descriptors; cvgs_fused: ROIs and operations) and enqueues its work, because the "
-                              "crop locations may change on every image; 100 calls after one warm-up; fkl_fused_late: the fkl_fused call again, timed immediately before "
-                              "hand_batch (a control of the position in the sequence), E4a only; hand_batch and hand_padded: the hand-written kernels of E1c "
-                              "(handwritten-cuda/e1_preproc.cu), E4a only; cvgs_fused: cvGPUSpeedup (cvGS::executeOperations, its default thread fusion), E4a only; sampling: "
+                              "crop locations may change on every image; 100 calls after one warm-up; fkl_fused_late and fkl_fused_after: the fkl_fused call again, timed "
+                              "immediately before hand_batch and immediately after hand_padded (controls of the position in the sequence), E4a only; hand_batch and "
+                              "hand_padded: the hand-written kernels of E1c (handwritten-cuda/e1_preproc.cu), E4a only; cvgs_fused: cvGPUSpeedup, cvGS::executeOperations "
+                              "with its default arguments, which request thread fusion; it cannot take effect in this chain (the batched resize read and TensorSplit do not "
+                              "support it; the same SASS as with executeOperations<false>), E4a only; sampling: "
                               "ASYMMETRIC = FKL default, cv::cuda::resize, the hand-written kernels and cvGPUSpeedup, HALF_PIXEL = NPP and fkl_fused_half_pixel; ok_own = max |output - "
                               "scalar double reference of the version's own convention| <= 1e-4" +
                               (profileMode() ? "; PROFILE MODE: nothing was timed, the times are zero" : "");
