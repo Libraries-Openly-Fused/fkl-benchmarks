@@ -5,7 +5,7 @@ nothing yet. The published runs behind Figure 15 are in `../rpp-preprocessing/` 
 
 ## What changed in the program (#32)
 
-The decisions are Oscar's, made in the coordinator session on 2026-11-06 and 2026-11-07.
+The program follows the decisions of 2026-11-06 and 2026-11-07 (fkl-benchmarks #32).
 
 - **RPP** uses its documented batched form. The N crops of the frame are copied into one dense batch, one `hipMemcpy2DAsync` per crop, and
   then one call each of `rppt_resize_mirror_normalize` and `rppt_channel_permute` processes that batch. The batch has an `RpptDesc` with a
@@ -172,8 +172,8 @@ Over the 30 batches:
 - The graphics clock during the timed runs is higher today, not lower: the median `sclk_timed_start_mhz` of `fkl_fused` is 3112 MHz, against
   3056 MHz published.
 - The difference grows with N (+1.9 us at N = 10, +9.7 us at N = 300), so it is not a fixed cost per launch.
-- To separate the environment from the host code: run the rebuilt published binary alternately with the reference in one window. That needs
-  the coordinator's go.
+- To separate the environment from the host code: run the rebuilt published binary alternately with the reference in one window; this has not
+  been done.
 
 ## The parts of the new variants
 
