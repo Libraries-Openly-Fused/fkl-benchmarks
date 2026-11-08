@@ -71,6 +71,7 @@
 #include <functional>
 #include <iostream>
 #include <limits>
+#include <stdexcept>
 #include <string>
 #include <utility>
 #include <vector>
@@ -302,9 +303,10 @@ void runA(fk::Stream_<fk::ParArch::GPU_AMD>& fkStream, fk::Ptr2D<fk::uchar3>& fk
     // RPP's batched functions take one tensor of images, described by an RpptDesc with a real batch stride (nStride, the distance from one image
     // to the next), and one ROI per image: that is the documented batched use of the rppt tensor API. The N crops of one frame are not such a
     // tensor, so they are copied into one dense batch, one hipMemcpy2DAsync per crop, and those copies are timed as RPP's batch building, as the
-    // crop views and the operations are FKL's. The previous version of this program (rpp/benchmark_rpp_preprocessing.h l.139 at 0fb1f9f) gave
-    // RPP the whole frame with a batch stride of 0 and one ROI per crop; RPP does not document a batch stride of 0, so it is not used. One RPP
-    // call per crop (a batch of one image) is not used either: it is not the batched API.
+    // crop views and the operations are FKL's; then one call each of rppt_resize_mirror_normalize and rppt_channel_permute processes the whole
+    // batch. The previous version of this program (rpp/benchmark_rpp_preprocessing.h l.139 at 0fb1f9f) gave RPP the whole frame with a batch
+    // stride of 0 and one ROI per crop; RPP does not document a batch stride of 0, so it is not used. One RPP call per crop (a batch of one image)
+    // is not used either: it is not the batched API.
     auto rppCropBatch = [&](fklb::WallClock::time_point& split) {
         for (int i = 0; i < N; ++i) {
             FKLB_HIP_CHECK(hipMemcpy2DAsync(cropBatch + cropBytes * i, static_cast<size_t>(CROP_W) * 3,
@@ -412,7 +414,10 @@ int launch() {
     std::vector<unsigned char> hostFrame(static_cast<size_t>(SRC_W) * SRC_H * 3);
     std::vector<unsigned char> ppm;
     int ppmW = 0, ppmH = 0;
-    const bool natural = imagePath != nullptr && fklb::readPpm(imagePath, ppm, ppmW, ppmH);
+    const bool natural = imagePath != nullptr;
+    if (natural && !fklb::readPpm(imagePath, ppm, ppmW, ppmH)) {   // a natural-image run must not measure the seeded noise instead
+        throw std::runtime_error(std::string("E5_IMAGE=") + imagePath + " cannot be read as a binary PPM (P6, maximum value 255)");
+    }
     uint32_t state = 12345u;
     for (int y = 0; y < SRC_H; ++y) {
         for (int x = 0; x < SRC_W; ++x) {
