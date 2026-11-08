@@ -37,6 +37,10 @@
 //   Repetitions: fused 100; baseline min(100, max(10, as many as fit in VFHF_BUDGET_SECONDS (30) s)), from the time of its last warm-up
 //   repetition (rep_estimate_ms). The column reps_rule says which applied: fixed (fused), budget, max (100) or min (10).
 //   Per point and side: mean, median, min and max; speedup = mean baseline / mean fused (the ratio of the means) and the ratio of the medians.
+//   Clocks and links (common/hip_wallclock.h), read outside the timed intervals: at the start of the warm-up, at the start of the timed
+//   repetitions and after them, -1 where they cannot be read (an NVIDIA GPU). sclk_* and mclk_*: the graphics and the memory clock; card_link_*:
+//   the GPU function's own PCIe link (on the RX 9060 the link inside the card, to its PCIe switch); host_link_*: the link of the root port above
+//   the GPU, to the host.
 // Order: the fused side of a point first, then its baseline; VFHF_BASELINE_FIRST=1 times the baseline first.
 // Checks, once per point before the timing, tolerance 1e-4 absolute: fused against the double precision reference of the chain (required), fused
 // against the baseline (required), the baseline against the reference (informational). The chain converges to 0.54 / (1 - 0.54) = 1.1739.
@@ -146,6 +150,16 @@ struct Settings {
     size_t maxOps{0};   // 0: every point
 };
 
+// The clocks and PCIe links of an AMD GPU (common/hip_wallclock.h), -1 where they cannot be read
+struct Readings {
+    double sclkMHz{-1}, mclkMHz{-1}, cardLinkGTs{-1}, cardLinkWidth{-1}, hostLinkGTs{-1}, hostLinkWidth{-1};
+};
+
+inline Readings readClocksAndLinks() {
+    return {fklb::amdGpuClockMHz(), fklb::amdGpuMemClockMHz(), fklb::amdCardLinkGTs(), fklb::amdCardLinkWidth(), fklb::amdHostLinkGTs(),
+            fklb::amdHostLinkWidth()};
+}
+
 struct SideTimes {
     size_t reps{0};
     std::string repsRule;
@@ -154,7 +168,7 @@ struct SideTimes {
     double warmupSeconds{0};
     int warmupRuns{0};
     bool warmupSteady{false};
-    double sclkStartMHz{-1}, sclkTimedMHz{-1}, sclkEndMHz{-1};   // the graphics clock of an AMD GPU (-1: none)
+    Readings start, timed, end;   // at the start of the warm-up, at the start of the timed repetitions and after them
 };
 
 struct Outputs {
@@ -173,7 +187,7 @@ SideTimes timeSide(EventTimer& timer, const Run& run, const bool fixedReps, cons
         run();
         return timer.stopMs();
     };
-    s.sclkStartMHz = fklb::amdGpuClockMHz();
+    s.start = readClocksAndLinks();
     const auto begin = fklb::WallClock::now();
     const auto elapsed = [&] { return std::chrono::duration<double>(fklb::WallClock::now() - begin).count(); };
     double windowStart = 0, windowSum = 0, previousWindowMean = -1, previousMs = -1;
@@ -219,12 +233,12 @@ SideTimes timeSide(EventTimer& timer, const Run& run, const bool fixedReps, cons
             s.repsRule = "budget";
         }
     }
-    s.sclkTimedMHz = fklb::amdGpuClockMHz();
+    s.timed = readClocksAndLinks();
     std::vector<double> times(s.reps);
     for (double& t : times) {
         t = once();
     }
-    s.sclkEndMHz = fklb::amdGpuClockMHz();
+    s.end = readClocksAndLinks();
     double sum = 0;
     for (const double t : times) {
         sum += t;
@@ -313,7 +327,10 @@ bool runPoint(fk::Stream_<fk::defaultParArch>& fusedStream, EventTimer& fusedTim
     }
     const auto timingRow = [&](const char* side, const size_t calls, const int position, const SideTimes& s) {
         out.timing->row(NUM_OPS, side, calls, position, s.reps, s.repsRule, s.repEstimateMs, s.mean, s.median, s.min, s.max, s.warmupSeconds,
-                        s.warmupRuns, s.warmupSteady ? 1 : 0, s.sclkStartMHz, s.sclkTimedMHz, s.sclkEndMHz);
+                        s.warmupRuns, s.warmupSteady ? 1 : 0, s.start.sclkMHz, s.timed.sclkMHz, s.end.sclkMHz, s.start.mclkMHz, s.timed.mclkMHz,
+                        s.end.mclkMHz, s.start.cardLinkGTs, s.timed.cardLinkGTs, s.end.cardLinkGTs, s.start.cardLinkWidth, s.timed.cardLinkWidth,
+                        s.end.cardLinkWidth, s.start.hostLinkGTs, s.timed.hostLinkGTs, s.end.hostLinkGTs, s.start.hostLinkWidth,
+                        s.timed.hostLinkWidth, s.end.hostLinkWidth);
         std::cout << "  " << side << ": mean " << s.mean << " ms, median " << s.median << " (min " << s.min << ", max " << s.max << "; " << s.reps
                   << " repetitions, " << s.repsRule << "; warm-up " << s.warmupSeconds << " s, " << s.warmupRuns << " runs, steady "
                   << s.warmupSteady << ")" << std::endl;
@@ -383,11 +400,18 @@ int launch() {
         "min(100, max(10, as many as fit in " + oneDecimal(settings.budgetSeconds) + " s from its last warm-up repetition)); order: " +
         (settings.baselineFirst ? "baseline first" : "fused first") + "; points (NUM_OPS): " + pointsText +
         (settings.maxOps ? "; only the points up to " + std::to_string(settings.maxOps) + " operations (VFHF_MAX_OPS)" : std::string()) +
-        "; speedup = mean baseline / mean fused and median baseline / median fused; sclk_*: the graphics clock of an AMD GPU at the start of "
-        "the warm-up, at the start of the timed repetitions and after them (-1: none)";
+        "; speedup = mean baseline / mean fused and median baseline / median fused; sclk_* and mclk_*: the graphics and the memory clock of an "
+        "AMD GPU (MHz); card_link_gts_* and card_link_width_*: the speed (GT/s) and width (lanes) of the GPU function's own PCIe link, which on "
+        "a card with its own PCIe switch is the link inside the card; host_link_gts_* and host_link_width_*: the same of the root port above the "
+        "GPU, the link to the host; all read outside the timed intervals, at the start of the warm-up, at the start of the timed repetitions and "
+        "after them (-1: not readable)";
     fklb::CsvWriter timing(std::string("benchmark_vfhf_max_speedup_") + ARCH_NAME + ".csv", "benchmark_vfhf_max_speedup",
                            {"num_ops", "side", "calls_per_rep", "position", "reps", "reps_rule", "rep_estimate_ms", "mean_ms", "median_ms", "min_ms",
-                            "max_ms", "warmup_s", "warmup_runs", "warmup_steady", "sclk_start_mhz", "sclk_timed_start_mhz", "sclk_end_mhz"},
+                            "max_ms", "warmup_s", "warmup_runs", "warmup_steady", "sclk_start_mhz", "sclk_timed_start_mhz", "sclk_end_mhz",
+                            "mclk_start_mhz", "mclk_timed_start_mhz", "mclk_end_mhz", "card_link_gts_start", "card_link_gts_timed_start",
+                            "card_link_gts_end", "card_link_width_start", "card_link_width_timed_start", "card_link_width_end",
+                            "host_link_gts_start", "host_link_gts_timed_start", "host_link_gts_end", "host_link_width_start",
+                            "host_link_width_timed_start", "host_link_width_end"},
                            notes);
     fklb::CsvWriter speedup(std::string("benchmark_vfhf_max_speedup_speedup_") + ARCH_NAME + ".csv", "benchmark_vfhf_max_speedup",
                             {"num_ops", "speedup_mean", "speedup_median", "fused_mean_ms", "baseline_mean_ms", "fused_median_ms", "baseline_median_ms"},
