@@ -1,0 +1,24 @@
+# experiment: E1b hand-written horizontal-fusion batch vs FKL (60x120 uchar crops -> float tensor)
+# notes: thread fusion: off (fk::TF::DISABLED, the default); source: seeded uint8 noise 3840x2160 (std::mt19937_64 seed 20261030), crop i at (i, i); cast, *1.0, -1.0, /3.2; the block is the one fk::getDefaultBlockSize picks; 100 timed iterations after one warm-up; *_bitexact = same bytes as hand_batch
+# repo: fkl-benchmarks a5dd9fa54210f60d0b631ce34508e95c86c387ce
+# fkl: 64ad9195cd785d0c93a70b35e02d5a6c7c4a5048
+# cvGPUSpeedup: 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c
+# FastNPP: a1b5e245d7dd70fba23dcb51a0aea80495dbc61d
+# nvcc: 13.4.92 (/home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/nvcc), architectures 89, -fmad on, -lineinfo off
+# hip: none (none), architectures none
+# host compiler: GNU 15.2.0, Release, -march=native, -ftemplate-depth=1000
+# opencv: none
+# cpu: AMD Ryzen 9 5950X 16-Core Processor
+# os: Ubuntu 26.04.1 LTS
+# kernel: Linux 7.0.0-38-generic
+# gpu: NVIDIA GeForce RTX 4090, cc 8.9, 128 SMs, 24106 MiB, PCI 0000:09:00.0
+# cuda driver api: 13.3, cuda runtime: 13.4
+# nvidia-smi driver: 610.43.02
+# clocks (sm, mem, max sm, max mem, MHz): 2685 MHz, 10251 MHz, 3105 MHz, 10501 MHz
+# power limit, temperature at start: 450.00 W, 44
+batch,hand_mean_ms,hand_min_ms,fkl_mean_ms,fkl_min_ms,iterated_mean_ms,iterated_min_ms,fkl_over_hand,iterated_over_fkl,fkl_bitexact,iterated_bitexact,hand_generic_mean_ms,hand_generic_min_ms,fkl_over_hand_generic,hand_generic_bitexact,hand_param_bytes,hand_generic_param_bytes
+1,0.00298720008,0.00204799999,0.00298496008,0.00204799999,0.00284928006,0.00204799999,0.999250134,0.95454545,1,1,0.00292736006,0.00204799999,1.01967644,1,8,24
+51,0.00406592,0.00307200011,0.00420927998,0.00380799989,0.0869699193,0.0829439983,1.03525893,20.6614717,1,1,0.00426111997,0.0038399999,0.987834187,1,408,1224
+201,0.00728416006,0.00684799999,0.00782208003,0.0071680001,0.32938752,0.321536005,1.07384791,42.1099655,1,1,0.00789376003,0.0071680001,0.990919409,1,1608,4824
+601,0.0156358398,0.015168,0.0173990401,0.016384,0.969530882,0.96153599,1.11276659,55.7232397,1,1,0.0179792002,0.0172160007,0.967731597,1,4808,14424
+1191,0.0281868801,0.0275839996,0.0318239998,0.0307199992,1.93719169,1.926144,1.12903591,60.8720368,1,1,0.0327865599,0.0317439996,0.970641623,1,9528,28584

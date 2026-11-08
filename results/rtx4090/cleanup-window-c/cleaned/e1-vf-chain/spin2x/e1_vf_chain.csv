@@ -1,0 +1,25 @@
+# experiment: E1a hand-written MAD chain vs FKL (4096x2160 uchar -> float)
+# notes: thread fusion: off (fk::TF::DISABLED, the default); input: seeded uint8 noise (std::mt19937_64 seed 20261030), uploaded to each side's own image (hand-written kernels: cudaMallocPitch; FKL: fk::Ptr2D); alpha 1.0, c 0.54; 32x8 threads per block (the block FKL launches for this image); GPU columns: CUDA events around one launch, 100 timed iterations after one warm-up; *_prep_*: host time (steady_clock) of building and releasing the arguments of one launch, done before every launch and outside the GPU interval (fkl: all its operations; hand_*: the kernel's argument values); *_total_mean_ms = GPU mean + preparation mean; *_kernel_*: the same launches with a GPU spin of 10000 us (no memory access) enqueued before the start event, so that the launch is queued when the GPU reaches the start event: the kernel without the host's dispatch of the launch; *_bitexact = bit-identical to hand_params
+# repo: fkl-benchmarks 1a2535cf090893bebc82714a410be8c300dde916
+# fkl: 64ad9195cd785d0c93a70b35e02d5a6c7c4a5048
+# cvGPUSpeedup: 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c
+# FastNPP: a1b5e245d7dd70fba23dcb51a0aea80495dbc61d
+# nvcc: 13.4.92 (/home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/nvcc), architectures 89, -fmad on, -lineinfo off
+# hip: none (none), architectures none
+# host compiler: GNU 15.2.0, Release, -march=native, -ftemplate-depth=1000
+# opencv: none
+# cpu: AMD Ryzen 9 5950X 16-Core Processor
+# os: Ubuntu 26.04.1 LTS
+# kernel: Linux 7.0.0-38-generic
+# gpu: NVIDIA GeForce RTX 4090, cc 8.9, 128 SMs, 24106 MiB, PCI 0000:09:00.0
+# cuda driver api: 13.3, cuda runtime: 13.4
+# nvidia-smi driver: 610.43.02
+# clocks (sm, mem, max sm, max mem, MHz): 2685 MHz, 10251 MHz, 3105 MHz, 10501 MHz
+# power limit, temperature at start: 450.00 W, 39
+ops,pairs,hand_params_mean_ms,hand_params_min_ms,hand_imm_mean_ms,hand_imm_min_ms,fkl_mean_ms,fkl_min_ms,fkl_over_hand_params,fkl_bitexact,hand_imm_bitexact,fkl_prep_mean_ms,fkl_prep_min_ms,fkl_total_mean_ms,hand_params_prep_mean_ms,hand_params_prep_min_ms,hand_params_total_mean_ms,hand_imm_prep_mean_ms,hand_imm_prep_min_ms,hand_imm_total_mean_ms,hand_params_kernel_mean_ms,hand_params_kernel_min_ms,hand_imm_kernel_mean_ms,hand_imm_kernel_min_ms,fkl_kernel_mean_ms,fkl_kernel_min_ms
+2,1,0.0204899196,0.0194559991,0.0203606397,0.0194559991,0.0204118397,0.0194559991,0.996189349,1,1,3.8e-05,2e-05,0.0204498397,8.24e-05,2e-05,0.0205723196,3.82e-05,2e-05,0.0203988397,0.0204905595,0.0204799995,0.0205023995,0.0204799995,0.0204799995,0.0204799995
+102,51,0.0266774399,0.0255999994,0.0264559998,0.0255999994,0.0259043196,0.0254079998,0.971019699,1,1,3.84e-05,3e-05,0.0259427196,3.79e-05,2e-05,0.0267153399,3.8e-05,2e-05,0.0264939998,0.0273113601,0.0266239997,0.02729408,0.0266239997,0.0266239997,0.0266239997
+1002,501,0.116304322,0.115712002,0.116222721,0.115712002,0.115207682,0.114688002,0.990570942,1,1,3.8e-05,2e-05,0.115245682,3.75e-05,2e-05,0.116341822,3.73e-05,3e-05,0.116260021,0.117046721,0.116736002,0.116976962,0.116736002,0.115873922,0.115712002
+5002,2501,0.528439349,0.520192027,0.521904008,0.520192027,0.524891523,0.519168019,0.993286218,1,1,3.93e-05,3e-05,0.524930823,3.83e-05,3e-05,0.528477649,3.849e-05,2e-05,0.521942498,0.522001258,0.520192027,0.522007339,0.520192027,0.521226264,0.519168019
+10002,5001,1.04328799,1.02707195,1.07203903,1.02707195,1.08068125,1.02604795,1.03584174,1,1,3.89e-05,2e-05,1.08072015,3.85e-05,3e-05,1.04332649,3.8e-05,3e-05,1.07207703,1.02919453,1.02707195,1.02899388,1.02707195,1.02750876,1.02521598
+19902,9951,2.21251552,2.07667208,2.2003792,2.08076811,2.17188223,2.06950402,0.981634797,1,1,3.9e-05,3e-05,2.17192123,3.88e-05,3e-05,2.21255432,3.79e-05,2e-05,2.2004171,2.09914272,2.07564807,2.10156224,2.07782412,2.09826271,2.07052803

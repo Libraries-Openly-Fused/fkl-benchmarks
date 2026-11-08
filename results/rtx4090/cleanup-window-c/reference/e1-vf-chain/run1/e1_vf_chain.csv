@@ -1,0 +1,25 @@
+# experiment: E1a hand-written MAD chain vs FKL (4096x2160 uchar -> float)
+# notes: thread fusion: off (fk::TF::DISABLED, the default); input: seeded uint8 noise (std::mt19937_64 seed 20261030); alpha 1.0, c 0.54; 32x8 threads per block (the block FKL picks); 100 timed iterations after one warm-up; *_bitexact = bit-identical to hand_params
+# repo: fkl-benchmarks a5dd9fa54210f60d0b631ce34508e95c86c387ce
+# fkl: 64ad9195cd785d0c93a70b35e02d5a6c7c4a5048
+# cvGPUSpeedup: 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c
+# FastNPP: a1b5e245d7dd70fba23dcb51a0aea80495dbc61d
+# nvcc: 13.4.92 (/home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/nvcc), architectures 89, -fmad on, -lineinfo off
+# hip: none (none), architectures none
+# host compiler: GNU 15.2.0, Release, -march=native, -ftemplate-depth=1000
+# opencv: none
+# cpu: AMD Ryzen 9 5950X 16-Core Processor
+# os: Ubuntu 26.04.1 LTS
+# kernel: Linux 7.0.0-38-generic
+# gpu: NVIDIA GeForce RTX 4090, cc 8.9, 128 SMs, 24106 MiB, PCI 0000:09:00.0
+# cuda driver api: 13.3, cuda runtime: 13.4
+# nvidia-smi driver: 610.43.02
+# clocks (sm, mem, max sm, max mem, MHz): 2550 MHz, 10251 MHz, 3105 MHz, 10501 MHz
+# power limit, temperature at start: 450.00 W, 40
+ops,pairs,hand_params_mean_ms,hand_params_min_ms,hand_imm_mean_ms,hand_imm_min_ms,fkl_mean_ms,fkl_min_ms,fkl_over_hand_params,fkl_bitexact,hand_imm_bitexact
+2,1,0.0214134398,0.0204799995,0.0213897598,0.0204799995,0.0211910398,0.0204799995,0.989614002,1,1
+102,51,0.02794496,0.0275519993,0.02780256,0.0273599997,0.0269103999,0.0265280008,0.96297865,1,1
+1002,501,0.121962558,0.120832004,0.121803198,0.120832004,0.120427522,0.119808003,0.987413876,1,1
+5002,2501,0.547868477,0.545791984,0.549172485,0.548735976,0.548049918,0.547743976,1.00033118,1,1
+10002,5001,1.04669631,1.02905595,1.09328703,1.08953595,1.09337183,1.09260798,1.04459318,1,1
+19902,9951,2.20420991,2.08588791,2.22599905,2.20160007,2.22290304,2.19033599,1.00848065,1,1

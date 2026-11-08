@@ -1,0 +1,24 @@
+# experiment: E1b hand-written horizontal-fusion batch vs FKL (60x120 uchar crops -> float tensor)
+# notes: thread fusion: off (fk::TF::DISABLED, the default); source: seeded uint8 noise 3840x2160 (std::mt19937_64 seed 20261030), uploaded to each side's own image (hand-written kernels: cudaMallocPitch, crops are pointers into it; FKL: fk::Ptr2D, crops are crop2D views), crop i at (i, i); cast, *1.0, -1.0, /3.2; 32x8 threads per block (the block FKL launches for a crop); GPU columns: CUDA events around one launch of prepared arguments, 100 timed iterations after one warm-up; *_prep_*: host time (steady_clock) of building and releasing the arguments of one launch (hand: the crop pointers; hand_generic: the crop descriptors; fkl: all its operations, the crop views and the read included, the read copied once into the tuple that holds them; iterated: the same with one read and one write per crop), done before every launch because the crops may move, outside the GPU interval; *_total_mean_ms = GPU mean + preparation mean; *_kernel_*: the same launches with a GPU spin of 5000 us (no memory access) enqueued before the start event, so that the launches are queued when the GPU reaches the start event: the kernels without the host's dispatch (iterated: with many crops the launch queue can fill before the spin ends, so some dispatch may remain); *_bitexact = same bytes as hand_batch
+# repo: fkl-benchmarks 1a2535cf090893bebc82714a410be8c300dde916
+# fkl: 64ad9195cd785d0c93a70b35e02d5a6c7c4a5048
+# cvGPUSpeedup: 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c
+# FastNPP: a1b5e245d7dd70fba23dcb51a0aea80495dbc61d
+# nvcc: 13.4.92 (/home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/nvcc), architectures 89, -fmad on, -lineinfo off
+# hip: none (none), architectures none
+# host compiler: GNU 15.2.0, Release, -march=native, -ftemplate-depth=1000
+# opencv: none
+# cpu: AMD Ryzen 9 5950X 16-Core Processor
+# os: Ubuntu 26.04.1 LTS
+# kernel: Linux 7.0.0-38-generic
+# gpu: NVIDIA GeForce RTX 4090, cc 8.9, 128 SMs, 24106 MiB, PCI 0000:09:00.0
+# cuda driver api: 13.3, cuda runtime: 13.4
+# nvidia-smi driver: 610.43.02
+# clocks (sm, mem, max sm, max mem, MHz): 2685 MHz, 10251 MHz, 3105 MHz, 10501 MHz
+# power limit, temperature at start: 450.00 W, 41
+batch,hand_mean_ms,hand_min_ms,fkl_mean_ms,fkl_min_ms,iterated_mean_ms,iterated_min_ms,fkl_over_hand,iterated_over_fkl,fkl_bitexact,iterated_bitexact,hand_generic_mean_ms,hand_generic_min_ms,fkl_over_hand_generic,hand_generic_bitexact,hand_param_bytes,hand_generic_param_bytes,hand_prep_mean_ms,hand_prep_min_ms,hand_total_mean_ms,hand_generic_prep_mean_ms,hand_generic_prep_min_ms,hand_generic_total_mean_ms,fkl_prep_mean_ms,fkl_prep_min_ms,fkl_total_mean_ms,iterated_prep_mean_ms,iterated_prep_min_ms,iterated_total_mean_ms,hand_kernel_mean_ms,hand_kernel_min_ms,hand_generic_kernel_mean_ms,hand_generic_kernel_min_ms,fkl_kernel_mean_ms,fkl_kernel_min_ms,iterated_kernel_mean_ms,iterated_kernel_min_ms
+1,0.00303104008,0.00204799999,0.00285536007,0.00204799999,0.00319232007,0.00227200007,0.942039694,1.11800964,1,1,0.00293568007,0.00204799999,0.972640068,1,8,24,3.76e-05,2e-05,0.00306864008,3.76e-05,3e-05,0.00297328007,7.55e-05,6e-05,0.00293086007,7.23e-05,6e-05,0.00326462007,0.00222624002,0.00204799999,0.00222496002,0.00204799999,0.00224256002,0.00204799999,0.00307200011,0.00307200011
+51,0.00419359997,0.00371200009,0.00425151998,0.00380799989,0.0865388788,0.0829439983,1.01381152,20.3548094,1,1,0.00422751999,0.00380799989,1.00567709,1,408,1224,4.82e-05,3e-05,0.00424179997,6.67e-05,5e-05,0.00429421999,0.00065349,0.00063,0.00490500998,0.0006401,0.00061,0.0871789788,0.00408575999,0.00307200011,0.00409599999,0.00409599999,0.00409599999,0.00409599999,0.0815827186,0.0808959976
+201,0.00734816006,0.00681600021,0.00763584003,0.0071680001,0.327383362,0.322560012,1.03914993,42.8745705,1,1,0.00792800004,0.0071680001,0.963148335,1,1608,4824,8.13e-05,7e-05,0.00742946006,0.0001557,0.00014,0.00808370004,0.00234017,0.00226,0.00997601003,0.0022462,0.00218,0.329629562,0.0071686401,0.0071680001,0.00724384006,0.0071680001,0.0071683201,0.0071680001,0.319087356,0.318464011
+601,0.0155702399,0.0151359998,0.0173376001,0.016384,0.969056321,0.96153599,1.11350887,55.8933367,1,1,0.0177392001,0.01712,0.977360874,1,4808,14424,0.0001662,0.00015,0.0157364399,0.0003869,0.00037,0.0181261001,0.00781019,0.00766,0.0251477901,0.00784799,0.00765,0.976904311,0.0153628796,0.0153599996,0.0170742401,0.016384,0.01638656,0.016384,0.954527041,0.951520026
+1191,0.0281152001,0.0275519993,0.0320915198,0.0307199992,1.91840032,1.90668797,1.14142954,59.7790422,1,1,0.03275008,0.0317439996,0.979891343,1,9528,28584,0.0002916,0.00028,0.0284068001,0.00072909,0.00072,0.03347917,0.0158013,0.01546,0.0478928198,0.01552726,0.015249,1.93392758,0.0278873601,0.027648,0.0309827198,0.0307199992,0.0297040007,0.0296960007,1.88218817,1.87904
