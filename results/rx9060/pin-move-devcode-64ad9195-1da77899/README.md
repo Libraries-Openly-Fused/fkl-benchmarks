@@ -1,6 +1,6 @@
 # Device code of the HIP programs at the two pins, 64ad9195 and 1da77899
 
-The pin of `external/fkl` moves from 64ad9195 to 1da77899, the merge of FKL #431 into LTS-C++17 (2026-11-09). The move itself is in a separate pull request by the NVIDIA session. The RX 9060 results of `results/rx9060/` were measured at 64ad9195 or at earlier pins.
+The pin of `external/fkl` moves from 64ad9195 to 1da77899, the merge of FKL #431 into LTS-C++17 (2026-11-09). The move itself is fkl-benchmarks #42, by the NVIDIA session. The RX 9060 results of `results/rx9060/` were measured at 64ad9195 or at earlier pins.
 
 #431 is the NVIDIA session's port of main's image-processing DPPs to LTS-C++17, for CUDA and the CPU. It also changes three headers that the HIP programs include, as on main (see "FKL commits" below). One of them is `arithmetic.h`, in which `fk::Sub`, `fk::Mul` and `fk::Div` get a 4th template parameter that defaults to `fk::BinaryType`. So every kernel with one of them in its name has a new name at 1da77899.
 
@@ -41,7 +41,7 @@ The whole executables differ (`binaries-sha256.txt`). Their host code was not co
 
 `scripts/devcode_compare.py` pairs the functions of two builds by their mangled names, so it would see a renamed kernel as one function only at 64ad9195 and another only at 1da77899. `scripts/devcode_compare_renamed.py` pairs them by a key instead:
 1. Demangle the name and remove all whitespace.
-2. Remove `,fk::BinaryType` where it is the 4th top-level template argument of `fk::Sub`, `fk::Mul` or `fk::Div`. This is `drop_default`, the NVIDIA session's rule for its CUDA check of #431, copied verbatim from its code.
+2. Remove `,fk::BinaryType` where it is the 4th top-level template argument of `fk::Sub`, `fk::Mul` or `fk::Div`. This is `drop_default` of the NVIDIA session's CUDA check of #431 (`../../rtx4090/fkl-pr431-check/scripts-used/sass_identity.py`). It is the same code apart from docstrings, line breaks and the text of one exception: the syntax trees are equal once those are removed, and both give the same result for all 1,020 names of the two builds.
 3. Change nothing else in the name.
 
 A mangled name inside the instruction text would be replaced by its key in the same way. No instruction line holds one, in either build. After each program's line the script prints a `names:` line: the pairs, the renamed functions, the arguments removed in each build and the key collisions. A key collision makes the last line `DEVICE CODE DIFFERENCES`.
@@ -163,7 +163,7 @@ The result was checked in four more ways on the same two builds, each with its o
 
 ## Not covered here
 
-- **The CUDA programs.** The NVIDIA session compared their SASS on an RTX 4090 for #431 itself, with the kernels paired the same way. It built against 64ad9195 and against the branch head c6f7473, which has the tree of 1da77899. 1,790 of 1,790 kernels of 34 programs are identical (FKL #431's description, "SASS identity check").
+- **The CUDA programs.** The NVIDIA session compared their SASS on an RTX 4090 for #431 itself, with the kernels paired the same way. It built against 64ad9195 and against the branch head c6f7473, which has the tree of 1da77899. 1,790 of 1,790 kernels of 34 programs are identical, and 1,221 of them are renamed (`../../rtx4090/fkl-pr431-check/`).
 - **The CPU builds.** Their results are kept in the repository only.
 - **The host code** of the executables, apart from the names and strings listed above.
 - **Run times.** Nothing was run.

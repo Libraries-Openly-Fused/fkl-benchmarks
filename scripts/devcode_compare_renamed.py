@@ -4,8 +4,8 @@
 # the merge of FKL #431, whose arithmetic.h gives fk::Sub, fk::Mul and fk::Div a 4th template parameter IT = BinaryType: every kernel with
 # one of them in its name gets a new mangled name. Results: results/rx9060/pin-move-devcode-64ad9195-1da77899/. The changes:
 #   - the key of a function is its name demangled (llvm-cxxfilt of --llvm), with all whitespace removed and ",fk::BinaryType" removed where it
-#     is the 4th top-level template argument of fk::Sub, fk::Mul or fk::Div (drop_default below: the NVIDIA session's rule from the
-#     sass_identity.py of its CUDA check of #431, copied verbatim); nothing else in the name changes. The functions of A and B are paired by that key.
+#     is the 4th top-level template argument of fk::Sub, fk::Mul or fk::Div (drop_default below: the code of the NVIDIA session's CUDA
+#     check of #431, results/rtx4090/fkl-pr431-check/scripts-used/sass_identity.py, apart from docstrings, line breaks and an exception text); nothing else in the name changes. The functions of A and B are paired by that key.
 #   - a mangled name inside the instruction text (after the comments are removed) is replaced by its key in the same way before the text is
 #     hashed; the lines that held one are counted.
 #   - key collisions (two different names of one code object, or of one side of a multi-bundle executable, with the same key) are counted and
@@ -60,7 +60,7 @@ PART = re.compile(r'^co\d+\.o$')
 MANGLED = re.compile(r'(?<![A-Za-z0-9_.$])_Z[A-Za-z0-9_.$]+')   # an Itanium mangled name inside the instruction text
 WHITESPACE = re.compile(r'\s+')
 
-# ---- the NVIDIA session's normalisation, verbatim from the sass_identity.py of its CUDA check of #431 ----
+# ---- the NVIDIA session's normalisation (results/rtx4090/fkl-pr431-check/scripts-used/sass_identity.py), in a compact form ----
 TEMPLATES = ("fk::Sub<", "fk::Mul<", "fk::Div<")
 OPEN, CLOSE = "<({[", ">)}]"
 def top_level_args(s, start):
