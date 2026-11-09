@@ -7,7 +7,7 @@ Results of the CPU back-end of FKL (`ParArch::CPU` and `CPU_MULTITHREAD`) agains
 - Removed: the NV12 video pipeline (pipeline (b): the folders `e4b-nv12-portable/`, `e5-preprocessing-b/`, `e5-preprocessing-b-c8fcbe8/` and `e5-preprocessing-b-c8fcbe8-repeats/`) is not in the paper.
   Its code and results are in the git history up to `341ecd1`, for example `git show 341ecd1:results/cpu-5800x3d/e5-preprocessing-b-c8fcbe8/README.md`.
 
-Pins: each folder names the FKL commit it was measured at. The pin of this repository was c8fcbe8 until 2026-11-07; since then it is 64ad9195, the final library version (c8fcbe8 plus #422, #426, #423 and #427; `../rtx4090/final-checks/README.md`). The device-code comparisons of c8fcbe8, 9e20bd4e and 64ad9195 (`../rtx4090/fkl-pr423-check/`, `../rtx4090/fkl-pr427-check/`) cover the CUDA programs on the RTX 4090 only, not the CPU builds of this folder.
+Pins: each folder names the FKL commit it was measured at. The pin of this repository was c8fcbe8 until 2026-11-07, then 64ad9195 (c8fcbe8 plus #422, #426, #423 and #427) until 2026-11-09; since then it is 1da77899, 64ad9195 plus #431, the image-processing DPPs (`../rtx4090/final-checks/README.md`). The device-code comparisons of c8fcbe8, 9e20bd4e, 64ad9195 and 1da77899 (`../rtx4090/fkl-pr423-check/`, `../rtx4090/fkl-pr427-check/`, `../rtx4090/fkl-pr431-check/`) cover the CUDA programs on the RTX 4090 only, not the CPU builds of this folder.
 
 ## Machine and software (read on 2026-11-01)
 
