@@ -1,0 +1,1921 @@
+(a) batch 10
+  RPP's other pinned parameter arrays are unchanged after its calls; RPP rewrote 246 of the 246 padding ROIs
+  fkl_fused vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.31323e-07, over 1e-4 0 ok
+  fkl_fused vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.39531e-07, over 1e-4 0 ok
+  fkl_fused_halfpixel vs scalar reference HALF_PIXEL [interior]: max 7.62939e-06, mean 6.3159e-07, over 1e-4 0 ok
+  fkl_fused_halfpixel vs scalar reference HALF_PIXEL [edge]: max 7.62939e-06, mean 5.99716e-07, over 1e-4 0 ok
+  fkl_perop_batch vs fkl_fused [interior]: max 7.62939e-06, mean 1.20447e-07, over 1e-4 0 ok
+  fkl_perop_batch vs fkl_fused [edge]: max 7.62939e-06, mean 1.22985e-07, over 1e-4 0 ok
+  rpp_crop_batch vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.34017e-07, over 1e-4 0 ok
+  rpp_crop_batch vs scalar reference HALF_PIXEL [edge]: max 120, mean 7.80881, over 1e-4 0.999825 (informational)
+  rpp_crop_batch vs fkl_fused_halfpixel [interior]: max 7.62939e-06, mean 8.8401e-07, over 1e-4 0 (informational)
+  rpp_crop_batch vs fkl_fused_halfpixel [edge]: max 120, mean 7.80881, over 1e-4 0.999825 (informational)
+  rpp_crop_batch_unsplit vs rpp_crop_batch [interior]: max 0, mean 0, over 1e-4 0 ok
+  rpp_crop_batch_unsplit vs rpp_crop_batch [edge]: max 0, mean 0, over 1e-4 0 ok
+  hand_batch vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.31323e-07, over 1e-4 0 ok
+  hand_batch vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.39531e-07, over 1e-4 0 ok
+  hand_batch vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_batch vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_batch vs fkl_fused: the whole tensors: bitwise equal
+  hand_padded vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.31323e-07, over 1e-4 0 ok
+  hand_padded vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.39531e-07, over 1e-4 0 ok
+  hand_padded vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_padded vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_padded vs fkl_fused: the whole tensors: bitwise equal
+  hand_roi vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.31323e-07, over 1e-4 0 ok
+  hand_roi vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.39531e-07, over 1e-4 0 ok
+  hand_roi vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi vs fkl_fused: the whole tensors: bitwise equal
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel [interior]: max 0, mean 0, over 1e-4 0 ok
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel [edge]: max 0, mean 0, over 1e-4 0 ok
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel: the whole tensors: bitwise equal
+  hand_roi_halfpixel_once vs scalar reference HALF_PIXEL [interior]: max 7.62939e-06, mean 6.3159e-07, over 1e-4 0 ok
+  hand_roi_halfpixel_once vs scalar reference HALF_PIXEL [edge]: max 7.62939e-06, mean 5.99716e-07, over 1e-4 0 ok
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel: the whole tensors: bitwise equal
+  fastrpp_shared vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.34017e-07, over 1e-4 0 ok
+  fastrpp_shared vs scalar reference HALF_PIXEL [edge]: max 1.90735e-06, mean 4.26768e-07, over 1e-4 0 ok
+  fastrpp_shared vs fkl_fused_halfpixel [interior]: max 7.62939e-06, mean 8.8401e-07, over 1e-4 0 ok
+  fastrpp_shared vs fkl_fused_halfpixel [edge]: max 7.62939e-06, mean 8.51343e-07, over 1e-4 0 ok
+  fastrpp_shared vs rpp_crop_batch [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared vs rpp_crop_batch [edge]: max 120, mean 7.80881, over 1e-4 0.999825 (informational)
+  fastrpp_crop_batch vs fastrpp_shared [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_crop_batch vs fastrpp_shared [edge]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.34017e-07, over 1e-4 0 ok
+  fastrpp_shared_once vs scalar reference HALF_PIXEL [edge]: max 1.90735e-06, mean 4.26768e-07, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared [edge]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared: the whole tensors: bitwise equal
+  fastrpp intermediate tensor: not written (one kernel)
+  fkl_fused: median 0.067601 ms (min 0.067601, max 0.067601; build 0.00041, compute 0.067191)
+  fkl_fused_halfpixel: median 0.03856 ms (min 0.03856, max 0.03856; build 0.00047, compute 0.03809)
+  fkl_perop_batch: median 0.06116 ms (min 0.06116, max 0.06116; build 0.00043, compute 0.06073)
+  rpp_crop_batch: median 0.1306 ms (min 0.1306, max 0.1306; build 0.05541, compute 0.07519)
+  rpp_crop_batch_unsplit: median 0.107941 ms (min 0.107941, max 0.107941; build nan, compute nan)
+  hand_batch: median 0.036361 ms (min 0.036361, max 0.036361; build 7e-05, compute 0.036291)
+  hand_padded: median 0.0371 ms (min 0.0371, max 0.0371; build 0.0001, compute 0.037)
+  hand_roi: median 0.067 ms (min 0.067, max 0.067; build 0.00011, compute 0.06689)
+  fkl_fused_halfpixel_once: median 0.03732 ms (min 0.03732, max 0.03732; build 6e-05, compute 0.03726)
+  hand_roi_halfpixel_once: median 0.03401 ms (min 0.03401, max 0.03401; build 6e-05, compute 0.03395)
+  fastrpp_shared: median 0.03873 ms (min 0.03873, max 0.03873; build 0.00025, compute 0.03848)
+  fastrpp_crop_batch: median 0.09138 ms (min 0.09138, max 0.09138; build 0.05795, compute 0.03343)
+  fastrpp_shared_once: median 0.0373 ms (min 0.0373, max 0.0373; build 8e-05, compute 0.03722)
+(a) batch 20
+  RPP's other pinned parameter arrays are unchanged after its calls; RPP rewrote 236 of the 236 padding ROIs
+  fkl_fused vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.32742e-07, over 1e-4 0 ok
+  fkl_fused vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.36782e-07, over 1e-4 0 ok
+  fkl_fused_halfpixel vs scalar reference HALF_PIXEL [interior]: max 7.62939e-06, mean 6.33645e-07, over 1e-4 0 ok
+  fkl_fused_halfpixel vs scalar reference HALF_PIXEL [edge]: max 7.62939e-06, mean 6.0841e-07, over 1e-4 0 ok
+  fkl_perop_batch vs fkl_fused [interior]: max 7.62939e-06, mean 1.21259e-07, over 1e-4 0 ok
+  fkl_perop_batch vs fkl_fused [edge]: max 7.62939e-06, mean 1.25927e-07, over 1e-4 0 ok
+  rpp_crop_batch vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.34623e-07, over 1e-4 0 ok
+  rpp_crop_batch vs scalar reference HALF_PIXEL [edge]: max 120, mean 7.83717, over 1e-4 0.999737 (informational)
+  rpp_crop_batch vs fkl_fused_halfpixel [interior]: max 7.62939e-06, mean 8.86929e-07, over 1e-4 0 (informational)
+  rpp_crop_batch vs fkl_fused_halfpixel [edge]: max 120, mean 7.83717, over 1e-4 0.999737 (informational)
+  rpp_crop_batch_unsplit vs rpp_crop_batch [interior]: max 0, mean 0, over 1e-4 0 ok
+  rpp_crop_batch_unsplit vs rpp_crop_batch [edge]: max 0, mean 0, over 1e-4 0 ok
+  hand_batch vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.32742e-07, over 1e-4 0 ok
+  hand_batch vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.36782e-07, over 1e-4 0 ok
+  hand_batch vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_batch vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_batch vs fkl_fused: the whole tensors: bitwise equal
+  hand_padded vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.32742e-07, over 1e-4 0 ok
+  hand_padded vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.36782e-07, over 1e-4 0 ok
+  hand_padded vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_padded vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_padded vs fkl_fused: the whole tensors: bitwise equal
+  hand_roi vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.32742e-07, over 1e-4 0 ok
+  hand_roi vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.36782e-07, over 1e-4 0 ok
+  hand_roi vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi vs fkl_fused: the whole tensors: bitwise equal
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel [interior]: max 0, mean 0, over 1e-4 0 ok
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel [edge]: max 0, mean 0, over 1e-4 0 ok
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel: the whole tensors: bitwise equal
+  hand_roi_halfpixel_once vs scalar reference HALF_PIXEL [interior]: max 7.62939e-06, mean 6.33645e-07, over 1e-4 0 ok
+  hand_roi_halfpixel_once vs scalar reference HALF_PIXEL [edge]: max 7.62939e-06, mean 6.0841e-07, over 1e-4 0 ok
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel: the whole tensors: bitwise equal
+  fastrpp_shared vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.34623e-07, over 1e-4 0 ok
+  fastrpp_shared vs scalar reference HALF_PIXEL [edge]: max 1.90735e-06, mean 4.28879e-07, over 1e-4 0 ok
+  fastrpp_shared vs fkl_fused_halfpixel [interior]: max 7.62939e-06, mean 8.86929e-07, over 1e-4 0 ok
+  fastrpp_shared vs fkl_fused_halfpixel [edge]: max 7.62939e-06, mean 8.58678e-07, over 1e-4 0 ok
+  fastrpp_shared vs rpp_crop_batch [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared vs rpp_crop_batch [edge]: max 120, mean 7.83717, over 1e-4 0.999737 (informational)
+  fastrpp_crop_batch vs fastrpp_shared [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_crop_batch vs fastrpp_shared [edge]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.34623e-07, over 1e-4 0 ok
+  fastrpp_shared_once vs scalar reference HALF_PIXEL [edge]: max 1.90735e-06, mean 4.28879e-07, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared [edge]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared: the whole tensors: bitwise equal
+  fastrpp intermediate tensor: not written (one kernel)
+  fkl_fused_halfpixel: median 0.042831 ms (min 0.042831, max 0.042831; build 0.00091, compute 0.041921)
+  fkl_perop_batch: median 0.102791 ms (min 0.102791, max 0.102791; build 0.00089, compute 0.101901)
+  rpp_crop_batch: median 0.181551 ms (min 0.181551, max 0.181551; build 0.085181, compute 0.09637)
+  rpp_crop_batch_unsplit: median 0.175531 ms (min 0.175531, max 0.175531; build nan, compute nan)
+  hand_batch: median 0.04095 ms (min 0.04095, max 0.04095; build 9e-05, compute 0.04086)
+  hand_padded: median 0.03819 ms (min 0.03819, max 0.03819; build 8e-05, compute 0.03811)
+  hand_roi: median 0.06965 ms (min 0.06965, max 0.06965; build 0.00013, compute 0.06952)
+  fkl_fused_halfpixel_once: median 0.04174 ms (min 0.04174, max 0.04174; build 4e-05, compute 0.0417)
+  hand_roi_halfpixel_once: median 0.07038 ms (min 0.07038, max 0.07038; build 5e-05, compute 0.07033)
+  fastrpp_shared: median 0.052021 ms (min 0.052021, max 0.052021; build 0.00034, compute 0.051681)
+  fastrpp_crop_batch: median 0.138551 ms (min 0.138551, max 0.138551; build 0.095251, compute 0.0433)
+  fastrpp_shared_once: median 0.069891 ms (min 0.069891, max 0.069891; build 5e-05, compute 0.069841)
+  fkl_fused: median 0.04185 ms (min 0.04185, max 0.04185; build 0.0009, compute 0.04095)
+(a) batch 30
+  RPP's other pinned parameter arrays are unchanged after its calls; RPP rewrote 226 of the 226 padding ROIs
+  fkl_fused vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.34057e-07, over 1e-4 0 ok
+  fkl_fused vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.29773e-07, over 1e-4 0 ok
+  fkl_fused_halfpixel vs scalar reference HALF_PIXEL [interior]: max 7.62939e-06, mean 6.34091e-07, over 1e-4 0 ok
+  fkl_fused_halfpixel vs scalar reference HALF_PIXEL [edge]: max 7.62939e-06, mean 6.12163e-07, over 1e-4 0 ok
+  fkl_perop_batch vs fkl_fused [interior]: max 7.62939e-06, mean 1.21343e-07, over 1e-4 0 ok
+  fkl_perop_batch vs fkl_fused [edge]: max 7.62939e-06, mean 1.28037e-07, over 1e-4 0 ok
+  rpp_crop_batch vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.34693e-07, over 1e-4 0 ok
+  rpp_crop_batch vs scalar reference HALF_PIXEL [edge]: max 120, mean 7.86064, over 1e-4 0.999825 (informational)
+  rpp_crop_batch vs fkl_fused_halfpixel [interior]: max 7.62939e-06, mean 8.88369e-07, over 1e-4 0 (informational)
+  rpp_crop_batch vs fkl_fused_halfpixel [edge]: max 120, mean 7.86064, over 1e-4 0.999825 (informational)
+  rpp_crop_batch_unsplit vs rpp_crop_batch [interior]: max 0, mean 0, over 1e-4 0 ok
+  rpp_crop_batch_unsplit vs rpp_crop_batch [edge]: max 0, mean 0, over 1e-4 0 ok
+  hand_batch vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.34057e-07, over 1e-4 0 ok
+  hand_batch vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.29773e-07, over 1e-4 0 ok
+  hand_batch vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_batch vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_batch vs fkl_fused: the whole tensors: bitwise equal
+  hand_padded vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.34057e-07, over 1e-4 0 ok
+  hand_padded vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.29773e-07, over 1e-4 0 ok
+  hand_padded vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_padded vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_padded vs fkl_fused: the whole tensors: bitwise equal
+  hand_roi vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.34057e-07, over 1e-4 0 ok
+  hand_roi vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.29773e-07, over 1e-4 0 ok
+  hand_roi vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi vs fkl_fused: the whole tensors: bitwise equal
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel [interior]: max 0, mean 0, over 1e-4 0 ok
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel [edge]: max 0, mean 0, over 1e-4 0 ok
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel: the whole tensors: bitwise equal
+  hand_roi_halfpixel_once vs scalar reference HALF_PIXEL [interior]: max 7.62939e-06, mean 6.34091e-07, over 1e-4 0 ok
+  hand_roi_halfpixel_once vs scalar reference HALF_PIXEL [edge]: max 7.62939e-06, mean 6.12163e-07, over 1e-4 0 ok
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel: the whole tensors: bitwise equal
+  fastrpp_shared vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.34693e-07, over 1e-4 0 ok
+  fastrpp_shared vs scalar reference HALF_PIXEL [edge]: max 1.90735e-06, mean 4.28827e-07, over 1e-4 0 ok
+  fastrpp_shared vs fkl_fused_halfpixel [interior]: max 7.62939e-06, mean 8.88369e-07, over 1e-4 0 ok
+  fastrpp_shared vs fkl_fused_halfpixel [edge]: max 7.62939e-06, mean 8.61742e-07, over 1e-4 0 ok
+  fastrpp_shared vs rpp_crop_batch [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared vs rpp_crop_batch [edge]: max 120, mean 7.86064, over 1e-4 0.999825 (informational)
+  fastrpp_crop_batch vs fastrpp_shared [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_crop_batch vs fastrpp_shared [edge]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.34693e-07, over 1e-4 0 ok
+  fastrpp_shared_once vs scalar reference HALF_PIXEL [edge]: max 1.90735e-06, mean 4.28827e-07, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared [edge]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared: the whole tensors: bitwise equal
+  fastrpp intermediate tensor: not written (one kernel)
+  fkl_perop_batch: median 0.09579 ms (min 0.09579, max 0.09579; build 0.0013, compute 0.09449)
+  rpp_crop_batch: median 0.248141 ms (min 0.248141, max 0.248141; build 0.14087, compute 0.107271)
+  rpp_crop_batch_unsplit: median 0.197081 ms (min 0.197081, max 0.197081; build nan, compute nan)
+  hand_batch: median 0.070851 ms (min 0.070851, max 0.070851; build 9e-05, compute 0.070761)
+  hand_padded: median 0.04527 ms (min 0.04527, max 0.04527; build 0.0001, compute 0.04517)
+  hand_roi: median 0.071171 ms (min 0.071171, max 0.071171; build 0.00017, compute 0.071001)
+  fkl_fused_halfpixel_once: median 0.046071 ms (min 0.046071, max 0.046071; build 4e-05, compute 0.046031)
+  hand_roi_halfpixel_once: median 0.07001 ms (min 0.07001, max 0.07001; build 6e-05, compute 0.06995)
+  fastrpp_shared: median 0.07123 ms (min 0.07123, max 0.07123; build 0.00046, compute 0.07077)
+  fastrpp_crop_batch: median 0.174071 ms (min 0.174071, max 0.174071; build 0.12597, compute 0.048101)
+  fastrpp_shared_once: median 0.07602 ms (min 0.07602, max 0.07602; build 9e-05, compute 0.07593)
+  fkl_fused: median 0.048761 ms (min 0.048761, max 0.048761; build 0.0013, compute 0.047461)
+  fkl_fused_halfpixel: median 0.04849 ms (min 0.04849, max 0.04849; build 0.00121, compute 0.04728)
+(a) batch 40
+  RPP's other pinned parameter arrays are unchanged after its calls; RPP rewrote 216 of the 216 padding ROIs
+  fkl_fused vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.33722e-07, over 1e-4 0 ok
+  fkl_fused vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.28637e-07, over 1e-4 0 ok
+  fkl_fused_halfpixel vs scalar reference HALF_PIXEL [interior]: max 7.62939e-06, mean 6.33048e-07, over 1e-4 0 ok
+  fkl_fused_halfpixel vs scalar reference HALF_PIXEL [edge]: max 7.62939e-06, mean 6.15447e-07, over 1e-4 0 ok
+  fkl_perop_batch vs fkl_fused [interior]: max 7.62939e-06, mean 1.2188e-07, over 1e-4 0 ok
+  fkl_perop_batch vs fkl_fused [edge]: max 7.62939e-06, mean 1.28768e-07, over 1e-4 0 ok
+  rpp_crop_batch vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.35067e-07, over 1e-4 0 ok
+  rpp_crop_batch vs scalar reference HALF_PIXEL [edge]: max 120, mean 7.9175, over 1e-4 0.999737 (informational)
+  rpp_crop_batch vs fkl_fused_halfpixel [interior]: max 7.62939e-06, mean 8.8809e-07, over 1e-4 0 (informational)
+  rpp_crop_batch vs fkl_fused_halfpixel [edge]: max 120, mean 7.9175, over 1e-4 0.999737 (informational)
+  rpp_crop_batch_unsplit vs rpp_crop_batch [interior]: max 0, mean 0, over 1e-4 0 ok
+  rpp_crop_batch_unsplit vs rpp_crop_batch [edge]: max 0, mean 0, over 1e-4 0 ok
+  hand_batch vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.33722e-07, over 1e-4 0 ok
+  hand_batch vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.28637e-07, over 1e-4 0 ok
+  hand_batch vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_batch vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_batch vs fkl_fused: the whole tensors: bitwise equal
+  hand_padded vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.33722e-07, over 1e-4 0 ok
+  hand_padded vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.28637e-07, over 1e-4 0 ok
+  hand_padded vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_padded vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_padded vs fkl_fused: the whole tensors: bitwise equal
+  hand_roi vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.33722e-07, over 1e-4 0 ok
+  hand_roi vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.28637e-07, over 1e-4 0 ok
+  hand_roi vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi vs fkl_fused: the whole tensors: bitwise equal
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel [interior]: max 0, mean 0, over 1e-4 0 ok
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel [edge]: max 0, mean 0, over 1e-4 0 ok
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel: the whole tensors: bitwise equal
+  hand_roi_halfpixel_once vs scalar reference HALF_PIXEL [interior]: max 7.62939e-06, mean 6.33048e-07, over 1e-4 0 ok
+  hand_roi_halfpixel_once vs scalar reference HALF_PIXEL [edge]: max 7.62939e-06, mean 6.15447e-07, over 1e-4 0 ok
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel: the whole tensors: bitwise equal
+  fastrpp_shared vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.35067e-07, over 1e-4 0 ok
+  fastrpp_shared vs scalar reference HALF_PIXEL [edge]: max 1.90735e-06, mean 4.27406e-07, over 1e-4 0 ok
+  fastrpp_shared vs fkl_fused_halfpixel [interior]: max 7.62939e-06, mean 8.8809e-07, over 1e-4 0 ok
+  fastrpp_shared vs fkl_fused_halfpixel [edge]: max 7.62939e-06, mean 8.64949e-07, over 1e-4 0 ok
+  fastrpp_shared vs rpp_crop_batch [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared vs rpp_crop_batch [edge]: max 120, mean 7.9175, over 1e-4 0.999737 (informational)
+  fastrpp_crop_batch vs fastrpp_shared [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_crop_batch vs fastrpp_shared [edge]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.35067e-07, over 1e-4 0 ok
+  fastrpp_shared_once vs scalar reference HALF_PIXEL [edge]: max 1.90735e-06, mean 4.27406e-07, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared [edge]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared: the whole tensors: bitwise equal
+  fastrpp intermediate tensor: not written (one kernel)
+  rpp_crop_batch: median 0.264622 ms (min 0.264622, max 0.264622; build 0.145611, compute 0.119011)
+  rpp_crop_batch_unsplit: median 0.237432 ms (min 0.237432, max 0.237432; build nan, compute nan)
+  hand_batch: median 0.07001 ms (min 0.07001, max 0.07001; build 0.00011, compute 0.0699)
+  hand_padded: median 0.07093 ms (min 0.07093, max 0.07093; build 0.00013, compute 0.0708)
+  hand_roi: median 0.0499 ms (min 0.0499, max 0.0499; build 0.00023, compute 0.04967)
+  fkl_fused_halfpixel_once: median 0.070481 ms (min 0.070481, max 0.070481; build 4e-05, compute 0.070441)
+  hand_roi_halfpixel_once: median 0.075731 ms (min 0.075731, max 0.075731; build 6e-05, compute 0.075671)
+  fastrpp_shared: median 0.07511 ms (min 0.07511, max 0.07511; build 0.00059, compute 0.07452)
+  fastrpp_crop_batch: median 0.210401 ms (min 0.210401, max 0.210401; build 0.15731, compute 0.053091)
+  fastrpp_shared_once: median 0.074561 ms (min 0.074561, max 0.074561; build 5e-05, compute 0.074511)
+  fkl_fused: median 0.05006 ms (min 0.05006, max 0.05006; build 0.00152, compute 0.04854)
+  fkl_fused_halfpixel: median 0.050651 ms (min 0.050651, max 0.050651; build 0.00155, compute 0.049101)
+  fkl_perop_batch: median 0.111121 ms (min 0.111121, max 0.111121; build 0.00155, compute 0.109571)
+(a) batch 50
+  RPP's other pinned parameter arrays are unchanged after its calls; RPP rewrote 206 of the 206 padding ROIs
+  fkl_fused vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.33647e-07, over 1e-4 0 ok
+  fkl_fused vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.25738e-07, over 1e-4 0 ok
+  fkl_fused_halfpixel vs scalar reference HALF_PIXEL [interior]: max 7.62939e-06, mean 6.32947e-07, over 1e-4 0 ok
+  fkl_fused_halfpixel vs scalar reference HALF_PIXEL [edge]: max 7.62939e-06, mean 6.10125e-07, over 1e-4 0 ok
+  fkl_perop_batch vs fkl_fused [interior]: max 7.62939e-06, mean 1.22007e-07, over 1e-4 0 ok
+  fkl_perop_batch vs fkl_fused [edge]: max 7.62939e-06, mean 1.26834e-07, over 1e-4 0 ok
+  rpp_crop_batch vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.34963e-07, over 1e-4 0 ok
+  rpp_crop_batch vs scalar reference HALF_PIXEL [edge]: max 120, mean 7.87728, over 1e-4 0.999719 (informational)
+  rpp_crop_batch vs fkl_fused_halfpixel [interior]: max 7.62939e-06, mean 8.88163e-07, over 1e-4 0 (informational)
+  rpp_crop_batch vs fkl_fused_halfpixel [edge]: max 120, mean 7.87728, over 1e-4 0.999719 (informational)
+  rpp_crop_batch_unsplit vs rpp_crop_batch [interior]: max 0, mean 0, over 1e-4 0 ok
+  rpp_crop_batch_unsplit vs rpp_crop_batch [edge]: max 0, mean 0, over 1e-4 0 ok
+  hand_batch vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.33647e-07, over 1e-4 0 ok
+  hand_batch vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.25738e-07, over 1e-4 0 ok
+  hand_batch vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_batch vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_batch vs fkl_fused: the whole tensors: bitwise equal
+  hand_padded vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.33647e-07, over 1e-4 0 ok
+  hand_padded vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.25738e-07, over 1e-4 0 ok
+  hand_padded vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_padded vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_padded vs fkl_fused: the whole tensors: bitwise equal
+  hand_roi vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.33647e-07, over 1e-4 0 ok
+  hand_roi vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.25738e-07, over 1e-4 0 ok
+  hand_roi vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi vs fkl_fused: the whole tensors: bitwise equal
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel [interior]: max 0, mean 0, over 1e-4 0 ok
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel [edge]: max 0, mean 0, over 1e-4 0 ok
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel: the whole tensors: bitwise equal
+  hand_roi_halfpixel_once vs scalar reference HALF_PIXEL [interior]: max 7.62939e-06, mean 6.32947e-07, over 1e-4 0 ok
+  hand_roi_halfpixel_once vs scalar reference HALF_PIXEL [edge]: max 7.62939e-06, mean 6.10125e-07, over 1e-4 0 ok
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel: the whole tensors: bitwise equal
+  fastrpp_shared vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.34963e-07, over 1e-4 0 ok
+  fastrpp_shared vs scalar reference HALF_PIXEL [edge]: max 1.90735e-06, mean 4.26308e-07, over 1e-4 0 ok
+  fastrpp_shared vs fkl_fused_halfpixel [interior]: max 7.62939e-06, mean 8.88163e-07, over 1e-4 0 ok
+  fastrpp_shared vs fkl_fused_halfpixel [edge]: max 7.62939e-06, mean 8.60438e-07, over 1e-4 0 ok
+  fastrpp_shared vs rpp_crop_batch [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared vs rpp_crop_batch [edge]: max 120, mean 7.87728, over 1e-4 0.999719 (informational)
+  fastrpp_crop_batch vs fastrpp_shared [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_crop_batch vs fastrpp_shared [edge]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.34963e-07, over 1e-4 0 ok
+  fastrpp_shared_once vs scalar reference HALF_PIXEL [edge]: max 1.90735e-06, mean 4.26308e-07, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared [edge]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared: the whole tensors: bitwise equal
+  fastrpp intermediate tensor: not written (one kernel)
+  rpp_crop_batch_unsplit: median 0.281581 ms (min 0.281581, max 0.281581; build nan, compute nan)
+  hand_batch: median 0.052051 ms (min 0.052051, max 0.052051; build 0.0001, compute 0.051951)
+  hand_padded: median 0.05236 ms (min 0.05236, max 0.05236; build 0.00014, compute 0.05222)
+  hand_roi: median 0.08005 ms (min 0.08005, max 0.08005; build 0.00024, compute 0.07981)
+  fkl_fused_halfpixel_once: median 0.053041 ms (min 0.053041, max 0.053041; build 4e-05, compute 0.053001)
+  hand_roi_halfpixel_once: median 0.078941 ms (min 0.078941, max 0.078941; build 6e-05, compute 0.078881)
+  fastrpp_shared: median 0.079411 ms (min 0.079411, max 0.079411; build 0.00069, compute 0.078721)
+  fastrpp_crop_batch: median 0.247702 ms (min 0.247702, max 0.247702; build 0.190341, compute 0.057361)
+  fastrpp_shared_once: median 0.05359 ms (min 0.05359, max 0.05359; build 7e-05, compute 0.05352)
+  fkl_fused: median 0.05465 ms (min 0.05465, max 0.05465; build 0.00198, compute 0.05267)
+  fkl_fused_halfpixel: median 0.08114 ms (min 0.08114, max 0.08114; build 0.00191, compute 0.07923)
+  fkl_perop_batch: median 0.130161 ms (min 0.130161, max 0.130161; build 0.001941, compute 0.12822)
+  rpp_crop_batch: median 0.305862 ms (min 0.305862, max 0.305862; build 0.175912, compute 0.12995)
+(a) batch 60
+  RPP's other pinned parameter arrays are unchanged after its calls; RPP rewrote 196 of the 196 padding ROIs
+  fkl_fused vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.34247e-07, over 1e-4 0 ok
+  fkl_fused vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.2732e-07, over 1e-4 0 ok
+  fkl_fused_halfpixel vs scalar reference HALF_PIXEL [interior]: max 7.62939e-06, mean 6.32864e-07, over 1e-4 0 ok
+  fkl_fused_halfpixel vs scalar reference HALF_PIXEL [edge]: max 7.62939e-06, mean 6.12979e-07, over 1e-4 0 ok
+  fkl_perop_batch vs fkl_fused [interior]: max 7.62939e-06, mean 1.22182e-07, over 1e-4 0 ok
+  fkl_perop_batch vs fkl_fused [edge]: max 7.62939e-06, mean 1.28012e-07, over 1e-4 0 ok
+  rpp_crop_batch vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.34894e-07, over 1e-4 0 ok
+  rpp_crop_batch vs scalar reference HALF_PIXEL [edge]: max 120, mean 7.8609, over 1e-4 0.999708 (informational)
+  rpp_crop_batch vs fkl_fused_halfpixel [interior]: max 7.62939e-06, mean 8.88156e-07, over 1e-4 0 (informational)
+  rpp_crop_batch vs fkl_fused_halfpixel [edge]: max 120, mean 7.8609, over 1e-4 0.999708 (informational)
+  rpp_crop_batch_unsplit vs rpp_crop_batch [interior]: max 0, mean 0, over 1e-4 0 ok
+  rpp_crop_batch_unsplit vs rpp_crop_batch [edge]: max 0, mean 0, over 1e-4 0 ok
+  hand_batch vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.34247e-07, over 1e-4 0 ok
+  hand_batch vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.2732e-07, over 1e-4 0 ok
+  hand_batch vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_batch vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_batch vs fkl_fused: the whole tensors: bitwise equal
+  hand_padded vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.34247e-07, over 1e-4 0 ok
+  hand_padded vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.2732e-07, over 1e-4 0 ok
+  hand_padded vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_padded vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_padded vs fkl_fused: the whole tensors: bitwise equal
+  hand_roi vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.34247e-07, over 1e-4 0 ok
+  hand_roi vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.2732e-07, over 1e-4 0 ok
+  hand_roi vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi vs fkl_fused: the whole tensors: bitwise equal
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel [interior]: max 0, mean 0, over 1e-4 0 ok
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel [edge]: max 0, mean 0, over 1e-4 0 ok
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel: the whole tensors: bitwise equal
+  hand_roi_halfpixel_once vs scalar reference HALF_PIXEL [interior]: max 7.62939e-06, mean 6.32864e-07, over 1e-4 0 ok
+  hand_roi_halfpixel_once vs scalar reference HALF_PIXEL [edge]: max 7.62939e-06, mean 6.12979e-07, over 1e-4 0 ok
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel: the whole tensors: bitwise equal
+  fastrpp_shared vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.34894e-07, over 1e-4 0 ok
+  fastrpp_shared vs scalar reference HALF_PIXEL [edge]: max 1.90735e-06, mean 4.26056e-07, over 1e-4 0 ok
+  fastrpp_shared vs fkl_fused_halfpixel [interior]: max 7.62939e-06, mean 8.88156e-07, over 1e-4 0 ok
+  fastrpp_shared vs fkl_fused_halfpixel [edge]: max 7.62939e-06, mean 8.62232e-07, over 1e-4 0 ok
+  fastrpp_shared vs rpp_crop_batch [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared vs rpp_crop_batch [edge]: max 120, mean 7.8609, over 1e-4 0.999708 (informational)
+  fastrpp_crop_batch vs fastrpp_shared [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_crop_batch vs fastrpp_shared [edge]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.34894e-07, over 1e-4 0 ok
+  fastrpp_shared_once vs scalar reference HALF_PIXEL [edge]: max 1.90735e-06, mean 4.26056e-07, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared [edge]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared: the whole tensors: bitwise equal
+  fastrpp intermediate tensor: not written (one kernel)
+  hand_batch: median 0.05419 ms (min 0.05419, max 0.05419; build 0.00011, compute 0.05408)
+  hand_padded: median 0.081541 ms (min 0.081541, max 0.081541; build 0.00015, compute 0.081391)
+  hand_roi: median 0.056251 ms (min 0.056251, max 0.056251; build 0.00029, compute 0.055961)
+  fkl_fused_halfpixel_once: median 0.07904 ms (min 0.07904, max 0.07904; build 5e-05, compute 0.07899)
+  hand_roi_halfpixel_once: median 0.08193 ms (min 0.08193, max 0.08193; build 6e-05, compute 0.08187)
+  fastrpp_shared: median 0.058831 ms (min 0.058831, max 0.058831; build 0.00078, compute 0.058051)
+  fastrpp_crop_batch: median 0.283442 ms (min 0.283442, max 0.283442; build 0.223581, compute 0.059861)
+  fastrpp_shared_once: median 0.082051 ms (min 0.082051, max 0.082051; build 5e-05, compute 0.082001)
+  fkl_fused: median 0.05758 ms (min 0.05758, max 0.05758; build 0.00213, compute 0.05545)
+  fkl_fused_halfpixel: median 0.08497 ms (min 0.08497, max 0.08497; build 0.0022, compute 0.08277)
+  fkl_perop_batch: median 0.166751 ms (min 0.166751, max 0.166751; build 0.00223, compute 0.164521)
+  rpp_crop_batch: median 0.347442 ms (min 0.347442, max 0.347442; build 0.206161, compute 0.141281)
+  rpp_crop_batch_unsplit: median 0.323412 ms (min 0.323412, max 0.323412; build nan, compute nan)
+(a) batch 70
+  RPP's other pinned parameter arrays are unchanged after its calls; RPP rewrote 186 of the 186 padding ROIs
+  fkl_fused vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.34064e-07, over 1e-4 0 ok
+  fkl_fused vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.27098e-07, over 1e-4 0 ok
+  fkl_fused_halfpixel vs scalar reference HALF_PIXEL [interior]: max 7.62939e-06, mean 6.32715e-07, over 1e-4 0 ok
+  fkl_fused_halfpixel vs scalar reference HALF_PIXEL [edge]: max 7.62939e-06, mean 6.15137e-07, over 1e-4 0 ok
+  fkl_perop_batch vs fkl_fused [interior]: max 7.62939e-06, mean 1.22568e-07, over 1e-4 0 ok
+  fkl_perop_batch vs fkl_fused [edge]: max 7.62939e-06, mean 1.29606e-07, over 1e-4 0 ok
+  rpp_crop_batch vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.34409e-07, over 1e-4 0 ok
+  rpp_crop_batch vs scalar reference HALF_PIXEL [edge]: max 120, mean 7.84399, over 1e-4 0.999737 (informational)
+  rpp_crop_batch vs fkl_fused_halfpixel [interior]: max 7.62939e-06, mean 8.88093e-07, over 1e-4 0 (informational)
+  rpp_crop_batch vs fkl_fused_halfpixel [edge]: max 120, mean 7.84399, over 1e-4 0.999737 (informational)
+  rpp_crop_batch_unsplit vs rpp_crop_batch [interior]: max 0, mean 0, over 1e-4 0 ok
+  rpp_crop_batch_unsplit vs rpp_crop_batch [edge]: max 0, mean 0, over 1e-4 0 ok
+  hand_batch vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.34064e-07, over 1e-4 0 ok
+  hand_batch vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.27098e-07, over 1e-4 0 ok
+  hand_batch vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_batch vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_batch vs fkl_fused: the whole tensors: bitwise equal
+  hand_padded vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.34064e-07, over 1e-4 0 ok
+  hand_padded vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.27098e-07, over 1e-4 0 ok
+  hand_padded vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_padded vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_padded vs fkl_fused: the whole tensors: bitwise equal
+  hand_roi vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.34064e-07, over 1e-4 0 ok
+  hand_roi vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.27098e-07, over 1e-4 0 ok
+  hand_roi vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi vs fkl_fused: the whole tensors: bitwise equal
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel [interior]: max 0, mean 0, over 1e-4 0 ok
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel [edge]: max 0, mean 0, over 1e-4 0 ok
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel: the whole tensors: bitwise equal
+  hand_roi_halfpixel_once vs scalar reference HALF_PIXEL [interior]: max 7.62939e-06, mean 6.32715e-07, over 1e-4 0 ok
+  hand_roi_halfpixel_once vs scalar reference HALF_PIXEL [edge]: max 7.62939e-06, mean 6.15137e-07, over 1e-4 0 ok
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel: the whole tensors: bitwise equal
+  fastrpp_shared vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.34409e-07, over 1e-4 0 ok
+  fastrpp_shared vs scalar reference HALF_PIXEL [edge]: max 1.90735e-06, mean 4.26135e-07, over 1e-4 0 ok
+  fastrpp_shared vs fkl_fused_halfpixel [interior]: max 7.62939e-06, mean 8.88093e-07, over 1e-4 0 ok
+  fastrpp_shared vs fkl_fused_halfpixel [edge]: max 7.62939e-06, mean 8.6421e-07, over 1e-4 0 ok
+  fastrpp_shared vs rpp_crop_batch [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared vs rpp_crop_batch [edge]: max 120, mean 7.84399, over 1e-4 0.999737 (informational)
+  fastrpp_crop_batch vs fastrpp_shared [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_crop_batch vs fastrpp_shared [edge]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.34409e-07, over 1e-4 0 ok
+  fastrpp_shared_once vs scalar reference HALF_PIXEL [edge]: max 1.90735e-06, mean 4.26135e-07, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared [edge]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared: the whole tensors: bitwise equal
+  fastrpp intermediate tensor: not written (one kernel)
+  hand_padded: median 0.079511 ms (min 0.079511, max 0.079511; build 0.00015, compute 0.079361)
+  hand_roi: median 0.084741 ms (min 0.084741, max 0.084741; build 0.00029, compute 0.084451)
+  fkl_fused_halfpixel_once: median 0.06114 ms (min 0.06114, max 0.06114; build 5e-05, compute 0.06109)
+  hand_roi_halfpixel_once: median 0.08532 ms (min 0.08532, max 0.08532; build 5e-05, compute 0.08527)
+  fastrpp_shared: median 0.088551 ms (min 0.088551, max 0.088551; build 0.00093, compute 0.087621)
+  fastrpp_crop_batch: median 0.332312 ms (min 0.332312, max 0.332312; build 0.272472, compute 0.05984)
+  fastrpp_shared_once: median 0.08675 ms (min 0.08675, max 0.08675; build 5e-05, compute 0.0867)
+  fkl_fused: median 0.064101 ms (min 0.064101, max 0.064101; build 0.00374, compute 0.060361)
+  fkl_fused_halfpixel: median 0.088331 ms (min 0.088331, max 0.088331; build 0.00249, compute 0.085841)
+  fkl_perop_batch: median 0.159651 ms (min 0.159651, max 0.159651; build 0.00279, compute 0.156861)
+  rpp_crop_batch: median 0.417353 ms (min 0.417353, max 0.417353; build 0.261362, compute 0.155991)
+  rpp_crop_batch_unsplit: median 0.364863 ms (min 0.364863, max 0.364863; build nan, compute nan)
+  hand_batch: median 0.05738 ms (min 0.05738, max 0.05738; build 0.00012, compute 0.05726)
+(a) batch 80
+  RPP's other pinned parameter arrays are unchanged after its calls; RPP rewrote 176 of the 176 padding ROIs
+  fkl_fused vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.34504e-07, over 1e-4 0 ok
+  fkl_fused vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.27468e-07, over 1e-4 0 ok
+  fkl_fused_halfpixel vs scalar reference HALF_PIXEL [interior]: max 7.62939e-06, mean 6.33272e-07, over 1e-4 0 ok
+  fkl_fused_halfpixel vs scalar reference HALF_PIXEL [edge]: max 7.62939e-06, mean 6.13712e-07, over 1e-4 0 ok
+  fkl_perop_batch vs fkl_fused [interior]: max 7.62939e-06, mean 1.22486e-07, over 1e-4 0 ok
+  fkl_perop_batch vs fkl_fused [edge]: max 7.62939e-06, mean 1.29911e-07, over 1e-4 0 ok
+  rpp_crop_batch vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.34141e-07, over 1e-4 0 ok
+  rpp_crop_batch vs scalar reference HALF_PIXEL [edge]: max 120, mean 7.83769, over 1e-4 0.99977 (informational)
+  rpp_crop_batch vs fkl_fused_halfpixel [interior]: max 7.62939e-06, mean 8.88361e-07, over 1e-4 0 (informational)
+  rpp_crop_batch vs fkl_fused_halfpixel [edge]: max 120, mean 7.83769, over 1e-4 0.99977 (informational)
+  rpp_crop_batch_unsplit vs rpp_crop_batch [interior]: max 0, mean 0, over 1e-4 0 ok
+  rpp_crop_batch_unsplit vs rpp_crop_batch [edge]: max 0, mean 0, over 1e-4 0 ok
+  hand_batch vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.34504e-07, over 1e-4 0 ok
+  hand_batch vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.27468e-07, over 1e-4 0 ok
+  hand_batch vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_batch vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_batch vs fkl_fused: the whole tensors: bitwise equal
+  hand_padded vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.34504e-07, over 1e-4 0 ok
+  hand_padded vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.27468e-07, over 1e-4 0 ok
+  hand_padded vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_padded vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_padded vs fkl_fused: the whole tensors: bitwise equal
+  hand_roi vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.34504e-07, over 1e-4 0 ok
+  hand_roi vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.27468e-07, over 1e-4 0 ok
+  hand_roi vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi vs fkl_fused: the whole tensors: bitwise equal
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel [interior]: max 0, mean 0, over 1e-4 0 ok
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel [edge]: max 0, mean 0, over 1e-4 0 ok
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel: the whole tensors: bitwise equal
+  hand_roi_halfpixel_once vs scalar reference HALF_PIXEL [interior]: max 7.62939e-06, mean 6.33272e-07, over 1e-4 0 ok
+  hand_roi_halfpixel_once vs scalar reference HALF_PIXEL [edge]: max 7.62939e-06, mean 6.13712e-07, over 1e-4 0 ok
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel: the whole tensors: bitwise equal
+  fastrpp_shared vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.34141e-07, over 1e-4 0 ok
+  fastrpp_shared vs scalar reference HALF_PIXEL [edge]: max 1.90735e-06, mean 4.26084e-07, over 1e-4 0 ok
+  fastrpp_shared vs fkl_fused_halfpixel [interior]: max 7.62939e-06, mean 8.88361e-07, over 1e-4 0 ok
+  fastrpp_shared vs fkl_fused_halfpixel [edge]: max 7.62939e-06, mean 8.63593e-07, over 1e-4 0 ok
+  fastrpp_shared vs rpp_crop_batch [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared vs rpp_crop_batch [edge]: max 120, mean 7.83769, over 1e-4 0.99977 (informational)
+  fastrpp_crop_batch vs fastrpp_shared [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_crop_batch vs fastrpp_shared [edge]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.34141e-07, over 1e-4 0 ok
+  fastrpp_shared_once vs scalar reference HALF_PIXEL [edge]: max 1.90735e-06, mean 4.26084e-07, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared [edge]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared: the whole tensors: bitwise equal
+  fastrpp intermediate tensor: not written (one kernel)
+  hand_roi: median 0.08796 ms (min 0.08796, max 0.08796; build 0.00035, compute 0.08761)
+  fkl_fused_halfpixel_once: median 0.062801 ms (min 0.062801, max 0.062801; build 4e-05, compute 0.062761)
+  hand_roi_halfpixel_once: median 0.06366 ms (min 0.06366, max 0.06366; build 6e-05, compute 0.0636)
+  fastrpp_shared: median 0.066541 ms (min 0.066541, max 0.066541; build 0.00132, compute 0.065221)
+  fastrpp_crop_batch: median 0.386333 ms (min 0.386333, max 0.386333; build 0.316563, compute 0.06977)
+  fastrpp_shared_once: median 0.091861 ms (min 0.091861, max 0.091861; build 5e-05, compute 0.091811)
+  fkl_fused: median 0.091401 ms (min 0.091401, max 0.091401; build 0.00304, compute 0.088361)
+  fkl_fused_halfpixel: median 0.091441 ms (min 0.091441, max 0.091441; build 0.00298, compute 0.088461)
+  fkl_perop_batch: median 0.195552 ms (min 0.195552, max 0.195552; build 0.00294, compute 0.192612)
+  rpp_crop_batch: median 0.431483 ms (min 0.431483, max 0.431483; build 0.264042, compute 0.167441)
+  rpp_crop_batch_unsplit: median 0.410343 ms (min 0.410343, max 0.410343; build nan, compute nan)
+  hand_batch: median 0.085781 ms (min 0.085781, max 0.085781; build 0.0001, compute 0.085681)
+  hand_padded: median 0.06145 ms (min 0.06145, max 0.06145; build 0.00013, compute 0.06132)
+(a) batch 90
+  RPP's other pinned parameter arrays are unchanged after its calls; RPP rewrote 166 of the 166 padding ROIs
+  fkl_fused vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.34436e-07, over 1e-4 0 ok
+  fkl_fused vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.26636e-07, over 1e-4 0 ok
+  fkl_fused_halfpixel vs scalar reference HALF_PIXEL [interior]: max 7.62939e-06, mean 6.3316e-07, over 1e-4 0 ok
+  fkl_fused_halfpixel vs scalar reference HALF_PIXEL [edge]: max 7.62939e-06, mean 6.15787e-07, over 1e-4 0 ok
+  fkl_perop_batch vs fkl_fused [interior]: max 7.62939e-06, mean 1.22406e-07, over 1e-4 0 ok
+  fkl_perop_batch vs fkl_fused [edge]: max 7.62939e-06, mean 1.29882e-07, over 1e-4 0 ok
+  rpp_crop_batch vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.34004e-07, over 1e-4 0 ok
+  rpp_crop_batch vs scalar reference HALF_PIXEL [edge]: max 120, mean 7.83414, over 1e-4 0.999786 (informational)
+  rpp_crop_batch vs fkl_fused_halfpixel [interior]: max 7.62939e-06, mean 8.88103e-07, over 1e-4 0 (informational)
+  rpp_crop_batch vs fkl_fused_halfpixel [edge]: max 120, mean 7.83414, over 1e-4 0.999786 (informational)
+  rpp_crop_batch_unsplit vs rpp_crop_batch [interior]: max 0, mean 0, over 1e-4 0 ok
+  rpp_crop_batch_unsplit vs rpp_crop_batch [edge]: max 0, mean 0, over 1e-4 0 ok
+  hand_batch vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.34436e-07, over 1e-4 0 ok
+  hand_batch vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.26636e-07, over 1e-4 0 ok
+  hand_batch vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_batch vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_batch vs fkl_fused: the whole tensors: bitwise equal
+  hand_padded vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.34436e-07, over 1e-4 0 ok
+  hand_padded vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.26636e-07, over 1e-4 0 ok
+  hand_padded vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_padded vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_padded vs fkl_fused: the whole tensors: bitwise equal
+  hand_roi vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.34436e-07, over 1e-4 0 ok
+  hand_roi vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.26636e-07, over 1e-4 0 ok
+  hand_roi vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi vs fkl_fused: the whole tensors: bitwise equal
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel [interior]: max 0, mean 0, over 1e-4 0 ok
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel [edge]: max 0, mean 0, over 1e-4 0 ok
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel: the whole tensors: bitwise equal
+  hand_roi_halfpixel_once vs scalar reference HALF_PIXEL [interior]: max 7.62939e-06, mean 6.3316e-07, over 1e-4 0 ok
+  hand_roi_halfpixel_once vs scalar reference HALF_PIXEL [edge]: max 7.62939e-06, mean 6.15787e-07, over 1e-4 0 ok
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel: the whole tensors: bitwise equal
+  fastrpp_shared vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.34004e-07, over 1e-4 0 ok
+  fastrpp_shared vs scalar reference HALF_PIXEL [edge]: max 1.90735e-06, mean 4.25786e-07, over 1e-4 0 ok
+  fastrpp_shared vs fkl_fused_halfpixel [interior]: max 7.62939e-06, mean 8.88103e-07, over 1e-4 0 ok
+  fastrpp_shared vs fkl_fused_halfpixel [edge]: max 7.62939e-06, mean 8.65685e-07, over 1e-4 0 ok
+  fastrpp_shared vs rpp_crop_batch [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared vs rpp_crop_batch [edge]: max 120, mean 7.83414, over 1e-4 0.999786 (informational)
+  fastrpp_crop_batch vs fastrpp_shared [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_crop_batch vs fastrpp_shared [edge]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.34004e-07, over 1e-4 0 ok
+  fastrpp_shared_once vs scalar reference HALF_PIXEL [edge]: max 1.90735e-06, mean 4.25786e-07, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared [edge]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared: the whole tensors: bitwise equal
+  fastrpp intermediate tensor: not written (one kernel)
+  fkl_fused_halfpixel_once: median 0.089291 ms (min 0.089291, max 0.089291; build 5e-05, compute 0.089241)
+  hand_roi_halfpixel_once: median 0.0659 ms (min 0.0659, max 0.0659; build 9e-05, compute 0.06581)
+  fastrpp_shared: median 0.071001 ms (min 0.071001, max 0.071001; build 0.00149, compute 0.069511)
+  fastrpp_crop_batch: median 0.375212 ms (min 0.375212, max 0.375212; build 0.307732, compute 0.06748)
+  fastrpp_shared_once: median 0.095371 ms (min 0.095371, max 0.095371; build 7e-05, compute 0.095301)
+  fkl_fused: median 0.070371 ms (min 0.070371, max 0.070371; build 0.00322, compute 0.067151)
+  fkl_fused_halfpixel: median 0.07001 ms (min 0.07001, max 0.07001; build 0.00366, compute 0.06635)
+  fkl_perop_batch: median 0.192921 ms (min 0.192921, max 0.192921; build 0.00334, compute 0.189581)
+  rpp_crop_batch: median 0.480213 ms (min 0.480213, max 0.480213; build 0.300002, compute 0.180211)
+  rpp_crop_batch_unsplit: median 0.450482 ms (min 0.450482, max 0.450482; build nan, compute nan)
+  hand_batch: median 0.063 ms (min 0.063, max 0.063; build 0.00011, compute 0.06289)
+  hand_padded: median 0.064391 ms (min 0.064391, max 0.064391; build 0.00014, compute 0.064251)
+  hand_roi: median 0.06553 ms (min 0.06553, max 0.06553; build 0.00038, compute 0.06515)
+(a) batch 100
+  RPP's other pinned parameter arrays are unchanged after its calls; RPP rewrote 156 of the 156 padding ROIs
+  fkl_fused vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.34527e-07, over 1e-4 0 ok
+  fkl_fused vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.26166e-07, over 1e-4 0 ok
+  fkl_fused_halfpixel vs scalar reference HALF_PIXEL [interior]: max 7.62939e-06, mean 6.33402e-07, over 1e-4 0 ok
+  fkl_fused_halfpixel vs scalar reference HALF_PIXEL [edge]: max 7.62939e-06, mean 6.18609e-07, over 1e-4 0 ok
+  fkl_perop_batch vs fkl_fused [interior]: max 7.62939e-06, mean 1.222e-07, over 1e-4 0 ok
+  fkl_perop_batch vs fkl_fused [edge]: max 7.62939e-06, mean 1.28865e-07, over 1e-4 0 ok
+  rpp_crop_batch vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.33863e-07, over 1e-4 0 ok
+  rpp_crop_batch vs scalar reference HALF_PIXEL [edge]: max 120, mean 7.84157, over 1e-4 0.999798 (informational)
+  rpp_crop_batch vs fkl_fused_halfpixel [interior]: max 7.62939e-06, mean 8.88576e-07, over 1e-4 0 (informational)
+  rpp_crop_batch vs fkl_fused_halfpixel [edge]: max 120, mean 7.84157, over 1e-4 0.999798 (informational)
+  rpp_crop_batch_unsplit vs rpp_crop_batch [interior]: max 0, mean 0, over 1e-4 0 ok
+  rpp_crop_batch_unsplit vs rpp_crop_batch [edge]: max 0, mean 0, over 1e-4 0 ok
+  hand_batch vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.34527e-07, over 1e-4 0 ok
+  hand_batch vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.26166e-07, over 1e-4 0 ok
+  hand_batch vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_batch vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_batch vs fkl_fused: the whole tensors: bitwise equal
+  hand_padded vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.34527e-07, over 1e-4 0 ok
+  hand_padded vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.26166e-07, over 1e-4 0 ok
+  hand_padded vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_padded vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_padded vs fkl_fused: the whole tensors: bitwise equal
+  hand_roi vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.34527e-07, over 1e-4 0 ok
+  hand_roi vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.26166e-07, over 1e-4 0 ok
+  hand_roi vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi vs fkl_fused: the whole tensors: bitwise equal
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel [interior]: max 0, mean 0, over 1e-4 0 ok
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel [edge]: max 0, mean 0, over 1e-4 0 ok
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel: the whole tensors: bitwise equal
+  hand_roi_halfpixel_once vs scalar reference HALF_PIXEL [interior]: max 7.62939e-06, mean 6.33402e-07, over 1e-4 0 ok
+  hand_roi_halfpixel_once vs scalar reference HALF_PIXEL [edge]: max 7.62939e-06, mean 6.18609e-07, over 1e-4 0 ok
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel: the whole tensors: bitwise equal
+  fastrpp_shared vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.33863e-07, over 1e-4 0 ok
+  fastrpp_shared vs scalar reference HALF_PIXEL [edge]: max 1.90735e-06, mean 4.25431e-07, over 1e-4 0 ok
+  fastrpp_shared vs fkl_fused_halfpixel [interior]: max 7.62939e-06, mean 8.88576e-07, over 1e-4 0 ok
+  fastrpp_shared vs fkl_fused_halfpixel [edge]: max 7.62939e-06, mean 8.67905e-07, over 1e-4 0 ok
+  fastrpp_shared vs rpp_crop_batch [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared vs rpp_crop_batch [edge]: max 120, mean 7.84157, over 1e-4 0.999798 (informational)
+  fastrpp_crop_batch vs fastrpp_shared [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_crop_batch vs fastrpp_shared [edge]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.33863e-07, over 1e-4 0 ok
+  fastrpp_shared_once vs scalar reference HALF_PIXEL [edge]: max 1.90735e-06, mean 4.25431e-07, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared [edge]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared: the whole tensors: bitwise equal
+  fastrpp intermediate tensor: not written (one kernel)
+  hand_roi_halfpixel_once: median 0.09499 ms (min 0.09499, max 0.09499; build 0.00011, compute 0.09488)
+  fastrpp_shared: median 0.10032 ms (min 0.10032, max 0.10032; build 0.0016, compute 0.09872)
+  fastrpp_crop_batch: median 0.429703 ms (min 0.429703, max 0.429703; build 0.353002, compute 0.076701)
+  fastrpp_shared_once: median 0.098721 ms (min 0.098721, max 0.098721; build 8e-05, compute 0.098641)
+  fkl_fused: median 0.098511 ms (min 0.098511, max 0.098511; build 0.00388, compute 0.094631)
+  fkl_fused_halfpixel: median 0.074331 ms (min 0.074331, max 0.074331; build 0.00387, compute 0.070461)
+  fkl_perop_batch: median 0.209401 ms (min 0.209401, max 0.209401; build 0.00457, compute 0.204831)
+  rpp_crop_batch: median 0.546324 ms (min 0.546324, max 0.546324; build 0.354483, compute 0.191841)
+  rpp_crop_batch_unsplit: median 0.494834 ms (min 0.494834, max 0.494834; build nan, compute nan)
+  hand_batch: median 0.06677 ms (min 0.06677, max 0.06677; build 0.0002, compute 0.06657)
+  hand_padded: median 0.06762 ms (min 0.06762, max 0.06762; build 0.00014, compute 0.06748)
+  hand_roi: median 0.09462 ms (min 0.09462, max 0.09462; build 0.00037, compute 0.09425)
+  fkl_fused_halfpixel_once: median 0.070371 ms (min 0.070371, max 0.070371; build 6e-05, compute 0.070311)
+(a) batch 110
+  RPP's other pinned parameter arrays are unchanged after its calls; RPP rewrote 146 of the 146 padding ROIs
+  fkl_fused vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.34246e-07, over 1e-4 0 ok
+  fkl_fused vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.2505e-07, over 1e-4 0 ok
+  fkl_fused_halfpixel vs scalar reference HALF_PIXEL [interior]: max 7.62939e-06, mean 6.33258e-07, over 1e-4 0 ok
+  fkl_fused_halfpixel vs scalar reference HALF_PIXEL [edge]: max 7.62939e-06, mean 6.15132e-07, over 1e-4 0 ok
+  fkl_perop_batch vs fkl_fused [interior]: max 7.62939e-06, mean 1.22068e-07, over 1e-4 0 ok
+  fkl_perop_batch vs fkl_fused [edge]: max 7.62939e-06, mean 1.28095e-07, over 1e-4 0 ok
+  rpp_crop_batch vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.33558e-07, over 1e-4 0 ok
+  rpp_crop_batch vs scalar reference HALF_PIXEL [edge]: max 120, mean 7.82792, over 1e-4 0.999793 (informational)
+  rpp_crop_batch vs fkl_fused_halfpixel [interior]: max 7.62939e-06, mean 8.88239e-07, over 1e-4 0 (informational)
+  rpp_crop_batch vs fkl_fused_halfpixel [edge]: max 120, mean 7.82792, over 1e-4 0.999793 (informational)
+  rpp_crop_batch_unsplit vs rpp_crop_batch [interior]: max 0, mean 0, over 1e-4 0 ok
+  rpp_crop_batch_unsplit vs rpp_crop_batch [edge]: max 0, mean 0, over 1e-4 0 ok
+  hand_batch vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.34246e-07, over 1e-4 0 ok
+  hand_batch vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.2505e-07, over 1e-4 0 ok
+  hand_batch vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_batch vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_batch vs fkl_fused: the whole tensors: bitwise equal
+  hand_padded vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.34246e-07, over 1e-4 0 ok
+  hand_padded vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.2505e-07, over 1e-4 0 ok
+  hand_padded vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_padded vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_padded vs fkl_fused: the whole tensors: bitwise equal
+  hand_roi vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.34246e-07, over 1e-4 0 ok
+  hand_roi vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.2505e-07, over 1e-4 0 ok
+  hand_roi vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi vs fkl_fused: the whole tensors: bitwise equal
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel [interior]: max 0, mean 0, over 1e-4 0 ok
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel [edge]: max 0, mean 0, over 1e-4 0 ok
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel: the whole tensors: bitwise equal
+  hand_roi_halfpixel_once vs scalar reference HALF_PIXEL [interior]: max 7.62939e-06, mean 6.33258e-07, over 1e-4 0 ok
+  hand_roi_halfpixel_once vs scalar reference HALF_PIXEL [edge]: max 7.62939e-06, mean 6.15132e-07, over 1e-4 0 ok
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel: the whole tensors: bitwise equal
+  fastrpp_shared vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.33558e-07, over 1e-4 0 ok
+  fastrpp_shared vs scalar reference HALF_PIXEL [edge]: max 1.90735e-06, mean 4.25343e-07, over 1e-4 0 ok
+  fastrpp_shared vs fkl_fused_halfpixel [interior]: max 7.62939e-06, mean 8.88239e-07, over 1e-4 0 ok
+  fastrpp_shared vs fkl_fused_halfpixel [edge]: max 7.62939e-06, mean 8.6564e-07, over 1e-4 0 ok
+  fastrpp_shared vs rpp_crop_batch [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared vs rpp_crop_batch [edge]: max 120, mean 7.82792, over 1e-4 0.999793 (informational)
+  fastrpp_crop_batch vs fastrpp_shared [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_crop_batch vs fastrpp_shared [edge]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.33558e-07, over 1e-4 0 ok
+  fastrpp_shared_once vs scalar reference HALF_PIXEL [edge]: max 1.90735e-06, mean 4.25343e-07, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared [edge]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared: the whole tensors: bitwise equal
+  fastrpp intermediate tensor: not written (one kernel)
+  fastrpp_shared: median 0.104521 ms (min 0.104521, max 0.104521; build 0.00176, compute 0.102761)
+  fastrpp_crop_batch: median 0.447772 ms (min 0.447772, max 0.447772; build 0.370502, compute 0.07727)
+  fastrpp_shared_once: median 0.076231 ms (min 0.076231, max 0.076231; build 7e-05, compute 0.076161)
+  fkl_fused: median 0.0769 ms (min 0.0769, max 0.0769; build 0.00413, compute 0.07277)
+  fkl_fused_halfpixel: median 0.08113 ms (min 0.08113, max 0.08113; build 0.00467, compute 0.07646)
+  fkl_perop_batch: median 0.250602 ms (min 0.250602, max 0.250602; build 0.00474, compute 0.245862)
+  rpp_crop_batch: median 0.560853 ms (min 0.560853, max 0.560853; build 0.354382, compute 0.206471)
+  rpp_crop_batch_unsplit: median 0.540384 ms (min 0.540384, max 0.540384; build nan, compute nan)
+  hand_batch: median 0.06995 ms (min 0.06995, max 0.06995; build 0.00011, compute 0.06984)
+  hand_padded: median 0.09651 ms (min 0.09651, max 0.09651; build 0.00016, compute 0.09635)
+  hand_roi: median 0.072021 ms (min 0.072021, max 0.072021; build 0.00038, compute 0.071641)
+  fkl_fused_halfpixel_once: median 0.099921 ms (min 0.099921, max 0.099921; build 5e-05, compute 0.099871)
+  hand_roi_halfpixel_once: median 0.09833 ms (min 0.09833, max 0.09833; build 7e-05, compute 0.09826)
+(a) batch 120
+  RPP's other pinned parameter arrays are unchanged after its calls; RPP rewrote 136 of the 136 padding ROIs
+  fkl_fused vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.34163e-07, over 1e-4 0 ok
+  fkl_fused vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.22293e-07, over 1e-4 0 ok
+  fkl_fused_halfpixel vs scalar reference HALF_PIXEL [interior]: max 7.62939e-06, mean 6.32955e-07, over 1e-4 0 ok
+  fkl_fused_halfpixel vs scalar reference HALF_PIXEL [edge]: max 7.62939e-06, mean 6.15909e-07, over 1e-4 0 ok
+  fkl_perop_batch vs fkl_fused [interior]: max 7.62939e-06, mean 1.21914e-07, over 1e-4 0 ok
+  fkl_perop_batch vs fkl_fused [edge]: max 7.62939e-06, mean 1.27747e-07, over 1e-4 0 ok
+  rpp_crop_batch vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.33143e-07, over 1e-4 0 ok
+  rpp_crop_batch vs scalar reference HALF_PIXEL [edge]: max 120, mean 7.82766, over 1e-4 0.999803 (informational)
+  rpp_crop_batch vs fkl_fused_halfpixel [interior]: max 7.62939e-06, mean 8.87827e-07, over 1e-4 0 (informational)
+  rpp_crop_batch vs fkl_fused_halfpixel [edge]: max 120, mean 7.82766, over 1e-4 0.999803 (informational)
+  rpp_crop_batch_unsplit vs rpp_crop_batch [interior]: max 0, mean 0, over 1e-4 0 ok
+  rpp_crop_batch_unsplit vs rpp_crop_batch [edge]: max 0, mean 0, over 1e-4 0 ok
+  hand_batch vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.34163e-07, over 1e-4 0 ok
+  hand_batch vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.22293e-07, over 1e-4 0 ok
+  hand_batch vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_batch vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_batch vs fkl_fused: the whole tensors: bitwise equal
+  hand_padded vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.34163e-07, over 1e-4 0 ok
+  hand_padded vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.22293e-07, over 1e-4 0 ok
+  hand_padded vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_padded vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_padded vs fkl_fused: the whole tensors: bitwise equal
+  hand_roi vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.34163e-07, over 1e-4 0 ok
+  hand_roi vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.22293e-07, over 1e-4 0 ok
+  hand_roi vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi vs fkl_fused: the whole tensors: bitwise equal
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel [interior]: max 0, mean 0, over 1e-4 0 ok
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel [edge]: max 0, mean 0, over 1e-4 0 ok
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel: the whole tensors: bitwise equal
+  hand_roi_halfpixel_once vs scalar reference HALF_PIXEL [interior]: max 7.62939e-06, mean 6.32955e-07, over 1e-4 0 ok
+  hand_roi_halfpixel_once vs scalar reference HALF_PIXEL [edge]: max 7.62939e-06, mean 6.15909e-07, over 1e-4 0 ok
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel: the whole tensors: bitwise equal
+  fastrpp_shared vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.33143e-07, over 1e-4 0 ok
+  fastrpp_shared vs scalar reference HALF_PIXEL [edge]: max 1.90735e-06, mean 4.25429e-07, over 1e-4 0 ok
+  fastrpp_shared vs fkl_fused_halfpixel [interior]: max 7.62939e-06, mean 8.87827e-07, over 1e-4 0 ok
+  fastrpp_shared vs fkl_fused_halfpixel [edge]: max 7.62939e-06, mean 8.66176e-07, over 1e-4 0 ok
+  fastrpp_shared vs rpp_crop_batch [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared vs rpp_crop_batch [edge]: max 120, mean 7.82766, over 1e-4 0.999803 (informational)
+  fastrpp_crop_batch vs fastrpp_shared [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_crop_batch vs fastrpp_shared [edge]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.33143e-07, over 1e-4 0 ok
+  fastrpp_shared_once vs scalar reference HALF_PIXEL [edge]: max 1.90735e-06, mean 4.25429e-07, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared [edge]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared: the whole tensors: bitwise equal
+  fastrpp intermediate tensor: not written (one kernel)
+  fastrpp_crop_batch: median 0.483973 ms (min 0.483973, max 0.483973; build 0.402383, compute 0.08159)
+  fastrpp_shared_once: median 0.106701 ms (min 0.106701, max 0.106701; build 7e-05, compute 0.106631)
+  fkl_fused: median 0.105551 ms (min 0.105551, max 0.105551; build 0.00467, compute 0.100881)
+  fkl_fused_halfpixel: median 0.108881 ms (min 0.108881, max 0.108881; build 0.00524, compute 0.103641)
+  fkl_perop_batch: median 0.274312 ms (min 0.274312, max 0.274312; build 0.00519, compute 0.269122)
+  rpp_crop_batch: median 0.603154 ms (min 0.603154, max 0.603154; build 0.386083, compute 0.217071)
+  rpp_crop_batch_unsplit: median 0.578674 ms (min 0.578674, max 0.578674; build nan, compute nan)
+  hand_batch: median 0.09823 ms (min 0.09823, max 0.09823; build 0.0001, compute 0.09813)
+  hand_padded: median 0.100321 ms (min 0.100321, max 0.100321; build 0.00016, compute 0.100161)
+  hand_roi: median 0.100711 ms (min 0.100711, max 0.100711; build 0.0004, compute 0.100311)
+  fkl_fused_halfpixel_once: median 0.077421 ms (min 0.077421, max 0.077421; build 6e-05, compute 0.077361)
+  hand_roi_halfpixel_once: median 0.075941 ms (min 0.075941, max 0.075941; build 8e-05, compute 0.075861)
+  fastrpp_shared: median 0.1012 ms (min 0.1012, max 0.1012; build 0.00189, compute 0.09931)
+(a) batch 130
+  RPP's other pinned parameter arrays are unchanged after its calls; RPP rewrote 126 of the 126 padding ROIs
+  fkl_fused vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.34225e-07, over 1e-4 0 ok
+  fkl_fused vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.20576e-07, over 1e-4 0 ok
+  fkl_fused_halfpixel vs scalar reference HALF_PIXEL [interior]: max 7.62939e-06, mean 6.32702e-07, over 1e-4 0 ok
+  fkl_fused_halfpixel vs scalar reference HALF_PIXEL [edge]: max 7.62939e-06, mean 6.15896e-07, over 1e-4 0 ok
+  fkl_perop_batch vs fkl_fused [interior]: max 7.62939e-06, mean 1.21727e-07, over 1e-4 0 ok
+  fkl_perop_batch vs fkl_fused [edge]: max 7.62939e-06, mean 1.27145e-07, over 1e-4 0 ok
+  rpp_crop_batch vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.32994e-07, over 1e-4 0 ok
+  rpp_crop_batch vs scalar reference HALF_PIXEL [edge]: max 120, mean 7.83733, over 1e-4 0.999811 (informational)
+  rpp_crop_batch vs fkl_fused_halfpixel [interior]: max 7.62939e-06, mean 8.87504e-07, over 1e-4 0 (informational)
+  rpp_crop_batch vs fkl_fused_halfpixel [edge]: max 120, mean 7.83733, over 1e-4 0.999811 (informational)
+  rpp_crop_batch_unsplit vs rpp_crop_batch [interior]: max 0, mean 0, over 1e-4 0 ok
+  rpp_crop_batch_unsplit vs rpp_crop_batch [edge]: max 0, mean 0, over 1e-4 0 ok
+  hand_batch vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.34225e-07, over 1e-4 0 ok
+  hand_batch vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.20576e-07, over 1e-4 0 ok
+  hand_batch vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_batch vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_batch vs fkl_fused: the whole tensors: bitwise equal
+  hand_padded vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.34225e-07, over 1e-4 0 ok
+  hand_padded vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.20576e-07, over 1e-4 0 ok
+  hand_padded vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_padded vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_padded vs fkl_fused: the whole tensors: bitwise equal
+  hand_roi vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.34225e-07, over 1e-4 0 ok
+  hand_roi vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.20576e-07, over 1e-4 0 ok
+  hand_roi vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi vs fkl_fused: the whole tensors: bitwise equal
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel [interior]: max 0, mean 0, over 1e-4 0 ok
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel [edge]: max 0, mean 0, over 1e-4 0 ok
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel: the whole tensors: bitwise equal
+  hand_roi_halfpixel_once vs scalar reference HALF_PIXEL [interior]: max 7.62939e-06, mean 6.32702e-07, over 1e-4 0 ok
+  hand_roi_halfpixel_once vs scalar reference HALF_PIXEL [edge]: max 7.62939e-06, mean 6.15896e-07, over 1e-4 0 ok
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel: the whole tensors: bitwise equal
+  fastrpp_shared vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.32994e-07, over 1e-4 0 ok
+  fastrpp_shared vs scalar reference HALF_PIXEL [edge]: max 1.90735e-06, mean 4.25128e-07, over 1e-4 0 ok
+  fastrpp_shared vs fkl_fused_halfpixel [interior]: max 7.62939e-06, mean 8.87504e-07, over 1e-4 0 ok
+  fastrpp_shared vs fkl_fused_halfpixel [edge]: max 7.62939e-06, mean 8.64293e-07, over 1e-4 0 ok
+  fastrpp_shared vs rpp_crop_batch [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared vs rpp_crop_batch [edge]: max 120, mean 7.83733, over 1e-4 0.999811 (informational)
+  fastrpp_crop_batch vs fastrpp_shared [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_crop_batch vs fastrpp_shared [edge]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.32994e-07, over 1e-4 0 ok
+  fastrpp_shared_once vs scalar reference HALF_PIXEL [edge]: max 1.90735e-06, mean 4.25128e-07, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared [edge]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared: the whole tensors: bitwise equal
+  fastrpp intermediate tensor: not written (one kernel)
+  fastrpp_shared_once: median 0.08476 ms (min 0.08476, max 0.08476; build 6e-05, compute 0.0847)
+  fkl_fused: median 0.110991 ms (min 0.110991, max 0.110991; build 0.00556, compute 0.105431)
+  fkl_fused_halfpixel: median 0.10752 ms (min 0.10752, max 0.10752; build 0.0049, compute 0.10262)
+  fkl_perop_batch: median 0.303981 ms (min 0.303981, max 0.303981; build 0.00554, compute 0.298441)
+  rpp_crop_batch: median 0.649694 ms (min 0.649694, max 0.649694; build 0.417892, compute 0.231802)
+  rpp_crop_batch_unsplit: median 0.651894 ms (min 0.651894, max 0.651894; build nan, compute nan)
+  hand_batch: median 0.074621 ms (min 0.074621, max 0.074621; build 0.00014, compute 0.074481)
+  hand_padded: median 0.10424 ms (min 0.10424, max 0.10424; build 0.00015, compute 0.10409)
+  hand_roi: median 0.103751 ms (min 0.103751, max 0.103751; build 0.00043, compute 0.103321)
+  fkl_fused_halfpixel_once: median 0.10157 ms (min 0.10157, max 0.10157; build 6e-05, compute 0.10151)
+  hand_roi_halfpixel_once: median 0.10368 ms (min 0.10368, max 0.10368; build 5e-05, compute 0.10363)
+  fastrpp_shared: median 0.08515 ms (min 0.08515, max 0.08515; build 0.0018, compute 0.08335)
+  fastrpp_crop_batch: median 0.539873 ms (min 0.539873, max 0.539873; build 0.449393, compute 0.09048)
+(a) batch 140
+  RPP's other pinned parameter arrays are unchanged after its calls; RPP rewrote 116 of the 116 padding ROIs
+  fkl_fused vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.34237e-07, over 1e-4 0 ok
+  fkl_fused vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.21541e-07, over 1e-4 0 ok
+  fkl_fused_halfpixel vs scalar reference HALF_PIXEL [interior]: max 7.62939e-06, mean 6.32874e-07, over 1e-4 0 ok
+  fkl_fused_halfpixel vs scalar reference HALF_PIXEL [edge]: max 7.62939e-06, mean 6.1525e-07, over 1e-4 0 ok
+  fkl_perop_batch vs fkl_fused [interior]: max 7.62939e-06, mean 1.21464e-07, over 1e-4 0 ok
+  fkl_perop_batch vs fkl_fused [edge]: max 7.62939e-06, mean 1.27143e-07, over 1e-4 0 ok
+  rpp_crop_batch vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.32773e-07, over 1e-4 0 ok
+  rpp_crop_batch vs scalar reference HALF_PIXEL [edge]: max 120, mean 7.85468, over 1e-4 0.999818 (informational)
+  rpp_crop_batch vs fkl_fused_halfpixel [interior]: max 7.62939e-06, mean 8.87486e-07, over 1e-4 0 (informational)
+  rpp_crop_batch vs fkl_fused_halfpixel [edge]: max 120, mean 7.85468, over 1e-4 0.999818 (informational)
+  rpp_crop_batch_unsplit vs rpp_crop_batch [interior]: max 0, mean 0, over 1e-4 0 ok
+  rpp_crop_batch_unsplit vs rpp_crop_batch [edge]: max 0, mean 0, over 1e-4 0 ok
+  hand_batch vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.34237e-07, over 1e-4 0 ok
+  hand_batch vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.21541e-07, over 1e-4 0 ok
+  hand_batch vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_batch vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_batch vs fkl_fused: the whole tensors: bitwise equal
+  hand_padded vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.34237e-07, over 1e-4 0 ok
+  hand_padded vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.21541e-07, over 1e-4 0 ok
+  hand_padded vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_padded vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_padded vs fkl_fused: the whole tensors: bitwise equal
+  hand_roi vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.34237e-07, over 1e-4 0 ok
+  hand_roi vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.21541e-07, over 1e-4 0 ok
+  hand_roi vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi vs fkl_fused: the whole tensors: bitwise equal
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel [interior]: max 0, mean 0, over 1e-4 0 ok
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel [edge]: max 0, mean 0, over 1e-4 0 ok
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel: the whole tensors: bitwise equal
+  hand_roi_halfpixel_once vs scalar reference HALF_PIXEL [interior]: max 7.62939e-06, mean 6.32874e-07, over 1e-4 0 ok
+  hand_roi_halfpixel_once vs scalar reference HALF_PIXEL [edge]: max 7.62939e-06, mean 6.1525e-07, over 1e-4 0 ok
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel: the whole tensors: bitwise equal
+  fastrpp_shared vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.32773e-07, over 1e-4 0 ok
+  fastrpp_shared vs scalar reference HALF_PIXEL [edge]: max 1.90735e-06, mean 4.25094e-07, over 1e-4 0 ok
+  fastrpp_shared vs fkl_fused_halfpixel [interior]: max 7.62939e-06, mean 8.87486e-07, over 1e-4 0 ok
+  fastrpp_shared vs fkl_fused_halfpixel [edge]: max 7.62939e-06, mean 8.64201e-07, over 1e-4 0 ok
+  fastrpp_shared vs rpp_crop_batch [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared vs rpp_crop_batch [edge]: max 120, mean 7.85468, over 1e-4 0.999818 (informational)
+  fastrpp_crop_batch vs fastrpp_shared [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_crop_batch vs fastrpp_shared [edge]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.32773e-07, over 1e-4 0 ok
+  fastrpp_shared_once vs scalar reference HALF_PIXEL [edge]: max 1.90735e-06, mean 4.25094e-07, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared [edge]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared: the whole tensors: bitwise equal
+  fastrpp intermediate tensor: not written (one kernel)
+  fkl_fused: median 0.113811 ms (min 0.113811, max 0.113811; build 0.00534, compute 0.108471)
+  fkl_fused_halfpixel: median 0.117181 ms (min 0.117181, max 0.117181; build 0.00621, compute 0.110971)
+  fkl_perop_batch: median 0.296252 ms (min 0.296252, max 0.296252; build 0.00607, compute 0.290182)
+  rpp_crop_batch: median 0.718534 ms (min 0.718534, max 0.718534; build 0.467093, compute 0.251441)
+  rpp_crop_batch_unsplit: median 0.663154 ms (min 0.663154, max 0.663154; build nan, compute nan)
+  hand_batch: median 0.106791 ms (min 0.106791, max 0.106791; build 0.00014, compute 0.106651)
+  hand_padded: median 0.082191 ms (min 0.082191, max 0.082191; build 0.00018, compute 0.082011)
+  hand_roi: median 0.108141 ms (min 0.108141, max 0.108141; build 0.00051, compute 0.107631)
+  fkl_fused_halfpixel_once: median 0.111611 ms (min 0.111611, max 0.111611; build 6e-05, compute 0.111551)
+  hand_roi_halfpixel_once: median 0.10753 ms (min 0.10753, max 0.10753; build 7e-05, compute 0.10746)
+  fastrpp_shared: median 0.116521 ms (min 0.116521, max 0.116521; build 0.00192, compute 0.114601)
+  fastrpp_crop_batch: median 0.605613 ms (min 0.605613, max 0.605613; build 0.510983, compute 0.09463)
+  fastrpp_shared_once: median 0.089281 ms (min 0.089281, max 0.089281; build 6e-05, compute 0.089221)
+(a) batch 150
+  RPP's other pinned parameter arrays are unchanged after its calls; RPP rewrote 106 of the 106 padding ROIs
+  fkl_fused vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.33907e-07, over 1e-4 0 ok
+  fkl_fused vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.2265e-07, over 1e-4 0 ok
+  fkl_fused_halfpixel vs scalar reference HALF_PIXEL [interior]: max 7.62939e-06, mean 6.32513e-07, over 1e-4 0 ok
+  fkl_fused_halfpixel vs scalar reference HALF_PIXEL [edge]: max 7.62939e-06, mean 6.17387e-07, over 1e-4 0 ok
+  fkl_perop_batch vs fkl_fused [interior]: max 7.62939e-06, mean 1.21207e-07, over 1e-4 0 ok
+  fkl_perop_batch vs fkl_fused [edge]: max 7.62939e-06, mean 1.28334e-07, over 1e-4 0 ok
+  rpp_crop_batch vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.32739e-07, over 1e-4 0 ok
+  rpp_crop_batch vs scalar reference HALF_PIXEL [edge]: max 120.344, mean 7.83981, over 1e-4 0.999825 (informational)
+  rpp_crop_batch vs fkl_fused_halfpixel [interior]: max 7.62939e-06, mean 8.87097e-07, over 1e-4 0 (informational)
+  rpp_crop_batch vs fkl_fused_halfpixel [edge]: max 120.344, mean 7.83981, over 1e-4 0.999825 (informational)
+  rpp_crop_batch_unsplit vs rpp_crop_batch [interior]: max 0, mean 0, over 1e-4 0 ok
+  rpp_crop_batch_unsplit vs rpp_crop_batch [edge]: max 0, mean 0, over 1e-4 0 ok
+  hand_batch vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.33907e-07, over 1e-4 0 ok
+  hand_batch vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.2265e-07, over 1e-4 0 ok
+  hand_batch vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_batch vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_batch vs fkl_fused: the whole tensors: bitwise equal
+  hand_padded vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.33907e-07, over 1e-4 0 ok
+  hand_padded vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.2265e-07, over 1e-4 0 ok
+  hand_padded vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_padded vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_padded vs fkl_fused: the whole tensors: bitwise equal
+  hand_roi vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.33907e-07, over 1e-4 0 ok
+  hand_roi vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.2265e-07, over 1e-4 0 ok
+  hand_roi vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi vs fkl_fused: the whole tensors: bitwise equal
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel [interior]: max 0, mean 0, over 1e-4 0 ok
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel [edge]: max 0, mean 0, over 1e-4 0 ok
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel: the whole tensors: bitwise equal
+  hand_roi_halfpixel_once vs scalar reference HALF_PIXEL [interior]: max 7.62939e-06, mean 6.32513e-07, over 1e-4 0 ok
+  hand_roi_halfpixel_once vs scalar reference HALF_PIXEL [edge]: max 7.62939e-06, mean 6.17387e-07, over 1e-4 0 ok
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel: the whole tensors: bitwise equal
+  fastrpp_shared vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.32739e-07, over 1e-4 0 ok
+  fastrpp_shared vs scalar reference HALF_PIXEL [edge]: max 1.90735e-06, mean 4.25262e-07, over 1e-4 0 ok
+  fastrpp_shared vs fkl_fused_halfpixel [interior]: max 7.62939e-06, mean 8.87097e-07, over 1e-4 0 ok
+  fastrpp_shared vs fkl_fused_halfpixel [edge]: max 7.62939e-06, mean 8.66431e-07, over 1e-4 0 ok
+  fastrpp_shared vs rpp_crop_batch [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared vs rpp_crop_batch [edge]: max 120.344, mean 7.83981, over 1e-4 0.999825 (informational)
+  fastrpp_crop_batch vs fastrpp_shared [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_crop_batch vs fastrpp_shared [edge]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.32739e-07, over 1e-4 0 ok
+  fastrpp_shared_once vs scalar reference HALF_PIXEL [edge]: max 1.90735e-06, mean 4.25262e-07, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared [edge]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared: the whole tensors: bitwise equal
+  fastrpp intermediate tensor: not written (one kernel)
+  fkl_fused_halfpixel: median 0.11892 ms (min 0.11892, max 0.11892; build 0.00603, compute 0.11289)
+  fkl_perop_batch: median 0.310202 ms (min 0.310202, max 0.310202; build 0.00692, compute 0.303282)
+  rpp_crop_batch: median 0.763735 ms (min 0.763735, max 0.763735; build 0.499463, compute 0.264272)
+  rpp_crop_batch_unsplit: median 0.709614 ms (min 0.709614, max 0.709614; build nan, compute nan)
+  hand_batch: median 0.078691 ms (min 0.078691, max 0.078691; build 0.00013, compute 0.078561)
+  hand_padded: median 0.109011 ms (min 0.109011, max 0.109011; build 0.00016, compute 0.108851)
+  hand_roi: median 0.11107 ms (min 0.11107, max 0.11107; build 0.00049, compute 0.11058)
+  fkl_fused_halfpixel_once: median 0.08696 ms (min 0.08696, max 0.08696; build 6e-05, compute 0.0869)
+  hand_roi_halfpixel_once: median 0.10927 ms (min 0.10927, max 0.10927; build 6e-05, compute 0.10921)
+  fastrpp_shared: median 0.119351 ms (min 0.119351, max 0.119351; build 0.00208, compute 0.117271)
+  fastrpp_crop_batch: median 0.615784 ms (min 0.615784, max 0.615784; build 0.513483, compute 0.102301)
+  fastrpp_shared_once: median 0.10987 ms (min 0.10987, max 0.10987; build 6e-05, compute 0.10981)
+  fkl_fused: median 0.115961 ms (min 0.115961, max 0.115961; build 0.00611, compute 0.109851)
+(a) batch 160
+  RPP's other pinned parameter arrays are unchanged after its calls; RPP rewrote 96 of the 96 padding ROIs
+  fkl_fused vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.33812e-07, over 1e-4 0 ok
+  fkl_fused vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.21848e-07, over 1e-4 0 ok
+  fkl_fused_halfpixel vs scalar reference HALF_PIXEL [interior]: max 7.62939e-06, mean 6.32464e-07, over 1e-4 0 ok
+  fkl_fused_halfpixel vs scalar reference HALF_PIXEL [edge]: max 7.62939e-06, mean 6.16584e-07, over 1e-4 0 ok
+  fkl_perop_batch vs fkl_fused [interior]: max 7.62939e-06, mean 1.21235e-07, over 1e-4 0 ok
+  fkl_perop_batch vs fkl_fused [edge]: max 7.62939e-06, mean 1.28229e-07, over 1e-4 0 ok
+  rpp_crop_batch vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.3275e-07, over 1e-4 0 ok
+  rpp_crop_batch vs scalar reference HALF_PIXEL [edge]: max 120.344, mean 7.83645, over 1e-4 0.999819 (informational)
+  rpp_crop_batch vs fkl_fused_halfpixel [interior]: max 7.62939e-06, mean 8.8697e-07, over 1e-4 0 (informational)
+  rpp_crop_batch vs fkl_fused_halfpixel [edge]: max 120.344, mean 7.83645, over 1e-4 0.999819 (informational)
+  rpp_crop_batch_unsplit vs rpp_crop_batch [interior]: max 0, mean 0, over 1e-4 0 ok
+  rpp_crop_batch_unsplit vs rpp_crop_batch [edge]: max 0, mean 0, over 1e-4 0 ok
+  hand_batch vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.33812e-07, over 1e-4 0 ok
+  hand_batch vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.21848e-07, over 1e-4 0 ok
+  hand_batch vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_batch vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_batch vs fkl_fused: the whole tensors: bitwise equal
+  hand_padded vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.33812e-07, over 1e-4 0 ok
+  hand_padded vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.21848e-07, over 1e-4 0 ok
+  hand_padded vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_padded vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_padded vs fkl_fused: the whole tensors: bitwise equal
+  hand_roi vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.33812e-07, over 1e-4 0 ok
+  hand_roi vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.21848e-07, over 1e-4 0 ok
+  hand_roi vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi vs fkl_fused: the whole tensors: bitwise equal
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel [interior]: max 0, mean 0, over 1e-4 0 ok
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel [edge]: max 0, mean 0, over 1e-4 0 ok
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel: the whole tensors: bitwise equal
+  hand_roi_halfpixel_once vs scalar reference HALF_PIXEL [interior]: max 7.62939e-06, mean 6.32464e-07, over 1e-4 0 ok
+  hand_roi_halfpixel_once vs scalar reference HALF_PIXEL [edge]: max 7.62939e-06, mean 6.16584e-07, over 1e-4 0 ok
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel: the whole tensors: bitwise equal
+  fastrpp_shared vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.3275e-07, over 1e-4 0 ok
+  fastrpp_shared vs scalar reference HALF_PIXEL [edge]: max 1.90735e-06, mean 4.25142e-07, over 1e-4 0 ok
+  fastrpp_shared vs fkl_fused_halfpixel [interior]: max 7.62939e-06, mean 8.8697e-07, over 1e-4 0 ok
+  fastrpp_shared vs fkl_fused_halfpixel [edge]: max 7.62939e-06, mean 8.65163e-07, over 1e-4 0 ok
+  fastrpp_shared vs rpp_crop_batch [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared vs rpp_crop_batch [edge]: max 120.344, mean 7.83645, over 1e-4 0.999819 (informational)
+  fastrpp_crop_batch vs fastrpp_shared [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_crop_batch vs fastrpp_shared [edge]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.3275e-07, over 1e-4 0 ok
+  fastrpp_shared_once vs scalar reference HALF_PIXEL [edge]: max 1.90735e-06, mean 4.25142e-07, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared [edge]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared: the whole tensors: bitwise equal
+  fastrpp intermediate tensor: not written (one kernel)
+  fkl_perop_batch: median 0.325862 ms (min 0.325862, max 0.325862; build 0.00735, compute 0.318512)
+  rpp_crop_batch: median 0.816426 ms (min 0.816426, max 0.816426; build 0.540734, compute 0.275692)
+  rpp_crop_batch_unsplit: median 0.809205 ms (min 0.809205, max 0.809205; build nan, compute nan)
+  hand_batch: median 0.079681 ms (min 0.079681, max 0.079681; build 0.00014, compute 0.079541)
+  hand_padded: median 0.113611 ms (min 0.113611, max 0.113611; build 0.00019, compute 0.113421)
+  hand_roi: median 0.113561 ms (min 0.113561, max 0.113561; build 0.00058, compute 0.112981)
+  fkl_fused_halfpixel_once: median 0.115951 ms (min 0.115951, max 0.115951; build 6e-05, compute 0.115891)
+  hand_roi_halfpixel_once: median 0.088931 ms (min 0.088931, max 0.088931; build 7e-05, compute 0.088861)
+  fastrpp_shared: median 0.124811 ms (min 0.124811, max 0.124811; build 0.00246, compute 0.122351)
+  fastrpp_crop_batch: median 0.625444 ms (min 0.625444, max 0.625444; build 0.527594, compute 0.09785)
+  fastrpp_shared_once: median 0.0968 ms (min 0.0968, max 0.0968; build 6e-05, compute 0.09674)
+  fkl_fused: median 0.095881 ms (min 0.095881, max 0.095881; build 0.0065, compute 0.089381)
+  fkl_fused_halfpixel: median 0.09851 ms (min 0.09851, max 0.09851; build 0.00661, compute 0.0919)
+(a) batch 170
+  RPP's other pinned parameter arrays are unchanged after its calls; RPP rewrote 86 of the 86 padding ROIs
+  fkl_fused vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.3382e-07, over 1e-4 0 ok
+  fkl_fused vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.22672e-07, over 1e-4 0 ok
+  fkl_fused_halfpixel vs scalar reference HALF_PIXEL [interior]: max 7.62939e-06, mean 6.32574e-07, over 1e-4 0 ok
+  fkl_fused_halfpixel vs scalar reference HALF_PIXEL [edge]: max 7.62939e-06, mean 6.17749e-07, over 1e-4 0 ok
+  fkl_perop_batch vs fkl_fused [interior]: max 7.62939e-06, mean 1.21248e-07, over 1e-4 0 ok
+  fkl_perop_batch vs fkl_fused [edge]: max 7.62939e-06, mean 1.28468e-07, over 1e-4 0 ok
+  rpp_crop_batch vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.32866e-07, over 1e-4 0 ok
+  rpp_crop_batch vs scalar reference HALF_PIXEL [edge]: max 120.344, mean 7.8397, over 1e-4 0.999825 (informational)
+  rpp_crop_batch vs fkl_fused_halfpixel [interior]: max 7.62939e-06, mean 8.87052e-07, over 1e-4 0 (informational)
+  rpp_crop_batch vs fkl_fused_halfpixel [edge]: max 120.344, mean 7.8397, over 1e-4 0.999825 (informational)
+  rpp_crop_batch_unsplit vs rpp_crop_batch [interior]: max 0, mean 0, over 1e-4 0 ok
+  rpp_crop_batch_unsplit vs rpp_crop_batch [edge]: max 0, mean 0, over 1e-4 0 ok
+  hand_batch vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.3382e-07, over 1e-4 0 ok
+  hand_batch vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.22672e-07, over 1e-4 0 ok
+  hand_batch vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_batch vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_batch vs fkl_fused: the whole tensors: bitwise equal
+  hand_padded vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.3382e-07, over 1e-4 0 ok
+  hand_padded vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.22672e-07, over 1e-4 0 ok
+  hand_padded vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_padded vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_padded vs fkl_fused: the whole tensors: bitwise equal
+  hand_roi vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.3382e-07, over 1e-4 0 ok
+  hand_roi vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.22672e-07, over 1e-4 0 ok
+  hand_roi vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi vs fkl_fused: the whole tensors: bitwise equal
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel [interior]: max 0, mean 0, over 1e-4 0 ok
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel [edge]: max 0, mean 0, over 1e-4 0 ok
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel: the whole tensors: bitwise equal
+  hand_roi_halfpixel_once vs scalar reference HALF_PIXEL [interior]: max 7.62939e-06, mean 6.32574e-07, over 1e-4 0 ok
+  hand_roi_halfpixel_once vs scalar reference HALF_PIXEL [edge]: max 7.62939e-06, mean 6.17749e-07, over 1e-4 0 ok
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel: the whole tensors: bitwise equal
+  fastrpp_shared vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.32866e-07, over 1e-4 0 ok
+  fastrpp_shared vs scalar reference HALF_PIXEL [edge]: max 1.90735e-06, mean 4.2527e-07, over 1e-4 0 ok
+  fastrpp_shared vs fkl_fused_halfpixel [interior]: max 7.62939e-06, mean 8.87052e-07, over 1e-4 0 ok
+  fastrpp_shared vs fkl_fused_halfpixel [edge]: max 7.62939e-06, mean 8.66394e-07, over 1e-4 0 ok
+  fastrpp_shared vs rpp_crop_batch [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared vs rpp_crop_batch [edge]: max 120.344, mean 7.8397, over 1e-4 0.999825 (informational)
+  fastrpp_crop_batch vs fastrpp_shared [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_crop_batch vs fastrpp_shared [edge]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.32866e-07, over 1e-4 0 ok
+  fastrpp_shared_once vs scalar reference HALF_PIXEL [edge]: max 1.90735e-06, mean 4.2527e-07, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared [edge]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared: the whole tensors: bitwise equal
+  fastrpp intermediate tensor: not written (one kernel)
+  rpp_crop_batch: median 0.862325 ms (min 0.862325, max 0.862325; build 0.577243, compute 0.285082)
+  rpp_crop_batch_unsplit: median 0.862145 ms (min 0.862145, max 0.862145; build nan, compute nan)
+  hand_batch: median 0.109781 ms (min 0.109781, max 0.109781; build 0.00023, compute 0.109551)
+  hand_padded: median 0.11471 ms (min 0.11471, max 0.11471; build 0.00019, compute 0.11452)
+  hand_roi: median 0.09139 ms (min 0.09139, max 0.09139; build 0.00062, compute 0.09077)
+  fkl_fused_halfpixel_once: median 0.11964 ms (min 0.11964, max 0.11964; build 7e-05, compute 0.11957)
+  hand_roi_halfpixel_once: median 0.111561 ms (min 0.111561, max 0.111561; build 6e-05, compute 0.111501)
+  fastrpp_shared: median 0.127 ms (min 0.127, max 0.127; build 0.00239, compute 0.12461)
+  fastrpp_crop_batch: median 0.662584 ms (min 0.662584, max 0.662584; build 0.560804, compute 0.10178)
+  fastrpp_shared_once: median 0.09949 ms (min 0.09949, max 0.09949; build 7e-05, compute 0.09942)
+  fkl_fused: median 0.09789 ms (min 0.09789, max 0.09789; build 0.00679, compute 0.0911)
+  fkl_fused_halfpixel: median 0.127061 ms (min 0.127061, max 0.127061; build 0.00681, compute 0.120251)
+  fkl_perop_batch: median 0.336632 ms (min 0.336632, max 0.336632; build 0.00764, compute 0.328992)
+(a) batch 180
+  RPP's other pinned parameter arrays are unchanged after its calls; RPP rewrote 76 of the 76 padding ROIs
+  fkl_fused vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.33937e-07, over 1e-4 0 ok
+  fkl_fused vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.23262e-07, over 1e-4 0 ok
+  fkl_fused_halfpixel vs scalar reference HALF_PIXEL [interior]: max 7.62939e-06, mean 6.32578e-07, over 1e-4 0 ok
+  fkl_fused_halfpixel vs scalar reference HALF_PIXEL [edge]: max 7.62939e-06, mean 6.18046e-07, over 1e-4 0 ok
+  fkl_perop_batch vs fkl_fused [interior]: max 7.62939e-06, mean 1.21286e-07, over 1e-4 0 ok
+  fkl_perop_batch vs fkl_fused [edge]: max 7.62939e-06, mean 1.27792e-07, over 1e-4 0 ok
+  rpp_crop_batch vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.32941e-07, over 1e-4 0 ok
+  rpp_crop_batch vs scalar reference HALF_PIXEL [edge]: max 120.344, mean 7.83318, over 1e-4 0.999815 (informational)
+  rpp_crop_batch vs fkl_fused_halfpixel [interior]: max 7.62939e-06, mean 8.86858e-07, over 1e-4 0 (informational)
+  rpp_crop_batch vs fkl_fused_halfpixel [edge]: max 120.344, mean 7.83318, over 1e-4 0.999815 (informational)
+  rpp_crop_batch_unsplit vs rpp_crop_batch [interior]: max 0, mean 0, over 1e-4 0 ok
+  rpp_crop_batch_unsplit vs rpp_crop_batch [edge]: max 0, mean 0, over 1e-4 0 ok
+  hand_batch vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.33937e-07, over 1e-4 0 ok
+  hand_batch vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.23262e-07, over 1e-4 0 ok
+  hand_batch vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_batch vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_batch vs fkl_fused: the whole tensors: bitwise equal
+  hand_padded vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.33937e-07, over 1e-4 0 ok
+  hand_padded vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.23262e-07, over 1e-4 0 ok
+  hand_padded vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_padded vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_padded vs fkl_fused: the whole tensors: bitwise equal
+  hand_roi vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.33937e-07, over 1e-4 0 ok
+  hand_roi vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.23262e-07, over 1e-4 0 ok
+  hand_roi vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi vs fkl_fused: the whole tensors: bitwise equal
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel [interior]: max 0, mean 0, over 1e-4 0 ok
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel [edge]: max 0, mean 0, over 1e-4 0 ok
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel: the whole tensors: bitwise equal
+  hand_roi_halfpixel_once vs scalar reference HALF_PIXEL [interior]: max 7.62939e-06, mean 6.32578e-07, over 1e-4 0 ok
+  hand_roi_halfpixel_once vs scalar reference HALF_PIXEL [edge]: max 7.62939e-06, mean 6.18046e-07, over 1e-4 0 ok
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel: the whole tensors: bitwise equal
+  fastrpp_shared vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.32941e-07, over 1e-4 0 ok
+  fastrpp_shared vs scalar reference HALF_PIXEL [edge]: max 1.90735e-06, mean 4.25467e-07, over 1e-4 0 ok
+  fastrpp_shared vs fkl_fused_halfpixel [interior]: max 7.62939e-06, mean 8.86858e-07, over 1e-4 0 ok
+  fastrpp_shared vs fkl_fused_halfpixel [edge]: max 7.62939e-06, mean 8.67315e-07, over 1e-4 0 ok
+  fastrpp_shared vs rpp_crop_batch [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared vs rpp_crop_batch [edge]: max 120.344, mean 7.83318, over 1e-4 0.999815 (informational)
+  fastrpp_crop_batch vs fastrpp_shared [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_crop_batch vs fastrpp_shared [edge]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.32941e-07, over 1e-4 0 ok
+  fastrpp_shared_once vs scalar reference HALF_PIXEL [edge]: max 1.90735e-06, mean 4.25467e-07, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared [edge]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared: the whole tensors: bitwise equal
+  fastrpp intermediate tensor: not written (one kernel)
+  rpp_crop_batch_unsplit: median 0.905006 ms (min 0.905006, max 0.905006; build nan, compute nan)
+  hand_batch: median 0.112161 ms (min 0.112161, max 0.112161; build 0.00012, compute 0.112041)
+  hand_padded: median 0.11577 ms (min 0.11577, max 0.11577; build 0.0002, compute 0.11557)
+  hand_roi: median 0.119221 ms (min 0.119221, max 0.119221; build 0.00064, compute 0.118581)
+  fkl_fused_halfpixel_once: median 0.123031 ms (min 0.123031, max 0.123031; build 6e-05, compute 0.122971)
+  hand_roi_halfpixel_once: median 0.11954 ms (min 0.11954, max 0.11954; build 8e-05, compute 0.11946)
+  fastrpp_shared: median 0.131291 ms (min 0.131291, max 0.131291; build 0.00247, compute 0.128821)
+  fastrpp_crop_batch: median 0.662234 ms (min 0.662234, max 0.662234; build 0.564944, compute 0.09729)
+  fastrpp_shared_once: median 0.103341 ms (min 0.103341, max 0.103341; build 7e-05, compute 0.103271)
+  fkl_fused: median 0.127421 ms (min 0.127421, max 0.127421; build 0.00697, compute 0.120451)
+  fkl_fused_halfpixel: median 0.104721 ms (min 0.104721, max 0.104721; build 0.00694, compute 0.097781)
+  fkl_perop_batch: median 0.501683 ms (min 0.501683, max 0.501683; build 0.00786, compute 0.493823)
+  rpp_crop_batch: median 0.910226 ms (min 0.910226, max 0.910226; build 0.609994, compute 0.300232)
+(a) batch 190
+  RPP's other pinned parameter arrays are unchanged after its calls; RPP rewrote 66 of the 66 padding ROIs
+  fkl_fused vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.33981e-07, over 1e-4 0 ok
+  fkl_fused vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.23425e-07, over 1e-4 0 ok
+  fkl_fused_halfpixel vs scalar reference HALF_PIXEL [interior]: max 7.62939e-06, mean 6.32657e-07, over 1e-4 0 ok
+  fkl_fused_halfpixel vs scalar reference HALF_PIXEL [edge]: max 7.62939e-06, mean 6.18079e-07, over 1e-4 0 ok
+  fkl_perop_batch vs fkl_fused [interior]: max 7.62939e-06, mean 1.21372e-07, over 1e-4 0 ok
+  fkl_perop_batch vs fkl_fused [edge]: max 7.62939e-06, mean 1.28037e-07, over 1e-4 0 ok
+  rpp_crop_batch vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.32958e-07, over 1e-4 0 ok
+  rpp_crop_batch vs scalar reference HALF_PIXEL [edge]: max 120.875, mean 7.83761, over 1e-4 0.999811 (informational)
+  rpp_crop_batch vs fkl_fused_halfpixel [interior]: max 7.62939e-06, mean 8.86906e-07, over 1e-4 0 (informational)
+  rpp_crop_batch vs fkl_fused_halfpixel [edge]: max 120.875, mean 7.83761, over 1e-4 0.999811 (informational)
+  rpp_crop_batch_unsplit vs rpp_crop_batch [interior]: max 0, mean 0, over 1e-4 0 ok
+  rpp_crop_batch_unsplit vs rpp_crop_batch [edge]: max 0, mean 0, over 1e-4 0 ok
+  hand_batch vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.33981e-07, over 1e-4 0 ok
+  hand_batch vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.23425e-07, over 1e-4 0 ok
+  hand_batch vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_batch vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_batch vs fkl_fused: the whole tensors: bitwise equal
+  hand_padded vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.33981e-07, over 1e-4 0 ok
+  hand_padded vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.23425e-07, over 1e-4 0 ok
+  hand_padded vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_padded vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_padded vs fkl_fused: the whole tensors: bitwise equal
+  hand_roi vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.33981e-07, over 1e-4 0 ok
+  hand_roi vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.23425e-07, over 1e-4 0 ok
+  hand_roi vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi vs fkl_fused: the whole tensors: bitwise equal
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel [interior]: max 0, mean 0, over 1e-4 0 ok
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel [edge]: max 0, mean 0, over 1e-4 0 ok
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel: the whole tensors: bitwise equal
+  hand_roi_halfpixel_once vs scalar reference HALF_PIXEL [interior]: max 7.62939e-06, mean 6.32657e-07, over 1e-4 0 ok
+  hand_roi_halfpixel_once vs scalar reference HALF_PIXEL [edge]: max 7.62939e-06, mean 6.18079e-07, over 1e-4 0 ok
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel: the whole tensors: bitwise equal
+  fastrpp_shared vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.32958e-07, over 1e-4 0 ok
+  fastrpp_shared vs scalar reference HALF_PIXEL [edge]: max 1.90735e-06, mean 4.25512e-07, over 1e-4 0 ok
+  fastrpp_shared vs fkl_fused_halfpixel [interior]: max 7.62939e-06, mean 8.86906e-07, over 1e-4 0 ok
+  fastrpp_shared vs fkl_fused_halfpixel [edge]: max 7.62939e-06, mean 8.6721e-07, over 1e-4 0 ok
+  fastrpp_shared vs rpp_crop_batch [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared vs rpp_crop_batch [edge]: max 120.875, mean 7.83761, over 1e-4 0.999811 (informational)
+  fastrpp_crop_batch vs fastrpp_shared [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_crop_batch vs fastrpp_shared [edge]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.32958e-07, over 1e-4 0 ok
+  fastrpp_shared_once vs scalar reference HALF_PIXEL [edge]: max 1.90735e-06, mean 4.25512e-07, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared [edge]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared: the whole tensors: bitwise equal
+  fastrpp intermediate tensor: not written (one kernel)
+  hand_batch: median 0.111171 ms (min 0.111171, max 0.111171; build 0.00016, compute 0.111011)
+  hand_padded: median 0.119301 ms (min 0.119301, max 0.119301; build 0.00022, compute 0.119081)
+  hand_roi: median 0.096891 ms (min 0.096891, max 0.096891; build 0.00068, compute 0.096211)
+  fkl_fused_halfpixel_once: median 0.126921 ms (min 0.126921, max 0.126921; build 6e-05, compute 0.126861)
+  hand_roi_halfpixel_once: median 0.096781 ms (min 0.096781, max 0.096781; build 7e-05, compute 0.096711)
+  fastrpp_shared: median 0.135041 ms (min 0.135041, max 0.135041; build 0.00295, compute 0.132091)
+  fastrpp_crop_batch: median 0.729074 ms (min 0.729074, max 0.729074; build 0.619384, compute 0.10969)
+  fastrpp_shared_once: median 0.122831 ms (min 0.122831, max 0.122831; build 6e-05, compute 0.122771)
+  fkl_fused: median 0.13169 ms (min 0.13169, max 0.13169; build 0.00777, compute 0.12392)
+  fkl_fused_halfpixel: median 0.137091 ms (min 0.137091, max 0.137091; build 0.00838, compute 0.128711)
+  fkl_perop_batch: median 0.540264 ms (min 0.540264, max 0.540264; build 0.00865, compute 0.531614)
+  rpp_crop_batch: median 0.984426 ms (min 0.984426, max 0.984426; build 0.673494, compute 0.310932)
+  rpp_crop_batch_unsplit: median 0.959216 ms (min 0.959216, max 0.959216; build nan, compute nan)
+(a) batch 200
+  RPP's other pinned parameter arrays are unchanged after its calls; RPP rewrote 56 of the 56 padding ROIs
+  fkl_fused vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.33913e-07, over 1e-4 0 ok
+  fkl_fused vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.23462e-07, over 1e-4 0 ok
+  fkl_fused_halfpixel vs scalar reference HALF_PIXEL [interior]: max 7.62939e-06, mean 6.32539e-07, over 1e-4 0 ok
+  fkl_fused_halfpixel vs scalar reference HALF_PIXEL [edge]: max 7.62939e-06, mean 6.17536e-07, over 1e-4 0 ok
+  fkl_perop_batch vs fkl_fused [interior]: max 7.62939e-06, mean 1.21504e-07, over 1e-4 0 ok
+  fkl_perop_batch vs fkl_fused [edge]: max 7.62939e-06, mean 1.28404e-07, over 1e-4 0 ok
+  rpp_crop_batch vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.32964e-07, over 1e-4 0 ok
+  rpp_crop_batch vs scalar reference HALF_PIXEL [edge]: max 126.406, mean 7.85359, over 1e-4 0.999803 (informational)
+  rpp_crop_batch vs fkl_fused_halfpixel [interior]: max 7.62939e-06, mean 8.86742e-07, over 1e-4 0 (informational)
+  rpp_crop_batch vs fkl_fused_halfpixel [edge]: max 126.406, mean 7.85359, over 1e-4 0.999803 (informational)
+  rpp_crop_batch_unsplit vs rpp_crop_batch [interior]: max 0, mean 0, over 1e-4 0 ok
+  rpp_crop_batch_unsplit vs rpp_crop_batch [edge]: max 0, mean 0, over 1e-4 0 ok
+  hand_batch vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.33913e-07, over 1e-4 0 ok
+  hand_batch vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.23462e-07, over 1e-4 0 ok
+  hand_batch vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_batch vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_batch vs fkl_fused: the whole tensors: bitwise equal
+  hand_padded vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.33913e-07, over 1e-4 0 ok
+  hand_padded vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.23462e-07, over 1e-4 0 ok
+  hand_padded vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_padded vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_padded vs fkl_fused: the whole tensors: bitwise equal
+  hand_roi vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.33913e-07, over 1e-4 0 ok
+  hand_roi vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.23462e-07, over 1e-4 0 ok
+  hand_roi vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi vs fkl_fused: the whole tensors: bitwise equal
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel [interior]: max 0, mean 0, over 1e-4 0 ok
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel [edge]: max 0, mean 0, over 1e-4 0 ok
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel: the whole tensors: bitwise equal
+  hand_roi_halfpixel_once vs scalar reference HALF_PIXEL [interior]: max 7.62939e-06, mean 6.32539e-07, over 1e-4 0 ok
+  hand_roi_halfpixel_once vs scalar reference HALF_PIXEL [edge]: max 7.62939e-06, mean 6.17536e-07, over 1e-4 0 ok
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel: the whole tensors: bitwise equal
+  fastrpp_shared vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.32964e-07, over 1e-4 0 ok
+  fastrpp_shared vs scalar reference HALF_PIXEL [edge]: max 1.90735e-06, mean 4.25439e-07, over 1e-4 0 ok
+  fastrpp_shared vs fkl_fused_halfpixel [interior]: max 7.62939e-06, mean 8.86742e-07, over 1e-4 0 ok
+  fastrpp_shared vs fkl_fused_halfpixel [edge]: max 7.62939e-06, mean 8.67016e-07, over 1e-4 0 ok
+  fastrpp_shared vs rpp_crop_batch [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared vs rpp_crop_batch [edge]: max 126.406, mean 7.85359, over 1e-4 0.999803 (informational)
+  fastrpp_crop_batch vs fastrpp_shared [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_crop_batch vs fastrpp_shared [edge]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.32964e-07, over 1e-4 0 ok
+  fastrpp_shared_once vs scalar reference HALF_PIXEL [edge]: max 1.90735e-06, mean 4.25439e-07, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared [edge]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared: the whole tensors: bitwise equal
+  fastrpp intermediate tensor: not written (one kernel)
+  hand_padded: median 0.098331 ms (min 0.098331, max 0.098331; build 0.00026, compute 0.098071)
+  hand_roi: median 0.12454 ms (min 0.12454, max 0.12454; build 0.0007, compute 0.12384)
+  fkl_fused_halfpixel_once: median 0.10435 ms (min 0.10435, max 0.10435; build 6e-05, compute 0.10429)
+  hand_roi_halfpixel_once: median 0.12776 ms (min 0.12776, max 0.12776; build 6e-05, compute 0.1277)
+  fastrpp_shared: median 0.115161 ms (min 0.115161, max 0.115161; build 0.00304, compute 0.112121)
+  fastrpp_crop_batch: median 0.770494 ms (min 0.770494, max 0.770494; build 0.653464, compute 0.11703)
+  fastrpp_shared_once: median 0.101221 ms (min 0.101221, max 0.101221; build 5e-05, compute 0.101171)
+  fkl_fused: median 0.135881 ms (min 0.135881, max 0.135881; build 0.008, compute 0.127881)
+  fkl_fused_halfpixel: median 0.133061 ms (min 0.133061, max 0.133061; build 0.00803, compute 0.125031)
+  fkl_perop_batch: median 0.571603 ms (min 0.571603, max 0.571603; build 0.00899, compute 0.562613)
+  rpp_crop_batch: median 1.03323 ms (min 1.03323, max 1.03323; build 0.710334, compute 0.322892)
+  rpp_crop_batch_unsplit: median 0.973756 ms (min 0.973756, max 0.973756; build nan, compute nan)
+  hand_batch: median 0.088911 ms (min 0.088911, max 0.088911; build 0.00015, compute 0.088761)
+(a) batch 210
+  RPP's other pinned parameter arrays are unchanged after its calls; RPP rewrote 46 of the 46 padding ROIs
+  fkl_fused vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.3386e-07, over 1e-4 0 ok
+  fkl_fused vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.22797e-07, over 1e-4 0 ok
+  fkl_fused_halfpixel vs scalar reference HALF_PIXEL [interior]: max 7.62939e-06, mean 6.32384e-07, over 1e-4 0 ok
+  fkl_fused_halfpixel vs scalar reference HALF_PIXEL [edge]: max 7.62939e-06, mean 6.16819e-07, over 1e-4 0 ok
+  fkl_perop_batch vs fkl_fused [interior]: max 7.62939e-06, mean 1.21554e-07, over 1e-4 0 ok
+  fkl_perop_batch vs fkl_fused [edge]: max 7.62939e-06, mean 1.28544e-07, over 1e-4 0 ok
+  rpp_crop_batch vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.33122e-07, over 1e-4 0 ok
+  rpp_crop_batch vs scalar reference HALF_PIXEL [edge]: max 126.406, mean 7.85369, over 1e-4 0.999808 (informational)
+  rpp_crop_batch vs fkl_fused_halfpixel [interior]: max 7.62939e-06, mean 8.86642e-07, over 1e-4 0 (informational)
+  rpp_crop_batch vs fkl_fused_halfpixel [edge]: max 126.406, mean 7.85369, over 1e-4 0.999808 (informational)
+  rpp_crop_batch_unsplit vs rpp_crop_batch [interior]: max 0, mean 0, over 1e-4 0 ok
+  rpp_crop_batch_unsplit vs rpp_crop_batch [edge]: max 0, mean 0, over 1e-4 0 ok
+  hand_batch vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.3386e-07, over 1e-4 0 ok
+  hand_batch vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.22797e-07, over 1e-4 0 ok
+  hand_batch vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_batch vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_batch vs fkl_fused: the whole tensors: bitwise equal
+  hand_padded vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.3386e-07, over 1e-4 0 ok
+  hand_padded vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.22797e-07, over 1e-4 0 ok
+  hand_padded vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_padded vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_padded vs fkl_fused: the whole tensors: bitwise equal
+  hand_roi vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.3386e-07, over 1e-4 0 ok
+  hand_roi vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.22797e-07, over 1e-4 0 ok
+  hand_roi vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi vs fkl_fused: the whole tensors: bitwise equal
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel [interior]: max 0, mean 0, over 1e-4 0 ok
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel [edge]: max 0, mean 0, over 1e-4 0 ok
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel: the whole tensors: bitwise equal
+  hand_roi_halfpixel_once vs scalar reference HALF_PIXEL [interior]: max 7.62939e-06, mean 6.32384e-07, over 1e-4 0 ok
+  hand_roi_halfpixel_once vs scalar reference HALF_PIXEL [edge]: max 7.62939e-06, mean 6.16819e-07, over 1e-4 0 ok
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel: the whole tensors: bitwise equal
+  fastrpp_shared vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.33122e-07, over 1e-4 0 ok
+  fastrpp_shared vs scalar reference HALF_PIXEL [edge]: max 1.90735e-06, mean 4.25191e-07, over 1e-4 0 ok
+  fastrpp_shared vs fkl_fused_halfpixel [interior]: max 7.62939e-06, mean 8.86642e-07, over 1e-4 0 ok
+  fastrpp_shared vs fkl_fused_halfpixel [edge]: max 7.62939e-06, mean 8.65949e-07, over 1e-4 0 ok
+  fastrpp_shared vs rpp_crop_batch [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared vs rpp_crop_batch [edge]: max 126.406, mean 7.85369, over 1e-4 0.999808 (informational)
+  fastrpp_crop_batch vs fastrpp_shared [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_crop_batch vs fastrpp_shared [edge]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.33122e-07, over 1e-4 0 ok
+  fastrpp_shared_once vs scalar reference HALF_PIXEL [edge]: max 1.90735e-06, mean 4.25191e-07, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared [edge]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared: the whole tensors: bitwise equal
+  fastrpp intermediate tensor: not written (one kernel)
+  hand_roi: median 0.104771 ms (min 0.104771, max 0.104771; build 0.00072, compute 0.104051)
+  fkl_fused_halfpixel_once: median 0.135001 ms (min 0.135001, max 0.135001; build 7e-05, compute 0.134931)
+  hand_roi_halfpixel_once: median 0.102631 ms (min 0.102631, max 0.102631; build 7e-05, compute 0.102561)
+  fastrpp_shared: median 0.117361 ms (min 0.117361, max 0.117361; build 0.0032, compute 0.114161)
+  fastrpp_crop_batch: median 0.826595 ms (min 0.826595, max 0.826595; build 0.708935, compute 0.11766)
+  fastrpp_shared_once: median 0.113661 ms (min 0.113661, max 0.113661; build 6e-05, compute 0.113601)
+  fkl_fused: median 0.140801 ms (min 0.140801, max 0.140801; build 0.00829, compute 0.132511)
+  fkl_fused_halfpixel: median 0.117811 ms (min 0.117811, max 0.117811; build 0.00929, compute 0.108521)
+  fkl_perop_batch: median 0.598554 ms (min 0.598554, max 0.598554; build 0.00938, compute 0.589174)
+  rpp_crop_batch: median 1.05255 ms (min 1.05255, max 1.05255; build 0.714944, compute 0.337602)
+  rpp_crop_batch_unsplit: median 1.02148 ms (min 1.02148, max 1.02148; build nan, compute nan)
+  hand_batch: median 0.117171 ms (min 0.117171, max 0.117171; build 0.00011, compute 0.117061)
+  hand_padded: median 0.097121 ms (min 0.097121, max 0.097121; build 0.00022, compute 0.096901)
+(a) batch 220
+  RPP's other pinned parameter arrays are unchanged after its calls; RPP rewrote 36 of the 36 padding ROIs
+  fkl_fused vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.33765e-07, over 1e-4 0 ok
+  fkl_fused vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.23037e-07, over 1e-4 0 ok
+  fkl_fused_halfpixel vs scalar reference HALF_PIXEL [interior]: max 7.62939e-06, mean 6.32282e-07, over 1e-4 0 ok
+  fkl_fused_halfpixel vs scalar reference HALF_PIXEL [edge]: max 7.62939e-06, mean 6.19075e-07, over 1e-4 0 ok
+  fkl_perop_batch vs fkl_fused [interior]: max 7.62939e-06, mean 1.21544e-07, over 1e-4 0 ok
+  fkl_perop_batch vs fkl_fused [edge]: max 7.62939e-06, mean 1.28715e-07, over 1e-4 0 ok
+  rpp_crop_batch vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.33223e-07, over 1e-4 0 ok
+  rpp_crop_batch vs scalar reference HALF_PIXEL [edge]: max 126.406, mean 7.85479, over 1e-4 0.999817 (informational)
+  rpp_crop_batch vs fkl_fused_halfpixel [interior]: max 7.62939e-06, mean 8.86701e-07, over 1e-4 0 (informational)
+  rpp_crop_batch vs fkl_fused_halfpixel [edge]: max 126.406, mean 7.85479, over 1e-4 0.999817 (informational)
+  rpp_crop_batch_unsplit vs rpp_crop_batch [interior]: max 0, mean 0, over 1e-4 0 ok
+  rpp_crop_batch_unsplit vs rpp_crop_batch [edge]: max 0, mean 0, over 1e-4 0 ok
+  hand_batch vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.33765e-07, over 1e-4 0 ok
+  hand_batch vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.23037e-07, over 1e-4 0 ok
+  hand_batch vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_batch vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_batch vs fkl_fused: the whole tensors: bitwise equal
+  hand_padded vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.33765e-07, over 1e-4 0 ok
+  hand_padded vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.23037e-07, over 1e-4 0 ok
+  hand_padded vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_padded vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_padded vs fkl_fused: the whole tensors: bitwise equal
+  hand_roi vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.33765e-07, over 1e-4 0 ok
+  hand_roi vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.23037e-07, over 1e-4 0 ok
+  hand_roi vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi vs fkl_fused: the whole tensors: bitwise equal
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel [interior]: max 0, mean 0, over 1e-4 0 ok
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel [edge]: max 0, mean 0, over 1e-4 0 ok
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel: the whole tensors: bitwise equal
+  hand_roi_halfpixel_once vs scalar reference HALF_PIXEL [interior]: max 7.62939e-06, mean 6.32282e-07, over 1e-4 0 ok
+  hand_roi_halfpixel_once vs scalar reference HALF_PIXEL [edge]: max 7.62939e-06, mean 6.19075e-07, over 1e-4 0 ok
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel: the whole tensors: bitwise equal
+  fastrpp_shared vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.33223e-07, over 1e-4 0 ok
+  fastrpp_shared vs scalar reference HALF_PIXEL [edge]: max 1.90735e-06, mean 4.24939e-07, over 1e-4 0 ok
+  fastrpp_shared vs fkl_fused_halfpixel [interior]: max 7.62939e-06, mean 8.86701e-07, over 1e-4 0 ok
+  fastrpp_shared vs fkl_fused_halfpixel [edge]: max 7.62939e-06, mean 8.67733e-07, over 1e-4 0 ok
+  fastrpp_shared vs rpp_crop_batch [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared vs rpp_crop_batch [edge]: max 126.406, mean 7.85479, over 1e-4 0.999817 (informational)
+  fastrpp_crop_batch vs fastrpp_shared [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_crop_batch vs fastrpp_shared [edge]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.33223e-07, over 1e-4 0 ok
+  fastrpp_shared_once vs scalar reference HALF_PIXEL [edge]: max 1.90735e-06, mean 4.24939e-07, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared [edge]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared: the whole tensors: bitwise equal
+  fastrpp intermediate tensor: not written (one kernel)
+  fkl_fused_halfpixel_once: median 0.136481 ms (min 0.136481, max 0.136481; build 7e-05, compute 0.136411)
+  hand_roi_halfpixel_once: median 0.132291 ms (min 0.132291, max 0.132291; build 7e-05, compute 0.132221)
+  fastrpp_shared: median 0.136351 ms (min 0.136351, max 0.136351; build 0.00336, compute 0.132991)
+  fastrpp_crop_batch: median 0.836086 ms (min 0.836086, max 0.836086; build 0.714485, compute 0.121601)
+  fastrpp_shared_once: median 0.145131 ms (min 0.145131, max 0.145131; build 6e-05, compute 0.145071)
+  fkl_fused: median 0.117351 ms (min 0.117351, max 0.117351; build 0.008821, compute 0.10853)
+  fkl_fused_halfpixel: median 0.147221 ms (min 0.147221, max 0.147221; build 0.00951, compute 0.137711)
+  fkl_perop_batch: median 0.624524 ms (min 0.624524, max 0.624524; build 0.00872, compute 0.615804)
+  rpp_crop_batch: median 1.09774 ms (min 1.09774, max 1.09774; build 0.747244, compute 0.350492)
+  rpp_crop_batch_unsplit: median 1.06867 ms (min 1.06867, max 1.06867; build nan, compute nan)
+  hand_batch: median 0.114631 ms (min 0.114631, max 0.114631; build 0.00013, compute 0.114501)
+  hand_padded: median 0.10092 ms (min 0.10092, max 0.10092; build 0.00022, compute 0.1007)
+  hand_roi: median 0.1316 ms (min 0.1316, max 0.1316; build 0.00075, compute 0.13085)
+(a) batch 230
+  RPP's other pinned parameter arrays are unchanged after its calls; RPP rewrote 26 of the 26 padding ROIs
+  fkl_fused vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.33814e-07, over 1e-4 0 ok
+  fkl_fused vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.22215e-07, over 1e-4 0 ok
+  fkl_fused_halfpixel vs scalar reference HALF_PIXEL [interior]: max 7.62939e-06, mean 6.32091e-07, over 1e-4 0 ok
+  fkl_fused_halfpixel vs scalar reference HALF_PIXEL [edge]: max 7.62939e-06, mean 6.18851e-07, over 1e-4 0 ok
+  fkl_perop_batch vs fkl_fused [interior]: max 7.62939e-06, mean 1.2164e-07, over 1e-4 0 ok
+  fkl_perop_batch vs fkl_fused [edge]: max 7.62939e-06, mean 1.28789e-07, over 1e-4 0 ok
+  rpp_crop_batch vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.33366e-07, over 1e-4 0 ok
+  rpp_crop_batch vs scalar reference HALF_PIXEL [edge]: max 126.406, mean 7.84513, over 1e-4 0.999825 (informational)
+  rpp_crop_batch vs fkl_fused_halfpixel [interior]: max 7.62939e-06, mean 8.86648e-07, over 1e-4 0 (informational)
+  rpp_crop_batch vs fkl_fused_halfpixel [edge]: max 126.406, mean 7.84513, over 1e-4 0.999825 (informational)
+  rpp_crop_batch_unsplit vs rpp_crop_batch [interior]: max 0, mean 0, over 1e-4 0 ok
+  rpp_crop_batch_unsplit vs rpp_crop_batch [edge]: max 0, mean 0, over 1e-4 0 ok
+  hand_batch vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.33814e-07, over 1e-4 0 ok
+  hand_batch vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.22215e-07, over 1e-4 0 ok
+  hand_batch vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_batch vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_batch vs fkl_fused: the whole tensors: bitwise equal
+  hand_padded vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.33814e-07, over 1e-4 0 ok
+  hand_padded vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.22215e-07, over 1e-4 0 ok
+  hand_padded vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_padded vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_padded vs fkl_fused: the whole tensors: bitwise equal
+  hand_roi vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.33814e-07, over 1e-4 0 ok
+  hand_roi vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.22215e-07, over 1e-4 0 ok
+  hand_roi vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi vs fkl_fused: the whole tensors: bitwise equal
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel [interior]: max 0, mean 0, over 1e-4 0 ok
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel [edge]: max 0, mean 0, over 1e-4 0 ok
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel: the whole tensors: bitwise equal
+  hand_roi_halfpixel_once vs scalar reference HALF_PIXEL [interior]: max 7.62939e-06, mean 6.32091e-07, over 1e-4 0 ok
+  hand_roi_halfpixel_once vs scalar reference HALF_PIXEL [edge]: max 7.62939e-06, mean 6.18851e-07, over 1e-4 0 ok
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel: the whole tensors: bitwise equal
+  fastrpp_shared vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.33366e-07, over 1e-4 0 ok
+  fastrpp_shared vs scalar reference HALF_PIXEL [edge]: max 1.90735e-06, mean 4.25082e-07, over 1e-4 0 ok
+  fastrpp_shared vs fkl_fused_halfpixel [interior]: max 7.62939e-06, mean 8.86648e-07, over 1e-4 0 ok
+  fastrpp_shared vs fkl_fused_halfpixel [edge]: max 7.62939e-06, mean 8.67866e-07, over 1e-4 0 ok
+  fastrpp_shared vs rpp_crop_batch [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared vs rpp_crop_batch [edge]: max 126.406, mean 7.84513, over 1e-4 0.999825 (informational)
+  fastrpp_crop_batch vs fastrpp_shared [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_crop_batch vs fastrpp_shared [edge]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.33366e-07, over 1e-4 0 ok
+  fastrpp_shared_once vs scalar reference HALF_PIXEL [edge]: max 1.90735e-06, mean 4.25082e-07, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared [edge]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared: the whole tensors: bitwise equal
+  fastrpp intermediate tensor: not written (one kernel)
+  hand_roi_halfpixel_once: median 0.133191 ms (min 0.133191, max 0.133191; build 9e-05, compute 0.133101)
+  fastrpp_shared: median 0.150941 ms (min 0.150941, max 0.150941; build 0.00354, compute 0.147401)
+  fastrpp_crop_batch: median 0.866616 ms (min 0.866616, max 0.866616; build 0.747005, compute 0.119611)
+  fastrpp_shared_once: median 0.12208 ms (min 0.12208, max 0.12208; build 6e-05, compute 0.12202)
+  fkl_fused: median 0.147351 ms (min 0.147351, max 0.147351; build 0.00912, compute 0.138231)
+  fkl_fused_halfpixel: median 0.150761 ms (min 0.150761, max 0.150761; build 0.00919, compute 0.141571)
+  fkl_perop_batch: median 0.660075 ms (min 0.660075, max 0.660075; build 0.00967, compute 0.650405)
+  rpp_crop_batch: median 1.15552 ms (min 1.15552, max 1.15552; build 0.782485, compute 0.373033)
+  rpp_crop_batch_unsplit: median 1.15587 ms (min 1.15587, max 1.15587; build nan, compute nan)
+  hand_batch: median 0.094181 ms (min 0.094181, max 0.094181; build 0.00014, compute 0.094041)
+  hand_padded: median 0.129751 ms (min 0.129751, max 0.129751; build 0.00025, compute 0.129501)
+  hand_roi: median 0.137401 ms (min 0.137401, max 0.137401; build 0.00079, compute 0.136611)
+  fkl_fused_halfpixel_once: median 0.141311 ms (min 0.141311, max 0.141311; build 7e-05, compute 0.141241)
+(a) batch 240
+  RPP's other pinned parameter arrays are unchanged after its calls; RPP rewrote 16 of the 16 padding ROIs
+  fkl_fused vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.33619e-07, over 1e-4 0 ok
+  fkl_fused vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.21875e-07, over 1e-4 0 ok
+  fkl_fused_halfpixel vs scalar reference HALF_PIXEL [interior]: max 7.62939e-06, mean 6.32024e-07, over 1e-4 0 ok
+  fkl_fused_halfpixel vs scalar reference HALF_PIXEL [edge]: max 7.62939e-06, mean 6.18757e-07, over 1e-4 0 ok
+  fkl_perop_batch vs fkl_fused [interior]: max 7.62939e-06, mean 1.21665e-07, over 1e-4 0 ok
+  fkl_perop_batch vs fkl_fused [edge]: max 7.62939e-06, mean 1.28582e-07, over 1e-4 0 ok
+  rpp_crop_batch vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.33534e-07, over 1e-4 0 ok
+  rpp_crop_batch vs scalar reference HALF_PIXEL [edge]: max 126.406, mean 7.83414, over 1e-4 0.999832 (informational)
+  rpp_crop_batch vs fkl_fused_halfpixel [interior]: max 7.62939e-06, mean 8.86703e-07, over 1e-4 0 (informational)
+  rpp_crop_batch vs fkl_fused_halfpixel [edge]: max 126.406, mean 7.83414, over 1e-4 0.999832 (informational)
+  rpp_crop_batch_unsplit vs rpp_crop_batch [interior]: max 0, mean 0, over 1e-4 0 ok
+  rpp_crop_batch_unsplit vs rpp_crop_batch [edge]: max 0, mean 0, over 1e-4 0 ok
+  hand_batch vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.33619e-07, over 1e-4 0 ok
+  hand_batch vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.21875e-07, over 1e-4 0 ok
+  hand_batch vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_batch vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_batch vs fkl_fused: the whole tensors: bitwise equal
+  hand_padded vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.33619e-07, over 1e-4 0 ok
+  hand_padded vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.21875e-07, over 1e-4 0 ok
+  hand_padded vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_padded vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_padded vs fkl_fused: the whole tensors: bitwise equal
+  hand_roi vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.33619e-07, over 1e-4 0 ok
+  hand_roi vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.21875e-07, over 1e-4 0 ok
+  hand_roi vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi vs fkl_fused: the whole tensors: bitwise equal
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel [interior]: max 0, mean 0, over 1e-4 0 ok
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel [edge]: max 0, mean 0, over 1e-4 0 ok
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel: the whole tensors: bitwise equal
+  hand_roi_halfpixel_once vs scalar reference HALF_PIXEL [interior]: max 7.62939e-06, mean 6.32024e-07, over 1e-4 0 ok
+  hand_roi_halfpixel_once vs scalar reference HALF_PIXEL [edge]: max 7.62939e-06, mean 6.18757e-07, over 1e-4 0 ok
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel: the whole tensors: bitwise equal
+  fastrpp_shared vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.33534e-07, over 1e-4 0 ok
+  fastrpp_shared vs scalar reference HALF_PIXEL [edge]: max 1.90735e-06, mean 4.25018e-07, over 1e-4 0 ok
+  fastrpp_shared vs fkl_fused_halfpixel [interior]: max 7.62939e-06, mean 8.86703e-07, over 1e-4 0 ok
+  fastrpp_shared vs fkl_fused_halfpixel [edge]: max 7.62939e-06, mean 8.67805e-07, over 1e-4 0 ok
+  fastrpp_shared vs rpp_crop_batch [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared vs rpp_crop_batch [edge]: max 126.406, mean 7.83414, over 1e-4 0.999832 (informational)
+  fastrpp_crop_batch vs fastrpp_shared [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_crop_batch vs fastrpp_shared [edge]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.33534e-07, over 1e-4 0 ok
+  fastrpp_shared_once vs scalar reference HALF_PIXEL [edge]: max 1.90735e-06, mean 4.25018e-07, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared [edge]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared: the whole tensors: bitwise equal
+  fastrpp intermediate tensor: not written (one kernel)
+  fastrpp_shared: median 0.131201 ms (min 0.131201, max 0.131201; build 0.00355, compute 0.127651)
+  fastrpp_crop_batch: median 0.862795 ms (min 0.862795, max 0.862795; build 0.744374, compute 0.118421)
+  fastrpp_shared_once: median 0.126421 ms (min 0.126421, max 0.126421; build 7e-05, compute 0.126351)
+  fkl_fused: median 0.151561 ms (min 0.151561, max 0.151561; build 0.00982, compute 0.141741)
+  fkl_fused_halfpixel: median 0.152731 ms (min 0.152731, max 0.152731; build 0.00963, compute 0.143101)
+  fkl_perop_batch: median 0.701064 ms (min 0.701064, max 0.701064; build 0.01098, compute 0.690084)
+  rpp_crop_batch: median 1.19071 ms (min 1.19071, max 1.19071; build 0.804515, compute 0.386192)
+  rpp_crop_batch_unsplit: median 1.21045 ms (min 1.21045, max 1.21045; build nan, compute nan)
+  hand_batch: median 0.127521 ms (min 0.127521, max 0.127521; build 0.00015, compute 0.127371)
+  hand_padded: median 0.13204 ms (min 0.13204, max 0.13204; build 0.00023, compute 0.13181)
+  hand_roi: median 0.1053 ms (min 0.1053, max 0.1053; build 0.00082, compute 0.10448)
+  fkl_fused_halfpixel_once: median 0.14375 ms (min 0.14375, max 0.14375; build 6e-05, compute 0.14369)
+  hand_roi_halfpixel_once: median 0.112731 ms (min 0.112731, max 0.112731; build 7e-05, compute 0.112661)
+(a) batch 250
+  RPP's other pinned parameter arrays are unchanged after its calls; RPP rewrote 6 of the 6 padding ROIs
+  fkl_fused vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.33414e-07, over 1e-4 0 ok
+  fkl_fused vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.22581e-07, over 1e-4 0 ok
+  fkl_fused_halfpixel vs scalar reference HALF_PIXEL [interior]: max 7.62939e-06, mean 6.31828e-07, over 1e-4 0 ok
+  fkl_fused_halfpixel vs scalar reference HALF_PIXEL [edge]: max 7.62939e-06, mean 6.18241e-07, over 1e-4 0 ok
+  fkl_perop_batch vs fkl_fused [interior]: max 7.62939e-06, mean 1.21702e-07, over 1e-4 0 ok
+  fkl_perop_batch vs fkl_fused [edge]: max 7.62939e-06, mean 1.28554e-07, over 1e-4 0 ok
+  rpp_crop_batch vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.33723e-07, over 1e-4 0 ok
+  rpp_crop_batch vs scalar reference HALF_PIXEL [edge]: max 126.406, mean 7.82803, over 1e-4 0.999839 (informational)
+  rpp_crop_batch vs fkl_fused_halfpixel [interior]: max 7.62939e-06, mean 8.86675e-07, over 1e-4 0 (informational)
+  rpp_crop_batch vs fkl_fused_halfpixel [edge]: max 126.406, mean 7.82803, over 1e-4 0.999839 (informational)
+  rpp_crop_batch_unsplit vs rpp_crop_batch [interior]: max 0, mean 0, over 1e-4 0 ok
+  rpp_crop_batch_unsplit vs rpp_crop_batch [edge]: max 0, mean 0, over 1e-4 0 ok
+  hand_batch vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.33414e-07, over 1e-4 0 ok
+  hand_batch vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.22581e-07, over 1e-4 0 ok
+  hand_batch vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_batch vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_batch vs fkl_fused: the whole tensors: bitwise equal
+  hand_padded vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.33414e-07, over 1e-4 0 ok
+  hand_padded vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.22581e-07, over 1e-4 0 ok
+  hand_padded vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_padded vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_padded vs fkl_fused: the whole tensors: bitwise equal
+  hand_roi vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.33414e-07, over 1e-4 0 ok
+  hand_roi vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.22581e-07, over 1e-4 0 ok
+  hand_roi vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi vs fkl_fused: the whole tensors: bitwise equal
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel [interior]: max 0, mean 0, over 1e-4 0 ok
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel [edge]: max 0, mean 0, over 1e-4 0 ok
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel: the whole tensors: bitwise equal
+  hand_roi_halfpixel_once vs scalar reference HALF_PIXEL [interior]: max 7.62939e-06, mean 6.31828e-07, over 1e-4 0 ok
+  hand_roi_halfpixel_once vs scalar reference HALF_PIXEL [edge]: max 7.62939e-06, mean 6.18241e-07, over 1e-4 0 ok
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel: the whole tensors: bitwise equal
+  fastrpp_shared vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.33723e-07, over 1e-4 0 ok
+  fastrpp_shared vs scalar reference HALF_PIXEL [edge]: max 1.90735e-06, mean 4.25117e-07, over 1e-4 0 ok
+  fastrpp_shared vs fkl_fused_halfpixel [interior]: max 7.62939e-06, mean 8.86675e-07, over 1e-4 0 ok
+  fastrpp_shared vs fkl_fused_halfpixel [edge]: max 7.62939e-06, mean 8.67419e-07, over 1e-4 0 ok
+  fastrpp_shared vs rpp_crop_batch [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared vs rpp_crop_batch [edge]: max 126.406, mean 7.82803, over 1e-4 0.999839 (informational)
+  fastrpp_crop_batch vs fastrpp_shared [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_crop_batch vs fastrpp_shared [edge]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.33723e-07, over 1e-4 0 ok
+  fastrpp_shared_once vs scalar reference HALF_PIXEL [edge]: max 1.90735e-06, mean 4.25117e-07, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared [edge]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared: the whole tensors: bitwise equal
+  fastrpp intermediate tensor: not written (one kernel)
+  fastrpp_crop_batch: median 0.985166 ms (min 0.985166, max 0.985166; build 0.849815, compute 0.135351)
+  fastrpp_shared_once: median 0.15722 ms (min 0.15722, max 0.15722; build 6e-05, compute 0.15716)
+  fkl_fused: median 0.154561 ms (min 0.154561, max 0.154561; build 0.00981, compute 0.144751)
+  fkl_fused_halfpixel: median 0.156241 ms (min 0.156241, max 0.156241; build 0.010021, compute 0.14622)
+  fkl_perop_batch: median 0.768045 ms (min 0.768045, max 0.768045; build 0.01107, compute 0.756975)
+  rpp_crop_batch: median 1.28191 ms (min 1.28191, max 1.28191; build 0.871986, compute 0.409922)
+  rpp_crop_batch_unsplit: median 1.20779 ms (min 1.20779, max 1.20779; build nan, compute nan)
+  hand_batch: median 0.128741 ms (min 0.128741, max 0.128741; build 0.00014, compute 0.128601)
+  hand_padded: median 0.130901 ms (min 0.130901, max 0.130901; build 0.00021, compute 0.130691)
+  hand_roi: median 0.117351 ms (min 0.117351, max 0.117351; build 0.00075, compute 0.116601)
+  fkl_fused_halfpixel_once: median 0.147261 ms (min 0.147261, max 0.147261; build 6e-05, compute 0.147201)
+  hand_roi_halfpixel_once: median 0.11813 ms (min 0.11813, max 0.11813; build 6e-05, compute 0.11807)
+  fastrpp_shared: median 0.122161 ms (min 0.122161, max 0.122161; build 0.00375, compute 0.118411)
+(a) batch 260
+  RPP's other pinned parameter arrays are unchanged after its calls; RPP rewrote 252 of the 252 padding ROIs
+  fkl_fused vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.33363e-07, over 1e-4 0 ok
+  fkl_fused vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.22476e-07, over 1e-4 0 ok
+  fkl_fused_halfpixel vs scalar reference HALF_PIXEL [interior]: max 7.62939e-06, mean 6.31854e-07, over 1e-4 0 ok
+  fkl_fused_halfpixel vs scalar reference HALF_PIXEL [edge]: max 7.62939e-06, mean 6.18233e-07, over 1e-4 0 ok
+  fkl_perop_batch vs fkl_fused [interior]: max 7.62939e-06, mean 1.21772e-07, over 1e-4 0 ok
+  fkl_perop_batch vs fkl_fused [edge]: max 7.62939e-06, mean 1.28544e-07, over 1e-4 0 ok
+  rpp_crop_batch vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.3373e-07, over 1e-4 0 ok
+  rpp_crop_batch vs scalar reference HALF_PIXEL [edge]: max 126.406, mean 7.82722, over 1e-4 0.999845 (informational)
+  rpp_crop_batch vs fkl_fused_halfpixel [interior]: max 7.62939e-06, mean 8.8671e-07, over 1e-4 0 (informational)
+  rpp_crop_batch vs fkl_fused_halfpixel [edge]: max 126.406, mean 7.82722, over 1e-4 0.999845 (informational)
+  rpp_crop_batch_unsplit vs rpp_crop_batch [interior]: max 0, mean 0, over 1e-4 0 ok
+  rpp_crop_batch_unsplit vs rpp_crop_batch [edge]: max 0, mean 0, over 1e-4 0 ok
+  hand_batch vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.33363e-07, over 1e-4 0 ok
+  hand_batch vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.22476e-07, over 1e-4 0 ok
+  hand_batch vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_batch vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_batch vs fkl_fused: the whole tensors: bitwise equal
+  hand_padded vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.33363e-07, over 1e-4 0 ok
+  hand_padded vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.22476e-07, over 1e-4 0 ok
+  hand_padded vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_padded vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_padded vs fkl_fused: the whole tensors: bitwise equal
+  hand_roi vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.33363e-07, over 1e-4 0 ok
+  hand_roi vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.22476e-07, over 1e-4 0 ok
+  hand_roi vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi vs fkl_fused: the whole tensors: bitwise equal
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel [interior]: max 0, mean 0, over 1e-4 0 ok
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel [edge]: max 0, mean 0, over 1e-4 0 ok
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel: the whole tensors: bitwise equal
+  hand_roi_halfpixel_once vs scalar reference HALF_PIXEL [interior]: max 7.62939e-06, mean 6.31854e-07, over 1e-4 0 ok
+  hand_roi_halfpixel_once vs scalar reference HALF_PIXEL [edge]: max 7.62939e-06, mean 6.18233e-07, over 1e-4 0 ok
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel: the whole tensors: bitwise equal
+  fastrpp_shared vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.3373e-07, over 1e-4 0 ok
+  fastrpp_shared vs scalar reference HALF_PIXEL [edge]: max 1.90735e-06, mean 4.24716e-07, over 1e-4 0 ok
+  fastrpp_shared vs fkl_fused_halfpixel [interior]: max 7.62939e-06, mean 8.8671e-07, over 1e-4 0 ok
+  fastrpp_shared vs fkl_fused_halfpixel [edge]: max 7.62939e-06, mean 8.6745e-07, over 1e-4 0 ok
+  fastrpp_shared vs rpp_crop_batch [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared vs rpp_crop_batch [edge]: max 126.406, mean 7.82722, over 1e-4 0.999845 (informational)
+  fastrpp_crop_batch vs fastrpp_shared [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_crop_batch vs fastrpp_shared [edge]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.3373e-07, over 1e-4 0 ok
+  fastrpp_shared_once vs scalar reference HALF_PIXEL [edge]: max 1.90735e-06, mean 4.24716e-07, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared [edge]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared: the whole tensors: bitwise equal
+  fastrpp intermediate tensor: not written (one kernel)
+  fastrpp_shared_once: median 0.135111 ms (min 0.135111, max 0.135111; build 6e-05, compute 0.135051)
+  fkl_fused: median 0.131951 ms (min 0.131951, max 0.131951; build 0.01024, compute 0.121711)
+  fkl_fused_halfpixel: median 0.163061 ms (min 0.163061, max 0.163061; build 0.0117, compute 0.151361)
+  fkl_perop_batch: median 0.855405 ms (min 0.855405, max 0.855405; build 0.01113, compute 0.844275)
+  rpp_crop_batch: median 1.28499 ms (min 1.28499, max 1.28499; build 0.863065, compute 0.421923)
+  rpp_crop_batch_unsplit: median 1.26449 ms (min 1.26449, max 1.26449; build nan, compute nan)
+  hand_batch: median 0.132191 ms (min 0.132191, max 0.132191; build 0.00016, compute 0.132031)
+  hand_padded: median 0.112761 ms (min 0.112761, max 0.112761; build 0.00025, compute 0.112511)
+  hand_roi: median 0.147351 ms (min 0.147351, max 0.147351; build 0.00077, compute 0.146581)
+  fkl_fused_halfpixel_once: median 0.149021 ms (min 0.149021, max 0.149021; build 5e-05, compute 0.148971)
+  hand_roi_halfpixel_once: median 0.147121 ms (min 0.147121, max 0.147121; build 5e-05, compute 0.147071)
+  fastrpp_shared: median 0.163411 ms (min 0.163411, max 0.163411; build 0.00392, compute 0.159491)
+  fastrpp_crop_batch: median 0.978076 ms (min 0.978076, max 0.978076; build 0.841585, compute 0.136491)
+(a) batch 270
+  RPP's other pinned parameter arrays are unchanged after its calls; RPP rewrote 242 of the 242 padding ROIs
+  fkl_fused vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.33053e-07, over 1e-4 0 ok
+  fkl_fused vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.21503e-07, over 1e-4 0 ok
+  fkl_fused_halfpixel vs scalar reference HALF_PIXEL [interior]: max 7.62939e-06, mean 6.31744e-07, over 1e-4 0 ok
+  fkl_fused_halfpixel vs scalar reference HALF_PIXEL [edge]: max 7.62939e-06, mean 6.18284e-07, over 1e-4 0 ok
+  fkl_perop_batch vs fkl_fused [interior]: max 7.62939e-06, mean 1.21787e-07, over 1e-4 0 ok
+  fkl_perop_batch vs fkl_fused [edge]: max 7.62939e-06, mean 1.28396e-07, over 1e-4 0 ok
+  rpp_crop_batch vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.33659e-07, over 1e-4 0 ok
+  rpp_crop_batch vs scalar reference HALF_PIXEL [edge]: max 126.406, mean 7.8204, over 1e-4 0.999847 (informational)
+  rpp_crop_batch vs fkl_fused_halfpixel [interior]: max 7.62939e-06, mean 8.866e-07, over 1e-4 0 (informational)
+  rpp_crop_batch vs fkl_fused_halfpixel [edge]: max 126.406, mean 7.8204, over 1e-4 0.999847 (informational)
+  rpp_crop_batch_unsplit vs rpp_crop_batch [interior]: max 0, mean 0, over 1e-4 0 ok
+  rpp_crop_batch_unsplit vs rpp_crop_batch [edge]: max 0, mean 0, over 1e-4 0 ok
+  hand_batch vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.33053e-07, over 1e-4 0 ok
+  hand_batch vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.21503e-07, over 1e-4 0 ok
+  hand_batch vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_batch vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_batch vs fkl_fused: the whole tensors: bitwise equal
+  hand_padded vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.33053e-07, over 1e-4 0 ok
+  hand_padded vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.21503e-07, over 1e-4 0 ok
+  hand_padded vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_padded vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_padded vs fkl_fused: the whole tensors: bitwise equal
+  hand_roi vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.33053e-07, over 1e-4 0 ok
+  hand_roi vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.21503e-07, over 1e-4 0 ok
+  hand_roi vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi vs fkl_fused: the whole tensors: bitwise equal
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel [interior]: max 0, mean 0, over 1e-4 0 ok
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel [edge]: max 0, mean 0, over 1e-4 0 ok
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel: the whole tensors: bitwise equal
+  hand_roi_halfpixel_once vs scalar reference HALF_PIXEL [interior]: max 7.62939e-06, mean 6.31744e-07, over 1e-4 0 ok
+  hand_roi_halfpixel_once vs scalar reference HALF_PIXEL [edge]: max 7.62939e-06, mean 6.18284e-07, over 1e-4 0 ok
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel: the whole tensors: bitwise equal
+  fastrpp_shared vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.33659e-07, over 1e-4 0 ok
+  fastrpp_shared vs scalar reference HALF_PIXEL [edge]: max 1.90735e-06, mean 4.2489e-07, over 1e-4 0 ok
+  fastrpp_shared vs fkl_fused_halfpixel [interior]: max 7.62939e-06, mean 8.866e-07, over 1e-4 0 ok
+  fastrpp_shared vs fkl_fused_halfpixel [edge]: max 7.62939e-06, mean 8.67528e-07, over 1e-4 0 ok
+  fastrpp_shared vs rpp_crop_batch [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared vs rpp_crop_batch [edge]: max 126.406, mean 7.8204, over 1e-4 0.999847 (informational)
+  fastrpp_crop_batch vs fastrpp_shared [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_crop_batch vs fastrpp_shared [edge]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.33659e-07, over 1e-4 0 ok
+  fastrpp_shared_once vs scalar reference HALF_PIXEL [edge]: max 1.90735e-06, mean 4.2489e-07, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared [edge]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared: the whole tensors: bitwise equal
+  fastrpp intermediate tensor: not written (one kernel)
+  fkl_fused: median 0.161491 ms (min 0.161491, max 0.161491; build 0.01046, compute 0.151031)
+  fkl_fused_halfpixel: median 0.165951 ms (min 0.165951, max 0.165951; build 0.01197, compute 0.153981)
+  fkl_perop_batch: median 0.932766 ms (min 0.932766, max 0.932766; build 0.0118, compute 0.920966)
+  rpp_crop_batch: median 1.31921 ms (min 1.31921, max 1.31921; build 0.876345, compute 0.442862)
+  rpp_crop_batch_unsplit: median 1.31079 ms (min 1.31079, max 1.31079; build nan, compute nan)
+  hand_batch: median 0.135961 ms (min 0.135961, max 0.135961; build 0.00015, compute 0.135811)
+  hand_padded: median 0.115601 ms (min 0.115601, max 0.115601; build 0.00023, compute 0.115371)
+  hand_roi: median 0.147811 ms (min 0.147811, max 0.147811; build 0.00079, compute 0.147021)
+  fkl_fused_halfpixel_once: median 0.128251 ms (min 0.128251, max 0.128251; build 7e-05, compute 0.128181)
+  hand_roi_halfpixel_once: median 0.147591 ms (min 0.147591, max 0.147591; build 6e-05, compute 0.147531)
+  fastrpp_shared: median 0.168121 ms (min 0.168121, max 0.168121; build 0.00412, compute 0.164001)
+  fastrpp_crop_batch: median 1.04536 ms (min 1.04536, max 1.04536; build 0.899177, compute 0.146181)
+  fastrpp_shared_once: median 0.163811 ms (min 0.163811, max 0.163811; build 6e-05, compute 0.163751)
+(a) batch 280
+  RPP's other pinned parameter arrays are unchanged after its calls; RPP rewrote 232 of the 232 padding ROIs
+  fkl_fused vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.32686e-07, over 1e-4 0 ok
+  fkl_fused vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.21919e-07, over 1e-4 0 ok
+  fkl_fused_halfpixel vs scalar reference HALF_PIXEL [interior]: max 7.62939e-06, mean 6.31493e-07, over 1e-4 0 ok
+  fkl_fused_halfpixel vs scalar reference HALF_PIXEL [edge]: max 7.62939e-06, mean 6.18095e-07, over 1e-4 0 ok
+  fkl_perop_batch vs fkl_fused [interior]: max 7.62939e-06, mean 1.2178e-07, over 1e-4 0 ok
+  fkl_perop_batch vs fkl_fused [edge]: max 7.62939e-06, mean 1.28369e-07, over 1e-4 0 ok
+  rpp_crop_batch vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.33619e-07, over 1e-4 0 ok
+  rpp_crop_batch vs scalar reference HALF_PIXEL [edge]: max 126.406, mean 7.83154, over 1e-4 0.999843 (informational)
+  rpp_crop_batch vs fkl_fused_halfpixel [interior]: max 7.62939e-06, mean 8.86367e-07, over 1e-4 0 (informational)
+  rpp_crop_batch vs fkl_fused_halfpixel [edge]: max 126.406, mean 7.83154, over 1e-4 0.999843 (informational)
+  rpp_crop_batch_unsplit vs rpp_crop_batch [interior]: max 0, mean 0, over 1e-4 0 ok
+  rpp_crop_batch_unsplit vs rpp_crop_batch [edge]: max 0, mean 0, over 1e-4 0 ok
+  hand_batch vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.32686e-07, over 1e-4 0 ok
+  hand_batch vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.21919e-07, over 1e-4 0 ok
+  hand_batch vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_batch vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_batch vs fkl_fused: the whole tensors: bitwise equal
+  hand_padded vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.32686e-07, over 1e-4 0 ok
+  hand_padded vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.21919e-07, over 1e-4 0 ok
+  hand_padded vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_padded vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_padded vs fkl_fused: the whole tensors: bitwise equal
+  hand_roi vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.32686e-07, over 1e-4 0 ok
+  hand_roi vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.21919e-07, over 1e-4 0 ok
+  hand_roi vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi vs fkl_fused: the whole tensors: bitwise equal
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel [interior]: max 0, mean 0, over 1e-4 0 ok
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel [edge]: max 0, mean 0, over 1e-4 0 ok
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel: the whole tensors: bitwise equal
+  hand_roi_halfpixel_once vs scalar reference HALF_PIXEL [interior]: max 7.62939e-06, mean 6.31493e-07, over 1e-4 0 ok
+  hand_roi_halfpixel_once vs scalar reference HALF_PIXEL [edge]: max 7.62939e-06, mean 6.18095e-07, over 1e-4 0 ok
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel: the whole tensors: bitwise equal
+  fastrpp_shared vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.33619e-07, over 1e-4 0 ok
+  fastrpp_shared vs scalar reference HALF_PIXEL [edge]: max 1.90735e-06, mean 4.24843e-07, over 1e-4 0 ok
+  fastrpp_shared vs fkl_fused_halfpixel [interior]: max 7.62939e-06, mean 8.86367e-07, over 1e-4 0 ok
+  fastrpp_shared vs fkl_fused_halfpixel [edge]: max 7.62939e-06, mean 8.67111e-07, over 1e-4 0 ok
+  fastrpp_shared vs rpp_crop_batch [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared vs rpp_crop_batch [edge]: max 126.406, mean 7.83154, over 1e-4 0.999843 (informational)
+  fastrpp_crop_batch vs fastrpp_shared [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_crop_batch vs fastrpp_shared [edge]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.33619e-07, over 1e-4 0 ok
+  fastrpp_shared_once vs scalar reference HALF_PIXEL [edge]: max 1.90735e-06, mean 4.24843e-07, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared [edge]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared: the whole tensors: bitwise equal
+  fastrpp intermediate tensor: not written (one kernel)
+  fkl_fused_halfpixel: median 0.169571 ms (min 0.169571, max 0.169571; build 0.01125, compute 0.158321)
+  fkl_perop_batch: median 1.01668 ms (min 1.01668, max 1.01668; build 0.01246, compute 1.00422)
+  rpp_crop_batch: median 1.36278 ms (min 1.36278, max 1.36278; build 0.901296, compute 0.461483)
+  rpp_crop_batch_unsplit: median 1.34619 ms (min 1.34619, max 1.34619; build nan, compute nan)
+  hand_batch: median 0.11261 ms (min 0.11261, max 0.11261; build 0.00016, compute 0.11245)
+  hand_padded: median 0.118401 ms (min 0.118401, max 0.118401; build 0.00023, compute 0.118171)
+  hand_roi: median 0.140931 ms (min 0.140931, max 0.140931; build 0.00103, compute 0.139901)
+  fkl_fused_halfpixel_once: median 0.154141 ms (min 0.154141, max 0.154141; build 7e-05, compute 0.154071)
+  hand_roi_halfpixel_once: median 0.145781 ms (min 0.145781, max 0.145781; build 6e-05, compute 0.145721)
+  fastrpp_shared: median 0.133591 ms (min 0.133591, max 0.133591; build 0.00418, compute 0.129411)
+  fastrpp_crop_batch: median 1.04713 ms (min 1.04713, max 1.04713; build 0.902646, compute 0.144481)
+  fastrpp_shared_once: median 0.149341 ms (min 0.149341, max 0.149341; build 6e-05, compute 0.149281)
+  fkl_fused: median 0.140651 ms (min 0.140651, max 0.140651; build 0.01164, compute 0.129011)
+(a) batch 290
+  RPP's other pinned parameter arrays are unchanged after its calls; RPP rewrote 222 of the 222 padding ROIs
+  fkl_fused vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.32576e-07, over 1e-4 0 ok
+  fkl_fused vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.21588e-07, over 1e-4 0 ok
+  fkl_fused_halfpixel vs scalar reference HALF_PIXEL [interior]: max 7.62939e-06, mean 6.3152e-07, over 1e-4 0 ok
+  fkl_fused_halfpixel vs scalar reference HALF_PIXEL [edge]: max 7.62939e-06, mean 6.17424e-07, over 1e-4 0 ok
+  fkl_perop_batch vs fkl_fused [interior]: max 7.62939e-06, mean 1.21754e-07, over 1e-4 0 ok
+  fkl_perop_batch vs fkl_fused [edge]: max 7.62939e-06, mean 1.28333e-07, over 1e-4 0 ok
+  rpp_crop_batch vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.33639e-07, over 1e-4 0 ok
+  rpp_crop_batch vs scalar reference HALF_PIXEL [edge]: max 126.406, mean 7.837, over 1e-4 0.999831 (informational)
+  rpp_crop_batch vs fkl_fused_halfpixel [interior]: max 7.62939e-06, mean 8.86478e-07, over 1e-4 0 (informational)
+  rpp_crop_batch vs fkl_fused_halfpixel [edge]: max 126.406, mean 7.837, over 1e-4 0.999831 (informational)
+  rpp_crop_batch_unsplit vs rpp_crop_batch [interior]: max 0, mean 0, over 1e-4 0 ok
+  rpp_crop_batch_unsplit vs rpp_crop_batch [edge]: max 0, mean 0, over 1e-4 0 ok
+  hand_batch vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.32576e-07, over 1e-4 0 ok
+  hand_batch vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.21588e-07, over 1e-4 0 ok
+  hand_batch vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_batch vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_batch vs fkl_fused: the whole tensors: bitwise equal
+  hand_padded vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.32576e-07, over 1e-4 0 ok
+  hand_padded vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.21588e-07, over 1e-4 0 ok
+  hand_padded vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_padded vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_padded vs fkl_fused: the whole tensors: bitwise equal
+  hand_roi vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.32576e-07, over 1e-4 0 ok
+  hand_roi vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.21588e-07, over 1e-4 0 ok
+  hand_roi vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi vs fkl_fused: the whole tensors: bitwise equal
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel [interior]: max 0, mean 0, over 1e-4 0 ok
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel [edge]: max 0, mean 0, over 1e-4 0 ok
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel: the whole tensors: bitwise equal
+  hand_roi_halfpixel_once vs scalar reference HALF_PIXEL [interior]: max 7.62939e-06, mean 6.3152e-07, over 1e-4 0 ok
+  hand_roi_halfpixel_once vs scalar reference HALF_PIXEL [edge]: max 7.62939e-06, mean 6.17424e-07, over 1e-4 0 ok
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel: the whole tensors: bitwise equal
+  fastrpp_shared vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.33639e-07, over 1e-4 0 ok
+  fastrpp_shared vs scalar reference HALF_PIXEL [edge]: max 1.90735e-06, mean 4.25177e-07, over 1e-4 0 ok
+  fastrpp_shared vs fkl_fused_halfpixel [interior]: max 7.62939e-06, mean 8.86478e-07, over 1e-4 0 ok
+  fastrpp_shared vs fkl_fused_halfpixel [edge]: max 7.62939e-06, mean 8.66525e-07, over 1e-4 0 ok
+  fastrpp_shared vs rpp_crop_batch [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared vs rpp_crop_batch [edge]: max 126.406, mean 7.837, over 1e-4 0.999831 (informational)
+  fastrpp_crop_batch vs fastrpp_shared [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_crop_batch vs fastrpp_shared [edge]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.33639e-07, over 1e-4 0 ok
+  fastrpp_shared_once vs scalar reference HALF_PIXEL [edge]: max 1.90735e-06, mean 4.25177e-07, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared [edge]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared: the whole tensors: bitwise equal
+  fastrpp intermediate tensor: not written (one kernel)
+  fkl_perop_batch: median 1.06399 ms (min 1.06399, max 1.06399; build 0.01285, compute 1.05114)
+  rpp_crop_batch: median 1.42053 ms (min 1.42053, max 1.42053; build 0.933247, compute 0.487283)
+  rpp_crop_batch_unsplit: median 1.4181 ms (min 1.4181, max 1.4181; build nan, compute nan)
+  hand_batch: median 0.136091 ms (min 0.136091, max 0.136091; build 0.00016, compute 0.135931)
+  hand_padded: median 0.136101 ms (min 0.136101, max 0.136101; build 0.00023, compute 0.135871)
+  hand_roi: median 0.132071 ms (min 0.132071, max 0.132071; build 0.00097, compute 0.131101)
+  fkl_fused_halfpixel_once: median 0.135311 ms (min 0.135311, max 0.135311; build 5e-05, compute 0.135261)
+  hand_roi_halfpixel_once: median 0.130281 ms (min 0.130281, max 0.130281; build 7e-05, compute 0.130211)
+  fastrpp_shared: median 0.161931 ms (min 0.161931, max 0.161931; build 0.00399, compute 0.157941)
+  fastrpp_crop_batch: median 1.09362 ms (min 1.09362, max 1.09362; build 0.934676, compute 0.158941)
+  fastrpp_shared_once: median 0.133241 ms (min 0.133241, max 0.133241; build 6e-05, compute 0.133181)
+  fkl_fused: median 0.161452 ms (min 0.161452, max 0.161452; build 0.012871, compute 0.148581)
+  fkl_fused_halfpixel: median 0.147461 ms (min 0.147461, max 0.147461; build 0.01161, compute 0.135851)
+(a) batch 300
+  RPP's other pinned parameter arrays are unchanged after its calls; RPP rewrote 212 of the 212 padding ROIs
+  fkl_fused vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.3231e-07, over 1e-4 0 ok
+  fkl_fused vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.21339e-07, over 1e-4 0 ok
+  fkl_fused_halfpixel vs scalar reference HALF_PIXEL [interior]: max 7.62939e-06, mean 6.31421e-07, over 1e-4 0 ok
+  fkl_fused_halfpixel vs scalar reference HALF_PIXEL [edge]: max 7.62939e-06, mean 6.16807e-07, over 1e-4 0 ok
+  fkl_perop_batch vs fkl_fused [interior]: max 7.62939e-06, mean 1.21774e-07, over 1e-4 0 ok
+  fkl_perop_batch vs fkl_fused [edge]: max 7.62939e-06, mean 1.28433e-07, over 1e-4 0 ok
+  rpp_crop_batch vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.33647e-07, over 1e-4 0 ok
+  rpp_crop_batch vs scalar reference HALF_PIXEL [edge]: max 126.406, mean 7.84034, over 1e-4 0.999836 (informational)
+  rpp_crop_batch vs fkl_fused_halfpixel [interior]: max 7.62939e-06, mean 8.86475e-07, over 1e-4 0 (informational)
+  rpp_crop_batch vs fkl_fused_halfpixel [edge]: max 126.406, mean 7.84034, over 1e-4 0.999836 (informational)
+  rpp_crop_batch_unsplit vs rpp_crop_batch [interior]: max 0, mean 0, over 1e-4 0 ok
+  rpp_crop_batch_unsplit vs rpp_crop_batch [edge]: max 0, mean 0, over 1e-4 0 ok
+  hand_batch vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.3231e-07, over 1e-4 0 ok
+  hand_batch vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.21339e-07, over 1e-4 0 ok
+  hand_batch vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_batch vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_batch vs fkl_fused: the whole tensors: bitwise equal
+  hand_padded vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.3231e-07, over 1e-4 0 ok
+  hand_padded vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.21339e-07, over 1e-4 0 ok
+  hand_padded vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_padded vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_padded vs fkl_fused: the whole tensors: bitwise equal
+  hand_roi vs scalar reference ASYMMETRIC [interior]: max 7.62939e-06, mean 6.3231e-07, over 1e-4 0 ok
+  hand_roi vs scalar reference ASYMMETRIC [edge]: max 7.62939e-06, mean 6.21339e-07, over 1e-4 0 ok
+  hand_roi vs fkl_fused [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi vs fkl_fused [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi vs fkl_fused: the whole tensors: bitwise equal
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel [interior]: max 0, mean 0, over 1e-4 0 ok
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel [edge]: max 0, mean 0, over 1e-4 0 ok
+  fkl_fused_halfpixel_once vs fkl_fused_halfpixel: the whole tensors: bitwise equal
+  hand_roi_halfpixel_once vs scalar reference HALF_PIXEL [interior]: max 7.62939e-06, mean 6.31421e-07, over 1e-4 0 ok
+  hand_roi_halfpixel_once vs scalar reference HALF_PIXEL [edge]: max 7.62939e-06, mean 6.16807e-07, over 1e-4 0 ok
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel [interior]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel [edge]: max 0, mean 0, over 1e-4 0 (informational)
+  hand_roi_halfpixel_once vs fkl_fused_halfpixel: the whole tensors: bitwise equal
+  fastrpp_shared vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.33647e-07, over 1e-4 0 ok
+  fastrpp_shared vs scalar reference HALF_PIXEL [edge]: max 1.90735e-06, mean 4.25292e-07, over 1e-4 0 ok
+  fastrpp_shared vs fkl_fused_halfpixel [interior]: max 7.62939e-06, mean 8.86475e-07, over 1e-4 0 ok
+  fastrpp_shared vs fkl_fused_halfpixel [edge]: max 7.62939e-06, mean 8.66173e-07, over 1e-4 0 ok
+  fastrpp_shared vs rpp_crop_batch [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared vs rpp_crop_batch [edge]: max 126.406, mean 7.84034, over 1e-4 0.999836 (informational)
+  fastrpp_crop_batch vs fastrpp_shared [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_crop_batch vs fastrpp_shared [edge]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs scalar reference HALF_PIXEL [interior]: max 1.90735e-06, mean 4.33647e-07, over 1e-4 0 ok
+  fastrpp_shared_once vs scalar reference HALF_PIXEL [edge]: max 1.90735e-06, mean 4.25292e-07, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared [interior]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared [edge]: max 0, mean 0, over 1e-4 0 ok
+  fastrpp_shared_once vs fastrpp_shared: the whole tensors: bitwise equal
+  fastrpp intermediate tensor: not written (one kernel)
+  rpp_crop_batch: median 1.5429 ms (min 1.5429, max 1.5429; build 1.02254, compute 0.520364)
+  rpp_crop_batch_unsplit: median 1.46507 ms (min 1.46507, max 1.46507; build nan, compute nan)
+  hand_batch: median 0.115261 ms (min 0.115261, max 0.115261; build 0.00015, compute 0.115111)
+  hand_padded: median 0.146712 ms (min 0.146712, max 0.146712; build 0.00027, compute 0.146442)
+  hand_roi: median 0.133871 ms (min 0.133871, max 0.133871; build 0.00101, compute 0.132861)
+  fkl_fused_halfpixel_once: median 0.14037 ms (min 0.14037, max 0.14037; build 6e-05, compute 0.14031)
+  hand_roi_halfpixel_once: median 0.146031 ms (min 0.146031, max 0.146031; build 6e-05, compute 0.145971)
+  fastrpp_shared: median 0.156081 ms (min 0.156081, max 0.156081; build 0.00409, compute 0.151991)
+  fastrpp_crop_batch: median 1.09682 ms (min 1.09682, max 1.09682; build 0.947196, compute 0.149621)
+  fastrpp_shared_once: median 0.175641 ms (min 0.175641, max 0.175641; build 6e-05, compute 0.175581)
+  fkl_fused: median 0.172261 ms (min 0.172261, max 0.172261; build 0.0115, compute 0.160761)
+  fkl_fused_halfpixel: median 0.151321 ms (min 0.151321, max 0.151321; build 0.0116, compute 0.139721)
+  fkl_perop_batch: median 1.13006 ms (min 1.13006, max 1.13006; build 0.01308, compute 1.11698)
+all required numerical checks passed
