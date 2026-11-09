@@ -1,0 +1,30 @@
+# experiment: E18 stencil: agreement of the 8-bit outputs
+# repo: fkl-benchmarks bd5900d27e4a2574244cfed3540229c24dde2842
+# fkl: 1da778992756e0fa08ec289225fe18dca134412c
+# cvGPUSpeedup: 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c
+# FastNPP: a1b5e245d7dd70fba23dcb51a0aea80495dbc61d
+# nvcc: 13.4.92 (/home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/nvcc), architectures 89, -fmad on, -lineinfo on
+# hip: none (none), architectures none
+# host compiler: GNU 15.2.0, Release, -march=native, -ftemplate-depth=1000
+# opencv: 4.14.0
+# cpu: AMD Ryzen 9 5950X 16-Core Processor
+# os: Ubuntu 26.04.1 LTS
+# kernel: Linux 7.0.0-38-generic
+# gpu: NVIDIA GeForce RTX 4090, cc 8.9, 128 SMs, 24106 MiB, PCI 0000:09:00.0
+# cuda driver api: 13.3, cuda runtime: 13.4
+# nvidia-smi driver: 610.43.02
+# clocks (sm, mem, max sm, max mem, MHz): 2550 MHz, 10251 MHz, 3105 MHz, 10501 MHz
+# power limit, temperature at start: 450.00 W, 44
+version,sampling,against,values,values_differing,pixels_differing,max_diff_levels,identical,max_distance_of_reference_to_half_level
+fkl_stencil_asym,ASYMMETRIC,reference_double_ASYMMETRIC,6220800,24274,23942,1,0,0.166666667
+fkl_stencil_halfpixel,HALF_PIXEL,reference_double_HALF_PIXEL,6220800,139104,135465,1,0,0.166666667
+opencv_cuda,ASYMMETRIC,reference_double_ASYMMETRIC,6220800,24271,23939,1,0,0.166666667
+npp,HALF_PIXEL,reference_double_HALF_PIXEL,6220800,139121,135484,1,0,0.166666667
+fkl_stencil_asym_once,ASYMMETRIC,reference_double_ASYMMETRIC,6220800,24274,23942,1,0,0.166666667
+fkl_stencil_halfpixel_once,HALF_PIXEL,reference_double_HALF_PIXEL,6220800,139104,135465,1,0,0.166666667
+fkl_stencil_asym,ASYMMETRIC,opencv_cuda,6220800,3,3,1,0,0.0555555557
+fkl_stencil_halfpixel,HALF_PIXEL,npp,6220800,85,85,1,0,0.111111111
+fkl_stencil_asym_once,ASYMMETRIC,fkl_stencil_asym,6220800,0,0,0,1,-1
+fkl_stencil_halfpixel_once,HALF_PIXEL,fkl_stencil_halfpixel,6220800,0,0,0,1,-1
+fkl_stencil_asym_once,ASYMMETRIC,opencv_cuda,6220800,3,3,1,0,0.0555555557
+fkl_stencil_halfpixel_once,HALF_PIXEL,npp,6220800,85,85,1,0,0.111111111

@@ -1,0 +1,13 @@
+whole_call:fkl_stencil_asym: 101 kernels in the range; per call (101 calls) 1.00; names [('linearFilterDPPKernel', 101)]
+kernel_only:fkl_stencil_asym: 100 timed calls behind a spin; kernels per call [1]; covered 100 of 100; margin (spin end - return of the last launch) min 4992.6 us, median 4996.7 us; GPU gap spin end -> first kernel max 2.56 us, median 2.21 us; one kernel per call
+whole_call:fkl_stencil_halfpixel: 101 kernels in the range; per call (101 calls) 1.00; names [('linearFilterDPPKernel', 101)]
+kernel_only:fkl_stencil_halfpixel: 100 timed calls behind a spin; kernels per call [1]; covered 100 of 100; margin (spin end - return of the last launch) min 4992.7 us, median 4996.7 us; GPU gap spin end -> first kernel max 2.53 us, median 2.18 us; one kernel per call
+whole_call:opencv_cuda: 606 kernels in the range; per call (101 calls) 6.00; names [('filter2D', 101), ('resize_linear', 101), ('transformSimple', 202), ('transformSmart', 202)]
+kernel_only:opencv_cuda: 100 timed calls behind a spin; kernels per call [6]; covered 100 of 100; margin (spin end - return of the last launch) min 4974.6 us, median 4979.2 us; GPU gap spin end -> first kernel max 2.94 us, median 2.27 us; between the kernels of a call max 1.47 us, median 0.70 us
+whole_call:npp: 404 kernels in the range; per call (101 calls) 4.00; names [('ForEachPixelNaiveInLargeImage', 303), ('resizeNaive', 101)]
+kernel_only:npp: 100 timed calls behind a spin; kernels per call [4]; covered 100 of 100; margin (spin end - return of the last launch) min 4981.1 us, median 4986.6 us; GPU gap spin end -> first kernel max 3.01 us, median 2.18 us; between the kernels of a call max 1.38 us, median 0.67 us
+whole_call:fkl_stencil_asym_once: 101 kernels in the range; per call (101 calls) 1.00; names [('linearFilterDPPKernel', 101)]
+kernel_only:fkl_stencil_asym_once: 100 timed calls behind a spin; kernels per call [1]; covered 100 of 100; margin (spin end - return of the last launch) min 4994.8 us, median 4996.7 us; GPU gap spin end -> first kernel max 2.53 us, median 2.18 us; one kernel per call
+whole_call:fkl_stencil_halfpixel_once: 101 kernels in the range; per call (101 calls) 1.00; names [('linearFilterDPPKernel', 101)]
+kernel_only:fkl_stencil_halfpixel_once: 100 timed calls behind a spin; kernels per call [1]; covered 100 of 100; margin (spin end - return of the last launch) min 4992.2 us, median 4996.7 us; GPU gap spin end -> first kernel max 2.46 us, median 2.18 us; one kernel per call
+texture, array or surface API calls in the whole trace: 0 {}

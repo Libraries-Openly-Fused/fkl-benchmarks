@@ -1,0 +1,26 @@
+# experiment: E18 stencil: checks of FKL's path
+# repo: fkl-benchmarks bd5900d27e4a2574244cfed3540229c24dde2842
+# fkl: 1da778992756e0fa08ec289225fe18dca134412c
+# cvGPUSpeedup: 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c
+# FastNPP: a1b5e245d7dd70fba23dcb51a0aea80495dbc61d
+# nvcc: 13.4.92 (/home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/nvcc), architectures 89, -fmad on, -lineinfo on
+# hip: none (none), architectures none
+# host compiler: GNU 15.2.0, Release, -march=native, -ftemplate-depth=1000
+# opencv: 4.14.0
+# cpu: AMD Ryzen 9 5950X 16-Core Processor
+# os: Ubuntu 26.04.1 LTS
+# kernel: Linux 7.0.0-38-generic
+# gpu: NVIDIA GeForce RTX 4090, cc 8.9, 128 SMs, 24106 MiB, PCI 0000:09:00.0
+# cuda driver api: 13.3, cuda runtime: 13.4
+# nvidia-smi driver: 610.43.02
+# clocks (sm, mem, max sm, max mem, MHz): 2550 MHz, 10251 MHz, 3105 MHz, 10501 MHz
+# power limit, temperature at start: 450.00 W, 44
+check,sampling,value,criterion,ok
+"resize alone (fk::executeOperations, float3) against the double-precision resize: max |difference|",ASYMMETRIC,0.0415039063,informational (float positions and weights against double),1
+LinearFilterDPP with the identity kernel against the resize alone: bitwise identical,ASYMMETRIC,1,must be 1,1
+OpenCV-CUDA's resized image (CV_32FC3) against FKL's resize: max |difference|,ASYMMETRIC,3.05175781e-05,informational,1
+OpenCV-CUDA's resized image against the double-precision resize: max |difference|,ASYMMETRIC,0.0415039063,informational,1
+"resize alone (fk::executeOperations, float3) against the double-precision resize: max |difference|",HALF_PIXEL,0.0428229439,informational (float positions and weights against double),1
+LinearFilterDPP with the identity kernel against the resize alone: bitwise identical,HALF_PIXEL,1,must be 1,1
+NPP's resized image (32f C3) against FKL's resize: max |difference|,HALF_PIXEL,4.57763672e-05,informational,1
+NPP's resized image against the double-precision resize: max |difference|,HALF_PIXEL,0.0428229439,informational,1

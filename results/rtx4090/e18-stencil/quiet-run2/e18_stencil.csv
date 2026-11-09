@@ -1,0 +1,30 @@
+# experiment: E18 stencil: whole-call and kernel-only times
+# repo: fkl-benchmarks bd5900d27e4a2574244cfed3540229c24dde2842
+# fkl: 1da778992756e0fa08ec289225fe18dca134412c
+# cvGPUSpeedup: 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c
+# FastNPP: a1b5e245d7dd70fba23dcb51a0aea80495dbc61d
+# nvcc: 13.4.92 (/home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/nvcc), architectures 89, -fmad on, -lineinfo on
+# hip: none (none), architectures none
+# host compiler: GNU 15.2.0, Release, -march=native, -ftemplate-depth=1000
+# opencv: 4.14.0
+# cpu: AMD Ryzen 9 5950X 16-Core Processor
+# os: Ubuntu 26.04.1 LTS
+# kernel: Linux 7.0.0-38-generic
+# gpu: NVIDIA GeForce RTX 4090, cc 8.9, 128 SMs, 24106 MiB, PCI 0000:09:00.0
+# cuda driver api: 13.3, cuda runtime: 13.4
+# nvidia-smi driver: 610.43.02
+# clocks (sm, mem, max sm, max mem, MHz): 2685 MHz, 10251 MHz, 3105 MHz, 10501 MHz
+# power limit, temperature at start: 450.00 W, 44
+version,sampling,interval,mean_ms,min_ms,host_prepare_mean_ms,host_prepare_min_ms,iterations,spin_us
+fkl_stencil_asym,ASYMMETRIC,whole_call,0.0384528004,0.0378880017,,,100,
+fkl_stencil_asym,ASYMMETRIC,kernel_only,0.0392563191,0.0389119983,8.01e-05,6e-05,100,5000
+fkl_stencil_halfpixel,HALF_PIXEL,whole_call,0.0385244799,0.0378880017,,,100,
+fkl_stencil_halfpixel,HALF_PIXEL,kernel_only,0.0397900786,0.0389119983,8.02e-05,6e-05,100,5000
+opencv_cuda,ASYMMETRIC,whole_call,0.173686401,0.171008006,,,100,
+opencv_cuda,ASYMMETRIC,kernel_only,0.168564801,0.159743994,7.18e-05,4e-05,100,5000
+npp,HALF_PIXEL,whole_call,0.121313922,0.118784003,,,100,
+npp,HALF_PIXEL,kernel_only,0.119873922,0.116736002,4.16e-05,3e-05,100,5000
+fkl_stencil_asym_once,ASYMMETRIC,whole_call,0.0386633596,0.0378880017,,,100,
+fkl_stencil_asym_once,ASYMMETRIC,kernel_only,0.0399359986,0.0399359986,3.85e-05,3e-05,100,5000
+fkl_stencil_halfpixel_once,HALF_PIXEL,whole_call,0.0387951994,0.0378880017,,,100,
+fkl_stencil_halfpixel_once,HALF_PIXEL,kernel_only,0.0399359986,0.0399359986,3.78e-05,2e-05,100,5000
