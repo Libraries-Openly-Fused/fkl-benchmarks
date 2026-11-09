@@ -1,0 +1,49 @@
+check_fkl_tree: FKL tree /home/oscar/tfkl-bench/worktrees/fkl-benchmarks-pin-1da7789/external/fkl (1da778992756e0fa08ec289225fe18dca134412c), 2026-11-09T11:28:04+01:00, jobs 12, cores 8-15,24-31, groups bench
+nvcc: Cuda compilation tools, release 13.4, V13.4.92  c++: c++ (Ubuntu 15.2.0-16ubuntu1) 15.2.0  OpenCV: /home/oscar/tfkl-bench/deps/opencv-4.14-cuda13.4/install
+fkl-benchmarks HEAD 434dada; cvGPUSpeedup 6d26c65; FastNPP a1b5e24; the repository itself is not changed
+
+== bench: configure (/home/oscar/tfkl-bench/scratch/pin-1da7789/check/bench-src)
+bench: 39 targets: batch_build_compilation_time_cpp batch_build_compilation_time_cu benchmark_CPU_NPP_vs_FastNPP_cu benchmark_CPU_OpenCV_vs_cvGS_cu benchmark_CPUandGPU_cvGS_vs_fk_cu benchmark_batched_preprocessing_cu benchmark_data_type_cu benchmark_horizontal_fusion_cpp benchmark_horizontal_fusion_cu benchmark_image_resolution_MAD_loop_cu benchmark_image_resolution_MAD_loop_mul4_cu benchmark_latency_hiding_cpp benchmark_latency_hiding_cu benchmark_npp_batchresize_x_split3D_cu benchmark_numinstructions_x_operation_cpp benchmark_numinstructions_x_operation_cu benchmark_thread_fusion_cpp benchmark_thread_fusion_cu
+bench: build finished after 2262 s (2262.67 s wall, largest resident set of one process 2508760 KiB)
+OK            batch_build_compilation_time_cpp
+OK            batch_build_compilation_time_cu
+OK            benchmark_CPU_NPP_vs_FastNPP_cu
+OK            benchmark_CPU_OpenCV_vs_cvGS_cu
+OK            benchmark_CPUandGPU_cvGS_vs_fk_cu
+OK            benchmark_batched_preprocessing_cu
+OK            benchmark_data_type_cu
+OK            benchmark_horizontal_fusion_cpp
+OK            benchmark_horizontal_fusion_cu
+OK            benchmark_image_resolution_MAD_loop_cu
+OK            benchmark_image_resolution_MAD_loop_mul4_cu
+OK            benchmark_latency_hiding_cpp
+OK            benchmark_latency_hiding_cu
+OK            benchmark_npp_batchresize_x_split3D_cu
+OK            benchmark_numinstructions_x_operation_cpp
+OK            benchmark_numinstructions_x_operation_cu
+OK            benchmark_thread_fusion_cpp
+OK            benchmark_thread_fusion_cu
+OK            benchmark_vertical_fusionCompareMul1_cu
+OK            benchmark_vertical_fusionCompareMulAdd1_cu
+OK            benchmark_vertical_fusionCompareMulAdd_cu
+OK            benchmark_vfhf_max_speedup_cu
+OK            e16_attention_cu
+OK            e16_query_tile_cu
+OK            e1_hf_batch_cu
+OK            e1_preproc_cu
+OK            e1_vf_chain_cu
+OK            e2_fkl_chain_cu
+OK            e4_preprocessing_cu
+OK            e6_fused_vs_unfused_cu
+OK            e9_cross_library_cu
+OK            graph_instantiate_time_cu
+OK            graph_structure_probe_cu
+OK            hf_fused_time_probe_cu
+OK            hf_graph_structure_probe_cu
+OK            opencv_parity_probe_cu
+OK            pcie_bandwidth_cu
+OK            resize_convention_cu
+OK            vf_fused_time_probe_cu
+bench: 39 targets, 39 compiled, 0 failed, 0 not built
+
+check_fkl_tree: done 2026-11-09T12:05:50+01:00, exit status 0 (0 = every target of every group compiled and every expected rejection held)

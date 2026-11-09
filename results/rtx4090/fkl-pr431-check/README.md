@@ -28,6 +28,7 @@
 - **Kernels:** 1,790 in each build, and all 1,790 pair up. 1,221 of the pairs have a different mangled name because of the default argument. The other 569 have no Sub, Mul or Div in their names.
 - **SASS:** identical for all 1,790. None differs, no kernel is left without a pair, and there are no key collisions.
 - **Names:** the pairing removed 15,704 `,fk::BinaryType` arguments from the names of the c6f7473 build, and none from the 64ad9195 build.
+- **Cause of the renames:** all 1,221 come from the default argument. Masking the module id that nvcc puts in the names of anonymous namespaces (`_GLOBAL__N__<8 hex>_`) leaves every one of them still different, and no other pair renamed (`rename-causes-64ad919-vs-c6f7473.txt`, from `scripts-used/rename_causes.py`).
 - **The coordinator's re-check:** byte for byte, instruction encodings included. It agrees.
 - **Compile:** both builds compiled all 39 targets of the bench group, the 34 `_cu` programs and 5 `_cpp` programs. They took 2,808 s and 2,802 s (`identity-builds/*/report.txt`, `bench-time.txt`).
 
@@ -61,6 +62,31 @@
   - it added `benchmark_vfhf_max_speedup_cu`;
   - `e4_preprocessing_cu` now has 182 kernels.
 
+## Compile check at the pin (`compile-check/`)
+- **What was built:** the branch of the pin move at fkl-benchmarks 434dada.
+  - 434dada is 8f4a95b plus the gitlink and the files in `results/`.
+  - Its `external/fkl` was checked out at `1da778992756e0fa08ec289225fe18dca134412c`, with thread-pool 27e733f, cvGPUSpeedup 6d26c65 and FastNPP a1b5e245.
+  - `scripts-used/compile_check.sh` stops unless the checkout and the gitlink of HEAD are both at 1da77899 and the worktree is clean.
+- **When:** compile only, 2026-11-09, 11:28:04 to 12:05:50 (+01:00).
+- **The build line:**
+  ```
+  scripts/check_fkl_tree.sh <worktree>/external/fkl --out <dir> --only bench --ref-build build/local-rtx4090
+  ```
+  This used the defaults (12 jobs on cores 8-15,24-31) and the same toolchain as above.
+- **Result:** all 39 targets compiled, 0 failed and 0 were not built, in 2,263 s (`report.txt`).
+- **Against the c6f7473 build of the identity check:** the same 39 targets and 0 regressions (`compare-with-c6f7473-identity-build.txt`, from `scripts/check_fkl_tree_compare.py`).
+- **SASS against the c6f7473 build:** 1,790 of 1,790 kernels identical, paired by demangled name as above (`sass-identity-head-vs-c6f7473-identity-build.txt`).
+  - 146 of them are in anonymous namespaces and carry a different module id in their mangled names. Nothing else in their names differs (`rename-causes-head-vs-c6f7473-identity-build.txt`).
+  - By mangled name alone, `scripts/sass_compare_builds.py` therefore reports 1,644 identical kernels and 146 in each build only (`sass-head-vs-c6f7473-identity-build.txt`).
+  - The two builds differ in the fkl-benchmarks commit (8f4a95b and 434dada) and in their build folders. Which of the two sets the module id was not determined.
+  - Between the 64ad9195 and c6f7473 builds, which share the commit, the module ids are the same.
+- **Left out:**
+  - `bench-build.log` (17.02 MiB);
+  - the empty `bench-rejected-targets.txt`;
+  - the build directory.
+
+  They stay in `scratch/pin-1da7789/check/` on this machine.
+
 ## What this says and what not
 - **What it says:** at fkl-benchmarks 8f4a95b, the device code of every CUDA program of this repository is the same, instruction for instruction, at FKL 64ad9195 and at 1da77899. Only kernel names differ, and only by the default argument. So the GPU results these programs gave at 64ad9195 stand for 1da77899 as far as the device code goes.
 - **What it does not cover:**
@@ -74,6 +100,12 @@
 - `sass-identity-64ad919-vs-c6f7473.txt`: the identity report.
 - `sass-identity-script-check-pr423-vs-pr427.txt`: the check of the script.
 - `scripts-used/identity_builds.sh` and `scripts-used/sass_identity.py`: the scripts that ran.
+- `scripts-used/compile_check.sh` and `scripts-used/rename_causes.py`: the scripts of the compile check at the pin and of the rename count.
+- `rename-causes-64ad919-vs-c6f7473.txt`: the renamed pairs of the identity check, by cause.
+- `compile-check/`: the compile check at the pin.
+  - The files that `check_fkl_tree.sh` wrote: `report.txt`, `bench-report.csv`, `bench-targets.txt`, `bench-targets-built.txt`, `bench-time.txt` and `bench-configure.log`.
+  - `console.txt`: `report.txt` plus the start and end lines of `compile_check.sh`.
+  - The comparisons with the c6f7473 build: `compare-with-c6f7473-identity-build.txt`, `sass-identity-head-vs-c6f7473-identity-build.txt`, `sass-head-vs-c6f7473-identity-build.txt` and `rename-causes-head-vs-c6f7473-identity-build.txt`.
 - `identity-builds/console.txt`: the console of `identity_builds.sh`.
 - `identity-builds/base-64ad919/` and `identity-builds/branch-c6f7473/`: per build, the files that `check_fkl_tree.sh` wrote:
   - `report.txt` (the same text as that build's console);
