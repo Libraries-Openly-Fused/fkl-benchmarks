@@ -51,6 +51,14 @@
 //                           They are valid only while the crops (their positions and sizes) do not change, and the build is left out on purpose:
 //                           they compare the kernels and their launch, not the builder API. fkl_fused_halfpixel_once runs fkl_fused_halfpixel's
 //                           kernel. 1 call each
+//   fastrpp_shared          FastRPP (external/FastRPP: RPP's rppt API as FKL operations): rppt_resize_mirror_normalize,
+//                           rppt_channel_permute and rppt_copy on the frame read in place as a shared-source batch (nStride = 0, one ROI
+//                           per crop), three FKL IOps that fastrpp::executeOperations runs as one kernel on the stream of an RPP
+//                           handle; its own frame (dense hipMalloc), RPP handle, stream and parameter arrays. 1 call
+//   fastrpp_crop_batch      the same on the crops copied into a dense batch (one hipMemcpy2DAsync per crop), as rpp_crop_batch. N + 1 calls
+//   fastrpp_shared_once     fastrpp_shared built once: the ROIs and the three FastRPP calls before any timed call, each timed call only
+//                           executeOperations and the synchronisation; valid only while the crops (their positions and sizes) and the
+//                           parameter arrays do not change. 1 call
 // The hand-written kernels share their frame (a hipMallocPitch image), their output and their stream.
 // The parts of a run, as the medians build_median_ms and compute_median_ms:
 //   FKL: build = the crop views and every operation (on the host); compute = executeOperations and the synchronisation, with no synchronisation
@@ -64,6 +72,9 @@
 //        total therefore includes one stream synchronisation more than rpp_crop_batch_unsplit, which has no parts (NaN). In every call
 //        rppt_resize_mirror_normalize itself clears its output and synchronises its stream (RPP 3.2.0), so in rpp_crop_batch_unsplit RPP waits
 //        for the copies inside that call.
+//   fastrpp_shared: build = the ROIs and the three FastRPP calls (the argument checks and the IOps, on the host); compute =
+//        executeOperations and the synchronisation. fastrpp_crop_batch: build = the copies and a stream synchronisation; compute = the ROIs,
+//        the three FastRPP calls, executeOperations and the synchronisation. fastrpp_shared_once: as the other built-once variants.
 // RPP has no per-channel multiply: the normalize of rppt_resize_mirror_normalize covers the multiply, the subtraction and the division, with
 // mean = sub / 0.3 and std = div / 0.3. Output widths are multiples of 8: the kernels of both RPP calls (RPP 3.2.0) write 8 pixels per thread
 // and check only the first against the width. RPP's ROI array has padding for the ROI overflow of RPP 3.2.0 (see runA), and after RPP's calls
@@ -94,6 +105,7 @@
 #include <rpp.h>
 #include <rppdefs.h>
 #include <rpp_version.h>
+#include <fast_rpp.h>
 
 #include <array>
 #include <cmath>
@@ -405,7 +417,8 @@ inline void agreementRows(Output& out, const int batch, const std::string& what,
 
 template <int N>
 void runA(fk::Stream_<fk::ParArch::GPU_AMD>& fkStream, fk::Ptr2D<fk::uchar3>& fklFrame, const hipStream_t rppStream, const unsigned char* rppFrame,
-          const hipStream_t handStream, const unsigned char* handFrame, const size_t handPitch, const std::vector<unsigned char>& hostFrame, Output& out) {
+          const hipStream_t handStream, const unsigned char* handFrame, const size_t handPitch, const hipStream_t fastrppStream, unsigned char* fastrppFrame,
+          const std::vector<unsigned char>& hostFrame, Output& out) {
     std::cout << "(a) batch " << N << std::endl;
 
     // ---- Set up once for this batch size. Nothing here depends on the location of the crops: the output tensors and the intermediate tensors of
@@ -674,6 +687,94 @@ void runA(fk::Stream_<fk::ParArch::GPU_AMD>& fkStream, fk::Ptr2D<fk::uchar3>& fk
         FKLB_HIP_CHECK(hipStreamSynchronize(handStream));
     };
 
+    // ---- FastRPP (RPP's tensor API as FKL operations: external/FastRPP/include/fast_rpp.h). Each FastRPP function returns one FKL IOp:
+    // rppt_resize_mirror_normalize a read (the crops, resized and normalised), rppt_channel_permute a compute IOp (fk::VectorReorderRT) and
+    // rppt_copy the write; fastrpp::executeOperations runs the three as ONE kernel (fk::executeOperations). RPP's two calls keep their
+    // arguments, and rppt_copy writes the values of the chain to the destination of rppt_channel_permute. Only the read IOp reads memory and
+    // only the write IOp writes it: the intermediate tensor (fastrppResized) is never accessed. A failed check throws fastrpp::Error, a
+    // std::runtime_error with RPP's status. The handle is RPP's own (rppCreate, on FastRPP's stream), and only fastrpp::executeOperations takes
+    // it: the kernel runs on the handle's stream. Its own frame (fastrppFrame: a dense hipMalloc copy of the frame), its own copies of RPP's
+    // parameter arrays (FastRPP reads them on the host, in its calls, so plain host memory), its own outputs.
+    // fastrpp_shared reads the N crops in place from the frame: a shared-source batch (nStride = 0, one ROI per crop), FastRPP's documented
+    // extension of RPP's addressing. fastrpp_crop_batch reads them copied into a dense batch, RPP's documented batched form, as rpp_crop_batch
+    // does. fastrpp_shared_once is fastrpp_shared built once.
+    rppHandle_t fastrppHandle{};
+    FKLB_RPP_CHECK(rppCreate(&fastrppHandle, N, 0, fastrppStream, RppBackend::RPP_HIP_BACKEND));
+    RpptDesc fastrppFrameDesc = fastrpp::sharedSourceDesc(N, 3, SRC_H, SRC_W, RpptDataType::U8, RpptLayout::NHWC, SRC_W * 3);
+    RpptDesc fastrppCropDesc(N, 3, CROP_H, CROP_W, RpptDataType::U8, RpptLayout::NHWC);
+    RpptDesc fastrppOutDesc(N, 3, OUT_H, OUT_W, RpptDataType::F32, RpptLayout::NCHW);
+    std::vector<RpptImagePatch> fastrppSizes(outSizes, outSizes + N);
+    std::vector<Rpp32f> fastrppMean(mean, mean + 3 * N), fastrppStdDev(stdDev, stdDev + 3 * N);
+    std::vector<Rpp32u> fastrppMirror(mirror, mirror + N), fastrppOrder(channelOrder, channelOrder + 3 * N);
+    std::vector<RpptROI> fastrppRois(N);
+    unsigned char* fastrppCropBatch = nullptr;
+    float* fastrppResized = nullptr;
+    float* fastrppSharedOut = nullptr;
+    float* fastrppCropOut = nullptr;
+    float* fastrppOnceOut = nullptr;
+    FKLB_HIP_CHECK(hipMalloc(&fastrppCropBatch, cropBytes * N));
+    FKLB_HIP_CHECK(hipMalloc(&fastrppResized, outBytes));
+    FKLB_HIP_CHECK(hipMalloc(&fastrppSharedOut, outBytes));
+    FKLB_HIP_CHECK(hipMalloc(&fastrppCropOut, outBytes));
+    FKLB_HIP_CHECK(hipMalloc(&fastrppOnceOut, outBytes));
+
+    // fastrpp_shared: build = the ROIs and the three FastRPP calls (the argument checks and the IOps, on the host); compute =
+    // executeOperations (one kernel) and the synchronisation of FastRPP's stream
+    auto fastrppShared = [&](fklb::WallClock::time_point& split) {
+        for (int i = 0; i < N; ++i) {
+            fastrppRois[i].xywhROI = {{i, i}, CROP_W, CROP_H};
+        }
+        const auto rmn = fastrpp::rppt_resize_mirror_normalize<N>(
+            fastrppFrame, &fastrppFrameDesc, fastrppResized, &fastrppOutDesc, fastrppSizes.data(), RpptInterpolationType::BILINEAR,
+            fastrppMean.data(), fastrppStdDev.data(), fastrppMirror.data(), fastrppRois.data(), RpptRoiType::XYWH);
+        const auto cp = fastrpp::rppt_channel_permute(fastrppResized, &fastrppOutDesc, fastrppSharedOut, &fastrppOutDesc, fastrppOrder.data());
+        const auto copy = fastrpp::rppt_copy(fastrppSharedOut, &fastrppOutDesc, fastrppSharedOut, &fastrppOutDesc);
+        split = fklb::WallClock::now();
+        fastrpp::executeOperations(fastrppHandle, RppBackend::RPP_HIP_BACKEND, rmn, cp, copy);
+        FKLB_HIP_CHECK(hipStreamSynchronize(fastrppStream));
+    };
+    // fastrpp_crop_batch: build = the copies and a stream synchronisation, as rpp_crop_batch; compute = the ROIs, the three FastRPP calls,
+    // executeOperations and the synchronisation
+    auto fastrppCrop = [&](fklb::WallClock::time_point& split) {
+        for (int i = 0; i < N; ++i) {
+            FKLB_HIP_CHECK(hipMemcpy2DAsync(fastrppCropBatch + cropBytes * i, static_cast<size_t>(CROP_W) * 3,
+                                            fastrppFrame + (static_cast<size_t>(i) * SRC_W + static_cast<size_t>(i)) * 3,
+                                            static_cast<size_t>(SRC_W) * 3, static_cast<size_t>(CROP_W) * 3, CROP_H, hipMemcpyDeviceToDevice,
+                                            fastrppStream));
+        }
+        FKLB_HIP_CHECK(hipStreamSynchronize(fastrppStream));
+        split = fklb::WallClock::now();
+        for (int i = 0; i < N; ++i) {
+            fastrppRois[i].xywhROI = {{0, 0}, CROP_W, CROP_H};
+        }
+        const auto rmn = fastrpp::rppt_resize_mirror_normalize<N>(
+            fastrppCropBatch, &fastrppCropDesc, fastrppResized, &fastrppOutDesc, fastrppSizes.data(), RpptInterpolationType::BILINEAR,
+            fastrppMean.data(), fastrppStdDev.data(), fastrppMirror.data(), fastrppRois.data(), RpptRoiType::XYWH);
+        const auto cp = fastrpp::rppt_channel_permute(fastrppResized, &fastrppOutDesc, fastrppCropOut, &fastrppOutDesc, fastrppOrder.data());
+        const auto copy = fastrpp::rppt_copy(fastrppCropOut, &fastrppOutDesc, fastrppCropOut, &fastrppOutDesc);
+        fastrpp::executeOperations(fastrppHandle, RppBackend::RPP_HIP_BACKEND, rmn, cp, copy);
+        FKLB_HIP_CHECK(hipStreamSynchronize(fastrppStream));
+    };
+    // fastrpp_shared_once, the built-once FastRPP variant: fastrpp_shared's ROIs and its three FastRPP calls run once, here, before any timed
+    // call, into its own output; each timed call is only fastrpp::executeOperations and the synchronisation (build_median_ms about 0). FastRPP's
+    // IOps hold copies of what they were built from (the crop positions and sizes, the parameters, the descriptors), so this is valid only while
+    // the crops (their positions and sizes) and the parameter arrays do not change; the build is left out on purpose, as in the other built-once
+    // variants.
+    std::vector<RpptROI> fastrppOnceRois(N);
+    for (int i = 0; i < N; ++i) {
+        fastrppOnceRois[i].xywhROI = {{i, i}, CROP_W, CROP_H};
+    }
+    const auto fastrppOnceRmn = fastrpp::rppt_resize_mirror_normalize<N>(
+        fastrppFrame, &fastrppFrameDesc, fastrppResized, &fastrppOutDesc, fastrppSizes.data(), RpptInterpolationType::BILINEAR,
+        fastrppMean.data(), fastrppStdDev.data(), fastrppMirror.data(), fastrppOnceRois.data(), RpptRoiType::XYWH);
+    const auto fastrppOnceCp = fastrpp::rppt_channel_permute(fastrppResized, &fastrppOutDesc, fastrppOnceOut, &fastrppOutDesc, fastrppOrder.data());
+    const auto fastrppOnceCopy = fastrpp::rppt_copy(fastrppOnceOut, &fastrppOutDesc, fastrppOnceOut, &fastrppOutDesc);
+    auto fastrppSharedOnce = [&](fklb::WallClock::time_point& split) {
+        split = fklb::WallClock::now();
+        fastrpp::executeOperations(fastrppHandle, RppBackend::RPP_HIP_BACKEND, fastrppOnceRmn, fastrppOnceCp, fastrppOnceCopy);
+        FKLB_HIP_CHECK(hipStreamSynchronize(fastrppStream));
+    };
+
     // ---- Agreement: one run of every variant, the outputs on the host
     fklb::WallClock::time_point unused{};
     fklFused(unused);
@@ -766,6 +867,42 @@ void runA(fk::Stream_<fk::ParArch::GPU_AMD>& fkStream, fk::Ptr2D<fk::uchar3>& fk
     const std::string handHalfBits = sameBits(handRoiHalfOnceHost.data(), half);
     agreementRows(out, N, "hand_roi_halfpixel_once vs fkl_fused_halfpixel", handRoiHalfOnceHost.data(), half, N, false, handHalfBits.c_str());
     std::cout << "  hand_roi_halfpixel_once vs fkl_fused_halfpixel: " << handHalfBits << std::endl;
+    // FastRPP: its outputs and its intermediate start as NaN (every byte 0xFF): an element not written fails its rows, and the intermediate must
+    // stay NaN through the three variants' runs
+    std::vector<float> fastrppSharedHost(static_cast<size_t>(N) * 3 * PLANE), fastrppCropHost(fastrppSharedHost.size()),
+        fastrppOnceHost(fastrppSharedHost.size()), fastrppResizedHost(fastrppSharedHost.size());
+    FKLB_HIP_CHECK(hipMemset(fastrppSharedOut, 0xFF, outBytes));
+    FKLB_HIP_CHECK(hipMemset(fastrppCropOut, 0xFF, outBytes));
+    FKLB_HIP_CHECK(hipMemset(fastrppOnceOut, 0xFF, outBytes));
+    FKLB_HIP_CHECK(hipMemset(fastrppResized, 0xFF, outBytes));
+    fastrppShared(unused);
+    fastrppCrop(unused);
+    fastrppSharedOnce(unused);
+    FKLB_HIP_CHECK(hipMemcpy(fastrppSharedHost.data(), fastrppSharedOut, outBytes, hipMemcpyDeviceToHost));
+    FKLB_HIP_CHECK(hipMemcpy(fastrppCropHost.data(), fastrppCropOut, outBytes, hipMemcpyDeviceToHost));
+    FKLB_HIP_CHECK(hipMemcpy(fastrppOnceHost.data(), fastrppOnceOut, outBytes, hipMemcpyDeviceToHost));
+    FKLB_HIP_CHECK(hipMemcpy(fastrppResizedHost.data(), fastrppResized, outBytes, hipMemcpyDeviceToHost));
+    agreementRows(out, N, "fastrpp_shared vs scalar reference HALF_PIXEL", fastrppSharedHost.data(), refHalf.data(), N, true,
+                  "FastRPP samples at the pixel centres (FKL's ResizeHalfPixel) on every pixel, the last columns and rows included");
+    agreementRows(out, N, "fastrpp_shared vs fkl_fused_halfpixel", fastrppSharedHost.data(), half, N, true,
+                  "the same sampling; FastRPP normalises as RPP does, (v - mean) * (1 / std), then permutes");
+    agreementRows(out, N, "fastrpp_shared vs rpp_crop_batch", fastrppSharedHost.data(), rppSplitOut.data(), N, false,
+                  "RPP clamps the source coordinate to size-2: the last 2 columns and rows differ; the interior is a required check", true);
+    agreementRows(out, N, "fastrpp_crop_batch vs fastrpp_shared", fastrppCropHost.data(), fastrppSharedHost.data(), N, true,
+                  "the same pixels, read from copies or in place");
+    agreementRows(out, N, "fastrpp_shared_once vs scalar reference HALF_PIXEL", fastrppOnceHost.data(), refHalf.data(), N, true, "");
+    const std::string fastrppOnceBits = sameBits(fastrppOnceHost.data(), fastrppSharedHost.data());
+    agreementRows(out, N, "fastrpp_shared_once vs fastrpp_shared", fastrppOnceHost.data(), fastrppSharedHost.data(), N, true,
+                  fastrppOnceBits.c_str());
+    std::cout << "  fastrpp_shared_once vs fastrpp_shared: " << fastrppOnceBits << std::endl;
+    size_t fastrppResizedWritten = 0;
+    for (const float v : fastrppResizedHost) {
+        uint32_t bits = 0;
+        std::memcpy(&bits, &v, sizeof(bits));
+        fastrppResizedWritten += bits != 0xFFFFFFFFu ? 1 : 0;
+    }
+    out.allPass &= fastrppResizedWritten == 0;
+    std::cout << "  fastrpp intermediate tensor: " << (fastrppResizedWritten == 0 ? "not written (one kernel)" : "WRITTEN") << std::endl;
 
     // ---- Timing
     timeRotated(out, N, N / 10 - 1,
@@ -778,7 +915,10 @@ void runA(fk::Stream_<fk::ParArch::GPU_AMD>& fkStream, fk::Ptr2D<fk::uchar3>& fk
                  {"hand_padded", 1, handPadded},
                  {"hand_roi", 1, handRoi},
                  {"fkl_fused_halfpixel_once", 1, fklFusedHalfOnce},
-                 {"hand_roi_halfpixel_once", 1, handRoiHalfOnce}});
+                 {"hand_roi_halfpixel_once", 1, handRoiHalfOnce},
+                 {"fastrpp_shared", 1, fastrppShared},
+                 {"fastrpp_crop_batch", N + 1, fastrppCrop},
+                 {"fastrpp_shared_once", 1, fastrppSharedOnce}});
     checkRppArrays("in the timed calls");
     out.timing->flush();
     out.agreement->flush();
@@ -794,13 +934,19 @@ void runA(fk::Stream_<fk::ParArch::GPU_AMD>& fkStream, fk::Ptr2D<fk::uchar3>& fk
     FKLB_HIP_CHECK(hipHostFree(stdDev));
     FKLB_HIP_CHECK(hipHostFree(mirror));
     FKLB_HIP_CHECK(hipHostFree(channelOrder));
+    FKLB_RPP_CHECK(rppDestroy(fastrppHandle, RppBackend::RPP_HIP_BACKEND));
+    FKLB_HIP_CHECK(hipFree(fastrppCropBatch));
+    FKLB_HIP_CHECK(hipFree(fastrppResized));
+    FKLB_HIP_CHECK(hipFree(fastrppSharedOut));
+    FKLB_HIP_CHECK(hipFree(fastrppCropOut));
+    FKLB_HIP_CHECK(hipFree(fastrppOnceOut));
 }
 
 template <int... Ns>
 void runAll(fk::Stream_<fk::ParArch::GPU_AMD>& fkStream, fk::Ptr2D<fk::uchar3>& fklFrame, const hipStream_t rppStream, const unsigned char* rppFrame,
-            const hipStream_t handStream, const unsigned char* handFrame, const size_t handPitch, const std::vector<unsigned char>& hostFrame, Output& out,
-            std::integer_sequence<int, Ns...>) {
-    (runA<(Ns + 1) * 10>(fkStream, fklFrame, rppStream, rppFrame, handStream, handFrame, handPitch, hostFrame, out), ...);
+            const hipStream_t handStream, const unsigned char* handFrame, const size_t handPitch, const hipStream_t fastrppStream, unsigned char* fastrppFrame,
+            const std::vector<unsigned char>& hostFrame, Output& out, std::integer_sequence<int, Ns...>) {
+    (runA<(Ns + 1) * 10>(fkStream, fklFrame, rppStream, rppFrame, handStream, handFrame, handPitch, fastrppStream, fastrppFrame, hostFrame, out), ...);
 }
 
 } // namespace rppbench
@@ -866,6 +1012,12 @@ int launch() {
     size_t handPitch = 0;
     FKLB_HIP_CHECK(hipMallocPitch(reinterpret_cast<void**>(&handFrame), &handPitch, SRC_W * sizeof(uchar3), SRC_H));
     FKLB_HIP_CHECK(hipMemcpy2D(handFrame, handPitch, hostFrame.data(), SRC_W * sizeof(uchar3), SRC_W * sizeof(uchar3), SRC_H, hipMemcpyHostToDevice));
+    // FastRPP's frame: a dense hipMalloc buffer, copied from the same host bytes, as RPP's; FastRPP's own hipStream_t
+    hipStream_t fastrppStream{};
+    FKLB_HIP_CHECK(hipStreamCreate(&fastrppStream));
+    unsigned char* fastrppFrame = nullptr;
+    FKLB_HIP_CHECK(hipMalloc(&fastrppFrame, hostFrame.size()));
+    FKLB_HIP_CHECK(hipMemcpy(fastrppFrame, hostFrame.data(), hostFrame.size(), hipMemcpyHostToDevice));
 
     const std::string rppText = "RPP " + std::to_string(RPP_VERSION_MAJOR) + "." + std::to_string(RPP_VERSION_MINOR) + "." + std::to_string(RPP_VERSION_PATCH) +
                                 " (ROCm package amdrocm-rpp), rppt tensor API, HIP back-end; rpp_crop_batch: the N crops copied into one dense batch (one "
@@ -888,7 +1040,17 @@ int launch() {
                                  "FKL's HALF_PIXEL sampling (e1c::handPreprocRoiHalfPixel) with handRoiParameters run once; both built before the timed "
                                  "calls, each timed call only the launch and the synchronisation: valid only while the crops (their positions and sizes) "
                                  "do not change, the build left out on purpose";
-    const std::string notes = "FKL HIP vs RPP and hand-written kernels; source: " + sourceText + "; " + rppText + "; " + fklText + "; " + handText +
+    const std::string fastrppText =
+        "fastrpp_shared: FastRPP (RPP's rppt API as FKL operations; external/FastRPP at efbf00912e0a0c35cc3b0bd633948696b07385ce), the frame read in place as a "
+        "shared-source batch (nStride = 0, one ROI per crop); rppt_resize_mirror_normalize, rppt_channel_permute and rppt_copy return FKL IOps "
+        "that fastrpp::executeOperations runs as one kernel on the stream of an RPP handle; its own frame (dense hipMalloc), RPP handle, "
+        "hipStream_t and parameter arrays; build = the ROIs "
+        "and the three FastRPP calls, compute = executeOperations and the synchronisation; fastrpp_crop_batch: the same on the crops copied into "
+        "a dense batch (N hipMemcpy2DAsync), build = the copies and a synchronisation, compute = the ROIs, the three FastRPP calls, "
+        "executeOperations and the synchronisation; fastrpp_shared_once: fastrpp_shared with the ROIs and the three FastRPP calls built once, "
+        "before the timed calls, each timed call only executeOperations and the synchronisation: valid only while the crops (their positions and "
+        "sizes) and the parameter arrays do not change, the build left out on purpose";
+    const std::string notes = "FKL HIP vs RPP, FastRPP and hand-written kernels; source: " + sourceText + "; " + rppText + "; " + fklText + "; " + handText + "; " + fastrppText +
                               "; wall clock on the host including the stream synchronisation; build_median_ms and compute_median_ms are the medians of the "
                               "two parts of a run: FKL build = the crop views and the operations (host), compute = executeOperations and the "
                               "synchronisation (no synchronisation between them); rpp_crop_batch build = the copies and a stream synchronisation, compute = "
@@ -916,11 +1078,14 @@ int launch() {
                            {"batch", "comparison", "region", "max_abs_diff", "mean_abs_diff", "fraction_over_1e-4", "pass", "note"},
                            notes + "; pass -1 = informational; tolerance 1e-4 absolute");
     Output outA{&timingA, &agreeA, true, warmup, iters, warmupSeconds, rotateOffset};
-    runAll(fkStream, fklFrame, rppStream, rppFrame, handStream, handFrame, handPitch, hostFrame, outA, std::make_integer_sequence<int, 30>{});
+    runAll(fkStream, fklFrame, rppStream, rppFrame, handStream, handFrame, handPitch, fastrppStream, fastrppFrame, hostFrame, outA,
+           std::make_integer_sequence<int, 30>{});
     FKLB_HIP_CHECK(hipFree(handFrame));
     FKLB_HIP_CHECK(hipStreamDestroy(handStream));
     FKLB_HIP_CHECK(hipFree(rppFrame));
     FKLB_HIP_CHECK(hipStreamDestroy(rppStream));
+    FKLB_HIP_CHECK(hipFree(fastrppFrame));
+    FKLB_HIP_CHECK(hipStreamDestroy(fastrppStream));
     std::cout << (outA.allPass ? "all required numerical checks passed" : "NUMERICAL CHECK FAILED") << std::endl;
     return outA.allPass ? 0 : -1;
 }

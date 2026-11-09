@@ -1,0 +1,12 @@
+# The two step-0 runs (their times are not used). LD_LIBRARY_PATH=/opt/rocm/core-10.1/lib in both.
+
+# Correctness run (step0/correctness/), 2026-11-09 12:33:41-12:37:19 UTC, from its own folder, no ulimit:
+#   the first build, tmp/vbuild/fastrpp-hip (tmp/fastrpp/build.sh: the worktree's files before they were committed as 84d0bfa, FKL 1da77899,
+#   FastRPP efbf009), sha256 417a67483d9a3ee0f3567dc2768eb799e5fc85c5a4f39c61ee39ef29b17a3bdf; its device code is the timing binary's
+#   (scripts/devcode_compare_renamed.py: 247 of 247 functions identical)
+E5_ITERS=1 E5_WARMUP=0 E5_WARMUP_SECONDS=0 timeout 1500 /home/cudeiro/rocm-fkl-benchmarks/tmp/vbuild/fastrpp-hip/bin/benchmark_rpp_preprocessing_hip
+
+# Dry check (step0/dry-check/), 2026-11-09 12:40:13-12:53:28 UTC, from its own folder, the timing binary (step0/build-ref.txt), the runs' limit:
+( ulimit -v 40000000; E5_ITERS=1 timeout 1500 /home/cudeiro/rocm-fkl-benchmarks/tmp/vbuild/fastrpp-run-hip/bin/benchmark_rpp_preprocessing_hip )
+
+# The timing build (step0/run_build.sh 84d0bfae94a7af3d6a026a0daa95ae63d1d07070): its log is step0/build.log (0 warnings, 0 errors).
