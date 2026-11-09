@@ -1,0 +1,23 @@
+E18 stencil: agreement checks, then the timing
+fused kernel arguments (bytes): details 24, reads 72 (image 48, weights 24), multiply 1, accumulate 1, output 24
+check ASYMMETRIC: resize alone vs double max |diff| 0.0415039; identity kernel bitwise equal to the resize 1
+check HALF_PIXEL: resize alone vs double max |diff| 0.0428229; identity kernel bitwise equal to the resize 1
+fkl_stencil_asym vs reference_double_ASYMMETRIC: 24274 values / 23942 pixels differ, max 1 levels; reference within 0.166667 of a half level at every differing value
+fkl_stencil_halfpixel vs reference_double_HALF_PIXEL: 139104 values / 135465 pixels differ, max 1 levels; reference within 0.166667 of a half level at every differing value
+opencv_cuda vs reference_double_ASYMMETRIC: 24271 values / 23939 pixels differ, max 1 levels; reference within 0.166667 of a half level at every differing value
+npp vs reference_double_HALF_PIXEL: 139121 values / 135484 pixels differ, max 1 levels; reference within 0.166667 of a half level at every differing value
+fkl_stencil_asym_once vs reference_double_ASYMMETRIC: 24274 values / 23942 pixels differ, max 1 levels; reference within 0.166667 of a half level at every differing value
+fkl_stencil_halfpixel_once vs reference_double_HALF_PIXEL: 139104 values / 135465 pixels differ, max 1 levels; reference within 0.166667 of a half level at every differing value
+fkl_stencil_asym vs opencv_cuda: 3 values / 3 pixels differ, max 1 levels; reference within 0.0555556 of a half level at every differing value
+fkl_stencil_halfpixel vs npp: 85 values / 85 pixels differ, max 1 levels; reference within 0.111111 of a half level at every differing value
+fkl_stencil_asym_once vs fkl_stencil_asym: 0 values / 0 pixels differ, max 0 levels; reference within -1 of a half level at every differing value
+fkl_stencil_halfpixel_once vs fkl_stencil_halfpixel: 0 values / 0 pixels differ, max 0 levels; reference within -1 of a half level at every differing value
+fkl_stencil_asym_once vs opencv_cuda: 3 values / 3 pixels differ, max 1 levels; reference within 0.0555556 of a half level at every differing value
+fkl_stencil_halfpixel_once vs npp: 85 values / 85 pixels differ, max 1 levels; reference within 0.111111 of a half level at every differing value
+E18 checks passed
+fkl_stencil_asym: whole call mean 0.0382464 ms (min 0.037728); kernel only mean 0.0391574 ms (min 0.038912), host preparation mean 8.13e-05 ms
+fkl_stencil_halfpixel: whole call mean 0.0383891 ms (min 0.037728); kernel only mean 0.0395168 ms (min 0.038912), host preparation mean 7.84e-05 ms
+opencv_cuda: whole call mean 0.17372 ms (min 0.171008); kernel only mean 0.169099 ms (min 0.159744), host preparation mean 5.94e-05 ms
+npp: whole call mean 0.121472 ms (min 0.118784); kernel only mean 0.119866 ms (min 0.11776), host preparation mean 4.15e-05 ms
+fkl_stencil_asym_once: whole call mean 0.0386483 ms (min 0.037888); kernel only mean 0.039936 ms (min 0.039936), host preparation mean 3.83e-05 ms
+fkl_stencil_halfpixel_once: whole call mean 0.0387331 ms (min 0.037888); kernel only mean 0.039936 ms (min 0.039936), host preparation mean 3.73e-05 ms

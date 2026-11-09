@@ -1,0 +1,28 @@
+E18 stencil: agreement checks, then the timing
+fused kernel arguments (bytes): details 24, reads 72 (image 48, weights 24), multiply 1, accumulate 1, output 24
+check ASYMMETRIC: resize alone vs double max |diff| 0.0415039; identity kernel bitwise equal to the resize 1
+check HALF_PIXEL: resize alone vs double max |diff| 0.0428229; identity kernel bitwise equal to the resize 1
+fkl_stencil_asym vs reference_double_ASYMMETRIC: 24274 values / 23942 pixels differ, max 1 levels; reference within 0.166667 of a half level at every differing value
+fkl_stencil_halfpixel vs reference_double_HALF_PIXEL: 139104 values / 135465 pixels differ, max 1 levels; reference within 0.166667 of a half level at every differing value
+opencv_cuda vs reference_double_ASYMMETRIC: 24271 values / 23939 pixels differ, max 1 levels; reference within 0.166667 of a half level at every differing value
+npp vs reference_double_HALF_PIXEL: 139121 values / 135484 pixels differ, max 1 levels; reference within 0.166667 of a half level at every differing value
+fkl_stencil_asym_once vs reference_double_ASYMMETRIC: 24274 values / 23942 pixels differ, max 1 levels; reference within 0.166667 of a half level at every differing value
+fkl_stencil_halfpixel_once vs reference_double_HALF_PIXEL: 139104 values / 135465 pixels differ, max 1 levels; reference within 0.166667 of a half level at every differing value
+fkl_stencil_asym vs opencv_cuda: 3 values / 3 pixels differ, max 1 levels; reference within 0.0555556 of a half level at every differing value
+fkl_stencil_halfpixel vs npp: 85 values / 85 pixels differ, max 1 levels; reference within 0.111111 of a half level at every differing value
+fkl_stencil_asym_once vs fkl_stencil_asym: 0 values / 0 pixels differ, max 0 levels; reference within -1 of a half level at every differing value
+fkl_stencil_halfpixel_once vs fkl_stencil_halfpixel: 0 values / 0 pixels differ, max 0 levels; reference within -1 of a half level at every differing value
+fkl_stencil_asym_once vs opencv_cuda: 3 values / 3 pixels differ, max 1 levels; reference within 0.0555556 of a half level at every differing value
+fkl_stencil_halfpixel_once vs npp: 85 values / 85 pixels differ, max 1 levels; reference within 0.111111 of a half level at every differing value
+E18 checks passed
+fkl_stencil_asym: whole call mean 0.0426282 ms (min 0.041888); kernel only mean 0.0416365 ms (min 0.040384), host preparation mean 9e-05 ms
+fkl_stencil_halfpixel: whole call mean 0.0409306 ms (min 0.040256); kernel only mean 0.0407328 ms (min 0.040544), host preparation mean 8.56e-05 ms
+opencv_cuda: whole call mean 0.175665 ms (min 0.173024); kernel only mean 0.169515 ms (min 0.160512), host preparation mean 7.6e-05 ms
+npp: whole call mean 0.12327 ms (min 0.120576); kernel only mean 0.119869 ms (min 0.117472), host preparation mean 4.42e-05 ms
+fkl_stencil_asym_once: whole call mean 0.040599 ms (min 0.039744); kernel only mean 0.0405507 ms (min 0.040384), host preparation mean 3.83e-05 ms
+fkl_stencil_halfpixel_once: whole call mean 0.0407808 ms (min 0.040096); kernel only mean 0.040737 ms (min 0.040544), host preparation mean 3.91e-05 ms
+Collecting data...
+Generating '/home/oscar/tfkl-bench/scratch/e18tmp/nsys-oscar/nsys-report-ea13.qdstrm'
+[1/1] [0%                          ] e18-stencil.nsys-rep[1/1] [0%                          ] e18-stencil.nsys-rep[1/1] [1%                          ] e18-stencil.nsys-rep[1/1] [2%                          ] e18-stencil.nsys-rep[1/1] [5%                          ] e18-stencil.nsys-rep[1/1] [6%                          ] e18-stencil.nsys-rep[1/1] [7%                          ] e18-stencil.nsys-rep[1/1] [=17%                        ] e18-stencil.nsys-rep[1/1] [==19%                       ] e18-stencil.nsys-rep[1/1] [==20%                       ] e18-stencil.nsys-rep[1/1] [=====================87%    ] e18-stencil.nsys-rep[1/1] [=====================89%    ] e18-stencil.nsys-rep[1/1] [=======================96%  ] e18-stencil.nsys-rep[1/1] [========================98% ] e18-stencil.nsys-rep[1/1] [========================100%] e18-stencil.nsys-rep[1/1] [========================100%] e18-stencil.nsys-rep
+Generated:
+	/home/oscar/tfkl-bench/worktrees/fkl-benchmarks-stencil/results/rtx4090/e18-stencil/nsys/e18-stencil.nsys-rep
