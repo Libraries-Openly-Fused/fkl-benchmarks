@@ -67,6 +67,15 @@ else()
     message(STATUS "fkl-benchmarks: e4_preprocessing skipped (common/resize_reference.h of fkl-benchmarks PR #2 is not present)")
 endif()
 
+# E18, the stencil after a resize: FKL's LinearFilterDPP in one kernel against OpenCV-CUDA and NPP. NPP's 2D filter (nppiFilterBorder) is in the
+# filtering library, nppif, which the other NPP programs do not use, so only this target links it.
+fklb_add_benchmark(e18_stencil
+    BACKENDS cu LIBS fkl opencv npp
+    SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/stencil/e18_stencil.cu")
+if(TARGET e18_stencil_cu)
+    target_link_libraries(e18_stencil_cu PRIVATE CUDA::nppif)
+endif()
+
 # The data-size experiment with every size a multiple of 4 (increment 282272 instead of 282270) and only the one-channel pairs: OpenCV-CUDA's one-channel kernels are
 # vectorised (cv::transformSmart<4>) only when the element count is a multiple of 4, which the sizes of the paper's experiment alternate (results/rtx4090/e0-data-size-parity).
 fklb_add_benchmark(benchmark_image_resolution_MAD_loop_mul4
