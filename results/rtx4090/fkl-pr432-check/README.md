@@ -10,7 +10,7 @@
 - **Tests:** the remaining 27 lines change the 7 tests.
 - **The CUDA build:** nvcc never defines `FK_HIP_BACKEND`, so every addition is preprocessed away there.
 - **Why a check is needed:** this repository's E18 program (`opencv-cuda/stencil/e18_stencil.cu`) includes `linear_filter.h`, so a CUDA identity check is due before the pin moves.
-- **Status:** at the time of this check #432 is not merged. The gitlink of this branch points at its head, 2c42a80.
+- **The merge:** #432 was merged into LTS-C++17 on 2026-11-13 at 12:18:24Z as `24478f0aa11dc3f12feea83178f7fde828322fb0`, with parents 1da77899 and 2c42a80. Its tree, `153ebf2b`, is the tree of 2c42a80. No file differs, so the builds of this check, which used 2c42a80, hold for 24478f0. The gitlink points at 24478f0.
 
 ## Result
 - **The 35 CUDA programs of fkl-benchmarks 8c1fa98** (E18's `e18_stencil_cu` included) were built once against FKL 1da77899 and once against 2c42a80, then compared kernel by kernel (`sass-identity-1da7789-vs-2c42a80.txt`).
@@ -54,7 +54,7 @@ The method is that of `../fkl-pr431-check/`.
   - The HIP device code of #432 is AMD's to check.
   - The CPU builds were not compared; the 5 `_cpp` programs only compiled.
   - Nothing here measures time.
-- **When #432 merges:** the gitlink of this branch has to move to the merge commit. The result applies to the merge commit if its tree equals 2c42a80's.
+- **The merge commit:** its tree equals 2c42a80's (153ebf2b), so the result applies to 24478f0 unchanged.
 
 ## Files
 - `sass-identity-1da7789-vs-2c42a80.txt`: the identity report.
