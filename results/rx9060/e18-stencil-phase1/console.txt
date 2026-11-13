@@ -1,0 +1,11 @@
+E18 stencil (AMD): agreement checks only (E18_NO_TIMING=1)
+fused kernel arguments (bytes): details 24, reads 72 (image 48, weights 24), multiply 1, accumulate 1, output 24
+check ASYMMETRIC: resize alone vs double max |diff| 0.0278015; identity kernel bitwise equal to the resize 1
+check HALF_PIXEL: resize alone vs double max |diff| 0.0428229; identity kernel bitwise equal to the resize 1
+fkl_stencil_asym vs reference_double_ASYMMETRIC: 7728 values / 7688 pixels differ, max 1 levels; reference within 0.0555556 of a half level at every differing value
+fkl_stencil_halfpixel vs reference_double_HALF_PIXEL: 139111 values / 135473 pixels differ, max 1 levels; reference within 0.166667 of a half level at every differing value
+fkl_stencil_asym_once vs reference_double_ASYMMETRIC: 7728 values / 7688 pixels differ, max 1 levels; reference within 0.0555556 of a half level at every differing value
+fkl_stencil_halfpixel_once vs reference_double_HALF_PIXEL: 139111 values / 135473 pixels differ, max 1 levels; reference within 0.166667 of a half level at every differing value
+fkl_stencil_asym_once vs fkl_stencil_asym: 0 values / 0 pixels differ, max 0 levels; reference within -1 of a half level at every differing value
+fkl_stencil_halfpixel_once vs fkl_stencil_halfpixel: 0 values / 0 pixels differ, max 0 levels; reference within -1 of a half level at every differing value
+E18 checks passed
