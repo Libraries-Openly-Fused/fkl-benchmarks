@@ -1,0 +1,23 @@
+# experiment: E18 stencil (AMD): agreement of the 8-bit outputs
+# repo: fkl-benchmarks 4c167f411790cdc806bb45a60a706649937e6351
+# fkl: 2c42a80e12168f4183ba835cdde353cc1e33be07
+# cvGPUSpeedup: not checked out (pinned 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c)
+# FastNPP: not checked out (pinned a1b5e245d7dd70fba23dcb51a0aea80495dbc61d)
+# nvcc: none (none), architectures native, -fmad on, -lineinfo on
+# hip: 24.0.0 (/opt/rocm/core-10.1/bin/amdclang++), architectures gfx1200
+# host compiler: Clang 24.0.0, Release, -march=native, -ftemplate-depth=1000
+# opencv: none
+# cpu: AMD Ryzen 7 5800X3D 8-Core Processor
+# os: Ubuntu 26.04.1 LTS
+# kernel: Linux 7.0.0-43-generic
+# gpu: AMD Radeon RX 9060, gfx1200, 14 WGPs (28 CUs), wave32, 8144 MiB, PCI 0000:0d:00.0
+# hip driver: 7.16.26385, hip runtime: 7.16.26385
+# clocks (gfx, mem, max gfx, max mem, MHz): 1517, 1124, 2400, 1124
+# amd-smi: AMDSMI Tool: 27.1.0+7da43026 | AMDSMI Library version: 27.1.0 | ROCm version: 10.1.0 | amdgpu version: 7.1.9.31600000 | ionic version: N/A
+version,sampling,against,values,values_differing,pixels_differing,max_diff_levels,identical,max_distance_of_reference_to_half_level
+fkl_stencil_asym,ASYMMETRIC,reference_double_ASYMMETRIC,6220800,7728,7688,1,0,0.055555556
+fkl_stencil_halfpixel,HALF_PIXEL,reference_double_HALF_PIXEL,6220800,139111,135473,1,0,0.166666667
+fkl_stencil_asym_once,ASYMMETRIC,reference_double_ASYMMETRIC,6220800,7728,7688,1,0,0.055555556
+fkl_stencil_halfpixel_once,HALF_PIXEL,reference_double_HALF_PIXEL,6220800,139111,135473,1,0,0.166666667
+fkl_stencil_asym_once,ASYMMETRIC,fkl_stencil_asym,6220800,0,0,0,1,-1
+fkl_stencil_halfpixel_once,HALF_PIXEL,fkl_stencil_halfpixel,6220800,0,0,0,1,-1

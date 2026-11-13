@@ -1,0 +1,21 @@
+# experiment: E18 stencil (AMD): checks of FKL's path
+# repo: fkl-benchmarks 4c167f411790cdc806bb45a60a706649937e6351
+# fkl: 2c42a80e12168f4183ba835cdde353cc1e33be07
+# cvGPUSpeedup: not checked out (pinned 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c)
+# FastNPP: not checked out (pinned a1b5e245d7dd70fba23dcb51a0aea80495dbc61d)
+# nvcc: none (none), architectures native, -fmad on, -lineinfo on
+# hip: 24.0.0 (/opt/rocm/core-10.1/bin/amdclang++), architectures gfx1200
+# host compiler: Clang 24.0.0, Release, -march=native, -ftemplate-depth=1000
+# opencv: none
+# cpu: AMD Ryzen 7 5800X3D 8-Core Processor
+# os: Ubuntu 26.04.1 LTS
+# kernel: Linux 7.0.0-43-generic
+# gpu: AMD Radeon RX 9060, gfx1200, 14 WGPs (28 CUs), wave32, 8144 MiB, PCI 0000:0d:00.0
+# hip driver: 7.16.26385, hip runtime: 7.16.26385
+# clocks (gfx, mem, max gfx, max mem, MHz): 1268, 875, 2400, 1124
+# amd-smi: AMDSMI Tool: 27.1.0+7da43026 | AMDSMI Library version: 27.1.0 | ROCm version: 10.1.0 | amdgpu version: 7.1.9.31600000 | ionic version: N/A
+check,sampling,value,criterion,ok
+"resize alone (fk::executeOperations, float3) against the double-precision resize: max |difference|",ASYMMETRIC,0.0278015137,informational (float positions and weights against double),1
+LinearFilterDPP with the identity kernel against the resize alone: bitwise identical,ASYMMETRIC,1,must be 1,1
+"resize alone (fk::executeOperations, float3) against the double-precision resize: max |difference|",HALF_PIXEL,0.0428229439,informational (float positions and weights against double),1
+LinearFilterDPP with the identity kernel against the resize alone: bitwise identical,HALF_PIXEL,1,must be 1,1
