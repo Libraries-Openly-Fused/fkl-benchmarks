@@ -1,8 +1,9 @@
 # Device code of the HIP programs at FKL 1da77899 and at 2c42a80 (FKL #432's head)
 
 FKL #432 adds the HIP (`ParArch::GPU_AMD`) versions of the 7 image-processing DPPs of #431. Its head, 2c42a80, is two commits on 1da77899, the
-pin of this repository. This folder is the HIP evidence for a move of the pin to #432. It is a draft: the move waits for Oscar's merge of #432, and
-the merge commit's tree is expected to be that of 2c42a80.
+pin of this repository until 2026-11-13. #432 was merged into LTS-C++17 on 2026-11-13 as 24478f0aa11dc3f12feea83178f7fde828322fb0 (parents
+1da77899 and 2c42a80). The merge commit's tree, 153ebf2b6d4d9866189c9416d7330a560ee58576, is the tree of 2c42a80, so this record holds for the
+pin 24478f0 (`external/fkl` since #47). This folder is the HIP evidence for that move.
 
 The check: every HIP program of this repository was built twice, once against each FKL commit, from the same sources with the same tool and
 flags, and their gfx1200 device code was compared function by function. Nothing was run. Done on 2026-11-13 on the RX 9060 machine
@@ -44,7 +45,8 @@ flags, and their gfx1200 device code was compared function by function. Nothing 
 
 ## Not covered here
 
-- **The CUDA programs.** The NVIDIA session checks them for the same move.
+- **The CUDA programs.** They were compared on the RTX 4090 for the same move, in `../../rtx4090/fkl-pr432-check/` (#47): 1,797 of 1,797
+  kernels identical, none renamed.
 - **The CPU builds.** Their results are kept in the repository only.
 - **Run times.** Nothing was run.
 
