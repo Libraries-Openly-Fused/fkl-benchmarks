@@ -203,14 +203,16 @@ Details 24 B; the two Reads 64 B (the image 48, the coefficient 12); multiply 1;
 | block, grid | 16 x 8 (128 threads = 4 waves), 120 x 135 |
 
 - **One kernel for both variants:** `fkl_box_halfpixel` and `fkl_half_once` launch the same instantiation.
-- **LDS:** the same 4,284 B as the stencil's kernel in `e18-stencil-phase1`. That is the halo of the default tile (22 x 14 `float3`) plus the 7 x 7 coefficients the DPP stages, including those of `ConstantFilterRead`.
+- **LDS:** the same 4,284 B as the stencil's kernel in `e18-stencil-phase1`. The shared arrays are sized for the largest kernel of the default details, 7 x 7: a 22 x 14 `float3` halo plus 7 x 7 coefficients.
+  - The work follows the runtime window, not that size. A 3 x 3 kernel stages 18 x 10 values per 16 x 8 tile, about 1.4 resizes per output pixel, because the halo is `TILE_WIDTH + windowWidth - 1` by `TILE_HEIGHT + windowHeight - 1` (`neighborhood.h:85-86`).
+  - So the 7 x 7 maximum changes the LDS size (4,284 B against 2,268 B for a 3 x 3 maximum), not the work.
 - **The other kernels of the binary**, in the same table:
   - `gpuSpin`;
   - the identity kernel of check a: 708 instructions, 26 VGPRs, 40 SGPRs;
   - the box kernel of check b: 386 instructions, 14 VGPRs, 30 SGPRs.
 - **Occupancy:** the compiler's static value. The achieved occupancy needs a profiler counter run, which was not done.
 
-## Phase 2 (`phase2/`, written, not run)
+## Phase 2 (`phase2/`)
 The timing is in the program. It follows the RTX 4090 protocol (`../../rtx4090/e18-stencil/`):
 - **`whole_call`:** `fklb::timeIt`, events around one call, 100 calls after one warm-up.
 - **`kernel_only`:** `fklb::timePreparedLaunch` with the 5 ms `gpuSpin` as `beforeLaunch`. RPP's kernels go behind one spin.
@@ -220,15 +222,27 @@ The timing is in the program. It follows the RTX 4090 protocol (`../../rtx4090/e
   - `fkl_half_once`: nothing.
 - **The order is fixed:** `rpp`, `rpp_ltrb`, `fkl_box_halfpixel`, `fkl_half_once`, each `whole_call` then `kernel_only`.
 - **ROCTx ranges:** each interval is in a range named `whole_call:<version>` or `kernel_only:<version>`.
+- **The clock warm-up** (added after the first window, 6fca6aa):
+  - **The problem:** in the first window the GPU idled at 35-60 MHz during the checks, so `rpp`, the first variant, was timed while sclk ramped up (`../e18-box-window1/`).
+  - **The fix:** now the timing file is opened first, then one `gpuSpin` of `E18_CLOCK_WARMUP_MS` (default 2000 ms) runs, then a synchronisation, and the first interval starts at once.
+  - **The clock record:** sclk (`fklb::amdGpuClockMHz`, `common/hip_wallclock.h`) is read before and after every interval, outside the timed calls, into the columns `sclk_before_mhz` and `sclk_after_mhz`.
+  - **Console lines:** the warm-up's sclk, and the realtime of the warm-up and the timing, for the analysis of the window's `gpu_clocks.csv`.
+- **`clock-warmup-test/`:** a diagnostic, not a benchmark. One 2 s single-thread `gpuSpin` with sclk read every 100 ms:
+  - sclk rises from 9 MHz to 3,097 MHz in 0.5 s and to 3,258 MHz at 2 s;
+  - after the spin it falls to 1,513 MHz within 0.1 s and to 48 MHz within 0.2 s.
+  - The timing file is therefore opened before the warm-up: its header runs `amd-smi` twice, 0.07-0.08 s each (`amd-smi-times.txt`).
+  - `build.log` holds 6 warnings for unchecked HIP return values; the final `hipGetLastError` reports no error.
 
 The scripts for the window:
 - **`window.sh`:**
   - Guards: the binary's sha256 and commit (no `-dirty`), a new output folder, and before every run no `Runner.Worker` and a load average below 0.8.
   - Runs: an optional warm-up run, then three quiet runs, then one complete run under rocprofv3. It samples the GPU clocks every 100 ms.
   - If the runner is not idle within `IDLE_MAX` seconds (default 600) before a run, the window stops there. `GUARD_ONLY=1` runs the guards only and creates nothing; it passed with the binary of `step0/` and refused a wrong commit.
-  - Not run otherwise.
-- **`e18_box_report.py`:** the median of the three runs' means with their min-max, and the speedups of FKL over `rpp` and over `rpp_ltrb`. Tested on made-up CSVs only.
-- **`../rocprofv3/rocprof_calls.py --spin`:** checks that the spin covers the host's enqueue of every kernel-only call, and gives the gaps. Its spin part has not run on a timing trace yet.
+  - It ran the first window (`../e18-box-window1/`, superseded), and runs the second one (`../e18-box/`) with the clock warm-up.
+- **`e18_box_report.py`:** the median of the three runs' means with their min-max, and the speedups of FKL over `rpp` and over `rpp_ltrb`.
+  - Since 6fca6aa it also gives the lowest sclk at the interval boundaries, and the sclk of `gpu_clocks.csv` during each run's timing (`e18_box_clock.csv`), against 3.1 GHz.
+  - It produced the summary of the first window. Its clock part is tested on made-up data only.
+- **`../rocprofv3/rocprof_calls.py --spin`:** checks that the spin covers the host's enqueue of every kernel-only call, and gives the gaps. It ran on the first window's rocprofv3 trace: 100 of 100 iterations covered for every variant.
 
 ## `inventory/`: the inventory behind the redefinition (2026-11-13)
 - `inventory-fkl.md`, `inventory-rpp.md`: the inventory of FKL's DPPs at 2c42a80 and of RPP 3.2.0's filters that led to this pipeline. Read only, as sent on 2026-11-13.
