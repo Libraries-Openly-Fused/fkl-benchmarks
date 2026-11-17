@@ -25,9 +25,12 @@
 //   rpp                RPP 3.2.0, HIP back-end, its own buffers and no FKL object. Two calls, as a user writes them:
 //                      rppt_resize (U8 NHWC, batch 1, BILINEAR, the crop as the XYWH ROI of the frame, the output size 1920 x 1080) into an
 //                      intermediate 1920 x 1080 U8 tensor, then rppt_box_filter (kernelSize 3, REPLICATE, the whole intermediate as its XYWH ROI)
-//                      into the output. rppt_resize converts its ROI from XYWH to LTRB in place, so every call first writes the crop's ROI (a
-//                      16-byte copy on RPP's stream from a pinned staging array); that write is part of the call, as the crop may move on
-//                      every call. rppt_box_filter converts only an LTRB ROI (box_filter.cpp:2050), so its XYWH ROI is written once.
+//                      into the output. The ROIs and the output size are in pinned host memory, as in the Figure 15 program
+//                      (rpp/benchmark_rpp_preprocessing.h). rppt_resize converts its ROI from XYWH to LTRB in place, so every call first
+//                      writes the crop's ROI on the host; that write is part of the call, as the crop may move on every call. rppt_box_filter
+//                      converts only an LTRB ROI (box_filter.cpp:2050), so its XYWH ROI is written once.
+//   rpp_ltrb           rpp with the crop passed to rppt_resize as an LTRB ROI (640, 360, 3199, 1799), rppt_resize's own form: it converts only
+//                      an XYWH ROI (resize.cpp:944), so it launches no conversion kernel. Its ROI is written before every call as well.
 //   fkl_box_halfpixel  FKL, one kernel: one fk::executeLinearFilter. Its image Read IOp is the read of the crop view (Ptr2D::crop2D) followed by
 //                      fk::Resize (INTER_LINEAR, ResizeSampling::HALF_PIXEL, to float3), fk::SaturateCast<float3, uchar3> (the 8-bit resized
 //                      image, rounded inside the kernel as RPP rounds it between its two calls) and fk::Cast<uchar3, float3>. The coefficients
@@ -54,14 +57,15 @@
 //      fkl_box_halfpixel against rpp. Whether every difference comes from step (a): each output against round(sum / 9) of its own 8-bit resized
 //      image (RPP's intermediate; FKL's identity output) must give 0 differences, and every differing output value must have a differing resized
 //      value in its 3 x 3 window (the differences of the resized images are those of step a). Required: 0 and all.
-//   d. fkl_half_once against fkl_box_halfpixel: bitwise equal. Required.
+//   d. fkl_half_once against fkl_box_halfpixel: bitwise equal. Required. rpp_ltrb against rpp (its intermediate and its output): bitwise equal.
+//      Required.
 //   Also checked: RPP's ROIs after the calls (the crop's is LTRB, the box filter's is unchanged), and the sizes of the fused kernel's arguments.
 //   Files: e18_box_agreement_GPU_AMD.csv (a, b, c, d), e18_box_ties_GPU_AMD.csv (a), e18_box_attribution_GPU_AMD.csv (c),
 //   e18_box_checks_GPU_AMD.csv (the other checks).
 // The timing (e18_box_GPU_AMD.csv), two intervals per variant, in the order of the list, the same in every run:
 //   whole_call   fklb::timeIt (common/hip_timing.h): events around one call, 100 calls after one warm-up call (E4's interval, Figure 15)
 //   kernel_only  fklb::timePreparedLaunch with gpuSpin (5 ms) as beforeLaunch (E1's interval, Table III): the preparation is timed on the host
-//                (rpp: the ROI write; fkl_box_halfpixel: the crop view, the IOps and the details; fkl_half_once: nothing); then the spin, the start
+//                (rpp, rpp_ltrb: the ROI write; fkl_box_halfpixel: the crop view, the IOps and the details; fkl_half_once: nothing); then the spin, the start
 //                event, every kernel of the call (RPP's behind one spin), the stop event
 //   Each interval of each variant is in a ROCTx range ("whole_call:<version>", "kernel_only:<version>") for rocprofv3.
 // E18_ONLY=a,b: only these variants. E18_NO_TIMING=1: the checks only. E18_SPIN_US: the length of the spin (default 5000).
@@ -91,12 +95,14 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
+#include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <functional>
 #include <iostream>
 #include <stdexcept>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace e18box {
@@ -307,6 +313,18 @@ inline Attribution attribute(const std::vector<unsigned char>& a, const std::vec
     return att;
 }
 
+// A digest of an 8-bit image (FNV-1a, 64 bits) for the console and the checks file, so that the outputs of two runs or two builds can be compared
+inline std::string digest(const std::vector<unsigned char>& image) {
+    uint64_t h = 1469598103934665603ull;
+    for (const unsigned char b : image) {
+        h ^= b;
+        h *= 1099511628211ull;
+    }
+    char text[17];
+    std::snprintf(text, sizeof(text), "%016llx", static_cast<unsigned long long>(h));
+    return text;
+}
+
 inline std::vector<unsigned char> download8u(const void* data, const size_t pitch) {
     std::vector<unsigned char> host(OUT_BYTES);
     FKLB_HIP_CHECK(hipMemcpy2D(host.data(), static_cast<size_t>(OUT_W) * 3, data, pitch, static_cast<size_t>(OUT_W) * 3, OUT_H, hipMemcpyDeviceToHost));
@@ -373,40 +391,40 @@ int launch() {
     FKLB_HIP_CHECK(hipStreamCreate(&rppStream));
     rppHandle_t handle{};
     FKLB_RPP_CHECK(rppCreate(&handle, 1, 0, rppStream, RppBackend::RPP_HIP_BACKEND));
-    unsigned char *rppFrame = nullptr, *rppResized = nullptr, *rppOut = nullptr;
+    // the frame; per variant (rpp, rpp_ltrb) its own intermediate and output
+    unsigned char *rppFrame = nullptr, *rppResized = nullptr, *rppOut = nullptr, *rppResizedLtrb = nullptr, *rppOutLtrb = nullptr;
     FKLB_HIP_CHECK(hipMalloc(&rppFrame, SRC_BYTES + RPP_TAIL));
     FKLB_HIP_CHECK(hipMalloc(&rppResized, RPP_OFFSET + OUT_BYTES + RPP_TAIL));
     FKLB_HIP_CHECK(hipMalloc(&rppOut, OUT_BYTES + RPP_TAIL));
+    FKLB_HIP_CHECK(hipMalloc(&rppResizedLtrb, RPP_OFFSET + OUT_BYTES + RPP_TAIL));
+    FKLB_HIP_CHECK(hipMalloc(&rppOutLtrb, OUT_BYTES + RPP_TAIL));
     FKLB_HIP_CHECK(hipMemset(rppResized, 0, RPP_OFFSET + OUT_BYTES + RPP_TAIL));
+    FKLB_HIP_CHECK(hipMemset(rppResizedLtrb, 0, RPP_OFFSET + OUT_BYTES + RPP_TAIL));
     FKLB_HIP_CHECK(hipMemcpy(rppFrame, noise.data(), SRC_BYTES, hipMemcpyHostToDevice));
     RpptDesc frameDesc(1, 3, SRC_H, SRC_W, RpptDataType::U8, RpptLayout::NHWC);        // the whole frame; the crop is the ROI
     RpptDesc resizedDesc(1, 3, OUT_H, OUT_W, RpptDataType::U8, RpptLayout::NHWC);      // the intermediate: written by the resize, read by the box
     resizedDesc.offsetInBytes = RPP_OFFSET;
     RpptDesc outDesc(1, 3, OUT_H, OUT_W, RpptDataType::U8, RpptLayout::NHWC);
-    // the output size (HIP memory, read by the resize kernel), the two ROI arrays (HIP memory, as RPP documents roiTensorPtrSrc for the HIP
-    // back-end) and the pinned staging of the crop's ROI
+    // The parameter arrays of the RPP calls, in pinned host memory (hipHostMalloc), as in the Figure 15 program
+    // (rpp/benchmark_rpp_preprocessing.h): the output size, the crop's ROI of each variant and the box filter's ROI. RPP's kernels read them in
+    // place on the GPU, and the XYWH conversion kernel rewrites them in place. RPP 3.2.0's header documents roiTensorPtrSrc as HIP memory for
+    // the HIP back-end. The host writes a crop's ROI before every call; no RPP kernel still reads it then, because every call of this program
+    // follows a synchronisation (the check run synchronises after every call, fklb::timeIt and fklb::timePreparedLaunch wait for each call's stop
+    // event, and the profile mode synchronises after every call).
     RpptImagePatch* rppSizes = nullptr;
-    RpptROI *rppResizeRoi = nullptr, *rppBoxRoi = nullptr, *rppRoiStaging = nullptr;
-    FKLB_HIP_CHECK(hipMalloc(&rppSizes, sizeof(RpptImagePatch)));
-    FKLB_HIP_CHECK(hipMalloc(&rppResizeRoi, sizeof(RpptROI) * RPP_ROI_ENTRIES));
-    FKLB_HIP_CHECK(hipMalloc(&rppBoxRoi, sizeof(RpptROI) * RPP_ROI_ENTRIES));
-    FKLB_HIP_CHECK(hipHostMalloc(&rppRoiStaging, sizeof(RpptROI)));
-    {
-        const RpptImagePatch size{static_cast<Rpp32u>(OUT_W), static_cast<Rpp32u>(OUT_H)};
-        FKLB_HIP_CHECK(hipMemcpy(rppSizes, &size, sizeof(size), hipMemcpyHostToDevice));
-        std::vector<RpptROI> rois(RPP_ROI_ENTRIES);
-        std::memset(rois.data(), 0, sizeof(RpptROI) * RPP_ROI_ENTRIES);
-        FKLB_HIP_CHECK(hipMemcpy(rppResizeRoi, rois.data(), sizeof(RpptROI) * RPP_ROI_ENTRIES, hipMemcpyHostToDevice));
-        rois[0].xywhROI = {{0, 0}, OUT_W, OUT_H};   // the box filter's: the whole intermediate
-        FKLB_HIP_CHECK(hipMemcpy(rppBoxRoi, rois.data(), sizeof(RpptROI) * RPP_ROI_ENTRIES, hipMemcpyHostToDevice));
-    }
-    // rpp: the crop's ROI (written before every call: rppt_resize rewrites it in place as LTRB), rppt_resize, rppt_box_filter. The staging is
-    // rewritten by the next call, so a call follows the end of the previous one's copy: every call of this program follows a synchronisation of
-    // RPP's stream.
-    const auto writeRppRoi = [&] {
-        rppRoiStaging->xywhROI = {{CROP_X, CROP_Y}, CROP_W, CROP_H};
-        FKLB_HIP_CHECK(hipMemcpyAsync(rppResizeRoi, rppRoiStaging, sizeof(RpptROI), hipMemcpyHostToDevice, rppStream));
-    };
+    RpptROI *rppResizeRoi = nullptr, *rppLtrbRoi = nullptr, *rppBoxRoi = nullptr;
+    FKLB_HIP_CHECK(hipHostMalloc(&rppSizes, sizeof(RpptImagePatch)));
+    FKLB_HIP_CHECK(hipHostMalloc(&rppResizeRoi, sizeof(RpptROI) * RPP_ROI_ENTRIES));
+    FKLB_HIP_CHECK(hipHostMalloc(&rppLtrbRoi, sizeof(RpptROI) * RPP_ROI_ENTRIES));
+    FKLB_HIP_CHECK(hipHostMalloc(&rppBoxRoi, sizeof(RpptROI) * RPP_ROI_ENTRIES));
+    rppSizes[0].width = OUT_W;
+    rppSizes[0].height = OUT_H;
+    std::memset(rppResizeRoi, 0, sizeof(RpptROI) * RPP_ROI_ENTRIES);
+    std::memset(rppLtrbRoi, 0, sizeof(RpptROI) * RPP_ROI_ENTRIES);
+    std::memset(rppBoxRoi, 0, sizeof(RpptROI) * RPP_ROI_ENTRIES);
+    rppBoxRoi[0].xywhROI = {{0, 0}, OUT_W, OUT_H};   // the box filter's: the whole intermediate, written once
+    // rpp: the crop as an XYWH ROI (written before every call: rppt_resize converts it to LTRB in place), rppt_resize, rppt_box_filter
+    const auto writeRppRoi = [&] { rppResizeRoi[0].xywhROI = {{CROP_X, CROP_Y}, CROP_W, CROP_H}; };
     const auto launchRpp = [&] {
         FKLB_RPP_CHECK(rppt_resize(rppFrame, &frameDesc, rppResized, &resizedDesc, rppSizes, RpptInterpolationType::BILINEAR, rppResizeRoi,
                                    RpptRoiType::XYWH, handle, RppBackend::RPP_HIP_BACKEND));
@@ -424,6 +442,27 @@ int launch() {
     const auto callRpp = [&] {
         writeRppRoi();
         launchRpp();
+    };
+    // rpp_ltrb: the same two calls with the crop as an LTRB ROI, rppt_resize's own form: it converts only an XYWH ROI (resize.cpp:944 on the
+    // single-image path), so this ROI is not rewritten; it is written before every call all the same, as the crop may move on every call
+    const auto writeRppLtrbRoi = [&] { rppLtrbRoi[0].ltrbROI = {{CROP_X, CROP_Y}, {CROP_X + CROP_W - 1, CROP_Y + CROP_H - 1}}; };
+    const auto launchRppLtrb = [&] {
+        FKLB_RPP_CHECK(rppt_resize(rppFrame, &frameDesc, rppResizedLtrb, &resizedDesc, rppSizes, RpptInterpolationType::BILINEAR, rppLtrbRoi,
+                                   RpptRoiType::LTRB, handle, RppBackend::RPP_HIP_BACKEND));
+        if (checking) {
+            FKLB_HIP_CHECK(hipGetLastError());
+            FKLB_HIP_CHECK(hipStreamSynchronize(rppStream));
+        }
+        FKLB_RPP_CHECK(rppt_box_filter(rppResizedLtrb, &resizedDesc, rppOutLtrb, &outDesc, KERNEL_W, RpptImageBorderType::REPLICATE, rppBoxRoi,
+                                       RpptRoiType::XYWH, handle, RppBackend::RPP_HIP_BACKEND));
+        if (checking) {
+            FKLB_HIP_CHECK(hipGetLastError());
+            FKLB_HIP_CHECK(hipStreamSynchronize(rppStream));
+        }
+    };
+    const auto callRppLtrb = [&] {
+        writeRppLtrbRoi();
+        launchRppLtrb();
     };
 
     // ---- FKL: its own stream, its own copy of the frame (fk::Ptr2D) and one output (fk::Ptr2D<uchar3>) per variant
@@ -499,6 +538,9 @@ int launch() {
     impls.push_back({"rpp", rppStream, callRpp,
                      makeKernelOnly(rppStream, [&] { writeRppRoi(); return 0; }, [&](int) { launchRpp(); }),
                      [&] { return download8u(rppOut, static_cast<size_t>(OUT_W) * 3); }});
+    impls.push_back({"rpp_ltrb", rppStream, callRppLtrb,
+                     makeKernelOnly(rppStream, [&] { writeRppLtrbRoi(); return 0; }, [&](int) { launchRppLtrb(); }),
+                     [&] { return download8u(rppOutLtrb, static_cast<size_t>(OUT_W) * 3); }});
     impls.push_back({"fkl_box_halfpixel", fklStream, callBox, makeKernelOnly(fklStream, prepareBox, launchPrepared),
                      [&] { return download8u(outBox.ptr().data, outBox.ptr().dims.pitch); }});
     impls.push_back({"fkl_half_once", fklStream, callOnce, makeKernelOnly(fklStream, [] { return 0; }, [&](int) { callOnce(); }),
@@ -536,34 +578,50 @@ int launch() {
         outputs.push_back(impl.download());
     }
     const std::vector<unsigned char>& outRpp = outputs[0];
-    const std::vector<unsigned char>& outFklBox = outputs[1];
-    const std::vector<unsigned char>& outFklOnce = outputs[2];
+    const std::vector<unsigned char>& outRppLtrb = outputs[1];
+    const std::vector<unsigned char>& outFklBox = outputs[2];
+    const std::vector<unsigned char>& outFklOnce = outputs[3];
     const std::vector<unsigned char> rppResized8 = download8u(rppResized + RPP_OFFSET, static_cast<size_t>(OUT_W) * 3);
+    const std::vector<unsigned char> rppResizedLtrb8 = download8u(rppResizedLtrb + RPP_OFFSET, static_cast<size_t>(OUT_W) * 3);
 
     bool allOk = true;
     {
         fklb::CsvWriter checks("e18_box_checks_GPU_AMD.csv", "E18 box (AMD): other checks", {"check", "value", "criterion", "ok"});
-        // RPP's ROIs after the calls: the crop's converted to LTRB in place by rppt_resize, the box filter's unchanged
-        RpptROI roi[2];
-        FKLB_HIP_CHECK(hipMemcpy(&roi[0], rppResizeRoi, sizeof(RpptROI), hipMemcpyDeviceToHost));
-        FKLB_HIP_CHECK(hipMemcpy(&roi[1], rppBoxRoi, sizeof(RpptROI), hipMemcpyDeviceToHost));
-        const bool cropLtrb = roi[0].ltrbROI.lt.x == CROP_X && roi[0].ltrbROI.lt.y == CROP_Y && roi[0].ltrbROI.rb.x == CROP_X + CROP_W - 1 &&
-                              roi[0].ltrbROI.rb.y == CROP_Y + CROP_H - 1;
-        const bool boxSame = roi[1].xywhROI.xy.x == 0 && roi[1].xywhROI.xy.y == 0 && roi[1].xywhROI.roiWidth == OUT_W && roi[1].xywhROI.roiHeight == OUT_H;
-        const std::string cropText = std::to_string(roi[0].ltrbROI.lt.x) + " " + std::to_string(roi[0].ltrbROI.lt.y) + " " +
-                                     std::to_string(roi[0].ltrbROI.rb.x) + " " + std::to_string(roi[0].ltrbROI.rb.y);
-        const std::string boxText = std::to_string(roi[1].xywhROI.xy.x) + " " + std::to_string(roi[1].xywhROI.xy.y) + " " +
-                                    std::to_string(roi[1].xywhROI.roiWidth) + " " + std::to_string(roi[1].xywhROI.roiHeight);
-        checks.row("rpp: the crop's ROI after rppt_resize (written as XYWH 640 360 2560 1440)", cropText, "LTRB 640 360 3199 1799", cropLtrb ? 1 : 0);
-        checks.row("rpp: the box filter's ROI after rppt_box_filter (written once as XYWH 0 0 1920 1080)", boxText, "unchanged", boxSame ? 1 : 0);
-        allOk = allOk && cropLtrb && boxSame;
-        std::cout << "rpp ROIs after the calls: crop " << cropText << " (LTRB), box " << boxText << " (XYWH)" << std::endl;
+        // RPP's ROIs after the calls (pinned host memory, read in place after the synchronisation): rpp's crop converted to LTRB in place by
+        // rppt_resize, rpp_ltrb's crop unchanged (an LTRB ROI is not converted), the box filter's unchanged
+        const auto ltrbText = [](const RpptROI& r) {
+            return std::to_string(r.ltrbROI.lt.x) + " " + std::to_string(r.ltrbROI.lt.y) + " " + std::to_string(r.ltrbROI.rb.x) + " " +
+                   std::to_string(r.ltrbROI.rb.y);
+        };
+        const auto isCropLtrb = [](const RpptROI& r) {
+            return r.ltrbROI.lt.x == CROP_X && r.ltrbROI.lt.y == CROP_Y && r.ltrbROI.rb.x == CROP_X + CROP_W - 1 && r.ltrbROI.rb.y == CROP_Y + CROP_H - 1;
+        };
+        const RpptROI& box = rppBoxRoi[0];
+        const bool cropLtrb = isCropLtrb(rppResizeRoi[0]), ltrbSame = isCropLtrb(rppLtrbRoi[0]);
+        const bool boxSame = box.xywhROI.xy.x == 0 && box.xywhROI.xy.y == 0 && box.xywhROI.roiWidth == OUT_W && box.xywhROI.roiHeight == OUT_H;
+        const std::string boxText = std::to_string(box.xywhROI.xy.x) + " " + std::to_string(box.xywhROI.xy.y) + " " +
+                                    std::to_string(box.xywhROI.roiWidth) + " " + std::to_string(box.xywhROI.roiHeight);
+        checks.row("rpp: the crop's ROI after rppt_resize (written as XYWH 640 360 2560 1440)", ltrbText(rppResizeRoi[0]), "LTRB 640 360 3199 1799",
+                   cropLtrb ? 1 : 0);
+        checks.row("rpp_ltrb: the crop's ROI after rppt_resize (written as LTRB 640 360 3199 1799)", ltrbText(rppLtrbRoi[0]), "unchanged",
+                   ltrbSame ? 1 : 0);
+        checks.row("rpp, rpp_ltrb: the box filter's ROI after rppt_box_filter (written once as XYWH 0 0 1920 1080)", boxText, "unchanged", boxSame ? 1 : 0);
+        allOk = allOk && cropLtrb && ltrbSame && boxSame;
+        std::cout << "rpp ROIs after the calls: rpp's crop " << ltrbText(rppResizeRoi[0]) << " (LTRB), rpp_ltrb's crop " << ltrbText(rppLtrbRoi[0])
+                  << " (LTRB), box " << boxText << " (XYWH)" << std::endl;
         const auto a = prepareBox();
         const std::string sizes = "details " + std::to_string(sizeof(a.details)) + ", reads " + std::to_string(sizeof(a.reads)) + " (image " +
                                   std::to_string(sizeof(fk::get<0>(a.reads))) + ", coefficient " + std::to_string(sizeof(fk::get<1>(a.reads))) +
                                   "), multiply " + std::to_string(sizeof(a.multiply)) + ", accumulate " + std::to_string(sizeof(a.accumulate)) +
                                   ", output " + std::to_string(sizeof(a.output));
         checks.row("fused kernel arguments (bytes)", sizes, "informational", -1);
+        const std::pair<const char*, const std::vector<unsigned char>*> images[] = {
+            {"rpp output", &outRpp}, {"rpp_ltrb output", &outRppLtrb}, {"fkl_box_halfpixel output", &outFklBox}, {"fkl_half_once output", &outFklOnce},
+            {"rpp intermediate", &rppResized8}, {"rpp_ltrb intermediate", &rppResizedLtrb8}};
+        for (const auto& image : images) {
+            checks.row(std::string("digest (FNV-1a 64) of the ") + image.first, digest(*image.second), "informational", -1);
+            std::cout << "digest " << image.first << ": " << digest(*image.second) << std::endl;
+        }
         std::cout << "fused kernel arguments (bytes): " << sizes << std::endl;
     }
     {
@@ -702,6 +760,8 @@ int launch() {
         rows("c", "rpp", "round(sum/9) of its own intermediate", outRpp, boxReference(rppResized8), nullptr, true);
         rows("c", "fkl_box_halfpixel", "round(sum/9) of its own resized image (identity)", outFklBox, boxReference(fklResized8), nullptr, true);
         rows("d", "fkl_half_once", "fkl_box_halfpixel", outFklOnce, outFklBox, nullptr, true);
+        rows("rpp_ltrb", "rpp_ltrb resize (intermediate)", "rpp resize (intermediate)", rppResizedLtrb8, rppResized8, nullptr, true);
+        rows("rpp_ltrb", "rpp_ltrb", "rpp", outRppLtrb, outRpp, nullptr, true);
 
         // ---- (c) every differing output value has a differing resized value in its 3 x 3 window
         fklb::CsvWriter attribution("e18_box_attribution_GPU_AMD.csv", "E18 box (AMD): the differences of the outputs and the resized images",
@@ -754,10 +814,12 @@ int launch() {
     FKLB_HIP_CHECK(hipFree(rppFrame));
     FKLB_HIP_CHECK(hipFree(rppResized));
     FKLB_HIP_CHECK(hipFree(rppOut));
-    FKLB_HIP_CHECK(hipFree(rppSizes));
-    FKLB_HIP_CHECK(hipFree(rppResizeRoi));
-    FKLB_HIP_CHECK(hipFree(rppBoxRoi));
-    FKLB_HIP_CHECK(hipHostFree(rppRoiStaging));
+    FKLB_HIP_CHECK(hipFree(rppResizedLtrb));
+    FKLB_HIP_CHECK(hipFree(rppOutLtrb));
+    FKLB_HIP_CHECK(hipHostFree(rppSizes));
+    FKLB_HIP_CHECK(hipHostFree(rppResizeRoi));
+    FKLB_HIP_CHECK(hipHostFree(rppLtrbRoi));
+    FKLB_HIP_CHECK(hipHostFree(rppBoxRoi));
     FKLB_HIP_CHECK(hipStreamDestroy(rppStream));
     FKLB_HIP_CHECK(hipStreamDestroy(fklStream));
     return allOk ? 0 : 1;
