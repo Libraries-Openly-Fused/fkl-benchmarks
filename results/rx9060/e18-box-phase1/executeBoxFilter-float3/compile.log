@@ -1,0 +1,16 @@
+In file included from t.hip:4:
+/home/cudeiro/rocm-fkl-benchmarks/tmp/wt-e18box/external/fkl/include/fused_kernel/algorithms/image_processing/linear_filter.h:460:9: error: no matching conversion for static_cast from 'int' to 'T' (aka 'fk::Float3')
+  460 |         static_cast<T>(details.kernelWidth * details.kernelHeight);
+      |         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+t.hip:11:9: note: in instantiation of function template specialization 'fk::executeBoxFilter<fk::LinearFilterDPPDetails<fk::Float3>, fk::ReadInstantiableOperation<fk::FusedOperation_<void, fk::ReadInstantiableOperation<fk::PerThreadRead<fk::ND::_2D, fk::Uchar3>>, fk::UnaryInstantiableOperation<fk::Cast<fk::Uchar3, fk::Float3>>>>, fk::WriteInstantiableOperation<fk::FusedOperation_<void, fk::UnaryInstantiableOperation<fk::SaturateCast<fk::Float3, fk::Uchar3>>, fk::WriteInstantiableOperation<fk::PerThreadWrite<fk::ND::_2D, fk::Uchar3>>>>>' requested here
+   11 |     fk::executeBoxFilter(d, image, write, fk::float3{1.f, 1.f, 1.f}, s);
+      |         ^
+/home/cudeiro/rocm-fkl-benchmarks/tmp/wt-e18box/external/fkl/include/fused_kernel/core/data/vector_types.h:205:12: note: candidate constructor (the implicit copy constructor) not viable: no known conversion from 'int' to 'const Float3' for 1st argument
+  205 |     struct Float3 {
+      |            ^~~~~~
+/home/cudeiro/rocm-fkl-benchmarks/tmp/wt-e18box/external/fkl/include/fused_kernel/core/data/vector_types.h:205:12: note: candidate constructor (the implicit move constructor) not viable: no known conversion from 'int' to 'Float3' for 1st argument
+  205 |     struct Float3 {
+      |            ^~~~~~
+/home/cudeiro/rocm-fkl-benchmarks/tmp/wt-e18box/external/fkl/include/fused_kernel/core/data/vector_types.h:205:12: note: candidate constructor (the implicit default constructor) not viable: requires 0 arguments, but 1 was provided
+1 error generated when compiling for gfx1200.
+exit 1

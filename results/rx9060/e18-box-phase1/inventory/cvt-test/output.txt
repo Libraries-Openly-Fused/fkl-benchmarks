@@ -1,0 +1,96 @@
+device: AMD Radeon RX 9060 (gfx1200)
+
+Part 1: __builtin_amdgcn_cvt_pk_u8_f32(x, 0, 0)
+input                                    value            bits            GPU   RNE TRUNC   RHU   RHA
+just below tie                           0.49999997       0x3effffff      0     0     0     0     0
+tie                                      0.5              0x3f000000      0     0     0     1     1
+just above tie                           0.50000006       0x3f000001      1     1     0     1     1
+just below tie                           1.49999988       0x3fbfffff      1     1     1     1     1
+tie                                      1.5              0x3fc00000      2     2     1     2     2
+just above tie                           1.50000012       0x3fc00001      2     2     1     2     2
+just below tie                           2.49999976       0x401fffff      2     2     2     2     2
+tie                                      2.5              0x40200000      2     2     2     3     3
+just above tie                           2.50000024       0x40200001      3     3     2     3     3
+just below tie                           3.49999976       0x405fffff      3     3     3     3     3
+tie                                      3.5              0x40600000      4     4     3     4     4
+just above tie                           3.50000024       0x40600001      4     4     3     4     4
+just below tie                           127.499992       0x42feffff    127   127   127   127   127
+tie                                      127.5            0x42ff0000    128   128   127   128   128
+just above tie                           127.500008       0x42ff0001    128   128   127   128   128
+just below tie                           128.499985       0x43007fff    128   128   128   128   128
+tie                                      128.5            0x43008000    128   128   128   129   129
+just above tie                           128.500015       0x43008001    129   129   128   129   129
+just below tie                           253.499985       0x437d7fff    253   253   253   253   253
+tie                                      253.5            0x437d8000    254   254   253   254   254
+just above tie                           253.500015       0x437d8001    254   254   253   254   254
+just below tie                           254.499985       0x437e7fff    254   254   254   254   254
+tie                                      254.5            0x437e8000    254   254   254   255   255
+just above tie                           254.500015       0x437e8001    255   255   254   255   255
+plain                                    0                0x00000000      0     0     0     0     0
+plain                                    1                0x3f800000      1     1     1     1     1
+plain                                    2                0x40000000      2     2     2     2     2
+plain                                    0.25             0x3e800000      0     0     0     0     0
+plain                                    0.75             0x3f400000      1     1     0     1     1
+plain                                    1.25             0x3fa00000      1     1     1     1     1
+plain                                    1.75             0x3fe00000      2     2     1     2     2
+plain                                    100.300003       0x42c8999a    100   100   100   100   100
+plain                                    100.699997       0x42c96666    101   101   100   101   101
+plain                                    254              0x437e0000    254   254   254   254   254
+plain                                    255              0x437f0000    255   255   255   255   255
+negative zero                            -0               0x80000000      0     0     0     0     0
+negative                                 -0.25            0xbe800000      0     0     0     0     0
+negative                                 -0.5             0xbf000000      0     0     0     0     0
+negative                                 -0.75            0xbf400000      0     0     0     0     0
+negative                                 -1               0xbf800000      0     0     0     0     0
+negative                                 -1.5             0xbfc00000      0     0     0     0     0
+negative                                 -2.5             0xc0200000      0     0     0     0     0
+negative                                 -100             0xc2c80000      0     0     0     0     0
+just above 255                           255.000015       0x437f0001    255   255   255   255   255
+above 255                                255.25           0x437f4000    255   255   255   255   255
+above 255                                255.5            0x437f8000    255   255   255   255   255
+above 255                                255.75           0x437fc000    255   255   255   255   255
+above 255                                256              0x43800000    255   255   255   255   255
+above 255                                300              0x43960000    255   255   255   255   255
+above 255                                1e+10            0x501502f9    255   255   255   255   255
+above 255                                3.40282347e+38   0x7f7fffff    255   255   255   255   255
+denormal                                 1.40129846e-45   0x00000001      0     0     0     0     0
+NaN                                      nan              0x7fc00000      0    -1    -1    -1    -1
+-NaN                                     -nan             0xffc00000      0    -1    -1    -1    -1
++inf                                     inf              0x7f800000    255   255   255   255   255
+-inf                                     -inf             0xff800000      0     0     0     0     0
+255*9 * 0.1111111f (box 3x3 on 255)      254.999969       0x437efffe    255   255   254   255   255
+255*49 * 0.02040816f (box 7x7 on 255)    254.999954       0x437efffd    255   255   254   255   255
+100*9 * 0.1111111f                       99.9999847       0x42c7fffe    100   100    99   100   100
+padding                                  1.5              0x3fc00000      2     2     1     2     2
+agreement over 58 non-NaN inputs: RNE 58, TRUNC 39, RHU 54, RHA 54
+rpp_hip_pack nested form vs single calls: 0 of 60 bytes differ
+byte selector, x = 2.5 into 0xAABBCCDD: sel0 0xaabbcc02, sel1 0xaabb02dd, sel2 0xaa02ccdd, sel3 0x02bbccdd
+
+Part 2: rppt_box_filter 3x3 U8 NHWC, single-image (n=1), 64 x 32 x 3, 6144 values per image
+sum mod 9    values  == round(s/9)  == floor(s/9)   == RPP formula      < round
+0              2240           2240           2240             2240            0
+1               378            378            378              378            0
+2               386            386            386              386            0
+3               644            644            644              644            0
+4               551            551            551              551            0
+5               561            561              0              561            0
+6               654            654              0              654            0
+7               368            368              0              368            0
+8               362            362              0              362            0
+all            6144           6144           4199             6144
+constant 3 x 3 windows (tile (1,1) pixel, channel 0): 0->0, 1->1, 2->2, 5->5, 9->9, 10->10, 100->100, 127->127, 128->128, 200->200, 245->245, 250->250, 251->251, 253->253, 254->254, 255->255
+
+Part 2: rppt_box_filter 3x3 U8 NHWC, batched (n=2), 64 x 32 x 3, 6144 values per image
+sum mod 9    values  == round(s/9)  == floor(s/9)   == RPP formula      < round
+0              4480           4480           4480             4480            0
+1               756            756            756              756            0
+2               772            772            772              772            0
+3              1288           1288           1288             1288            0
+4              1102           1102           1102             1102            0
+5              1122           1122              0             1122            0
+6              1308           1308              0             1308            0
+7               736            736              0              736            0
+8               724            724              0              724            0
+all           12288          12288           8398            12288
+the two images of the batch are identical
+batched image 0 vs single-image output: identical
