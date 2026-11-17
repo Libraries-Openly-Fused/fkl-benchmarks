@@ -1,0 +1,25 @@
+row / interval / kernel position: kernel, calls, GPU duration median (min-max) in us
+fkl_box_asym / whole_call / 1: linearFilterDPPKernel, 100 calls, 40.77 (40.51-41.22) us
+fkl_box_asym / kernel_only / 1: linearFilterDPPKernel, 100 calls, 40.45 (40.29-42.85) us
+fkl_trunc_halfpixel / whole_call / 1: linearFilterDPPKernel, 100 calls, 37.98 (37.76-38.24) us
+fkl_trunc_halfpixel / kernel_only / 1: linearFilterDPPKernel, 100 calls, 39.39 (39.26-39.84) us
+npp / whole_call / 1: resizeNaive, 100 calls, 10.82 (10.72-10.91) us
+npp / whole_call / 2: ForEachPixelNaiveInLargeImage, 100 calls, 21.18 (21.09-21.34) us
+npp / kernel_only / 1: resizeNaive, 100 calls, 11.26 (11.23-11.36) us
+npp / kernel_only / 2: ForEachPixelNaiveInLargeImage, 100 calls, 21.73 (21.60-21.82) us
+npp_resize / whole_call / 1: resizeNaive, 100 calls, 10.88 (10.78-10.95) us
+npp_resize / kernel_only / 1: resizeNaive, 100 calls, 11.26 (11.20-11.30) us
+fkl_resize / whole_call / 1: launchTransformDPP_Kernel, 100 calls, 13.28 (13.25-13.34) us
+fkl_resize / kernel_only / 1: launchTransformDPP_Kernel, 100 calls, 13.76 (13.73-13.82) us
+npp_box / whole_call / 1: ForEachPixelNaiveInLargeImage, 100 calls, 21.34 (21.25-21.50) us
+npp_box / kernel_only / 1: ForEachPixelNaiveInLargeImage, 100 calls, 21.98 (21.92-22.11) us
+fkl_box / whole_call / 1: linearFilterDPPKernel, 100 calls, 29.44 (29.25-29.82) us
+fkl_box / kernel_only / 1: linearFilterDPPKernel, 100 calls, 30.40 (30.34-30.59) us
+
+sums of the kernel medians (us):
+whole_call: fkl_resize 13.28 + fkl_box 29.44 = 42.72 against the fused kernel of fkl_trunc_halfpixel 37.98: (fkl_resize + fkl_box) / fused = 1.1247
+whole_call: npp_resize 10.88 + npp_box 21.34 = 32.23 against npp's two kernels 10.82 + 21.18 = 32.00: (npp_resize + npp_box) / npp = 1.0070
+whole_call: fkl_box / npp_box 1.3793; fkl_resize / npp_resize 1.2206; fused / npp's two kernels 1.1870
+kernel_only: fkl_resize 13.76 + fkl_box 30.40 = 44.16 against the fused kernel of fkl_trunc_halfpixel 39.39: (fkl_resize + fkl_box) / fused = 1.1210
+kernel_only: npp_resize 11.26 + npp_box 21.98 = 33.25 against npp's two kernels 11.26 + 21.73 = 32.99: (npp_resize + npp_box) / npp = 1.0078
+kernel_only: fkl_box / npp_box 1.3828; fkl_resize / npp_resize 1.2216; fused / npp's two kernels 1.1940
