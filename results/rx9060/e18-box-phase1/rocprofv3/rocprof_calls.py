@@ -12,7 +12,8 @@ The summary gives, per range name, the kernels of each call and whether any call
 20 kernels (the whole_call and kernel_only ranges of a timed run: 101 calls each) is listed by kernel name and count.
 --spin (phase 2, for the trace of a complete timed run): for every range kernel_only:<version> (fklb::timePreparedLaunch: one warm-up call without
 a spin, then 100 iterations of the preparation, gpuSpin and the call), the iterations: the kernels launched after each gpuSpin by the API calls
-before the next one, not counting the kernels of hipMemcpy* calls (rpp's preparation, the ROI write, is enqueued before the spin). Covered: the
+before the next one, not counting the kernels of hipMemcpy* calls (a preparation that copies enqueues them before the spin; the ROI writes of rpp
+and rpp_ltrb are host stores, with no copy). Covered: the
 host's launch call of the iteration's last kernel returned before the spin ended on the GPU (the GPU never waited for the host inside the timed
 interval); the margin is the spin's end minus that return. The gaps on the GPU: from the end of the spin to the start of the first kernel, and
 between consecutive kernels. rocprofv3 gives the host and the GPU timestamps in one time base (ns).

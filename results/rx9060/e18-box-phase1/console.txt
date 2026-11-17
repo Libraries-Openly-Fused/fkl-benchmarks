@@ -1,5 +1,11 @@
 E18 box (AMD): the checks only (E18_NO_TIMING=1)
-rpp ROIs after the calls: crop 640 360 3199 1799 (LTRB), box 0 0 1920 1080 (XYWH)
+rpp ROIs after the calls: rpp's crop 640 360 3199 1799 (LTRB), rpp_ltrb's crop 640 360 3199 1799 (LTRB), box 0 0 1920 1080 (XYWH)
+digest rpp output: 9d2e2d8cdf865beb
+digest rpp_ltrb output: 9d2e2d8cdf865beb
+digest fkl_box_halfpixel output: e0be817567fd29f1
+digest fkl_half_once output: e0be817567fd29f1
+digest rpp intermediate: 0c87ef655df949fd
+digest rpp_ltrb intermediate: 0c87ef655df949fd
 fused kernel arguments (bytes): details 24, reads 64 (image 48, coefficient 12), multiply 1, accumulate 1, output 24
 ties exact reference resize (ties to even) [interior]: 633880 exact ties, 103049 within 1/36 of a tie, 5465883 other values; ties rounded up 317470, down 316410, neither 0
 ties exact reference resize (ties to even) [last 2 columns and rows]: 2645 exact ties, 223 within 1/36 of a tie, 15120 other values; ties rounded up 844, down 1801, neither 0
@@ -33,6 +39,10 @@ c fkl_box_halfpixel vs round(sum/9) of its own resized image (identity) [interio
 c fkl_box_halfpixel vs round(sum/9) of its own resized image (identity) [last 2 columns and rows]: 0 of 17988 values differ, 0 in the last row or column, max 0 levels ok
 d fkl_half_once vs fkl_box_halfpixel [interior]: 0 of 6202812 values differ, 0 in the last row or column, max 0 levels ok
 d fkl_half_once vs fkl_box_halfpixel [last 2 columns and rows]: 0 of 17988 values differ, 0 in the last row or column, max 0 levels ok
+rpp_ltrb rpp_ltrb resize (intermediate) vs rpp resize (intermediate) [interior]: 0 of 6202812 values differ, 0 in the last row or column, max 0 levels ok
+rpp_ltrb rpp_ltrb resize (intermediate) vs rpp resize (intermediate) [last 2 columns and rows]: 0 of 17988 values differ, 0 in the last row or column, max 0 levels ok
+rpp_ltrb rpp_ltrb vs rpp [interior]: 0 of 6202812 values differ, 0 in the last row or column, max 0 levels ok
+rpp_ltrb rpp_ltrb vs rpp [last 2 columns and rows]: 0 of 17988 values differ, 0 in the last row or column, max 0 levels ok
 c rpp vs exact reference [interior]: 183019 of 183019 differing values have a differing resized value (rpp intermediate vs exact reference resize) in their window ok
 c rpp vs exact reference [last 2 columns and rows]: 17500 of 17500 differing values have a differing resized value (rpp intermediate vs exact reference resize) in their window ok
 c fkl_box_halfpixel vs exact reference [interior]: 182312 of 182312 differing values have a differing resized value (fkl identity vs exact reference resize) in their window ok

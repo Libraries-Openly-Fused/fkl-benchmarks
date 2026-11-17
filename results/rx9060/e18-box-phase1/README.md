@@ -1,7 +1,7 @@
 # E18 box, phase 1 (e18-box-phase1), 2026-11-17: the 3 x 3 box filter after a crop and a resize on the RX 9060, RPP against FKL, checks only, NOT timed
 
 This folder is phase 1 of the redefined E18 on AMD: the program, the build, the checks, the kernels of every call and the metrics of the fused kernel. **Nothing here is timed.** The timing code is written (`phase2/`) and runs only in a GPU window scheduled with the coordinator after review.
-- **The program:** `rpp/e18_box.h`, target `e18_box_hip`, at f97e949 (branch `e18-box-rx9060`).
+- **The program:** `rpp/e18_box.h`, target `e18_box_hip`, at 664b06a (branch `e18-box-rx9060`). It is f97e949 with the changes of the review: RPP's parameter arrays moved to pinned host memory, and the variant `rpp_ltrb` added.
 - **FKL:** 24478f0, the pin of `external/fkl` on main since #47.
 - **RPP:** 3.2.0 of ROCm 10.1.0 (`librpp.so.3.2.0`, sha256 `c6d9bdc7800e105122632f01f408a709b38bea4775677040beda4d7e5614844d`), HIP back-end.
 - **Decision:** E18 uses a pipeline that OpenCV-CUDA, NPP, RPP and FKL can all run, in 8 bits from start to end. Oscar chose the box filter on 2026-11-17, in the coordinator session. This replaces the sharpen pipeline of `e18-stencil-phase1` (#46), which RPP cannot run (`inventory/`).
@@ -20,12 +20,21 @@ The order below is the order of the checks and of the timing.
 2. `rppt_box_filter`: `kernelSize` 3, `RpptImageBorderType::REPLICATE`, with the whole intermediate as its XYWH ROI.
 
 The buffers follow what RPP 3.2.0 needs:
-- **The ROI arrays and `dstImgSizes`** are in HIP memory (`hipMalloc`), as RPP documents `roiTensorPtrSrc` for the HIP back-end.
+- **The ROI arrays and `dstImgSizes` are in pinned host memory** (`hipHostMalloc`), as in the Figure 15 program (`rpp/benchmark_rpp_preprocessing.h`). RPP's kernels read them in place, and its conversion kernel rewrites them in place. RPP 3.2.0's header documents `roiTensorPtrSrc` as HIP memory for the HIP back-end; we use pinned host memory, as Figure 15's program does.
 - **256 entries per ROI array.** RPP's ROI conversion kernels run 256 threads for a batch of 1, each rewriting one entry (`rpp_hip_roi_conversion.hpp`).
 - **A 64-byte offset in the intermediate.** It is the box filter's source, and `rppt_box_filter` returns `RPP_ERROR_LOW_OFFSET` when `offsetInBytes < 12 * (kernelSize / 2)` (`rppt_tensor_filter_augmentations.cpp:133`).
 - **64 bytes after every image**, because RPP stores 8 pixels at a time, up to 7 pixels past the ROI width.
 
-**The ROI write is part of every call.** `rppt_resize` converts its ROI from XYWH to LTRB in place, so each call first writes the crop's ROI. It is a 16-byte `hipMemcpyAsync` on RPP's stream from a pinned staging array, the form HIP's header recommends for asynchronous copies. `rppt_box_filter` converts only an LTRB ROI (`box_filter.cpp:2050`), so its XYWH ROI is written once. The check run confirms both: after the calls, the crop's ROI reads LTRB 640 360 3199 1799 and the box filter's is unchanged (`e18_box_checks_GPU_AMD.csv`).
+**The ROI write is part of every call.** `rppt_resize` converts its ROI from XYWH to LTRB in place, so each call first writes the crop's ROI: a 16-byte store on the host into the pinned array. `rppt_box_filter` converts only an LTRB ROI (`box_filter.cpp:2050`), so its XYWH ROI is written once. The check run confirms both: after the calls, the crop's ROI reads LTRB 640 360 3199 1799 and the box filter's is unchanged (`e18_box_checks_GPU_AMD.csv`).
+
+**The host write is safe** because no RPP kernel still reads the ROI when it is rewritten. Every call of this program follows a synchronisation:
+- the check run synchronises after every call;
+- `fklb::timeIt` and `fklb::timePreparedLaunch` wait for each call's stop event before the next call (`common/hip_timing.h:51` and `:93`);
+- the profile mode synchronises after every call.
+
+**From HIP memory to pinned host memory.** f97e949 kept the ROIs in HIP memory and wrote them with a 16-byte `hipMemcpyAsync`, which HIP ran as a blit kernel in every call. The outputs are bitwise the same in both forms. `rpp-roi-memory/digests.txt` gives the digests (FNV-1a 64) of the outputs and the intermediate from a scratch build of 6f21abf and from this folder's run: equal for `rpp`, `fkl_box_halfpixel` and `fkl_half_once`.
+
+**`rpp_ltrb`:** `rpp` with the crop passed to `rppt_resize` as an LTRB ROI (640, 360, 3199, 1799). That is `rppt_resize`'s own form: it converts the ROI only when it is XYWH (`resize.cpp:944` on the single-image path that a batch of 1 takes, and `:730` on the batched path), so with LTRB it launches no conversion kernel. The ROI is in pinned host memory, in its own 256-entry array, and is written before every call like `rpp`'s. `rpp_ltrb` has its own intermediate and output, and shares the box filter's ROI with `rpp`. Both forms are documented. `rpp` is the form of the Figure 15 program; `rpp_ltrb` is RPP's native form for the resize.
 
 **In the check run,** every RPP call is followed by `hipGetLastError` and `hipStreamSynchronize`, because RPP returns `RPP_SUCCESS` when a launch fails. The profile mode and the timing do not add them.
 
@@ -50,12 +59,13 @@ These are exactly the arguments `fk::executeBoxFilter` builds (`linear_filter.h:
 - the spin waits on `wall_clock64()`;
 - the profiler ranges are ROCTx (`rocprofiler-sdk-roctx`) instead of NVTX.
 
-## The build (`build/`)
+## The build (`step0/`)
 - amdclang++ 24.0.0 (ROCm 10.1.0), gfx1200, Release, the HIP configuration of the benchmark builds (`-DFKLB_BUILD_RPP=ON`, CUDA off). Only `e18_box_hip` was built: 0 errors, 0 warnings.
-- **Source state** (`source-state.txt`): the clean worktree at f97e949, with FKL 24478f0 clean. The only untracked path was this results folder.
+- **Source state** (`source-state.txt`): the worktree at 664b06a, with FKL 24478f0 clean. The only changed files were three scripts of this results folder, which are not part of the build.
 - **Why `git status` is recorded directly:** the `-dirty` mark of the binaries covers `common cmake fkl-self opencv-cuda npp external CMakeLists.txt CMakePresets.json` (`cmake/fklb_write_build_info.cmake:22`), not `rpp/`.
-- The binary records f97e949 and FKL 24478f0. Its sha256 is in `binary-sha256.txt` (`c35d9d3b…`).
+- The binary records 664b06a and FKL 24478f0. Its sha256 is in `binary-sha256.txt` (`8d4a2b98…`).
 - Before each GPU run there was no CI job (`Runner.Worker`) on this machine.
+- The folder is `step0/`, not `build/`, because the repository's `.gitignore` ignores `build*/`.
 
 ## The checks (`console.txt` and the four CSVs)
 One run with `E18_NO_TIMING=1`: exit 0, empty stderr, "E18 checks passed".
@@ -140,8 +150,15 @@ By (a), those resized differences are:
 - ties, or values within 1/36 of a tie, everywhere for FKL and in RPP's interior;
 - RPP's edge clamp in its last row and column, which the box spreads over the last two.
 
-### d. The build-once variant (check d)
-`fkl_half_once` is bitwise equal to `fkl_box_halfpixel` at all 6,220,800 values (required).
+### d. The build-once variant and `rpp_ltrb` (check d and the `rpp_ltrb` rows)
+- `fkl_half_once` is bitwise equal to `fkl_box_halfpixel` at all 6,220,800 values (required).
+- `rpp_ltrb` is bitwise equal to `rpp` at all 6,220,800 values, in both its intermediate and its output (required).
+- After the calls, `rpp_ltrb`'s ROI is unchanged (LTRB 640 360 3199 1799), so `rppt_resize` did not convert it (`e18_box_checks_GPU_AMD.csv`).
+
+### The digests
+The check run prints a digest (FNV-1a 64) of every output and intermediate, also in `e18_box_checks_GPU_AMD.csv`:
+- `rpp` and `rpp_ltrb`: output `9d2e2d8cdf865beb`, intermediate `0c87ef655df949fd`;
+- `fkl_box_halfpixel` and `fkl_half_once`: output `e0be817567fd29f1`.
 
 ### The fused kernel's arguments
 Details 24 B; the two Reads 64 B (the image 48, the coefficient 12); multiply 1; accumulate 1; the write 24. That is 114 B of explicit arguments.
@@ -154,13 +171,14 @@ Details 24 B; the two Reads 64 B (the image 48, the coefficient 12); multiply 1;
 
 | variant | GPU dispatches per call (the same in all 3 calls) | HIP API calls inside a call |
 |---|---|---|
-| `rpp` | 4: `__amd_rocclr_copyBuffer` (HIP's blit kernel for the 16-byte ROI write) → `roi_conversion_xywh_to_ltrb` (RPP's in-place ROI conversion) → `resize_bilinear_pkd_hip_tensor` → `box_filter_3x3_pkd_hip_tensor` | `hipMemcpyAsync` 1, `hipLaunchKernel` 3, `hipGetLastError` 3 (RPP's own launch checks) |
+| `rpp` | 3: `roi_conversion_xywh_to_ltrb` (RPP's in-place ROI conversion) → `resize_bilinear_pkd_hip_tensor` → `box_filter_3x3_pkd_hip_tensor` | `hipLaunchKernel` 3, `hipGetLastError` 3 (RPP's own launch checks) |
+| `rpp_ltrb` | 2: `resize_bilinear_pkd_hip_tensor` → `box_filter_3x3_pkd_hip_tensor` | `hipLaunchKernel` 2, `hipGetLastError` 2 |
 | `fkl_box_halfpixel` | 1: `fk::linearFilterDPPKernel` | `hipLaunchKernel` 1, `hipGetLastError` 1 |
 | `fkl_half_once` | 1: the same kernel | `hipLaunchKernel` 1, `hipGetLastError` 1 |
 
-- **RPP launches 3 kernels per call.** That is one more than its two calls suggest, because `rppt_resize` converts its XYWH ROI in a kernel of its own. The ROI write adds a fourth GPU dispatch: HIP performs the 16-byte host-to-device copy with a blit kernel, and the trace has no SDMA copy for it.
-- **No call allocates, frees or sets memory:** 0 allocation or free API calls, 0 memory allocations, 0 `hipMemset*`.
-- **The only copy inside a call** is rpp's ROI write (1 `hipMemcpyAsync`).
+- **`rpp` launches 3 kernels per call,** one more than its two calls suggest, because `rppt_resize` converts its XYWH ROI in a kernel of its own. `rpp_ltrb` launches 2: an LTRB ROI needs no conversion.
+- **No call allocates, frees, copies or sets memory:** 0 allocation or free API calls, 0 memory allocations, 0 `hipMemcpy*`, 0 memory copies and 0 `hipMemset*`. The ROI writes are host stores into pinned memory.
+- **Before the review,** at f97e949, with the ROI in HIP memory, `rpp` made 4 GPU dispatches per call. The extra one was HIP's blit kernel `__amd_rocclr_copyBuffer` for the 16-byte `hipMemcpyAsync` of the ROI.
 - **What the runtime reports for the kernels:**
   - the fused kernel: 32 VGPRs and 4,608 B of LDS, the compiler's 26 and 4,284 rounded up to the allocation granules;
   - RPP's resize: 96 VGPRs, no LDS;
@@ -197,10 +215,10 @@ The timing is in the program. It follows the RTX 4090 protocol (`../../rtx4090/e
 - **`whole_call`:** `fklb::timeIt`, events around one call, 100 calls after one warm-up.
 - **`kernel_only`:** `fklb::timePreparedLaunch` with the 5 ms `gpuSpin` as `beforeLaunch`. RPP's kernels go behind one spin.
 - **The preparation**, timed on the host:
-  - `rpp`: the ROI write;
+  - `rpp`, `rpp_ltrb`: the ROI write (a host store);
   - `fkl_box_halfpixel`: the crop view, the IOps and the details;
   - `fkl_half_once`: nothing.
-- **The order is fixed:** `rpp`, `fkl_box_halfpixel`, `fkl_half_once`, each `whole_call` then `kernel_only`.
+- **The order is fixed:** `rpp`, `rpp_ltrb`, `fkl_box_halfpixel`, `fkl_half_once`, each `whole_call` then `kernel_only`.
 - **ROCTx ranges:** each interval is in a range named `whole_call:<version>` or `kernel_only:<version>`.
 
 The scripts for the window:
@@ -208,7 +226,7 @@ The scripts for the window:
   - Guards: the binary's sha256 and commit (no `-dirty`), a new output folder, and before every run no `Runner.Worker` and a load average below 0.8.
   - Runs: an optional warm-up run, then three quiet runs, then one complete run under rocprofv3. It samples the GPU clocks every 100 ms.
   - Not run.
-- **`e18_box_report.py`:** the median of the three runs' means with their min-max, and the speedups. Tested on made-up CSVs only.
+- **`e18_box_report.py`:** the median of the three runs' means with their min-max, and the speedups of FKL over `rpp` and over `rpp_ltrb`. Tested on made-up CSVs only.
 - **`../rocprofv3/rocprof_calls.py --spin`:** checks that the spin covers the host's enqueue of every kernel-only call, and gives the gaps. Its spin part has not run on a timing trace yet.
 
 ## `inventory/`: the inventory behind the redefinition (2026-11-13)

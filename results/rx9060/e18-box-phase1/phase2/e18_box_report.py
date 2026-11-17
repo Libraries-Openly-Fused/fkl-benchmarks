@@ -50,7 +50,7 @@ with open(os.path.join(args.folder, "e18_box_summary.csv"), "w", newline="") as 
     w = csv.DictWriter(f, fieldnames=cols)
     w.writeheader()
     w.writerows(rows)
-pairs = [("rpp", "fkl_box_halfpixel"), ("rpp", "fkl_half_once")]
+pairs = [("rpp", "fkl_box_halfpixel"), ("rpp", "fkl_half_once"), ("rpp_ltrb", "fkl_box_halfpixel"), ("rpp_ltrb", "fkl_half_once")]
 sp = []
 for base, fkl in pairs:
     for interval in ("whole_call", "kernel_only"):

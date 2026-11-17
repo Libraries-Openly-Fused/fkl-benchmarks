@@ -1,5 +1,5 @@
 # experiment: E18 box (AMD): agreement of the 8-bit images
-# repo: fkl-benchmarks f97e949c38c26eedcbd244d386f6aaf18136fc13
+# repo: fkl-benchmarks 664b06a40d5114884539e53c95e43e15fe1b12f5
 # fkl: 24478f0aa11dc3f12feea83178f7fde828322fb0
 # cvGPUSpeedup: not checked out (pinned 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c)
 # FastNPP: not checked out (pinned a1b5e245d7dd70fba23dcb51a0aea80495dbc61d)
@@ -12,7 +12,7 @@
 # kernel: Linux 7.0.0-43-generic
 # gpu: AMD Radeon RX 9060, gfx1200, 14 WGPs (28 CUs), wave32, 8144 MiB, PCI 0000:0d:00.0
 # hip driver: 7.16.26385, hip runtime: 7.16.26385
-# clocks (gfx, mem, max gfx, max mem, MHz): 59, 456, 2400, 1124
+# clocks (gfx, mem, max gfx, max mem, MHz): 64, 456, 2400, 1124
 # amd-smi: AMDSMI Tool: 27.1.0+7da43026 | AMDSMI Library version: 27.1.0 | ROCm version: 10.1.0 | amdgpu version: 7.1.9.31600000 | ionic version: N/A
 check,image,against,region,values,values_differing,differing_at_exact_ties,differing_within_1_36_of_a_tie,differing_other,differing_in_last_row_or_column,max_diff_levels,criterion,ok
 a,rpp resize (intermediate),exact reference resize,interior,6202812,201737,201068,669,0,0,1,informational,-1
@@ -39,3 +39,7 @@ c,fkl_box_halfpixel,round(sum/9) of its own resized image (identity),interior,62
 c,fkl_box_halfpixel,round(sum/9) of its own resized image (identity),last 2 columns and rows,17988,0,,,,0,0,0 values differing,1
 d,fkl_half_once,fkl_box_halfpixel,interior,6202812,0,,,,0,0,0 values differing,1
 d,fkl_half_once,fkl_box_halfpixel,last 2 columns and rows,17988,0,,,,0,0,0 values differing,1
+rpp_ltrb,rpp_ltrb resize (intermediate),rpp resize (intermediate),interior,6202812,0,,,,0,0,0 values differing,1
+rpp_ltrb,rpp_ltrb resize (intermediate),rpp resize (intermediate),last 2 columns and rows,17988,0,,,,0,0,0 values differing,1
+rpp_ltrb,rpp_ltrb,rpp,interior,6202812,0,,,,0,0,0 values differing,1
+rpp_ltrb,rpp_ltrb,rpp,last 2 columns and rows,17988,0,,,,0,0,0 values differing,1

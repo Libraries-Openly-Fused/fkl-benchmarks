@@ -2,7 +2,7 @@
 # window.sh <out dir>: the GPU window of E18 box on the RX 9060 (phase 2). Written in phase 1 and NOT RUN: it runs only in a window scheduled with
 # the coordinator. The protocol is the RTX 4090's (results/rtx4090/e18-stencil/window-script.sh):
 #   1. WARMUP=1: one complete run (the checks and the timing), in warmup/, not used.
-#   2. Three complete quiet runs, back to back: quiet-run1..3. Every run checks first, then times every variant in the same order (rpp,
+#   2. Three complete quiet runs, back to back: quiet-run1..3. Every run checks first, then times every variant in the same order (rpp, rpp_ltrb,
 #      fkl_box_halfpixel, fkl_half_once; whole_call, then kernel_only; rpp/e18_box.h).
 #   3. After the three timed runs, as its own step: one complete run under rocprofv3 (kernel, HIP runtime, ROCTx, memory copy and allocation
 #      traces), in rocprofv3/. Its times are not used: rocprof_calls.py --spin gives the kernels of every call and whether the spin covers the
