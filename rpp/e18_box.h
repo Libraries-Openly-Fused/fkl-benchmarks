@@ -1,0 +1,764 @@
+/* Copyright 2026 Oscar Amoros Huguet
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License. */
+
+// E18 (AMD): a 3 x 3 box filter after a crop and a resize, in 8 bits from start to end: RPP (two calls) against FKL (one kernel), on an AMD GPU
+// (HIP, ParArch::GPU_AMD). The pipeline is the one every library of E18 can run (OpenCV-CUDA, NPP, RPP and FKL).
+//
+// The pipeline, on one 3840 x 2160 8UC3 frame (the seeded source of E4, as in Figure 15 and the first E18 program):
+//   crop       2560 x 1440 at (640, 360)
+//   resize     2560 x 1440 -> 1920 x 1080, bilinear, half-pixel sampling ((x + 0.5) * scale - 0.5), 8-bit input and 8-bit output (rounded to the
+//              nearest integer, ties to even)
+//   box        3 x 3, anchor at the centre, border REPLICATE: round(sum / 9), 8-bit input and 8-bit output
+//   output     1920 x 1080 8UC3
+// The variants, in the order of the checks and of the timing:
+//   rpp                RPP 3.2.0, HIP back-end, its own buffers and no FKL object. Two calls, as a user writes them:
+//                      rppt_resize (U8 NHWC, batch 1, BILINEAR, the crop as the XYWH ROI of the frame, the output size 1920 x 1080) into an
+//                      intermediate 1920 x 1080 U8 tensor, then rppt_box_filter (kernelSize 3, REPLICATE, the whole intermediate as its XYWH ROI)
+//                      into the output. rppt_resize converts its ROI from XYWH to LTRB in place, so every call first writes the crop's ROI (a
+//                      16-byte copy on RPP's stream from a pinned staging array); that write is part of the call, as the crop may move on
+//                      every call. rppt_box_filter converts only an LTRB ROI (box_filter.cpp:2050), so its XYWH ROI is written once.
+//   fkl_box_halfpixel  FKL, one kernel: one fk::executeLinearFilter. Its image Read IOp is the read of the crop view (Ptr2D::crop2D) followed by
+//                      fk::Resize (INTER_LINEAR, ResizeSampling::HALF_PIXEL, to float3), fk::SaturateCast<float3, uchar3> (the 8-bit resized
+//                      image, rounded inside the kernel as RPP rounds it between its two calls) and fk::Cast<uchar3, float3>. The coefficients
+//                      are fk::ConstantFilterRead<float3> with 1/9 in every channel; multiply and accumulate are the Unary forms of fk::Mul and
+//                      fk::Add on float3; the write is fk::SaturateCast<float3, uchar3> followed by the write of the output. These are the
+//                      arguments that fk::executeBoxFilter builds (linear_filter.h:452-468 at 24478f0); executeBoxFilter itself does not compile
+//                      for LinearFilterDPPDetails<float3>, because its coefficient scale / static_cast<T>(kernelWidth * kernelHeight)
+//                      (linear_filter.h:459-460, GPU_AMD; 324-325 GPU_NVIDIA) has no conversion from int to a vector T. Every call builds
+//                      the crop view, every IOp and the details, and launches.
+//   fkl_half_once      fkl_box_halfpixel with the crop view, the IOps and the details built once; every call is fk::executeLinearFilter
+//
+// Every run checks first, then times (the timing is skipped when a required check fails). Every comparison counts the interior and the last
+// two rows and columns separately (RPP's resize never reads the last column and row of its ROI). In the check runs every RPP call is followed by
+// hipGetLastError and hipStreamSynchronize, because RPP returns RPP_SUCCESS when a launch fails.
+//   a. The resize alone, against the exact reference resize (exactResizeHalfPixel: in integers, rounded to the nearest integer with ties to
+//      even exactly): RPP's intermediate tensor, and FKL's image Read IOp written by fk::executeLinearFilter with the identity coefficients
+//      0 0 0 / 0 1 0 / 0 0 0 (a 3 x 3 fk::Ptr2D<float3>) and the same write; FKL against RPP; and, as a cross-check, the double-precision
+//      resize (common/resize_reference.h) rounded with std::nearbyint. The differences are counted at the exact ties of the exact resize, within
+//      1/36 of a tie, and at the other values; e18_box_ties_GPU_AMD.csv counts the ties and how each image rounds them. Informational.
+//   b. The box alone, on one 1920 x 1080 8UC3 image (E4's generator at 1920 x 1080, the whole image as the ROI): rppt_box_filter, and FKL's
+//      fk::executeLinearFilter of the box on a plain read of the image (PerThreadRead, Cast<uchar3, float3>), each against round(sum / 9) with the
+//      border replicated, in integers. Required: 0 differences.
+//   c. The whole pipeline: rpp and fkl_box_halfpixel against the exact reference (the exact resize, then round(sum / 9)), and
+//      fkl_box_halfpixel against rpp. Whether every difference comes from step (a): each output against round(sum / 9) of its own 8-bit resized
+//      image (RPP's intermediate; FKL's identity output) must give 0 differences, and every differing output value must have a differing resized
+//      value in its 3 x 3 window (the differences of the resized images are those of step a). Required: 0 and all.
+//   d. fkl_half_once against fkl_box_halfpixel: bitwise equal. Required.
+//   Also checked: RPP's ROIs after the calls (the crop's is LTRB, the box filter's is unchanged), and the sizes of the fused kernel's arguments.
+//   Files: e18_box_agreement_GPU_AMD.csv (a, b, c, d), e18_box_ties_GPU_AMD.csv (a), e18_box_attribution_GPU_AMD.csv (c),
+//   e18_box_checks_GPU_AMD.csv (the other checks).
+// The timing (e18_box_GPU_AMD.csv), two intervals per variant, in the order of the list, the same in every run:
+//   whole_call   fklb::timeIt (common/hip_timing.h): events around one call, 100 calls after one warm-up call (E4's interval, Figure 15)
+//   kernel_only  fklb::timePreparedLaunch with gpuSpin (5 ms) as beforeLaunch (E1's interval, Table III): the preparation is timed on the host
+//                (rpp: the ROI write; fkl_box_halfpixel: the crop view, the IOps and the details; fkl_half_once: nothing); then the spin, the start
+//                event, every kernel of the call (RPP's behind one spin), the stop event
+//   Each interval of each variant is in a ROCTx range ("whole_call:<version>", "kernel_only:<version>") for rocprofv3.
+// E18_ONLY=a,b: only these variants. E18_NO_TIMING=1: the checks only. E18_SPIN_US: the length of the spin (default 5000).
+// E18_PROFILE=1: for rocprofv3, no checks and no timing: after the setup, one warm-up call of every selected variant, then three calls of each,
+//   every call in a ROCTx range named after the variant and followed by a synchronisation of its stream.
+#include <common/csv_writer.h>
+#include <common/hip_timing.h>
+#include <common/main.h>
+#include <common/resize_reference.h>
+#include <common/status_check.h>
+
+#include <fused_kernel/fused_kernel.h>
+#include <fused_kernel/algorithms/basic_ops/arithmetic.h>
+#include <fused_kernel/algorithms/basic_ops/cast.h>
+#include <fused_kernel/algorithms/image_processing/linear_filter.h>
+#include <fused_kernel/algorithms/image_processing/resize.h>
+#include <fused_kernel/algorithms/image_processing/saturate.h>
+#include <fused_kernel/core/data/ptr_utils.h>
+#include <fused_kernel/core/data/rect.h>
+#include <fused_kernel/core/execution_model/executors.h>
+
+#include <hip/hip_runtime.h>
+#include <rocprofiler-sdk-roctx/roctx.h>
+#include <rpp.h>
+#include <rppdefs.h>
+
+#include <algorithm>
+#include <cmath>
+#include <cstdint>
+#include <cstdlib>
+#include <cstring>
+#include <functional>
+#include <iostream>
+#include <stdexcept>
+#include <string>
+#include <vector>
+
+namespace e18box {
+constexpr int SRC_W = 3840, SRC_H = 2160;
+constexpr int CROP_X = 640, CROP_Y = 360, CROP_W = 2560, CROP_H = 1440;
+constexpr int OUT_W = 1920, OUT_H = 1080;
+constexpr int KERNEL_W = 3, KERNEL_H = 3, ANCHOR_X = 1, ANCHOR_Y = 1;
+constexpr size_t OUT_BYTES = static_cast<size_t>(OUT_W) * OUT_H * 3;
+constexpr size_t SRC_BYTES = static_cast<size_t>(SRC_W) * SRC_H * 3;
+// RPP's buffers. The tensor the box filter reads starts RPP_OFFSET bytes into its allocation: rppt_box_filter's HIP path returns
+// RPP_ERROR_LOW_OFFSET when srcDesc->offsetInBytes < 12 * (kernelSize / 2) (rppt_tensor_filter_augmentations.cpp:133); 64 keeps the image
+// 64-byte aligned. Every RPP buffer has RPP_TAIL bytes after its image: RPP's kernels store 8 pixels at a time, up to 7 pixels (21 bytes) past
+// the ROI width. RPP's ROI conversion kernels run 256 threads for a batch of 1 and rewrite one ROI each (rpp_hip_roi_conversion.hpp), so every
+// ROI array has 256 entries; entry 0 is the image's, the others are padding that only RPP writes.
+constexpr unsigned RPP_OFFSET = 64;
+constexpr size_t RPP_TAIL = 64;
+constexpr size_t RPP_ROI_ENTRIES = 256;
+
+inline bool selected(const std::string& name) {
+    const char* e = std::getenv("E18_ONLY");
+    if (e == nullptr) return true;
+    return (std::string(",") + e + ",").find("," + name + ",") != std::string::npos;
+}
+
+inline bool envIs1(const char* name) {
+    const char* e = std::getenv(name);
+    return e != nullptr && std::string(e) == "1";
+}
+
+// The source of E4 (opencv-cuda/batched-preprocessing/e4_preprocessing.cu): an LCG with seed 12345, bytes 31..24, 23..16, 15..8 of every state,
+// row by row
+inline std::vector<unsigned char> seededNoise(const int width, const int height) {
+    std::vector<unsigned char> noise(static_cast<size_t>(width) * height * 3);
+    uint32_t state = 12345u;
+    for (size_t i = 0; i < noise.size(); i += 3) {
+        state = state * 1664525u + 1013904223u;
+        noise[i] = static_cast<unsigned char>(state >> 24);
+        noise[i + 1] = static_cast<unsigned char>(state >> 16);
+        noise[i + 2] = static_cast<unsigned char>(state >> 8);
+    }
+    return noise;
+}
+
+inline size_t at(const int x, const int y, const int c) { return (static_cast<size_t>(y) * OUT_W + x) * 3 + c; }
+
+// The half-pixel bilinear resize of the 8-bit crop to OUT_W x OUT_H in integers, rounded to the nearest integer with ties to even, exactly.
+// The destination x samples the source position ((2x + 1) * srcW - dstW) / (2 dstW) (clamped as in common/resize_reference.h: not before the
+// first pixel, the second neighbour not after the last), so the weights are multiples of 1 / (2 dstW) and 1 / (2 dstH), and the value times
+// D = (2 dstW) (2 dstH) is an integer N. At this scale (4/3, 2560 x 1440 -> 1920 x 1080) the sample positions are multiples of 1/6, the
+// weights of each direction are 1/6, 1/2 and 5/6, and every value is a multiple of 1/36 (checked: N is a multiple of D / 36). So many exact
+// values lie halfway between two integers; a computation with inexact weights (the double-precision reference, and every float implementation)
+// rounds those by the sign of its own error.
+// The class of each value: 0 an exact tie (k + 18/36), 1 within 1/36 of a tie (k + 17/36 or k + 19/36), 2 the others; floorValue: floor(value).
+enum TieClass : unsigned char { EXACT_TIE = 0, WITHIN_1_36 = 1, OTHER = 2 };
+struct ExactResize {
+    std::vector<unsigned char> rounded, cls, floorValue;
+};
+inline ExactResize exactResizeHalfPixel(const unsigned char* src, const size_t pitch, const int srcW, const int srcH) {
+    const int64_t denX = 2 * static_cast<int64_t>(OUT_W), denY = 2 * static_cast<int64_t>(OUT_H), D = denX * denY;
+    if (D % 36 != 0) throw std::runtime_error("exactResizeHalfPixel: D is not a multiple of 36");
+    const auto tap = [](const int d, const int64_t srcSize, const int64_t den, const int dstSize, int& i1, int& i2, int64_t& frac) {
+        int64_t num = (2 * static_cast<int64_t>(d) + 1) * srcSize - dstSize;
+        num = std::max<int64_t>(num, 0);
+        i1 = static_cast<int>(num / den);
+        frac = num % den;
+        if (i1 >= srcSize - 1) {
+            i1 = static_cast<int>(srcSize - 1);
+            frac = 0;
+        }
+        i2 = std::min(i1 + 1, static_cast<int>(srcSize - 1));
+    };
+    ExactResize e;
+    e.rounded.assign(OUT_BYTES, 0);
+    e.cls.assign(OUT_BYTES, OTHER);
+    e.floorValue.assign(OUT_BYTES, 0);
+    for (int y = 0; y < OUT_H; ++y) {
+        int y1, y2;
+        int64_t fy;
+        tap(y, srcH, denY, OUT_H, y1, y2, fy);
+        for (int x = 0; x < OUT_W; ++x) {
+            int x1, x2;
+            int64_t fx;
+            tap(x, srcW, denX, OUT_W, x1, x2, fx);
+            for (int c = 0; c < 3; ++c) {
+                const auto p = [&](const int xx, const int yy) { return static_cast<int64_t>(src[static_cast<size_t>(yy) * pitch + static_cast<size_t>(xx) * 3 + c]); };
+                const int64_t n = (p(x1, y1) * (denX - fx) + p(x2, y1) * fx) * (denY - fy) + (p(x1, y2) * (denX - fx) + p(x2, y2) * fx) * fy;
+                const int64_t q = n / D, r = n % D;
+                if (r % (D / 36) != 0) throw std::runtime_error("exactResizeHalfPixel: a value is not a multiple of 1/36");
+                const int64_t k = r / (D / 36);   // the value is q + k / 36
+                const int64_t rounded = 2 * r > D ? q + 1 : (2 * r == D ? q + (q & 1) : q);
+                e.rounded[at(x, y, c)] = static_cast<unsigned char>(rounded);
+                e.floorValue[at(x, y, c)] = static_cast<unsigned char>(q);
+                e.cls[at(x, y, c)] = k == 18 ? EXACT_TIE : ((k == 17 || k == 19) ? WITHIN_1_36 : OTHER);
+            }
+        }
+    }
+    return e;
+}
+
+// The 3 x 3 box of an 8-bit OUT_W x OUT_H image in integers: round(sum / 9) = (sum + 4) / 9 (sum / 9 is never halfway between two integers),
+// the border replicated
+inline std::vector<unsigned char> boxReference(const std::vector<unsigned char>& image) {
+    std::vector<unsigned char> out(OUT_BYTES);
+    for (int y = 0; y < OUT_H; ++y) {
+        for (int x = 0; x < OUT_W; ++x) {
+            for (int c = 0; c < 3; ++c) {
+                int sum = 0;
+                for (int ky = 0; ky < KERNEL_H; ++ky) {
+                    for (int kx = 0; kx < KERNEL_W; ++kx) {
+                        const int sx = std::min(std::max(x + kx - ANCHOR_X, 0), OUT_W - 1);
+                        const int sy = std::min(std::max(y + ky - ANCHOR_Y, 0), OUT_H - 1);
+                        sum += image[at(sx, sy, c)];
+                    }
+                }
+                out[at(x, y, c)] = static_cast<unsigned char>((sum + 4) / 9);
+            }
+        }
+    }
+    return out;
+}
+
+// The regions of every comparison: the interior, and the last two columns and rows
+inline bool inEdge(const size_t value) {
+    const size_t pixel = value / 3;
+    const int x = static_cast<int>(pixel % OUT_W), y = static_cast<int>(pixel / OUT_W);
+    return x >= OUT_W - 2 || y >= OUT_H - 2;
+}
+inline bool inLastRowOrColumn(const size_t value) {
+    const size_t pixel = value / 3;
+    const int x = static_cast<int>(pixel % OUT_W), y = static_cast<int>(pixel / OUT_W);
+    return x == OUT_W - 1 || y == OUT_H - 1;
+}
+struct Region {
+    size_t values = 0, differ = 0, differLast = 0;   // differLast: in the last row or column
+    size_t differByClass[3] = {0, 0, 0};             // by the TieClass of the exact resize at the value (resized images only)
+    int maxDiff = 0;
+};
+struct Comparison {
+    Region region[2];   // 0 the interior, 1 the last two columns and rows
+};
+
+// exact: the exact resize, for the comparisons of resized images (the differences counted by TieClass); nullptr for the others
+inline Comparison compare8u(const std::vector<unsigned char>& a, const std::vector<unsigned char>& b, const ExactResize* exact) {
+    if (a.size() != OUT_BYTES || b.size() != OUT_BYTES) throw std::runtime_error("compare8u: not an output image");
+    Comparison cmp;
+    for (size_t i = 0; i < OUT_BYTES; ++i) {
+        Region& r = cmp.region[inEdge(i) ? 1 : 0];
+        ++r.values;
+        const int diff = std::abs(static_cast<int>(a[i]) - static_cast<int>(b[i]));
+        if (diff != 0) {
+            ++r.differ;
+            r.differLast += inLastRowOrColumn(i) ? 1 : 0;
+            r.maxDiff = std::max(r.maxDiff, diff);
+            if (exact != nullptr) ++r.differByClass[exact->cls[i]];
+        }
+    }
+    return cmp;
+}
+
+// How an 8-bit resized image rounds the exact ties: per region, the values of each TieClass, and at the exact ties how many of the image's values
+// are floor + 1 (rounded up), floor (rounded down) or neither
+struct TieRounding {
+    size_t values = 0, byClass[3] = {0, 0, 0}, up = 0, down = 0, neither = 0;
+};
+inline void tieRounding(const std::vector<unsigned char>& image, const ExactResize& exact, TieRounding (&t)[2]) {
+    for (size_t i = 0; i < OUT_BYTES; ++i) {
+        TieRounding& r = t[inEdge(i) ? 1 : 0];
+        ++r.values;
+        ++r.byClass[exact.cls[i]];
+        if (exact.cls[i] != EXACT_TIE) continue;
+        if (image[i] == exact.floorValue[i] + 1) {
+            ++r.up;
+        } else if (image[i] == exact.floorValue[i]) {
+            ++r.down;
+        } else {
+            ++r.neither;
+        }
+    }
+}
+
+// Step (c): the output values where a and b differ, and how many of them have a value in their 3 x 3 window (border replicated, the same
+// channel) where the resized images ra and rb differ
+struct Attribution {
+    size_t differ[2] = {0, 0}, explained[2] = {0, 0};
+};
+inline Attribution attribute(const std::vector<unsigned char>& a, const std::vector<unsigned char>& b, const std::vector<unsigned char>& ra,
+                             const std::vector<unsigned char>& rb) {
+    Attribution att;
+    for (int y = 0; y < OUT_H; ++y) {
+        for (int x = 0; x < OUT_W; ++x) {
+            for (int c = 0; c < 3; ++c) {
+                const size_t i = at(x, y, c);
+                if (a[i] == b[i]) continue;
+                const int r = inEdge(i) ? 1 : 0;
+                ++att.differ[r];
+                bool resizeDiffers = false;
+                for (int ky = 0; ky < KERNEL_H && !resizeDiffers; ++ky) {
+                    for (int kx = 0; kx < KERNEL_W && !resizeDiffers; ++kx) {
+                        const int sx = std::min(std::max(x + kx - ANCHOR_X, 0), OUT_W - 1);
+                        const int sy = std::min(std::max(y + ky - ANCHOR_Y, 0), OUT_H - 1);
+                        resizeDiffers = ra[at(sx, sy, c)] != rb[at(sx, sy, c)];
+                    }
+                }
+                att.explained[r] += resizeDiffers ? 1 : 0;
+            }
+        }
+    }
+    return att;
+}
+
+inline std::vector<unsigned char> download8u(const void* data, const size_t pitch) {
+    std::vector<unsigned char> host(OUT_BYTES);
+    FKLB_HIP_CHECK(hipMemcpy2D(host.data(), static_cast<size_t>(OUT_W) * 3, data, pitch, static_cast<size_t>(OUT_W) * 3, OUT_H, hipMemcpyDeviceToHost));
+    return host;
+}
+
+// The GPU spin of the kernel-only interval (E1's role, handwritten-cuda/e1_common.h): one thread waits on the GPU's constant-rate wall clock
+// (s_memrealtime, wall_clock64()) and touches no memory. Enqueued before the start event, it keeps the GPU busy while the host records the start
+// event and enqueues the call, so that the interval holds the kernels and not the host's dispatch of them. `ticks` = microseconds * the wall clock
+// rate (hipDeviceAttributeWallClockRate, kHz) / 1000.
+__global__ void gpuSpin(const unsigned long long ticks) {
+    const unsigned long long t0 = wall_clock64();
+    while (wall_clock64() - t0 < ticks) {
+    }
+}
+
+inline unsigned long long spinUs() {
+    const char* e = std::getenv("E18_SPIN_US");
+    return std::strtoull(e != nullptr ? e : "5000", nullptr, 10);
+}
+
+using Details = fk::LinearFilterDPPDetails<fk::float3>;   // the default tile (16 x 8) and largest kernel (7 x 7): the call a user writes
+
+template <typename Reads, typename Multiply, typename Accumulate, typename Write>
+struct FilterArguments {
+    Reads reads;
+    Multiply multiply;
+    Accumulate accumulate;
+    Write output;
+    Details details;
+};
+
+struct Implementation {
+    std::string version;
+    hipStream_t stream;
+    std::function<void()> call;
+    std::function<void(fklb::Timing& gpu, fklb::Timing& host)> kernelOnly;
+    std::function<std::vector<unsigned char>()> download;
+};
+}  // namespace e18box
+
+int launch() {
+    using namespace e18box;
+    using fk::float3;
+    using fk::uchar3;
+    const bool profile = envIs1("E18_PROFILE");
+    const bool timing = !profile && !envIs1("E18_NO_TIMING");
+    std::cout << "E18 box (AMD): "
+              << (profile ? "the profile mode (E18_PROFILE=1): calls in ROCTx ranges, no checks, no timing"
+                          : (timing ? "the checks, then the timing" : "the checks only (E18_NO_TIMING=1)"))
+              << std::endl;
+    const std::vector<unsigned char> noise = seededNoise(SRC_W, SRC_H);
+    const size_t hostRow = static_cast<size_t>(SRC_W) * 3;
+    int device = 0, wallClockKHz = 0;
+    FKLB_HIP_CHECK(hipGetDevice(&device));
+    FKLB_HIP_CHECK(hipDeviceGetAttribute(&wallClockKHz, hipDeviceAttributeWallClockRate, device));
+    const unsigned long long spinTicks = spinUs() * static_cast<unsigned long long>(wallClockKHz) / 1000ull;
+    // In the check runs every RPP call is followed by hipGetLastError and hipStreamSynchronize (RPP returns RPP_SUCCESS when a launch fails);
+    // in the profile mode and in the timing it is not
+    bool checking = !profile;
+
+    // ---- RPP: its own stream, handle, buffers, descriptors, output size and ROIs, all set up once (none depends on the crop but the crop's ROI)
+    hipStream_t rppStream;
+    FKLB_HIP_CHECK(hipStreamCreate(&rppStream));
+    rppHandle_t handle{};
+    FKLB_RPP_CHECK(rppCreate(&handle, 1, 0, rppStream, RppBackend::RPP_HIP_BACKEND));
+    unsigned char *rppFrame = nullptr, *rppResized = nullptr, *rppOut = nullptr;
+    FKLB_HIP_CHECK(hipMalloc(&rppFrame, SRC_BYTES + RPP_TAIL));
+    FKLB_HIP_CHECK(hipMalloc(&rppResized, RPP_OFFSET + OUT_BYTES + RPP_TAIL));
+    FKLB_HIP_CHECK(hipMalloc(&rppOut, OUT_BYTES + RPP_TAIL));
+    FKLB_HIP_CHECK(hipMemset(rppResized, 0, RPP_OFFSET + OUT_BYTES + RPP_TAIL));
+    FKLB_HIP_CHECK(hipMemcpy(rppFrame, noise.data(), SRC_BYTES, hipMemcpyHostToDevice));
+    RpptDesc frameDesc(1, 3, SRC_H, SRC_W, RpptDataType::U8, RpptLayout::NHWC);        // the whole frame; the crop is the ROI
+    RpptDesc resizedDesc(1, 3, OUT_H, OUT_W, RpptDataType::U8, RpptLayout::NHWC);      // the intermediate: written by the resize, read by the box
+    resizedDesc.offsetInBytes = RPP_OFFSET;
+    RpptDesc outDesc(1, 3, OUT_H, OUT_W, RpptDataType::U8, RpptLayout::NHWC);
+    // the output size (HIP memory, read by the resize kernel), the two ROI arrays (HIP memory, as RPP documents roiTensorPtrSrc for the HIP
+    // back-end) and the pinned staging of the crop's ROI
+    RpptImagePatch* rppSizes = nullptr;
+    RpptROI *rppResizeRoi = nullptr, *rppBoxRoi = nullptr, *rppRoiStaging = nullptr;
+    FKLB_HIP_CHECK(hipMalloc(&rppSizes, sizeof(RpptImagePatch)));
+    FKLB_HIP_CHECK(hipMalloc(&rppResizeRoi, sizeof(RpptROI) * RPP_ROI_ENTRIES));
+    FKLB_HIP_CHECK(hipMalloc(&rppBoxRoi, sizeof(RpptROI) * RPP_ROI_ENTRIES));
+    FKLB_HIP_CHECK(hipHostMalloc(&rppRoiStaging, sizeof(RpptROI)));
+    {
+        const RpptImagePatch size{static_cast<Rpp32u>(OUT_W), static_cast<Rpp32u>(OUT_H)};
+        FKLB_HIP_CHECK(hipMemcpy(rppSizes, &size, sizeof(size), hipMemcpyHostToDevice));
+        std::vector<RpptROI> rois(RPP_ROI_ENTRIES);
+        std::memset(rois.data(), 0, sizeof(RpptROI) * RPP_ROI_ENTRIES);
+        FKLB_HIP_CHECK(hipMemcpy(rppResizeRoi, rois.data(), sizeof(RpptROI) * RPP_ROI_ENTRIES, hipMemcpyHostToDevice));
+        rois[0].xywhROI = {{0, 0}, OUT_W, OUT_H};   // the box filter's: the whole intermediate
+        FKLB_HIP_CHECK(hipMemcpy(rppBoxRoi, rois.data(), sizeof(RpptROI) * RPP_ROI_ENTRIES, hipMemcpyHostToDevice));
+    }
+    // rpp: the crop's ROI (written before every call: rppt_resize rewrites it in place as LTRB), rppt_resize, rppt_box_filter. The staging is
+    // rewritten by the next call, so a call follows the end of the previous one's copy: every call of this program follows a synchronisation of
+    // RPP's stream.
+    const auto writeRppRoi = [&] {
+        rppRoiStaging->xywhROI = {{CROP_X, CROP_Y}, CROP_W, CROP_H};
+        FKLB_HIP_CHECK(hipMemcpyAsync(rppResizeRoi, rppRoiStaging, sizeof(RpptROI), hipMemcpyHostToDevice, rppStream));
+    };
+    const auto launchRpp = [&] {
+        FKLB_RPP_CHECK(rppt_resize(rppFrame, &frameDesc, rppResized, &resizedDesc, rppSizes, RpptInterpolationType::BILINEAR, rppResizeRoi,
+                                   RpptRoiType::XYWH, handle, RppBackend::RPP_HIP_BACKEND));
+        if (checking) {
+            FKLB_HIP_CHECK(hipGetLastError());
+            FKLB_HIP_CHECK(hipStreamSynchronize(rppStream));
+        }
+        FKLB_RPP_CHECK(rppt_box_filter(rppResized, &resizedDesc, rppOut, &outDesc, KERNEL_W, RpptImageBorderType::REPLICATE, rppBoxRoi,
+                                       RpptRoiType::XYWH, handle, RppBackend::RPP_HIP_BACKEND));
+        if (checking) {
+            FKLB_HIP_CHECK(hipGetLastError());
+            FKLB_HIP_CHECK(hipStreamSynchronize(rppStream));
+        }
+    };
+    const auto callRpp = [&] {
+        writeRppRoi();
+        launchRpp();
+    };
+
+    // ---- FKL: its own stream, its own copy of the frame (fk::Ptr2D) and one output (fk::Ptr2D<uchar3>) per variant
+    hipStream_t fklStream;
+    FKLB_HIP_CHECK(hipStreamCreate(&fklStream));
+    fk::Stream_<fk::ParArch::GPU_AMD> fkStream(fklStream);
+    fk::Ptr2D<uchar3> dFrame(SRC_W, SRC_H);
+    FKLB_HIP_CHECK(hipMemcpy2D(dFrame.ptr().data, dFrame.ptr().dims.pitch, noise.data(), hostRow, hostRow, SRC_H, hipMemcpyHostToDevice));
+    fk::Ptr2D<uchar3> outBox(OUT_W, OUT_H), outOnce(OUT_W, OUT_H);
+
+    // fkl_box_halfpixel: every call builds the crop view, every IOp and the details, and launches
+    const auto callBox = [&] {
+        const fk::Ptr2D<uchar3> crop = dFrame.crop2D(fk::Rect(CROP_X, CROP_Y, CROP_W, CROP_H));
+        const auto image = fk::PerThreadRead<fk::ND::_2D, uchar3>::build(crop)
+                               .then(fk::Resize<fk::InterpolationType::INTER_LINEAR, fk::AspectRatio::IGNORE_AR, NullType,
+                                                fk::ResizeSampling::HALF_PIXEL>::build(fk::Size(OUT_W, OUT_H)))
+                               .then(fk::SaturateCast<float3, uchar3>::build())
+                               .then(fk::Cast<uchar3, float3>::build());
+        const auto coefficient = fk::ConstantFilterRead<float3>::build(float3{1.f, 1.f, 1.f} / float3{9.f, 9.f, 9.f});
+        const auto multiply = fk::Mul<float3, float3, float3, fk::UnaryType>::build();
+        const auto accumulate = fk::Add<float3, float3, float3, fk::UnaryType>::build();
+        const auto output = fk::SaturateCast<float3, uchar3>::build().then(fk::PerThreadWrite<fk::ND::_2D, uchar3>::build(outBox));
+        const Details details{OUT_W, OUT_H, KERNEL_W, KERNEL_H, ANCHOR_X, ANCHOR_Y};
+        if (!fk::executeLinearFilter(details, fk::make_tuple(image, coefficient), multiply, accumulate, output, fkStream)) {
+            throw std::runtime_error("fkl_box_halfpixel: the details are not valid");
+        }
+    };
+    const auto prepareBox = [&] {
+        const fk::Ptr2D<uchar3> crop = dFrame.crop2D(fk::Rect(CROP_X, CROP_Y, CROP_W, CROP_H));
+        const auto reads = fk::make_tuple(fk::PerThreadRead<fk::ND::_2D, uchar3>::build(crop)
+                                              .then(fk::Resize<fk::InterpolationType::INTER_LINEAR, fk::AspectRatio::IGNORE_AR, NullType,
+                                                               fk::ResizeSampling::HALF_PIXEL>::build(fk::Size(OUT_W, OUT_H)))
+                                              .then(fk::SaturateCast<float3, uchar3>::build())
+                                              .then(fk::Cast<uchar3, float3>::build()),
+                                          fk::ConstantFilterRead<float3>::build(float3{1.f, 1.f, 1.f} / float3{9.f, 9.f, 9.f}));
+        const auto multiply = fk::Mul<float3, float3, float3, fk::UnaryType>::build();
+        const auto accumulate = fk::Add<float3, float3, float3, fk::UnaryType>::build();
+        const auto output = fk::SaturateCast<float3, uchar3>::build().then(fk::PerThreadWrite<fk::ND::_2D, uchar3>::build(outBox));
+        return FilterArguments<std::decay_t<decltype(reads)>, std::decay_t<decltype(multiply)>, std::decay_t<decltype(accumulate)>,
+                               std::decay_t<decltype(output)>>{reads, multiply, accumulate, output,
+                                                               Details{OUT_W, OUT_H, KERNEL_W, KERNEL_H, ANCHOR_X, ANCHOR_Y}};
+    };
+    const auto launchPrepared = [&](const auto& a) {
+        if (!fk::executeLinearFilter(a.details, a.reads, a.multiply, a.accumulate, a.output, fkStream)) {
+            throw std::runtime_error("fkl_box_halfpixel: the details are not valid");
+        }
+    };
+    // fkl_half_once: built once, valid only while the crop (its position and size) does not change
+    const fk::Ptr2D<uchar3> cropOnce = dFrame.crop2D(fk::Rect(CROP_X, CROP_Y, CROP_W, CROP_H));
+    const auto readsOnce = fk::make_tuple(fk::PerThreadRead<fk::ND::_2D, uchar3>::build(cropOnce)
+                                              .then(fk::Resize<fk::InterpolationType::INTER_LINEAR, fk::AspectRatio::IGNORE_AR, NullType,
+                                                               fk::ResizeSampling::HALF_PIXEL>::build(fk::Size(OUT_W, OUT_H)))
+                                              .then(fk::SaturateCast<float3, uchar3>::build())
+                                              .then(fk::Cast<uchar3, float3>::build()),
+                                          fk::ConstantFilterRead<float3>::build(float3{1.f, 1.f, 1.f} / float3{9.f, 9.f, 9.f}));
+    const auto multiplyOnce = fk::Mul<float3, float3, float3, fk::UnaryType>::build();
+    const auto accumulateOnce = fk::Add<float3, float3, float3, fk::UnaryType>::build();
+    const auto outputOnce = fk::SaturateCast<float3, uchar3>::build().then(fk::PerThreadWrite<fk::ND::_2D, uchar3>::build(outOnce));
+    const Details detailsOnce{OUT_W, OUT_H, KERNEL_W, KERNEL_H, ANCHOR_X, ANCHOR_Y};
+    const auto callOnce = [&] {
+        if (!fk::executeLinearFilter(detailsOnce, readsOnce, multiplyOnce, accumulateOnce, outputOnce, fkStream)) {
+            throw std::runtime_error("fkl_half_once: the details are not valid");
+        }
+    };
+
+    // ---- The variants, in the order of the checks and of the timing
+    const auto makeKernelOnly = [&](const hipStream_t stream, const auto& prepare, const auto& launch) {
+        return [&, stream, prepare, launch](fklb::Timing& gpu, fklb::Timing& host) {
+            fklb::timePreparedLaunch(stream, prepare, [&, stream] { gpuSpin<<<1, 1, 0, stream>>>(spinTicks); }, launch, gpu, host);
+        };
+    };
+    std::vector<Implementation> impls;
+    impls.push_back({"rpp", rppStream, callRpp,
+                     makeKernelOnly(rppStream, [&] { writeRppRoi(); return 0; }, [&](int) { launchRpp(); }),
+                     [&] { return download8u(rppOut, static_cast<size_t>(OUT_W) * 3); }});
+    impls.push_back({"fkl_box_halfpixel", fklStream, callBox, makeKernelOnly(fklStream, prepareBox, launchPrepared),
+                     [&] { return download8u(outBox.ptr().data, outBox.ptr().dims.pitch); }});
+    impls.push_back({"fkl_half_once", fklStream, callOnce, makeKernelOnly(fklStream, [] { return 0; }, [&](int) { callOnce(); }),
+                     [&] { return download8u(outOnce.ptr().data, outOnce.ptr().dims.pitch); }});
+
+    // ---- The profile mode: a warm-up call of every selected variant, then three calls of each in ROCTx ranges named after it
+    if (profile) {
+        for (const Implementation& impl : impls) {
+            if (!selected(impl.version)) continue;
+            impl.call();
+            FKLB_HIP_CHECK(hipStreamSynchronize(impl.stream));
+        }
+        FKLB_HIP_CHECK(hipDeviceSynchronize());
+        for (const Implementation& impl : impls) {
+            if (!selected(impl.version)) continue;
+            for (int k = 0; k < 3; ++k) {
+                roctxRangePushA(impl.version.c_str());
+                impl.call();
+                roctxRangePop();
+                FKLB_HIP_CHECK(hipStreamSynchronize(impl.stream));
+            }
+        }
+        FKLB_HIP_CHECK(hipGetLastError());
+        FKLB_RPP_CHECK(rppDestroy(handle, RppBackend::RPP_HIP_BACKEND));
+        std::cout << "E18 profile mode done" << std::endl;
+        return 0;
+    }
+
+    // ---- One call of every variant (all of them: the checks need every output), its output downloaded
+    std::vector<std::vector<unsigned char>> outputs;
+    for (const Implementation& impl : impls) {
+        FKLB_HIP_CHECK(hipStreamSynchronize(impl.stream));
+        impl.call();
+        FKLB_HIP_CHECK(hipStreamSynchronize(impl.stream));
+        outputs.push_back(impl.download());
+    }
+    const std::vector<unsigned char>& outRpp = outputs[0];
+    const std::vector<unsigned char>& outFklBox = outputs[1];
+    const std::vector<unsigned char>& outFklOnce = outputs[2];
+    const std::vector<unsigned char> rppResized8 = download8u(rppResized + RPP_OFFSET, static_cast<size_t>(OUT_W) * 3);
+
+    bool allOk = true;
+    {
+        fklb::CsvWriter checks("e18_box_checks_GPU_AMD.csv", "E18 box (AMD): other checks", {"check", "value", "criterion", "ok"});
+        // RPP's ROIs after the calls: the crop's converted to LTRB in place by rppt_resize, the box filter's unchanged
+        RpptROI roi[2];
+        FKLB_HIP_CHECK(hipMemcpy(&roi[0], rppResizeRoi, sizeof(RpptROI), hipMemcpyDeviceToHost));
+        FKLB_HIP_CHECK(hipMemcpy(&roi[1], rppBoxRoi, sizeof(RpptROI), hipMemcpyDeviceToHost));
+        const bool cropLtrb = roi[0].ltrbROI.lt.x == CROP_X && roi[0].ltrbROI.lt.y == CROP_Y && roi[0].ltrbROI.rb.x == CROP_X + CROP_W - 1 &&
+                              roi[0].ltrbROI.rb.y == CROP_Y + CROP_H - 1;
+        const bool boxSame = roi[1].xywhROI.xy.x == 0 && roi[1].xywhROI.xy.y == 0 && roi[1].xywhROI.roiWidth == OUT_W && roi[1].xywhROI.roiHeight == OUT_H;
+        const std::string cropText = std::to_string(roi[0].ltrbROI.lt.x) + " " + std::to_string(roi[0].ltrbROI.lt.y) + " " +
+                                     std::to_string(roi[0].ltrbROI.rb.x) + " " + std::to_string(roi[0].ltrbROI.rb.y);
+        const std::string boxText = std::to_string(roi[1].xywhROI.xy.x) + " " + std::to_string(roi[1].xywhROI.xy.y) + " " +
+                                    std::to_string(roi[1].xywhROI.roiWidth) + " " + std::to_string(roi[1].xywhROI.roiHeight);
+        checks.row("rpp: the crop's ROI after rppt_resize (written as XYWH 640 360 2560 1440)", cropText, "LTRB 640 360 3199 1799", cropLtrb ? 1 : 0);
+        checks.row("rpp: the box filter's ROI after rppt_box_filter (written once as XYWH 0 0 1920 1080)", boxText, "unchanged", boxSame ? 1 : 0);
+        allOk = allOk && cropLtrb && boxSame;
+        std::cout << "rpp ROIs after the calls: crop " << cropText << " (LTRB), box " << boxText << " (XYWH)" << std::endl;
+        const auto a = prepareBox();
+        const std::string sizes = "details " + std::to_string(sizeof(a.details)) + ", reads " + std::to_string(sizeof(a.reads)) + " (image " +
+                                  std::to_string(sizeof(fk::get<0>(a.reads))) + ", coefficient " + std::to_string(sizeof(fk::get<1>(a.reads))) +
+                                  "), multiply " + std::to_string(sizeof(a.multiply)) + ", accumulate " + std::to_string(sizeof(a.accumulate)) +
+                                  ", output " + std::to_string(sizeof(a.output));
+        checks.row("fused kernel arguments (bytes)", sizes, "informational", -1);
+        std::cout << "fused kernel arguments (bytes): " << sizes << std::endl;
+    }
+    {
+        // ---- The references. The exact one: the half-pixel resize of the crop in integers, rounded to nearest with ties to even exactly
+        // (exactResizeHalfPixel), then round(sum / 9) in integers. The double-precision resize (common/resize_reference.h) rounded with
+        // std::nearbyint (ties to even in the default rounding mode) is a cross-check only: at the exact ties its rounding follows the sign of its
+        // own error.
+        const unsigned char* crop = noise.data() + (static_cast<size_t>(CROP_Y) * SRC_W + CROP_X) * 3;
+        const ExactResize exact = exactResizeHalfPixel(crop, hostRow, CROP_W, CROP_H);
+        const std::vector<unsigned char>& refResized8 = exact.rounded;
+        const std::vector<unsigned char> refOut = boxReference(refResized8);
+        std::vector<double> doubleResized(OUT_BYTES);
+        fklb::resizeBilinear(crop, hostRow, CROP_W, CROP_H, 3, OUT_W, OUT_H, fklb::ResizeSampling::HALF_PIXEL, doubleResized.data());
+        std::vector<unsigned char> doubleResized8(OUT_BYTES);
+        for (size_t i = 0; i < OUT_BYTES; ++i) doubleResized8[i] = static_cast<unsigned char>(std::nearbyint(doubleResized[i]));
+
+        // ---- (a) FKL's image Read IOp, written through fk::executeLinearFilter with the identity coefficients and the same write
+        fk::Ptr2D<float3> dIdentity(KERNEL_W, KERNEL_H);
+        {
+            std::vector<float3> id(KERNEL_W * KERNEL_H);
+            for (int ky = 0; ky < KERNEL_H; ++ky) {
+                for (int kx = 0; kx < KERNEL_W; ++kx) {
+                    const float one = (kx == ANCHOR_X && ky == ANCHOR_Y) ? 1.f : 0.f;
+                    id[ky * KERNEL_W + kx] = float3{one, one, one};
+                }
+            }
+            FKLB_HIP_CHECK(hipMemcpy2D(dIdentity.ptr().data, dIdentity.ptr().dims.pitch, id.data(), KERNEL_W * sizeof(float3), KERNEL_W * sizeof(float3),
+                                       KERNEL_H, hipMemcpyHostToDevice));
+        }
+        fk::Ptr2D<uchar3> dFklResized(OUT_W, OUT_H);
+        {
+            const fk::Ptr2D<uchar3> crop2 = dFrame.crop2D(fk::Rect(CROP_X, CROP_Y, CROP_W, CROP_H));
+            const auto image = fk::PerThreadRead<fk::ND::_2D, uchar3>::build(crop2)
+                                   .then(fk::Resize<fk::InterpolationType::INTER_LINEAR, fk::AspectRatio::IGNORE_AR, NullType,
+                                                    fk::ResizeSampling::HALF_PIXEL>::build(fk::Size(OUT_W, OUT_H)))
+                                   .then(fk::SaturateCast<float3, uchar3>::build())
+                                   .then(fk::Cast<uchar3, float3>::build());
+            const Details details{OUT_W, OUT_H, KERNEL_W, KERNEL_H, ANCHOR_X, ANCHOR_Y};
+            if (!fk::executeLinearFilter(details, fk::make_tuple(image, fk::PerThreadRead<fk::ND::_2D, float3>::build(dIdentity)),
+                                         fk::Mul<float3, float3, float3, fk::UnaryType>::build(), fk::Add<float3, float3, float3, fk::UnaryType>::build(),
+                                         fk::SaturateCast<float3, uchar3>::build().then(fk::PerThreadWrite<fk::ND::_2D, uchar3>::build(dFklResized)),
+                                         fkStream)) {
+                throw std::runtime_error("identity check: the details are not valid");
+            }
+            FKLB_HIP_CHECK(hipStreamSynchronize(fklStream));
+        }
+        const std::vector<unsigned char> fklResized8 = download8u(dFklResized.ptr().data, dFklResized.ptr().dims.pitch);
+
+        // ---- (b) the box alone on one 1920 x 1080 image: rppt_box_filter, and FKL on a plain read of the image
+        const std::vector<unsigned char> boxInput = seededNoise(OUT_W, OUT_H);
+        const std::vector<unsigned char> boxInputRef = boxReference(boxInput);
+        unsigned char *rppBoxIn = nullptr, *rppBoxOut = nullptr;
+        FKLB_HIP_CHECK(hipMalloc(&rppBoxIn, RPP_OFFSET + OUT_BYTES + RPP_TAIL));
+        FKLB_HIP_CHECK(hipMalloc(&rppBoxOut, OUT_BYTES + RPP_TAIL));
+        FKLB_HIP_CHECK(hipMemset(rppBoxIn, 0, RPP_OFFSET + OUT_BYTES + RPP_TAIL));
+        FKLB_HIP_CHECK(hipMemcpy(rppBoxIn + RPP_OFFSET, boxInput.data(), OUT_BYTES, hipMemcpyHostToDevice));
+        FKLB_RPP_CHECK(rppt_box_filter(rppBoxIn, &resizedDesc, rppBoxOut, &outDesc, KERNEL_W, RpptImageBorderType::REPLICATE, rppBoxRoi, RpptRoiType::XYWH,
+                                       handle, RppBackend::RPP_HIP_BACKEND));
+        FKLB_HIP_CHECK(hipGetLastError());
+        FKLB_HIP_CHECK(hipStreamSynchronize(rppStream));
+        const std::vector<unsigned char> rppBoxAlone = download8u(rppBoxOut, static_cast<size_t>(OUT_W) * 3);
+        fk::Ptr2D<uchar3> dBoxIn(OUT_W, OUT_H), dBoxOut(OUT_W, OUT_H);
+        FKLB_HIP_CHECK(hipMemcpy2D(dBoxIn.ptr().data, dBoxIn.ptr().dims.pitch, boxInput.data(), static_cast<size_t>(OUT_W) * 3,
+                                   static_cast<size_t>(OUT_W) * 3, OUT_H, hipMemcpyHostToDevice));
+        {
+            const Details details{OUT_W, OUT_H, KERNEL_W, KERNEL_H, ANCHOR_X, ANCHOR_Y};
+            if (!fk::executeLinearFilter(details,
+                                         fk::make_tuple(fk::PerThreadRead<fk::ND::_2D, uchar3>::build(dBoxIn).then(fk::Cast<uchar3, float3>::build()),
+                                                        fk::ConstantFilterRead<float3>::build(float3{1.f, 1.f, 1.f} / float3{9.f, 9.f, 9.f})),
+                                         fk::Mul<float3, float3, float3, fk::UnaryType>::build(), fk::Add<float3, float3, float3, fk::UnaryType>::build(),
+                                         fk::SaturateCast<float3, uchar3>::build().then(fk::PerThreadWrite<fk::ND::_2D, uchar3>::build(dBoxOut)),
+                                         fkStream)) {
+                throw std::runtime_error("box-alone check: the details are not valid");
+            }
+            FKLB_HIP_CHECK(hipStreamSynchronize(fklStream));
+        }
+        const std::vector<unsigned char> fklBoxAlone = download8u(dBoxOut.ptr().data, dBoxOut.ptr().dims.pitch);
+        FKLB_HIP_CHECK(hipFree(rppBoxIn));
+        FKLB_HIP_CHECK(hipFree(rppBoxOut));
+
+        // ---- The agreement rows: every comparison in the interior and in the last two columns and rows
+        const char* REGION[2] = {"interior", "last 2 columns and rows"};
+        {
+            // ---- How each 8-bit resized image rounds the exact ties of the exact resize
+            fklb::CsvWriter ties("e18_box_ties_GPU_AMD.csv", "E18 box (AMD): the exact ties of the resize and how each 8-bit resized image rounds them",
+                                 {"image", "region", "values", "values_at_exact_ties", "values_within_1_36_of_a_tie", "other_values", "ties_rounded_up",
+                                  "ties_rounded_down", "ties_neither"});
+            const auto tieRows = [&](const char* image, const std::vector<unsigned char>& x) {
+                TieRounding t[2];
+                tieRounding(x, exact, t);
+                for (int r = 0; r < 2; ++r) {
+                    ties.row(image, REGION[r], t[r].values, t[r].byClass[EXACT_TIE], t[r].byClass[WITHIN_1_36], t[r].byClass[OTHER], t[r].up, t[r].down,
+                             t[r].neither);
+                    std::cout << "ties " << image << " [" << REGION[r] << "]: " << t[r].byClass[EXACT_TIE] << " exact ties, "
+                              << t[r].byClass[WITHIN_1_36] << " within 1/36 of a tie, " << t[r].byClass[OTHER] << " other values; ties rounded up "
+                              << t[r].up << ", down " << t[r].down << ", neither " << t[r].neither << std::endl;
+                }
+            };
+            tieRows("exact reference resize (ties to even)", refResized8);
+            tieRows("double reference resize (std::nearbyint)", doubleResized8);
+            tieRows("rpp resize (intermediate)", rppResized8);
+            tieRows("fkl read chain (identity)", fklResized8);
+        }
+        fklb::CsvWriter agreement("e18_box_agreement_GPU_AMD.csv", "E18 box (AMD): agreement of the 8-bit images",
+                                  {"check", "image", "against", "region", "values", "values_differing", "differing_at_exact_ties",
+                                   "differing_within_1_36_of_a_tie", "differing_other", "differing_in_last_row_or_column", "max_diff_levels", "criterion", "ok"});
+        const auto rows = [&](const char* check, const char* image, const char* against, const std::vector<unsigned char>& x,
+                              const std::vector<unsigned char>& y, const ExactResize* byClass, const bool requireZero) {
+            const Comparison cmp = compare8u(x, y, byClass);
+            for (int r = 0; r < 2; ++r) {
+                const Region& g = cmp.region[r];
+                const bool pass = g.differ == 0;
+                const auto cls = [&](const int k) { return byClass != nullptr ? std::to_string(g.differByClass[k]) : std::string(); };
+                agreement.row(check, image, against, REGION[r], g.values, g.differ, cls(EXACT_TIE), cls(WITHIN_1_36), cls(OTHER), g.differLast, g.maxDiff,
+                              requireZero ? "0 values differing" : "informational", requireZero ? (pass ? 1 : 0) : -1);
+                std::cout << check << " " << image << " vs " << against << " [" << REGION[r] << "]: " << g.differ << " of " << g.values << " values differ";
+                if (byClass != nullptr) {
+                    std::cout << " (" << g.differByClass[EXACT_TIE] << " at exact ties, " << g.differByClass[WITHIN_1_36] << " within 1/36 of a tie, "
+                              << g.differByClass[OTHER] << " other)";
+                }
+                std::cout << ", " << g.differLast << " in the last row or column, max " << g.maxDiff << " levels"
+                          << (requireZero ? (pass ? " ok" : " FAIL") : "") << std::endl;
+                allOk = allOk && (pass || !requireZero);
+            }
+            return cmp;
+        };
+        rows("a", "rpp resize (intermediate)", "exact reference resize", rppResized8, refResized8, &exact, false);
+        rows("a", "fkl read chain (identity)", "exact reference resize", fklResized8, refResized8, &exact, false);
+        rows("a", "fkl read chain (identity)", "rpp resize (intermediate)", fklResized8, rppResized8, &exact, false);
+        rows("a", "double reference resize (cross-check)", "exact reference resize", doubleResized8, refResized8, &exact, false);
+        rows("b", "rpp box alone", "round(sum/9)", rppBoxAlone, boxInputRef, nullptr, true);
+        rows("b", "fkl box alone", "round(sum/9)", fklBoxAlone, boxInputRef, nullptr, true);
+        rows("c", "rpp", "exact reference", outRpp, refOut, nullptr, false);
+        rows("c", "fkl_box_halfpixel", "exact reference", outFklBox, refOut, nullptr, false);
+        rows("c", "fkl_box_halfpixel", "rpp", outFklBox, outRpp, nullptr, false);
+        rows("c", "rpp", "round(sum/9) of its own intermediate", outRpp, boxReference(rppResized8), nullptr, true);
+        rows("c", "fkl_box_halfpixel", "round(sum/9) of its own resized image (identity)", outFklBox, boxReference(fklResized8), nullptr, true);
+        rows("d", "fkl_half_once", "fkl_box_halfpixel", outFklOnce, outFklBox, nullptr, true);
+
+        // ---- (c) every differing output value has a differing resized value in its 3 x 3 window
+        fklb::CsvWriter attribution("e18_box_attribution_GPU_AMD.csv", "E18 box (AMD): the differences of the outputs and the resized images",
+                                    {"output", "against", "resized_images", "region", "values_differing", "with_a_differing_resized_value_in_the_window",
+                                     "criterion", "ok"});
+        const auto attributionRows = [&](const char* image, const char* against, const char* resized, const std::vector<unsigned char>& x,
+                                         const std::vector<unsigned char>& y, const std::vector<unsigned char>& rx, const std::vector<unsigned char>& ry) {
+            const Attribution att = attribute(x, y, rx, ry);
+            for (int r = 0; r < 2; ++r) {
+                const bool pass = att.explained[r] == att.differ[r];
+                attribution.row(image, against, resized, REGION[r], att.differ[r], att.explained[r], "all", pass ? 1 : 0);
+                std::cout << "c " << image << " vs " << against << " [" << REGION[r] << "]: " << att.explained[r] << " of " << att.differ[r]
+                          << " differing values have a differing resized value (" << resized << ") in their window" << (pass ? " ok" : " FAIL")
+                          << std::endl;
+                allOk = allOk && pass;
+            }
+        };
+        attributionRows("rpp", "exact reference", "rpp intermediate vs exact reference resize", outRpp, refOut, rppResized8, refResized8);
+        attributionRows("fkl_box_halfpixel", "exact reference", "fkl identity vs exact reference resize", outFklBox, refOut, fklResized8, refResized8);
+        attributionRows("fkl_box_halfpixel", "rpp", "fkl identity vs rpp intermediate", outFklBox, outRpp, fklResized8, rppResized8);
+        std::cout << (allOk ? "E18 checks passed" : "E18 CHECK FAILED") << std::endl;
+    }
+    checking = false;
+
+    // ---- The timing, after the checks, in the order of the list: whole_call (fklb::timeIt) and kernel_only (fklb::timePreparedLaunch behind gpuSpin)
+    if (timing && allOk) {
+        fklb::CsvWriter t("e18_box_GPU_AMD.csv", "E18 box (AMD): whole-call and kernel-only times",
+                          {"version", "interval", "mean_ms", "min_ms", "host_prepare_mean_ms", "host_prepare_min_ms", "iterations", "spin_us"});
+        for (const Implementation& impl : impls) {
+            if (!selected(impl.version)) continue;
+            fklb::Timing whole, gpu, host;
+            FKLB_HIP_CHECK(hipDeviceSynchronize());
+            roctxRangePushA(("whole_call:" + impl.version).c_str());
+            fklb::timeIt(impl.stream, impl.call, whole);
+            roctxRangePop();
+            FKLB_HIP_CHECK(hipDeviceSynchronize());
+            roctxRangePushA(("kernel_only:" + impl.version).c_str());
+            impl.kernelOnly(gpu, host);
+            roctxRangePop();
+            t.row(impl.version, "whole_call", whole.mean, whole.min, "", "", fklb::ITERATIONS, "");
+            t.row(impl.version, "kernel_only", gpu.mean, gpu.min, host.mean, host.min, fklb::ITERATIONS, spinUs());
+            std::cout << impl.version << ": whole call mean " << whole.mean << " ms (min " << whole.min << "); kernel only mean " << gpu.mean << " ms (min "
+                      << gpu.min << "), host preparation mean " << host.mean << " ms" << std::endl;
+        }
+    } else if (timing) {
+        std::cout << "not timed: a check failed" << std::endl;
+    }
+    FKLB_HIP_CHECK(hipDeviceSynchronize());
+    FKLB_RPP_CHECK(rppDestroy(handle, RppBackend::RPP_HIP_BACKEND));
+    FKLB_HIP_CHECK(hipFree(rppFrame));
+    FKLB_HIP_CHECK(hipFree(rppResized));
+    FKLB_HIP_CHECK(hipFree(rppOut));
+    FKLB_HIP_CHECK(hipFree(rppSizes));
+    FKLB_HIP_CHECK(hipFree(rppResizeRoi));
+    FKLB_HIP_CHECK(hipFree(rppBoxRoi));
+    FKLB_HIP_CHECK(hipHostFree(rppRoiStaging));
+    FKLB_HIP_CHECK(hipStreamDestroy(rppStream));
+    FKLB_HIP_CHECK(hipStreamDestroy(fklStream));
+    return allOk ? 0 : 1;
+}
