@@ -76,6 +76,15 @@ if(TARGET e18_stencil_cu)
     target_link_libraries(e18_stencil_cu PRIVATE CUDA::nppif)
 endif()
 
+# E18 with a 3 x 3 box filter, in uchar from start to end: the pipeline that OpenCV-CUDA, NPP, RPP and FKL can all run. NPP's box filter
+# (nppiFilterBoxBorder) is in nppif as well.
+fklb_add_benchmark(e18_box
+    BACKENDS cu LIBS fkl opencv npp
+    SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/stencil/e18_box.cu")
+if(TARGET e18_box_cu)
+    target_link_libraries(e18_box_cu PRIVATE CUDA::nppif)
+endif()
+
 # The data-size experiment with every size a multiple of 4 (increment 282272 instead of 282270) and only the one-channel pairs: OpenCV-CUDA's one-channel kernels are
 # vectorised (cv::transformSmart<4>) only when the element count is a multiple of 4, which the sizes of the paper's experiment alternate (results/rtx4090/e0-data-size-parity).
 fklb_add_benchmark(benchmark_image_resolution_MAD_loop_mul4
