@@ -49,6 +49,11 @@ The load before the start was 0.03.
 - No CSV is INCOMPLETE or holds -nan.
 - The three check CSVs of each of these five runs are identical to phase 1's, row by row (`e18_box_agreement.csv`, `e18_box_checks.csv`, `e18_box_kernel.csv`).
 - The clocks: during the timing, `gpu_clocks.csv` shows the SM at 2,685 MHz and the memory at 10,251 MHz (P2). At the end of each run the memory clock briefly shows 10,501 MHz (P0); between the runs the SM clock falls to 2,550 MHz at 0 % utilisation. The GPU stayed at 43-48 °C.
+  - **Correction (2026-11-17, #50).** The 2,550 MHz readings fall inside the runs, not between them: at the idle end of each quiet run's checks, directly before its timing, and from 12:09:46.2 to 52.1 in the nsys run.
+    - In quiet-run2 they continue into the timing (12:09:31.7-32.1, at 95 % utilisation). The nsys run's timing began at 2,550 MHz: all of `fkl_box_asym`'s whole-call kernels and the first 40 of its kernel-only kernels ran at that clock.
+    - The timing's first interval is `fkl_box_asym`'s whole call. That makes the clock a candidate, not a cause, for "`fkl_box_asym`, the first variant timed in each run" below.
+    - The nsys run reached 49 °C.
+    - The analysis: `../e18-box-split/README.md`, "The SM clock and the first row".
 
 ## The times (`e18_box_summary.csv`, `e18_box_report.md`)
 Each value is the median of the three quiet runs' means (100 iterations each), with the min-max of the three means. The CSVs are in ms; this table is in µs.
