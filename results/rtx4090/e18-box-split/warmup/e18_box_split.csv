@@ -1,0 +1,32 @@
+# experiment: E18 box split: whole-call and kernel-only times
+# repo: fkl-benchmarks 417a106bcbe1627f9894fef83a6bc7a7e1f88b86
+# fkl: 24478f0aa11dc3f12feea83178f7fde828322fb0
+# cvGPUSpeedup: 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c
+# FastNPP: a1b5e245d7dd70fba23dcb51a0aea80495dbc61d
+# nvcc: 13.4.92 (/home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/nvcc), architectures 89, -fmad on, -lineinfo on
+# hip: none (none), architectures none
+# host compiler: GNU 15.2.0, Release, -march=native, -ftemplate-depth=1000
+# opencv: 4.14.0
+# cpu: AMD Ryzen 9 5950X 16-Core Processor
+# os: Ubuntu 26.04.1 LTS
+# kernel: Linux 7.0.0-38-generic
+# gpu: NVIDIA GeForce RTX 4090, cc 8.9, 128 SMs, 24106 MiB, PCI 0000:09:00.0
+# cuda driver api: 13.3, cuda runtime: 13.4
+# nvidia-smi driver: 610.43.02
+# clocks (sm, mem, max sm, max mem, MHz): 2550 MHz, 10251 MHz, 3105 MHz, 10501 MHz
+# power limit, temperature at start: 450.00 W, 44
+version,sampling,interval,mean_ms,min_ms,host_prepare_mean_ms,host_prepare_min_ms,iterations,spin_us
+fkl_box_asym,ASYMMETRIC,whole_call,0.0420639997,0.040959999,,,100,
+fkl_box_asym,ASYMMETRIC,kernel_only,0.0421583996,0.040959999,0.000141,0.00012,100,5000
+fkl_trunc_halfpixel,HALF_PIXEL,whole_call,0.0391590393,0.0386239998,,,100,
+fkl_trunc_halfpixel,HALF_PIXEL,kernel_only,0.0402607994,0.0399359986,0.0001447,0.00012,100,5000
+npp,HALF_PIXEL,whole_call,0.0331619199,0.0327039994,,,100,
+npp,HALF_PIXEL,kernel_only,0.0338848003,0.0337920003,4.099e-05,3e-05,100,5000
+npp_resize,HALF_PIXEL,whole_call,0.0119894402,0.0112640001,,,100,
+npp_resize,HALF_PIXEL,kernel_only,0.0123347204,0.0122880004,4.03e-05,2e-05,100,5000
+fkl_resize,HALF_PIXEL,whole_call,0.0142259201,0.0133119998,,,100,
+fkl_resize,HALF_PIXEL,kernel_only,0.0143491202,0.0143360002,0.0001096,8e-05,100,5000
+npp_box,none,whole_call,0.0227376001,0.0222720001,,,100,
+npp_box,none,kernel_only,0.0228758402,0.0225280002,3.75e-05,2e-05,100,5000
+fkl_box,none,whole_call,0.0308777597,0.0296960007,,,100,
+fkl_box,none,kernel_only,0.0317439996,0.0317439996,5.46e-05,4e-05,100,5000

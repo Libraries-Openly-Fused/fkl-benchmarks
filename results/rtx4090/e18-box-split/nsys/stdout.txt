@@ -1,0 +1,37 @@
+E18 box split: checks, then the timing
+exact resize ASYMMETRIC: denominator 9, 0 exact ties; double resize within 7.7307e-11, its rounding differs from the exact one at 0 values
+exact resize HALF_PIXEL: denominator 36, 636525 exact ties; double resize within 7.97513e-11, its rounding differs from the exact one at 201756 values
+resize: fkl_read_chain_asym vs exact_resize_ASYMMETRIC: 0 values / 0 pixels differ, max 0 levels (0 above, 0 below); 0 at exact ties, the others within -1 of a half level; 0 of the 0 exact ties rounded up
+resize: fkl_read_chain_halfpixel vs exact_resize_HALF_PIXEL: 201593 values / 193530 pixels differ, max 1 levels (103564 above, 98029 below); 201302 at exact ties, the others within 0.0277778 of a half level; 323816 of the 636525 exact ties rounded up
+resize: npp_intermediate vs exact_resize_HALF_PIXEL: 318328 values / 293230 pixels differ, max 1 levels (220312 above, 98016 below); 318037 at exact ties, the others within 0.0277778 of a half level; 440577 of the 636525 exact ties rounded up
+resize: fkl_read_chain_halfpixel vs npp_intermediate: 116849 values / 100094 pixels differ, max 1 levels (44 above, 116805 below); 116849 at exact ties, the others within -1 of a half level; 323816 of the 636525 exact ties rounded up
+resize: npp_resize vs npp_intermediate: 0 values / 0 pixels differ, max 0 levels (0 above, 0 below); 0 at exact ties, the others within -1 of a half level; 440577 of the 636525 exact ties rounded up
+resize: npp_resize vs exact_resize_HALF_PIXEL: 318328 values / 293230 pixels differ, max 1 levels (220312 above, 98016 below); 318037 at exact ties, the others within 0.0277778 of a half level; 440577 of the 636525 exact ties rounded up
+resize: fkl_resize vs fkl_read_chain_halfpixel: 0 values / 0 pixels differ, max 0 levels (0 above, 0 below); 0 at exact ties, the others within -1 of a half level; 323816 of the 636525 exact ties rounded up
+resize: fkl_resize vs exact_resize_HALF_PIXEL: 201593 values / 193530 pixels differ, max 1 levels (103564 above, 98029 below); 201302 at exact ties, the others within 0.0277778 of a half level; 323816 of the 636525 exact ties rounded up
+resize: fkl_resize vs npp_resize: 116849 values / 100094 pixels differ, max 1 levels (44 above, 116805 below); 116849 at exact ties, the others within -1 of a half level; 323816 of the 636525 exact ties rounded up
+box: npp_box vs exact_box_truncated: 0 values / 0 pixels differ, max 0 levels (0 above, 0 below); 0 at exact ties, the others within -1 of a half level; 0 of the 0 exact ties rounded up
+box: fkl_box vs exact_box_truncated: 0 values / 0 pixels differ, max 0 levels (0 above, 0 below); 0 at exact ties, the others within -1 of a half level; 0 of the 0 exact ties rounded up
+box: fkl_box vs npp_box: 0 values / 0 pixels differ, max 0 levels (0 above, 0 below); 0 at exact ties, the others within -1 of a half level; 0 of the 0 exact ties rounded up
+pipeline: fkl_box_asym vs exact_pipeline_ASYMMETRIC: 0 values / 0 pixels differ, max 0 levels (0 above, 0 below)
+pipeline: fkl_box_asym vs exact_box_of_own_resize: 0 values / 0 pixels differ, max 0 levels (0 above, 0 below)
+pipeline: fkl_trunc_halfpixel vs exact_pipeline_HALF_PIXEL: 2763971 values / 1717771 pixels differ, max 1 levels (6 above, 2763965 below)
+pipeline: fkl_trunc_halfpixel vs exact_pipeline_truncated_HALF_PIXEL: 183571 values / 178567 pixels differ, max 1 levels (93976 above, 89595 below)
+pipeline: fkl_trunc_halfpixel vs exact_box_truncated_of_own_resize: 0 values / 0 pixels differ, max 0 levels (0 above, 0 below)
+pipeline: npp vs exact_pipeline_HALF_PIXEL: 2648272 values / 1681047 pixels differ, max 1 levels (87 above, 2648185 below)
+pipeline: npp vs exact_pipeline_truncated_HALF_PIXEL: 280340 values / 268599 pixels differ, max 1 levels (200291 above, 80049 below)
+pipeline: npp vs exact_box_truncated_of_own_resize: 0 values / 0 pixels differ, max 0 levels (0 above, 0 below)
+pipeline: fkl_trunc_halfpixel vs npp: 115927 values / 113849 pixels differ, max 1 levels (33 above, 115894 below)
+E18 box split checks passed
+fkl_box_asym: whole call mean 0.0441936 ms (min 0.043616); kernel only mean 0.0431546 ms (min 0.042208), host preparation mean 0.0001511 ms
+fkl_trunc_halfpixel: whole call mean 0.041225 ms (min 0.04064); kernel only mean 0.0414214 ms (min 0.041216), host preparation mean 0.0001463 ms
+npp: whole call mean 0.0359629 ms (min 0.035456); kernel only mean 0.0358682 ms (min 0.035584), host preparation mean 4.23e-05 ms
+npp_resize: whole call mean 0.0145789 ms (min 0.013952); kernel only mean 0.0134512 ms (min 0.013312), host preparation mean 4.35e-05 ms
+fkl_resize: whole call mean 0.0169619 ms (min 0.016416); kernel only mean 0.0159597 ms (min 0.015904), host preparation mean 0.00011 ms
+npp_box: whole call mean 0.0249408 ms (min 0.024256); kernel only mean 0.0241987 ms (min 0.024064), host preparation mean 3.93e-05 ms
+fkl_box: whole call mean 0.0331734 ms (min 0.032288); kernel only mean 0.0326202 ms (min 0.03248), host preparation mean 5.63e-05 ms
+Collecting data...
+Generating '/home/oscar/tfkl-bench/scratch/e18-box-split/tmp/nsys-oscar/nsys-report-15aa.qdstrm'
+[1/1] [0%                          ] e18-box-split.nsys-rep[1/1] [0%                          ] e18-box-split.nsys-rep[1/1] [1%                          ] e18-box-split.nsys-rep[1/1] [2%                          ] e18-box-split.nsys-rep[1/1] [5%                          ] e18-box-split.nsys-rep[1/1] [6%                          ] e18-box-split.nsys-rep[1/1] [7%                          ] e18-box-split.nsys-rep[1/1] [8%                          ] e18-box-split.nsys-rep[1/1] [==19%                       ] e18-box-split.nsys-rep[1/1] [==20%                       ] e18-box-split.nsys-rep[1/1] [====================85%     ] e18-box-split.nsys-rep[1/1] [=====================88%    ] e18-box-split.nsys-rep[1/1] [=======================96%  ] e18-box-split.nsys-rep[1/1] [========================98% ] e18-box-split.nsys-rep[1/1] [========================100%] e18-box-split.nsys-rep[1/1] [========================100%] e18-box-split.nsys-rep
+Generated:
+	/home/oscar/tfkl-bench/worktrees/fkl-benchmarks-e18-box-split/results/rtx4090/e18-box-split/nsys/e18-box-split.nsys-rep

@@ -85,6 +85,14 @@ if(TARGET e18_box_cu)
     target_link_libraries(e18_box_cu PRIVATE CUDA::nppif)
 endif()
 
+# E18 box split: the E18 box pipeline of e18_box, and its resize and its box each alone, in FKL and in NPP (no OpenCV call)
+fklb_add_benchmark(e18_box_split
+    BACKENDS cu LIBS fkl npp
+    SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/stencil/e18_box_split.cu")
+if(TARGET e18_box_split_cu)
+    target_link_libraries(e18_box_split_cu PRIVATE CUDA::nppif)
+endif()
+
 # The data-size experiment with every size a multiple of 4 (increment 282272 instead of 282270) and only the one-channel pairs: OpenCV-CUDA's one-channel kernels are
 # vectorised (cv::transformSmart<4>) only when the element count is a multiple of 4, which the sizes of the paper's experiment alternate (results/rtx4090/e0-data-size-parity).
 fklb_add_benchmark(benchmark_image_resolution_MAD_loop_mul4
