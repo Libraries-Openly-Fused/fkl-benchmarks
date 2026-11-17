@@ -225,7 +225,8 @@ The scripts for the window:
 - **`window.sh`:**
   - Guards: the binary's sha256 and commit (no `-dirty`), a new output folder, and before every run no `Runner.Worker` and a load average below 0.8.
   - Runs: an optional warm-up run, then three quiet runs, then one complete run under rocprofv3. It samples the GPU clocks every 100 ms.
-  - Not run.
+  - If the runner is not idle within `IDLE_MAX` seconds (default 600) before a run, the window stops there. `GUARD_ONLY=1` runs the guards only and creates nothing; it passed with the binary of `step0/` and refused a wrong commit.
+  - Not run otherwise.
 - **`e18_box_report.py`:** the median of the three runs' means with their min-max, and the speedups of FKL over `rpp` and over `rpp_ltrb`. Tested on made-up CSVs only.
 - **`../rocprofv3/rocprof_calls.py --spin`:** checks that the spin covers the host's enqueue of every kernel-only call, and gives the gaps. Its spin part has not run on a timing trace yet.
 

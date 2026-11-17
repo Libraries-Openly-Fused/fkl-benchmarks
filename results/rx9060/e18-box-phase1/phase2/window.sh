@@ -11,10 +11,12 @@
 # Guards: the binary is BIN with the sha256 SHA256 and carries the commit COMMIT without -dirty; the output folder is new; before every run the
 # runner is idle (no Runner.Worker, a load average below 0.8). Throughout the window the GPU's graphics and memory clocks (hwmon freq1_input,
 # freq2_input) are sampled every 100 ms into gpu_clocks.csv.
-#   BIN=<e18_box_hip> COMMIT=<40 hex> SHA256=<sha256> WARMUP=0|1 window.sh <out dir>
+# If the runner is not idle within IDLE_MAX seconds (default 600) before a run, the window stops there. GUARD_ONLY=1: the guards only (the
+# binary, its commit, the new output folder, and the runner's state now); nothing is created and nothing runs.
+#   BIN=<e18_box_hip> COMMIT=<40 hex> SHA256=<sha256> WARMUP=0|1 [IDLE_MAX=600] [GUARD_ONLY=1] window.sh <out dir>
 set -u
 OUT=${1:?usage: window.sh <out dir>}
-BIN=${BIN:?}; COMMIT=${COMMIT:?}; SHA256=${SHA256:?}; WARMUP=${WARMUP:?set WARMUP=0 or 1}
+BIN=${BIN:?}; COMMIT=${COMMIT:?}; SHA256=${SHA256:?}; WARMUP=${WARMUP:?set WARMUP=0 or 1}; IDLE_MAX=${IDLE_MAX:-600}
 HERE=$(cd "$(dirname "$0")" && pwd)
 NS=/home/cudeiro/rocm-fkl-benchmarks/tmp
 ROCPROF=/opt/rocm/core-10.1/bin/rocprofv3
@@ -26,12 +28,22 @@ unset E18_ONLY E18_NO_TIMING E18_PROFILE E18_SPIN_US
 echo "$SHA256  $BIN" | sha256sum -c --quiet || { echo "the binary differs from the record: not starting"; exit 1; }
 strings "$BIN" | grep -q -x "$COMMIT" || { echo "the binary does not carry $COMMIT: not starting"; exit 1; }
 strings "$BIN" | grep -q -E '^[0-9a-f]{40}-dirty$' && { echo "the binary carries a -dirty commit: not starting"; exit 1; }
+if [ -n "${GUARD_ONLY:-}" ]; then
+  echo "guards ok at $(date -Iseconds): binary $SHA256, commit $COMMIT, $OUT is new; Runner.Worker:" \
+       "$(pgrep -x Runner.Worker > /dev/null && echo running || echo none); load $(cut -d' ' -f1-3 /proc/loadavg)"
+  exit 0
+fi
 mkdir -p "$OUT"
 exec > >(tee -a "$OUT/window-console.txt") 2>&1
 cp "$0" "$OUT/window.sh"
-idle() {   # the runner is idle: no Runner.Worker and a load average below 0.8 (1 minute)
+SAMPLER_PID=""
+trap '[ -n "$SAMPLER_PID" ] && kill $SAMPLER_PID 2> /dev/null' EXIT
+idle() {   # the runner is idle: no Runner.Worker and a load average below 0.8 (1 minute); the window stops after IDLE_MAX s of waiting
   local waited=0
-  while pgrep -x Runner.Worker > /dev/null || awk '{exit !($1 >= 0.8)}' /proc/loadavg; do sleep 15; waited=$((waited + 15)); done
+  while pgrep -x Runner.Worker > /dev/null || awk '{exit !($1 >= 0.8)}' /proc/loadavg; do
+    [ $waited -ge $IDLE_MAX ] && { echo "# $(date -Iseconds) not idle after ${waited} s (loadavg $(cut -d' ' -f1-3 /proc/loadavg)): the window stops here"; exit 1; }
+    sleep 15; waited=$((waited + 15))
+  done
   echo "  idle after ${waited} s wait; loadavg $(cut -d' ' -f1-3 /proc/loadavg)"
 }
 hwmon=""
@@ -43,7 +55,6 @@ echo "# $(date -Iseconds) GPU window e18-box starts (WARMUP=$WARMUP); binary $SH
 { date -Iseconds; cat /proc/loadavg; ps -eo pid,pcpu,psr,comm,args --sort=-pcpu | head -16 | cut -c1-150
   echo "environment variables naming HIP/HSA/ROC/AMD/kernarg: $(env | grep -c -i -E '^(HIP|HSA|ROC|AMD)_|kernarg')"
   /opt/rocm/core-10.1/bin/rocminfo 2> /dev/null | grep -E 'Marketing Name|Name: +gfx' | head -4; } > "$OUT/environment-before.txt" 2>&1
-SAMPLER_PID=""
 if [ -n "$hwmon" ]; then
   ( echo "time_ns,sclk_hz,mclk_hz"; while true; do echo "$(date +%s%N),$(cat $hwmon/freq1_input),$(cat $hwmon/freq2_input 2> /dev/null)"; sleep 0.1; done ) \
     > "$OUT/gpu_clocks.csv" 2> /dev/null &
