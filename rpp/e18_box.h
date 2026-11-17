@@ -68,11 +68,15 @@
 //                (rpp, rpp_ltrb: the ROI write; fkl_box_halfpixel: the crop view, the IOps and the details; fkl_half_once: nothing); then the spin, the start
 //                event, every kernel of the call (RPP's behind one spin), the stop event
 //   Each interval of each variant is in a ROCTx range ("whole_call:<version>", "kernel_only:<version>") for rocprofv3.
+//   Before the timing, one gpuSpin of E18_CLOCK_WARMUP_MS (default 2000) brings the GPU's graphics clock up from idle (the RX 9060 idles while
+//   the host computes the references of the checks); sclk (fklb::amdGpuClockMHz, common/hip_wallclock.h) is read before and after every
+//   interval, outside the timed calls, into the columns sclk_before_mhz and sclk_after_mhz.
 // E18_ONLY=a,b: only these variants. E18_NO_TIMING=1: the checks only. E18_SPIN_US: the length of the spin (default 5000).
 // E18_PROFILE=1: for rocprofv3, no checks and no timing: after the setup, one warm-up call of every selected variant, then three calls of each,
 //   every call in a ROCTx range named after the variant and followed by a synchronisation of its stream.
 #include <common/csv_writer.h>
 #include <common/hip_timing.h>
+#include <common/hip_wallclock.h>
 #include <common/main.h>
 #include <common/resize_reference.h>
 #include <common/status_check.h>
@@ -93,6 +97,7 @@
 #include <rppdefs.h>
 
 #include <algorithm>
+#include <chrono>
 #include <cmath>
 #include <cstdint>
 #include <cstdio>
@@ -344,6 +349,17 @@ __global__ void gpuSpin(const unsigned long long ticks) {
 inline unsigned long long spinUs() {
     const char* e = std::getenv("E18_SPIN_US");
     return std::strtoull(e != nullptr ? e : "5000", nullptr, 10);
+}
+
+// The clock warm-up before the timing, in ms (E18_CLOCK_WARMUP_MS, default 2000)
+inline unsigned long long clockWarmupMs() {
+    const char* e = std::getenv("E18_CLOCK_WARMUP_MS");
+    return std::strtoull(e != nullptr ? e : "2000", nullptr, 10);
+}
+
+// The host's CLOCK_REALTIME in ns, the time base of the window's clock sampler (date +%s%N)
+inline long long realtimeNs() {
+    return std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 }
 
 using Details = fk::LinearFilterDPPDetails<fk::float3>;   // the default tile (16 x 8) and largest kernel (7 x 7): the call a user writes
@@ -788,24 +804,53 @@ int launch() {
 
     // ---- The timing, after the checks, in the order of the list: whole_call (fklb::timeIt) and kernel_only (fklb::timePreparedLaunch behind gpuSpin)
     if (timing && allOk) {
+        // The timing file is opened first: its header runs amd-smi twice (common/system_info.h, about 0.07 s each), and the RX 9060's graphics
+        // clock falls from 3.2 GHz to about 1.5 GHz within 0.1 s of the GPU going idle, to idle within 0.2 s
+        // (results/rx9060/e18-box-phase1/clock-warmup-test/). sclk (fklb::amdGpuClockMHz, hwmon freq1_input) is read before and after each
+        // interval, outside the timed calls.
         fklb::CsvWriter t("e18_box_GPU_AMD.csv", "E18 box (AMD): whole-call and kernel-only times",
-                          {"version", "interval", "mean_ms", "min_ms", "host_prepare_mean_ms", "host_prepare_min_ms", "iterations", "spin_us"});
+                          {"version", "interval", "mean_ms", "min_ms", "host_prepare_mean_ms", "host_prepare_min_ms", "iterations", "spin_us",
+                           "sclk_before_mhz", "sclk_after_mhz"},
+                          "clock warm-up: one gpuSpin of " + std::to_string(clockWarmupMs()) +
+                              " ms after this file's header and right before the timing (the sclk before and after it is in the console)");
+        // The clock warm-up. The graphics clock idles while the host computes the references of the checks, and it needs about 0.5 s of GPU work to
+        // reach 3.1 GHz (results/rx9060/e18-box-window1, the clock-warmup-test). So one gpuSpin of E18_CLOCK_WARMUP_MS (default 2000) runs right
+        // before the timing, then a synchronisation, and the first interval starts at once.
+        const double sclkBeforeWarmup = fklb::amdGpuClockMHz();
+        const long long warmupStartNs = realtimeNs();
+        gpuSpin<<<1, 1, 0, rppStream>>>(clockWarmupMs() * static_cast<unsigned long long>(wallClockKHz));
+        FKLB_HIP_CHECK(hipGetLastError());
+        FKLB_HIP_CHECK(hipDeviceSynchronize());
+        const double sclkAfterWarmup = fklb::amdGpuClockMHz();
+        const long long timingStartNs = realtimeNs();
         for (const Implementation& impl : impls) {
             if (!selected(impl.version)) continue;
             fklb::Timing whole, gpu, host;
             FKLB_HIP_CHECK(hipDeviceSynchronize());
+            const double sclkWholeBefore = fklb::amdGpuClockMHz();
             roctxRangePushA(("whole_call:" + impl.version).c_str());
             fklb::timeIt(impl.stream, impl.call, whole);
             roctxRangePop();
             FKLB_HIP_CHECK(hipDeviceSynchronize());
+            const double sclkWholeAfter = fklb::amdGpuClockMHz();
+            const double sclkKernelBefore = fklb::amdGpuClockMHz();
             roctxRangePushA(("kernel_only:" + impl.version).c_str());
             impl.kernelOnly(gpu, host);
             roctxRangePop();
-            t.row(impl.version, "whole_call", whole.mean, whole.min, "", "", fklb::ITERATIONS, "");
-            t.row(impl.version, "kernel_only", gpu.mean, gpu.min, host.mean, host.min, fklb::ITERATIONS, spinUs());
+            const double sclkKernelAfter = fklb::amdGpuClockMHz();
+            t.row(impl.version, "whole_call", whole.mean, whole.min, "", "", fklb::ITERATIONS, "", sclkWholeBefore, sclkWholeAfter);
+            t.row(impl.version, "kernel_only", gpu.mean, gpu.min, host.mean, host.min, fklb::ITERATIONS, spinUs(), sclkKernelBefore, sclkKernelAfter);
             std::cout << impl.version << ": whole call mean " << whole.mean << " ms (min " << whole.min << "); kernel only mean " << gpu.mean << " ms (min "
-                      << gpu.min << "), host preparation mean " << host.mean << " ms" << std::endl;
+                      << gpu.min << "), host preparation mean " << host.mean << " ms; sclk " << sclkWholeBefore << " / " << sclkWholeAfter << " / "
+                      << sclkKernelBefore << " / " << sclkKernelAfter << " MHz" << std::endl;
         }
+        // after the timing (no console output before it): the clock warm-up, and the host times of the warm-up and the timing (CLOCK_REALTIME, as
+        // the clock sampler of the window) for the analysis of gpu_clocks.csv
+        const long long timingEndNs = realtimeNs();
+        std::cout << "clock warm-up: one gpuSpin of " << clockWarmupMs() << " ms; sclk " << sclkBeforeWarmup << " MHz before it, " << sclkAfterWarmup
+                  << " MHz after it" << std::endl;
+        std::cout << "E18 timing (realtime ns): warm-up start " << warmupStartNs << ", timing start " << timingStartNs << ", timing end " << timingEndNs
+                  << std::endl;
     } else if (timing) {
         std::cout << "not timed: a check failed" << std::endl;
     }

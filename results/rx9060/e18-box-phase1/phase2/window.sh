@@ -2,7 +2,8 @@
 # window.sh <out dir>: the GPU window of E18 box on the RX 9060 (phase 2). Written in phase 1 and NOT RUN: it runs only in a window scheduled with
 # the coordinator. The protocol is the RTX 4090's (results/rtx4090/e18-stencil/window-script.sh):
 #   1. WARMUP=1: one complete run (the checks and the timing), in warmup/, not used.
-#   2. Three complete quiet runs, back to back: quiet-run1..3. Every run checks first, then times every variant in the same order (rpp, rpp_ltrb,
+#   2. Three complete quiet runs, back to back: quiet-run1..3. Every run checks first, then spins the GPU for 2 s (the clock warm-up,
+#      E18_CLOCK_WARMUP_MS at its default), then times every variant in the same order (rpp, rpp_ltrb,
 #      fkl_box_halfpixel, fkl_half_once; whole_call, then kernel_only; rpp/e18_box.h).
 #   3. After the three timed runs, as its own step: one complete run under rocprofv3 (kernel, HIP runtime, ROCTx, memory copy and allocation
 #      traces), in rocprofv3/. Its times are not used: rocprof_calls.py --spin gives the kernels of every call and whether the spin covers the
@@ -22,7 +23,7 @@ NS=/home/cudeiro/rocm-fkl-benchmarks/tmp
 ROCPROF=/opt/rocm/core-10.1/bin/rocprofv3
 PY="$NS/scripts/safepy.sh"
 export TMPDIR=$NS/sys LD_LIBRARY_PATH=/opt/rocm/core-10.1/lib:${LD_LIBRARY_PATH:-}
-unset E18_ONLY E18_NO_TIMING E18_PROFILE E18_SPIN_US
+unset E18_ONLY E18_NO_TIMING E18_PROFILE E18_SPIN_US E18_CLOCK_WARMUP_MS
 [ "$(basename "$BIN")" = e18_box_hip ] || { echo "$BIN is not e18_box_hip: not starting"; exit 1; }
 [ -e "$OUT" ] && { echo "$OUT exists: not starting (nothing is overwritten)"; exit 1; }
 echo "$SHA256  $BIN" | sha256sum -c --quiet || { echo "the binary differs from the record: not starting"; exit 1; }
