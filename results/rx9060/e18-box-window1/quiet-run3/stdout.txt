@@ -1,0 +1,56 @@
+E18 box (AMD): the checks, then the timing
+rpp ROIs after the calls: rpp's crop 640 360 3199 1799 (LTRB), rpp_ltrb's crop 640 360 3199 1799 (LTRB), box 0 0 1920 1080 (XYWH)
+digest rpp output: 9d2e2d8cdf865beb
+digest rpp_ltrb output: 9d2e2d8cdf865beb
+digest fkl_box_halfpixel output: e0be817567fd29f1
+digest fkl_half_once output: e0be817567fd29f1
+digest rpp intermediate: 0c87ef655df949fd
+digest rpp_ltrb intermediate: 0c87ef655df949fd
+fused kernel arguments (bytes): details 24, reads 64 (image 48, coefficient 12), multiply 1, accumulate 1, output 24
+ties exact reference resize (ties to even) [interior]: 633880 exact ties, 103049 within 1/36 of a tie, 5465883 other values; ties rounded up 317470, down 316410, neither 0
+ties exact reference resize (ties to even) [last 2 columns and rows]: 2645 exact ties, 223 within 1/36 of a tie, 15120 other values; ties rounded up 844, down 1801, neither 0
+ties double reference resize (std::nearbyint) [interior]: 633880 exact ties, 103049 within 1/36 of a tie, 5465883 other values; ties rounded up 311743, down 322137, neither 0
+ties double reference resize (std::nearbyint) [last 2 columns and rows]: 2645 exact ties, 223 within 1/36 of a tie, 15120 other values; ties rounded up 919, down 1726, neither 0
+ties rpp resize (intermediate) [interior]: 633880 exact ties, 103049 within 1/36 of a tie, 5465883 other values; ties rounded up 322662, down 311218, neither 0
+ties rpp resize (intermediate) [last 2 columns and rows]: 2645 exact ties, 223 within 1/36 of a tie, 15120 other values; ties rounded up 992, down 1098, neither 555
+ties fkl read chain (identity) [interior]: 633880 exact ties, 103049 within 1/36 of a tie, 5465883 other values; ties rounded up 322511, down 311369, neither 0
+ties fkl read chain (identity) [last 2 columns and rows]: 2645 exact ties, 223 within 1/36 of a tie, 15120 other values; ties rounded up 1281, down 1364, neither 0
+a rpp resize (intermediate) vs exact reference resize [interior]: 201737 of 6202812 values differ (201068 at exact ties, 669 within 1/36 of a tie, 0 other), 0 in the last row or column, max 1 levels
+a rpp resize (intermediate) vs exact reference resize [last 2 columns and rows]: 9559 of 17988 values differ (1184 at exact ties, 223 within 1/36 of a tie, 8152 other), 8931 in the last row or column, max 196 levels
+a fkl read chain (identity) vs exact reference resize [interior]: 200675 of 6202812 values differ (200389 at exact ties, 286 within 1/36 of a tie, 0 other), 0 in the last row or column, max 1 levels
+a fkl read chain (identity) vs exact reference resize [last 2 columns and rows]: 912 of 17988 values differ (907 at exact ties, 5 within 1/36 of a tie, 0 other), 288 in the last row or column, max 1 levels
+a fkl read chain (identity) vs rpp resize (intermediate) [interior]: 15098 of 6202812 values differ (14701 at exact ties, 397 within 1/36 of a tie, 0 other), 0 in the last row or column, max 1 levels
+a fkl read chain (identity) vs rpp resize (intermediate) [last 2 columns and rows]: 8958 of 17988 values differ (583 at exact ties, 223 within 1/36 of a tie, 8152 other), 8932 in the last row or column, max 196 levels
+a double reference resize (cross-check) vs exact reference resize [interior]: 201223 of 6202812 values differ (201223 at exact ties, 0 within 1/36 of a tie, 0 other), 0 in the last row or column, max 1 levels
+a double reference resize (cross-check) vs exact reference resize [last 2 columns and rows]: 533 of 17988 values differ (533 at exact ties, 0 within 1/36 of a tie, 0 other), 275 in the last row or column, max 1 levels
+b rpp box alone vs round(sum/9) [interior]: 0 of 6202812 values differ, 0 in the last row or column, max 0 levels ok
+b rpp box alone vs round(sum/9) [last 2 columns and rows]: 0 of 17988 values differ, 0 in the last row or column, max 0 levels ok
+b fkl box alone vs round(sum/9) [interior]: 0 of 6202812 values differ, 0 in the last row or column, max 0 levels ok
+b fkl box alone vs round(sum/9) [last 2 columns and rows]: 0 of 17988 values differ, 0 in the last row or column, max 0 levels ok
+c rpp vs exact reference [interior]: 183019 of 6202812 values differ, 0 in the last row or column, max 1 levels
+c rpp vs exact reference [last 2 columns and rows]: 17500 of 17988 values differ, 8842 in the last row or column, max 104 levels
+c fkl_box_halfpixel vs exact reference [interior]: 182312 of 6202812 values differ, 0 in the last row or column, max 1 levels
+c fkl_box_halfpixel vs exact reference [last 2 columns and rows]: 773 of 17988 values differ, 401 in the last row or column, max 1 levels
+c fkl_box_halfpixel vs rpp [interior]: 14737 of 6202812 values differ, 0 in the last row or column, max 1 levels
+c fkl_box_halfpixel vs rpp [last 2 columns and rows]: 17513 of 17988 values differ, 8842 in the last row or column, max 104 levels
+c rpp vs round(sum/9) of its own intermediate [interior]: 0 of 6202812 values differ, 0 in the last row or column, max 0 levels ok
+c rpp vs round(sum/9) of its own intermediate [last 2 columns and rows]: 0 of 17988 values differ, 0 in the last row or column, max 0 levels ok
+c fkl_box_halfpixel vs round(sum/9) of its own resized image (identity) [interior]: 0 of 6202812 values differ, 0 in the last row or column, max 0 levels ok
+c fkl_box_halfpixel vs round(sum/9) of its own resized image (identity) [last 2 columns and rows]: 0 of 17988 values differ, 0 in the last row or column, max 0 levels ok
+d fkl_half_once vs fkl_box_halfpixel [interior]: 0 of 6202812 values differ, 0 in the last row or column, max 0 levels ok
+d fkl_half_once vs fkl_box_halfpixel [last 2 columns and rows]: 0 of 17988 values differ, 0 in the last row or column, max 0 levels ok
+rpp_ltrb rpp_ltrb resize (intermediate) vs rpp resize (intermediate) [interior]: 0 of 6202812 values differ, 0 in the last row or column, max 0 levels ok
+rpp_ltrb rpp_ltrb resize (intermediate) vs rpp resize (intermediate) [last 2 columns and rows]: 0 of 17988 values differ, 0 in the last row or column, max 0 levels ok
+rpp_ltrb rpp_ltrb vs rpp [interior]: 0 of 6202812 values differ, 0 in the last row or column, max 0 levels ok
+rpp_ltrb rpp_ltrb vs rpp [last 2 columns and rows]: 0 of 17988 values differ, 0 in the last row or column, max 0 levels ok
+c rpp vs exact reference [interior]: 183019 of 183019 differing values have a differing resized value (rpp intermediate vs exact reference resize) in their window ok
+c rpp vs exact reference [last 2 columns and rows]: 17500 of 17500 differing values have a differing resized value (rpp intermediate vs exact reference resize) in their window ok
+c fkl_box_halfpixel vs exact reference [interior]: 182312 of 182312 differing values have a differing resized value (fkl identity vs exact reference resize) in their window ok
+c fkl_box_halfpixel vs exact reference [last 2 columns and rows]: 773 of 773 differing values have a differing resized value (fkl identity vs exact reference resize) in their window ok
+c fkl_box_halfpixel vs rpp [interior]: 14737 of 14737 differing values have a differing resized value (fkl identity vs rpp intermediate) in their window ok
+c fkl_box_halfpixel vs rpp [last 2 columns and rows]: 17513 of 17513 differing values have a differing resized value (fkl identity vs rpp intermediate) in their window ok
+E18 checks passed
+rpp: whole call mean 0.245009 ms (min 0.231682); kernel only mean 0.186413 ms (min 0.158401), host preparation mean 7.99e-05 ms
+rpp_ltrb: whole call mean 0.160073 ms (min 0.151281); kernel only mean 0.155839 ms (min 0.151682), host preparation mean 7.84e-05 ms
+fkl_box_halfpixel: whole call mean 0.232505 ms (min 0.223162); kernel only mean 0.223938 ms (min 0.222122), host preparation mean 0.0001053 ms
+fkl_half_once: whole call mean 0.232056 ms (min 0.220402); kernel only mean 0.22177 ms (min 0.219082), host preparation mean 5.291e-05 ms

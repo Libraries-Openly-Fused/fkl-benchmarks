@@ -1,0 +1,25 @@
+# experiment: E18 box (AMD): the exact ties of the resize and how each 8-bit resized image rounds them
+# repo: fkl-benchmarks 664b06a40d5114884539e53c95e43e15fe1b12f5
+# fkl: 24478f0aa11dc3f12feea83178f7fde828322fb0
+# cvGPUSpeedup: not checked out (pinned 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c)
+# FastNPP: not checked out (pinned a1b5e245d7dd70fba23dcb51a0aea80495dbc61d)
+# nvcc: none (none), architectures native, -fmad on, -lineinfo on
+# hip: 24.0.0 (/opt/rocm/core-10.1/bin/amdclang++), architectures gfx1200
+# host compiler: Clang 24.0.0, Release, -march=native, -ftemplate-depth=1000
+# opencv: none
+# cpu: AMD Ryzen 7 5800X3D 8-Core Processor
+# os: Ubuntu 26.04.1 LTS
+# kernel: Linux 7.0.0-43-generic
+# gpu: AMD Radeon RX 9060, gfx1200, 14 WGPs (28 CUs), wave32, 8144 MiB, PCI 0000:0d:00.0
+# hip driver: 7.16.26385, hip runtime: 7.16.26385
+# clocks (gfx, mem, max gfx, max mem, MHz): 74, 456, 2400, 1124
+# amd-smi: AMDSMI Tool: 27.1.0+7da43026 | AMDSMI Library version: 27.1.0 | ROCm version: 10.1.0 | amdgpu version: 7.1.9.31600000 | ionic version: N/A
+image,region,values,values_at_exact_ties,values_within_1_36_of_a_tie,other_values,ties_rounded_up,ties_rounded_down,ties_neither
+exact reference resize (ties to even),interior,6202812,633880,103049,5465883,317470,316410,0
+exact reference resize (ties to even),last 2 columns and rows,17988,2645,223,15120,844,1801,0
+double reference resize (std::nearbyint),interior,6202812,633880,103049,5465883,311743,322137,0
+double reference resize (std::nearbyint),last 2 columns and rows,17988,2645,223,15120,919,1726,0
+rpp resize (intermediate),interior,6202812,633880,103049,5465883,322662,311218,0
+rpp resize (intermediate),last 2 columns and rows,17988,2645,223,15120,992,1098,555
+fkl read chain (identity),interior,6202812,633880,103049,5465883,322511,311369,0
+fkl read chain (identity),last 2 columns and rows,17988,2645,223,15120,1281,1364,0

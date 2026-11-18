@@ -1,0 +1,27 @@
+# experiment: E18 box (AMD): other checks
+# repo: fkl-benchmarks e2fca069b0a6740e0e10ce8542487fd82ecadb0a
+# fkl: 24478f0aa11dc3f12feea83178f7fde828322fb0
+# cvGPUSpeedup: not checked out (pinned 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c)
+# FastNPP: not checked out (pinned a1b5e245d7dd70fba23dcb51a0aea80495dbc61d)
+# nvcc: none (none), architectures native, -fmad on, -lineinfo on
+# hip: 24.0.0 (/opt/rocm/core-10.1/bin/amdclang++), architectures gfx1200
+# host compiler: Clang 24.0.0, Release, -march=native, -ftemplate-depth=1000
+# opencv: none
+# cpu: AMD Ryzen 7 5800X3D 8-Core Processor
+# os: Ubuntu 26.04.1 LTS
+# kernel: Linux 7.0.0-43-generic
+# gpu: AMD Radeon RX 9060, gfx1200, 14 WGPs (28 CUs), wave32, 8144 MiB, PCI 0000:0d:00.0
+# hip driver: 7.16.26385, hip runtime: 7.16.26385
+# clocks (gfx, mem, max gfx, max mem, MHz): 81, 772, 2400, 1124
+# amd-smi: AMDSMI Tool: 27.1.0+7da43026 | AMDSMI Library version: 27.1.0 | ROCm version: 10.1.0 | amdgpu version: 7.1.9.31600000 | ionic version: N/A
+check,value,criterion,ok
+rpp: the crop's ROI after rppt_resize (written as XYWH 640 360 2560 1440),640 360 3199 1799,LTRB 640 360 3199 1799,1
+rpp_ltrb: the crop's ROI after rppt_resize (written as LTRB 640 360 3199 1799),640 360 3199 1799,unchanged,1
+"rpp, rpp_ltrb: the box filter's ROI after rppt_box_filter (written once as XYWH 0 0 1920 1080)",0 0 1920 1080,unchanged,1
+fused kernel arguments (bytes),"details 24, reads 64 (image 48, coefficient 12), multiply 1, accumulate 1, output 24",informational,-1
+digest (FNV-1a 64) of the rpp output,9d2e2d8cdf865beb,informational,-1
+digest (FNV-1a 64) of the rpp_ltrb output,9d2e2d8cdf865beb,informational,-1
+digest (FNV-1a 64) of the fkl_box_halfpixel output,e0be817567fd29f1,informational,-1
+digest (FNV-1a 64) of the fkl_half_once output,e0be817567fd29f1,informational,-1
+digest (FNV-1a 64) of the rpp intermediate,0c87ef655df949fd,informational,-1
+digest (FNV-1a 64) of the rpp_ltrb intermediate,0c87ef655df949fd,informational,-1

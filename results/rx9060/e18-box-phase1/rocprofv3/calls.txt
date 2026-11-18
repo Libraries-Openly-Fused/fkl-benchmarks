@@ -1,0 +1,50 @@
+range rpp #1: 6 HIP API calls (hipGetLastError 3, hipLaunchKernel 3)
+    kernel roi_conversion_xywh_to_ltrb: VGPR 8, SGPR 128, LDS 0 B, scratch 0 B, workgroup 256x1x1, grid 256x1x1 (correlation 55)
+    kernel resize_bilinear_pkd_hip_tensor: VGPR 96, SGPR 128, LDS 0 B, scratch 0 B, workgroup 16x16x1, grid 720x1088x1 (correlation 57)
+    kernel box_filter_3x3_pkd_hip_tensor: VGPR 48, SGPR 128, LDS 6144 B, scratch 0 B, workgroup 16x16x1, grid 256x1248x1 (correlation 59)
+range rpp #2: 6 HIP API calls (hipGetLastError 3, hipLaunchKernel 3)
+    kernel roi_conversion_xywh_to_ltrb: VGPR 8, SGPR 128, LDS 0 B, scratch 0 B, workgroup 256x1x1, grid 256x1x1 (correlation 63)
+    kernel resize_bilinear_pkd_hip_tensor: VGPR 96, SGPR 128, LDS 0 B, scratch 0 B, workgroup 16x16x1, grid 720x1088x1 (correlation 65)
+    kernel box_filter_3x3_pkd_hip_tensor: VGPR 48, SGPR 128, LDS 6144 B, scratch 0 B, workgroup 16x16x1, grid 256x1248x1 (correlation 67)
+range rpp #3: 6 HIP API calls (hipGetLastError 3, hipLaunchKernel 3)
+    kernel roi_conversion_xywh_to_ltrb: VGPR 8, SGPR 128, LDS 0 B, scratch 0 B, workgroup 256x1x1, grid 256x1x1 (correlation 71)
+    kernel resize_bilinear_pkd_hip_tensor: VGPR 96, SGPR 128, LDS 0 B, scratch 0 B, workgroup 16x16x1, grid 720x1088x1 (correlation 73)
+    kernel box_filter_3x3_pkd_hip_tensor: VGPR 48, SGPR 128, LDS 6144 B, scratch 0 B, workgroup 16x16x1, grid 256x1248x1 (correlation 75)
+range rpp_ltrb #1: 4 HIP API calls (hipGetLastError 2, hipLaunchKernel 2)
+    kernel resize_bilinear_pkd_hip_tensor: VGPR 96, SGPR 128, LDS 0 B, scratch 0 B, workgroup 16x16x1, grid 720x1088x1 (correlation 79)
+    kernel box_filter_3x3_pkd_hip_tensor: VGPR 48, SGPR 128, LDS 6144 B, scratch 0 B, workgroup 16x16x1, grid 256x1248x1 (correlation 81)
+range rpp_ltrb #2: 4 HIP API calls (hipGetLastError 2, hipLaunchKernel 2)
+    kernel resize_bilinear_pkd_hip_tensor: VGPR 96, SGPR 128, LDS 0 B, scratch 0 B, workgroup 16x16x1, grid 720x1088x1 (correlation 85)
+    kernel box_filter_3x3_pkd_hip_tensor: VGPR 48, SGPR 128, LDS 6144 B, scratch 0 B, workgroup 16x16x1, grid 256x1248x1 (correlation 87)
+range rpp_ltrb #3: 4 HIP API calls (hipGetLastError 2, hipLaunchKernel 2)
+    kernel resize_bilinear_pkd_hip_tensor: VGPR 96, SGPR 128, LDS 0 B, scratch 0 B, workgroup 16x16x1, grid 720x1088x1 (correlation 91)
+    kernel box_filter_3x3_pkd_hip_tensor: VGPR 48, SGPR 128, LDS 6144 B, scratch 0 B, workgroup 16x16x1, grid 256x1248x1 (correlation 93)
+range fkl_box_halfpixel #1: 2 HIP API calls (hipGetLastError 1, hipLaunchKernel 1)
+    kernel fk::linearFilterDPPKernel: VGPR 32, SGPR 128, LDS 4608 B, scratch 0 B, workgroup 16x8x1, grid 1920x1080x1 (correlation 97)
+range fkl_box_halfpixel #2: 2 HIP API calls (hipGetLastError 1, hipLaunchKernel 1)
+    kernel fk::linearFilterDPPKernel: VGPR 32, SGPR 128, LDS 4608 B, scratch 0 B, workgroup 16x8x1, grid 1920x1080x1 (correlation 101)
+range fkl_box_halfpixel #3: 2 HIP API calls (hipGetLastError 1, hipLaunchKernel 1)
+    kernel fk::linearFilterDPPKernel: VGPR 32, SGPR 128, LDS 4608 B, scratch 0 B, workgroup 16x8x1, grid 1920x1080x1 (correlation 105)
+range fkl_half_once #1: 2 HIP API calls (hipGetLastError 1, hipLaunchKernel 1)
+    kernel fk::linearFilterDPPKernel: VGPR 32, SGPR 128, LDS 4608 B, scratch 0 B, workgroup 16x8x1, grid 1920x1080x1 (correlation 109)
+range fkl_half_once #2: 2 HIP API calls (hipGetLastError 1, hipLaunchKernel 1)
+    kernel fk::linearFilterDPPKernel: VGPR 32, SGPR 128, LDS 4608 B, scratch 0 B, workgroup 16x8x1, grid 1920x1080x1 (correlation 113)
+range fkl_half_once #3: 2 HIP API calls (hipGetLastError 1, hipLaunchKernel 1)
+    kernel fk::linearFilterDPPKernel: VGPR 32, SGPR 128, LDS 4608 B, scratch 0 B, workgroup 16x8x1, grid 1920x1080x1 (correlation 117)
+
+summary per range name (one range = one call):
+  rpp: 3 calls; kernels per call [3]; the same kernels in every call: yes
+    roi_conversion_xywh_to_ltrb -> resize_bilinear_pkd_hip_tensor -> box_filter_3x3_pkd_hip_tensor
+    inside the calls: hipMemcpy* API calls 0, memory copies 0, allocation/free API calls 0, memory allocations/frees 0, hipMemset* API calls 0
+  rpp_ltrb: 3 calls; kernels per call [2]; the same kernels in every call: yes
+    resize_bilinear_pkd_hip_tensor -> box_filter_3x3_pkd_hip_tensor
+    inside the calls: hipMemcpy* API calls 0, memory copies 0, allocation/free API calls 0, memory allocations/frees 0, hipMemset* API calls 0
+  fkl_box_halfpixel: 3 calls; kernels per call [1]; the same kernels in every call: yes
+    fk::linearFilterDPPKernel
+    inside the calls: hipMemcpy* API calls 0, memory copies 0, allocation/free API calls 0, memory allocations/frees 0, hipMemset* API calls 0
+  fkl_half_once: 3 calls; kernels per call [1]; the same kernels in every call: yes
+    fk::linearFilterDPPKernel
+    inside the calls: hipMemcpy* API calls 0, memory copies 0, allocation/free API calls 0, memory allocations/frees 0, hipMemset* API calls 0
+
+spin coverage of the kernel_only ranges:
+  no kernel_only range in this trace
