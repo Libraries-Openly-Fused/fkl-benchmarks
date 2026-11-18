@@ -51,8 +51,9 @@
 // buffer it writes is filled with 0xFF bytes, so a value that the call does not write reads as 255 (NaN in the tensor):
 //   grey     each library's grey images (its own intermediates, read after the call) against a host reference with that library's weights and
 //            rounding. OpenCV: its fixed point above. NPP: its documented weights as floats, with several roundings (the exact weighted sum
-//            truncated or rounded half up; the sum evaluated in float, truncated or rounded), and two fixed-point rules; the rule with the
-//            fewest differing values is NPP's reference (the rounding found by comparison). The timing needs 0 differing values
+//            truncated or rounded half up; the sum evaluated in float, truncated or rounded), two fixed-point rules, and the FMA chain
+//            0.587f G, then 0.299f R, then 0.114f B, + 0.5f and truncated; the rule with the fewest differing values is NPP's reference (the
+//            rounding found by comparison). The timing needs 0 differing values
 //   box      each library's box images against the exact box of its own grey images (border REPLICATE), truncated (floor(sum / 9)) and rounded
 //            to the nearest (sum / 9 is never a tie): the rule with 0 differing values is the library's C1 box rounding. The timing needs one
 //            rule with 0. Then against the box, with that rounding, of the host reference grey (the reference pipeline): reported
@@ -148,7 +149,7 @@ std::vector<Detection> detectionsOfTheFrame() {
 
 // ---- The host references
 // The rules of a grey reference: OpenCV's (FIXED15_NEAREST), and the candidates for NPP's rounding of its documented float weights
-enum class GreyRule { FIXED15_NEAREST, EXACT_TRUNC, EXACT_NEAREST, FLOAT_EVAL_TRUNC, FLOAT_EVAL_NEAREST, FIXED8_NEAREST };
+enum class GreyRule { FIXED15_NEAREST, EXACT_TRUNC, EXACT_NEAREST, FLOAT_EVAL_TRUNC, FLOAT_EVAL_NEAREST, FIXED8_NEAREST, FMA_GRB_NEAREST };
 
 const char* name(const GreyRule r) {
     switch (r) {
@@ -158,6 +159,7 @@ const char* name(const GreyRule r) {
     case GreyRule::FLOAT_EVAL_TRUNC: return "0.299f R + 0.587f G + 0.114f B in float (each product and sum rounded, left to right), truncated";
     case GreyRule::FLOAT_EVAL_NEAREST: return "0.299f R + 0.587f G + 0.114f B in float (each product and sum rounded, left to right), + 0.5f, truncated";
     case GreyRule::FIXED8_NEAREST: return "(77 R + 150 G + 29 B + 128) >> 8";
+    case GreyRule::FMA_GRB_NEAREST: return "t = 0.587f G; t = fmaf(0.299f, R, t); t = fmaf(0.114f, B, t); (int)(t + 0.5f)";
     }
     return "?";
 }
@@ -189,6 +191,17 @@ int greyOf(const int r, const int g, const int b, const GreyRule rule) {
         break;
     }
     case GreyRule::FIXED8_NEAREST: v = (77 * r + 150 * g + 29 * b + 128) >> 8; break;
+    case GreyRule::FMA_GRB_NEAREST: {
+        // NPP's rule, found by comparison with the raw dump of the window e19-checks (2026-11-18, results/rtx4090/e19-batched-box-phase1:
+        // grey_rule_search.py): 0 of 1,966,080 values differ; of the other 79 rules of the search, the best differs at 64. std::fma rounds
+        // once (a correctly rounded fused multiply-add); volatile: the product and the + 0.5f are each rounded to float
+        volatile float t = 0.587f * static_cast<float>(g);
+        t = std::fma(0.299f, static_cast<float>(r), t);
+        t = std::fma(0.114f, static_cast<float>(b), t);
+        volatile float rounded = t + 0.5f;
+        v = static_cast<int>(rounded);
+        break;
+    }
     }
     return std::min(255, v);
 }
@@ -543,7 +556,7 @@ int launch() {
             const std::vector<GreyRule> rules =
                 isOpenCV ? std::vector<GreyRule>{GreyRule::FIXED15_NEAREST}
                          : std::vector<GreyRule>{GreyRule::EXACT_TRUNC, GreyRule::EXACT_NEAREST, GreyRule::FLOAT_EVAL_TRUNC, GreyRule::FLOAT_EVAL_NEAREST,
-                                                 GreyRule::FIXED8_NEAREST, GreyRule::FIXED15_NEAREST};
+                                                 GreyRule::FIXED8_NEAREST, GreyRule::FIXED15_NEAREST, GreyRule::FMA_GRB_NEAREST};
             std::vector<std::vector<unsigned char>> greyRefs;
             std::vector<Difference8u> greyDiffs;
             size_t best = 0;
