@@ -24,7 +24,8 @@
 //   crops    30 crops of 256 x 256. Crop i (0..29) starts at x = 64 + 600 * (i mod 6), y = 64 + 400 * (i div 6): a made-up layout of 30
 //            detections. The program treats it as a layout that changes on every frame: every call reads the positions from the detection
 //            table and builds every ROI and every crop pointer from them
-//   grey     RGB to grey, with the library's own call and weights: 8 bits in OpenCV-CUDA and NPP, float in FKL (below)
+//   grey     RGB to grey, with the library's own call and weights: 8 bits in OpenCV-CUDA and NPP; in FKL an integer value held in a float
+//            (below)
 //   box      3 x 3, anchor at the centre, border REPLICATE at the crop's edges (the crop's grey image is the filter's whole input): 8 bits in
 //            OpenCV-CUDA and NPP, float in FKL
 //   float    out = (v / 255 - 0.45) / 0.225 = v * ALPHA + BETA, with ALPHA = 1 / 57.375 and BETA = -2
@@ -52,8 +53,10 @@
 //   fkl_loop     per crop, one fk::executeLinearFilter (FKL's linear_filter.h, its GPU_NVIDIA version), one kernel:
 //                  image read   fk::PerThreadRead<_2D, uchar3> of the crop view (crop2D of the rectangle of detection i), then
 //                               fk::ColorConversion<COLOR_RGB2GRAY, uchar3, float>, which is fk::RGB2Gray<uchar3, float> (color_conversion.h):
-//                               (R * 0.299f) + (G * 0.587f) + (B * 0.114f) in float, not rounded (its output type is float; with an integer
-//                               output type it rounds with __float2uint_rn). These two are the filter's read chain, as E18's FKL rows put the
+//                               (R * 0.299f) + (G * 0.587f) + (B * 0.114f) in float, then rounded to the nearest integer, ties to even, held in
+//                               a float. At 24478f0 its exec() tests std::is_signed_v of the output type before std::is_floating_point_v, and
+//                               std::is_signed_v<float> is true, so a float output takes the __float2int_rn branch (see fklReference). These
+//                               two are the filter's read chain, as E18's FKL rows put the
 //                               resize there: the DPP stages the grey values of each tile with its replicated border in shared memory, the
 //                               border at the crop's own edges (readReplicate in neighborhood.h)
 //                  coefficient  fk::ConstantFilterRead<float> with 1 / 9 in float (scale / (kernel width * kernel height), computed as
@@ -144,12 +147,12 @@ constexpr float NPP_MIN = -2.0f, NPP_MAX = 0.55f / 0.225f;        // the values 
 constexpr double FLOAT_TOLERANCE = 1e-5;
 constexpr float SCALE = 1.f;   // the scale argument of fk::executeBoxFilter: FKL's coefficient is SCALE / (BOX_W * BOX_H), as in E18
 // fkl_loop's tolerance against its reference in double, from FKL's float arithmetic (bounds, one rounding = half a unit in the last place):
-//   grey        two products, two sums, every value at most 255: at most 2.8e-5
-//   box         9 products (at most 28.3) and 8 sums (at most 255): at most 6.9e-5; the grey errors, averaged: at most 2.8e-5; 1 / 9 in float
-//               against 1 / 9: at most 1.9e-6. In all at most 1.0e-4 (in grey levels)
-//   conversion  the box error over 57.375: at most 1.8e-6; the divisions, the subtraction and the float constants 0.45f and 0.225f: at most
+//   grey        none: the reference computes FKL's grey value exactly as the kernel does (an integer, see fklReference)
+//   box         9 products (at most 28.3) and 8 sums (at most 255): at most 6.9e-5 in grey levels (the reference holds the same coefficient,
+//               1 / 9 rounded to float)
+//   conversion  the box error over 57.375: at most 1.2e-6; the divisions, the subtraction and the float constants 0.45f and 0.225f: at most
 //               5.1e-7
-// so FKL is within about 2.3e-6 of the reference (an FMA, where nvcc contracts a product and a sum, rounds once and stays inside the bound).
+// so FKL is within about 1.7e-6 of the reference (an FMA, where nvcc contracts a product and a sum, rounds once and stays inside the bound).
 // 1e-5 is above that and far below the 0.0174 of one grey level after the conversion.
 constexpr double FKL_TOLERANCE = 1e-5;
 
@@ -337,19 +340,31 @@ DifferenceFloat compareFloats(const std::vector<float>& a, const std::vector<flo
     return d;
 }
 
-// fkl_loop's reference in double: FKL's pipeline with the float constants FKL holds and no rounding of its own. The grey value is the exact sum
-// R * 0.299f + G * 0.587f + B * 0.114f (fk::RGB2Gray with a float output; every product and the sum are exact in double); the box value is
-// FKL's coefficient (SCALE / 9, rounded to float as the call computes it) times the exact sum of the 9 grey values of the 3 x 3 window, border
-// REPLICATE at the crop's edges; the output is (box / 255 - 0.45) / 0.225. Crop by crop, row by row, as the tensor
+// fkl_loop's reference in double: FKL's pipeline as the kernel computes its grey value, then the box and the conversion without rounding of
+// their own.
+//   grey   FKL's actual rule at 24478f0. fk::RGB2Gray::exec (color_conversion.h:55-69) tests std::is_unsigned_v of the output type (:57,
+//          __float2uint_rn), then std::is_signed_v (:63, __float2int_rn), then std::is_floating_point_v (:67, the value unrounded).
+//          std::is_signed_v<float> is true, so with a float output the grey is __float2int_rn of the luminance, held in a float (F2I.NTZ in
+//          the kernel's SASS). The luminance is (R * 0.299f) + (G * 0.587f) + (B * 0.114f) as nvcc compiles it in the kernel: t = 0.587f G,
+//          t = fma(0.299f, R, t), t = fma(0.114f, B, t) (FMUL, FFMA, FFMA in the SASS). The reference copies that contraction: rounding the
+//          exact weighted sum instead differs at 926 of the 1,966,080 grey values (the dump of the window e19-fkl-checks,
+//          results/rtx4090/e19-batched-box-fkl-checks). std::fma rounds once; volatile keeps the product a float; std::nearbyint rounds to
+//          the nearest integer, ties to even (the default rounding mode), as __float2int_rn
+//   box    FKL's coefficient (SCALE / 9, rounded to float as the call computes it) times the exact sum of the 9 grey values of the 3 x 3
+//          window, border REPLICATE at the crop's edges
+//   output (box / 255 - 0.45) / 0.225
+// Crop by crop, row by row, as the tensor.
 std::vector<double> fklReference(const std::vector<unsigned char>& frame, const std::vector<Detection>& detections) {
-    const double wr = 0.299f, wg = 0.587f, wb = 0.114f;
     const double coefficient = SCALE / static_cast<float>(BOX_W * BOX_H);
     std::vector<double> grey(VALUES), out(VALUES);
     for (int i = 0; i < CROPS; ++i) {
         for (int y = 0; y < CROP_H; ++y) {
             for (int x = 0; x < CROP_W; ++x) {
                 const unsigned char* p = frame.data() + ((static_cast<size_t>(detections[i].y) + y) * SRC_W + detections[i].x + x) * 3;
-                grey[i * PLANE + static_cast<size_t>(y) * CROP_W + x] = wr * p[0] + wg * p[1] + wb * p[2];
+                volatile float t = 0.587f * static_cast<float>(p[1]);
+                t = std::fma(0.299f, static_cast<float>(p[0]), t);
+                t = std::fma(0.114f, static_cast<float>(p[2]), t);
+                grey[i * PLANE + static_cast<size_t>(y) * CROP_W + x] = std::nearbyint(static_cast<float>(t));
             }
         }
     }
@@ -748,7 +763,8 @@ int launch() {
         if (resultFkl != nullptr) {
             const DifferenceFloat f = compareToReference(resultFkl->tensor, fklReference(frame, detections), FKL_TOLERANCE);
             check("fkl_loop", "float", "fkl_reference",
-                  "grey 0.299f R + 0.587f G + 0.114f B, box (1/9 in float) * sum of 9, (v / 255 - 0.45) / 0.225, all in double; differing = beyond 1e-5",
+                  "grey nearbyint(fma(0.114f, B, fma(0.299f, R, 0.587f G))), box (1/9 in float) * sum of 9 in double, (v / 255 - 0.45) / 0.225 in "
+                  "double; differing = beyond 1e-5",
                   VALUES, f.beyond, f.maxAbs, std::to_string(f.nonFinite), "largest difference at most 1e-5, every value finite",
                   f.nonFinite == 0 && f.maxAbs <= FKL_TOLERANCE, true);
             for (const Result* other : {resultOpenCV, resultNpp}) {
