@@ -1,0 +1,30 @@
+E19 batched box (AMD): the checks, then the timing
+rpp grey vs (0.299f R + 0.587f G) + 0.114f B in float, no FMA, ties to even: 154 differing/beyond, max 1, non-finite 0 [RPP's source rule]
+rpp grey vs t = 0.587f G; t = fma(0.299f, R, t); t = fma(0.114f, B, t), ties to even: 0 differing/beyond, max 0, non-finite 0 [candidate]
+rpp grey vs t = 0.299f R; t = fma(0.587f, G, t); t = fma(0.114f, B, t), ties to even: 178 differing/beyond, max 1, non-finite 0 [candidate]
+rpp grey vs t = 0.299f R + 0.587f G (rounded); t = fma(0.114f, B, t), ties to even: 141 differing/beyond, max 1, non-finite 0 [candidate]
+rpp grey vs 0.299f R + 0.587f G + 0.114f B exactly, ties to even: 926 differing/beyond, max 1, non-finite 0 [candidate]
+rpp grey vs the rule with the fewest: t = 0.587f G; t = fma(0.299f, R, t); t = fma(0.114f, B, t): 0 differing/beyond, max 0, non-finite 0 [one rule with 0 differing values: ok]
+rpp box vs round(sum / 9) of its own grey, REPLICATE: 0 differing/beyond, max 0, non-finite 0 [0 differing values: ok]
+rpp box vs floor(sum / 9) of its own grey (informational): 873625 differing/beyond, max 1, non-finite 0 [informational]
+rpp float vs (v / 255 - 0.45) / 0.225 in double, v its own box: 0 differing/beyond, max 1.31416e-07, non-finite 0 [within 1e-5, all finite: ok]
+fkl_loop float vs fklReference, grey (0.299f R + 0.587f G) + 0.114f B in float, no FMA: 1380 differing/beyond, max 0.00387332, non-finite 0 [candidate]
+fkl_loop float vs fklReference, grey t = 0.587f G; t = fma(0.299f, R, t); t = fma(0.114f, B, t): 0 differing/beyond, max 6.36952e-07, non-finite 0 [candidate]
+fkl_loop float vs fklReference, grey t = 0.299f R; t = fma(0.587f, G, t); t = fma(0.114f, B, t): 1593 differing/beyond, max 0.00387336, non-finite 0 [candidate]
+fkl_loop float vs fklReference, grey t = 0.299f R + 0.587f G (rounded); t = fma(0.114f, B, t): 1260 differing/beyond, max 0.00387332, non-finite 0 [candidate]
+fkl_loop float vs fklReference, grey 0.299f R + 0.587f G + 0.114f B exactly: 8281 differing/beyond, max 0.00387338, non-finite 0 [candidate]
+fkl_loop float vs fklReference, the grey order with the fewest: t = 0.587f G; t = fma(0.299f, R, t); t = fma(0.114f, B, t): 0 differing/beyond, max 6.36952e-07, non-finite 0 [one order within 1e-5, all finite: ok]
+fkl_batch float vs fklReference, grey (0.299f R + 0.587f G) + 0.114f B in float, no FMA: 1380 differing/beyond, max 0.00387332, non-finite 0 [candidate]
+fkl_batch float vs fklReference, grey t = 0.587f G; t = fma(0.299f, R, t); t = fma(0.114f, B, t): 0 differing/beyond, max 3.56459e-07, non-finite 0 [candidate]
+fkl_batch float vs fklReference, grey t = 0.299f R; t = fma(0.587f, G, t); t = fma(0.114f, B, t): 1593 differing/beyond, max 0.00387326, non-finite 0 [candidate]
+fkl_batch float vs fklReference, grey t = 0.299f R + 0.587f G (rounded); t = fma(0.114f, B, t): 1260 differing/beyond, max 0.00387332, non-finite 0 [candidate]
+fkl_batch float vs fklReference, grey 0.299f R + 0.587f G + 0.114f B exactly: 8281 differing/beyond, max 0.00387332, non-finite 0 [candidate]
+fkl_batch float vs fklReference, the grey order with the fewest: t = 0.587f G; t = fma(0.299f, R, t); t = fma(0.114f, B, t): 0 differing/beyond, max 3.56459e-07, non-finite 0 [one order within 1e-5, all finite: ok]
+rpp float vs fkl_loop: 0 differing/beyond, max 0.00774699, non-finite 0 [reported]
+fkl_batch float vs fkl_loop: 0 differing/beyond, max 7.7486e-07, non-finite 0 [reported]
+E19 checks passed
+fkl_loop: whole call mean 0.220215 ms (min 0.193003); kernel only mean 0.216835 ms (min 0.204322); sclk 3453 / 3057 / 3057 / 3462 MHz
+fkl_batch: whole call mean 0.113165 ms (min 0.103201); kernel only mean 0.102669 ms (min 0.099801); sclk 3462 / 3229 / 3229 / 3479 MHz
+rpp: whole call mean 0.189554 ms (min 0.176322); kernel only mean 0.200615 ms (min 0.175482); sclk 3479 / 3381 / 3381 / 3480 MHz
+clock warm-up: one gpuSpin of 2000 ms; sclk 76 MHz before it, 3453 MHz after it
+E19 timing (realtime ns): warm-up start 1795019420581147730, timing start 1795019422582459509, timing end 1795019424222418307
