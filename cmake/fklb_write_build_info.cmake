@@ -20,7 +20,7 @@ function(fklb_git_describe OUT DIR)
     endif()
     set(PATHS "")
     if("${DIR}" STREQUAL "${FKLB_SRC}")
-        set(PATHS -- common cmake fkl-self opencv-cuda npp external CMakeLists.txt CMakePresets.json)
+        set(PATHS -- common cmake fkl-self opencv-cuda npp opencv-cpu rpp handwritten-cuda external CMakeLists.txt CMakePresets.json)
     endif()
     execute_process(COMMAND git -C "${DIR}" rev-parse HEAD OUTPUT_VARIABLE H OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET)
     execute_process(COMMAND git -C "${DIR}" status --porcelain --untracked-files=no ${PATHS} OUTPUT_VARIABLE D
