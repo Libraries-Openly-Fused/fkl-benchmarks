@@ -1,0 +1,40 @@
+2640 kernels, 0 memsets, 3 memcpys, 9266 runtime API calls in the trace
+
+fkl_loop: 10 calls in the ranges 'fkl_loop:call'
+  kernels per call: [30] (per crop: [1.0]); memsets per call: [0]; memcpys per call: [0]
+  kernels by name, per call (the same in every call):
+      30  linearFilterDPPKernel
+  runtime API calls by name, per call (the same in every call):
+      30  cuKernelGetName
+      30  cudaLaunchKernel_v7000
+  host, the call's range (the enqueue of one call), us: median 93.4, min 91.3, max 107.8
+  GPU, first kernel start to last kernel end, us: median 92.1, min 89.9, max 100.3
+  GPU, sum of the kernel durations, us: median 62.2, min 62.1, max 62.4
+
+opencv_cuda: 10 calls in the ranges 'opencv_cuda:call'
+  kernels per call: [120] (per crop: [4.0]); memsets per call: [0]; memcpys per call: [0]
+  kernels by name, per call (the same in every call):
+      30  ForEachLargeTupleByteQuadInLargeImage
+      30  copy
+      30  transformSimple
+      30  transformSmart
+  runtime API calls by name, per call (the same in every call):
+     120  cuKernelGetName
+     120  cudaLaunchKernel_v7000
+      30  cudaGetDeviceProperties_v12000
+  host, the call's range (the enqueue of one call), us: median 405.6, min 398.3, max 434.5
+  GPU, first kernel start to last kernel end, us: median 403.2, min 395.8, max 426.9
+  GPU, sum of the kernel durations, us: median 178.0, min 177.6, max 178.2
+
+npp: 10 calls in the ranges 'npp:call'
+  kernels per call: [90] (per crop: [3.0]); memsets per call: [0]; memcpys per call: [0]
+  kernels by name, per call (the same in every call):
+      30  ForEachLargeTupleByteQuadInLargeImage
+      30  ForEachPixelByteInLargeImage
+      30  ForEachTupleDWordInLargeImage
+  runtime API calls by name, per call (the same in every call):
+      90  cuKernelGetName
+      90  cudaLaunchKernel_v7000
+  host, the call's range (the enqueue of one call), us: median 272.3, min 265.4, max 300.8
+  GPU, first kernel start to last kernel end, us: median 270.1, min 264.0, max 295.7
+  GPU, sum of the kernel durations, us: median 177.3, min 177.2, max 177.6

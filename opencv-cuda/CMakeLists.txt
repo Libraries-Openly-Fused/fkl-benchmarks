@@ -93,6 +93,16 @@ if(TARGET e18_box_split_cu)
     target_link_libraries(e18_box_split_cu PRIVATE CUDA::nppif)
 endif()
 
+# E19, the batched grey box pipeline: 30 crops of one frame, each converted to grey, box filtered (3 x 3, REPLICATE) and converted to float into
+# one NCHW tensor; OpenCV-CUDA and NPP with a loop over the crops (neither has a batched call for these steps), and FKL with one fused call per
+# crop (its filter takes one image per call). NPP's grey conversion is in nppicc, its box filter in nppif
+fklb_add_benchmark(e19_batched_box
+    BACKENDS cu LIBS fkl opencv npp
+    SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/stencil/e19_batched_box.cu")
+if(TARGET e19_batched_box_cu)
+    target_link_libraries(e19_batched_box_cu PRIVATE CUDA::nppicc CUDA::nppif)
+endif()
+
 # The data-size experiment with every size a multiple of 4 (increment 282272 instead of 282270) and only the one-channel pairs: OpenCV-CUDA's one-channel kernels are
 # vectorised (cv::transformSmart<4>) only when the element count is a multiple of 4, which the sizes of the paper's experiment alternate (results/rtx4090/e0-data-size-parity).
 fklb_add_benchmark(benchmark_image_resolution_MAD_loop_mul4

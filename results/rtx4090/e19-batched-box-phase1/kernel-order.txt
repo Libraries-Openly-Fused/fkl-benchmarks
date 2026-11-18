@@ -1,0 +1,20 @@
+opencv_cuda: the kernels of crop 0 of the first call, in launch order (name; grid; block; demangled name, 160 characters):
+  transformSimple; grid 8x32x1; block 32x8x1; void cv::cudev::grid_transform_detail::transformSimple<cv::cudev::GlobPtr<uchar3>, unsigned char, cv::cudev::RGB_to_GRAY_func<unsigned char>, cv::cudev::WithOut
+  copy; grid 9x33x1; block 32x8x1; void cv::cudev::grid_copy_detail::copy<cv::cudev::RemapPtr1<cv::cudev::BrdBase<cv::cudev::BrdReplicate, cv::cudev::GlobPtr<unsigned char>>, <unnamed>::ShiftMap>
+  ForEachLargeTupleByteQuadInLargeImage; grid 1x32x1; block 32x2x1; void ForEachLargeTupleByteQuadInLargeImage<unsigned char, (int)1, LargeTupleByteQuadFunctor<unsigned char, (int)1, LargeFilterBoxReplicateBorder3x3QuadNew<unsig
+  transformSmart; grid 2x32x1; block 32x8x1; void cv::cudev::grid_transform_detail::transformSmart<(int)4, unsigned char, float, <unnamed>::Convertor<unsigned char, float, float>, cv::cudev::WithOutMask>(c
+  every crop of every call launches the same kernels in this order: yes
+  GPU duration per kernel, us (over the 10 calls):
+    transformSimple: 300 kernels, median 1.15, min 1.15, max 1.18
+    copy: 300 kernels, median 1.18, min 1.15, max 1.19
+    ForEachLargeTupleByteQuadInLargeImage: 300 kernels, median 2.53, min 2.50, max 2.56
+    transformSmart: 300 kernels, median 1.09, min 1.06, max 1.12
+npp: the kernels of crop 0 of the first call, in launch order (name; grid; block; demangled name, 160 characters):
+  ForEachPixelByteInLargeImage; grid 2x32x1; block 32x8x1; void ForEachPixelByteInLargeImage<unsigned char, (int)1, ColorToGrayFunctor<unsigned char, (int)3>>(Pixel<T1, T2> *, unsigned long, int, int, int, int, int, T3)
+  ForEachLargeTupleByteQuadInLargeImage; grid 1x32x1; block 32x2x1; void ForEachLargeTupleByteQuadInLargeImage<unsigned char, (int)1, LargeTupleByteQuadFunctor<unsigned char, (int)1, LargeFilterBoxReplicateBorder3x3QuadNew<unsig
+  ForEachTupleDWordInLargeImage; grid 4x32x1; block 32x8x1; void ForEachTupleDWordInLargeImage<float, (int)1, TupleDWordFunctor<float, (int)1, LargePointwiseFunctor<unsigned char, (int)1, float, (int)1, ScaleFunctor<unsi
+  every crop of every call launches the same kernels in this order: yes
+  GPU duration per kernel, us (over the 10 calls):
+    ForEachPixelByteInLargeImage: 300 kernels, median 1.60, min 1.57, max 1.66
+    ForEachLargeTupleByteQuadInLargeImage: 300 kernels, median 3.14, min 3.10, max 3.20
+    ForEachTupleDWordInLargeImage: 300 kernels, median 1.15, min 1.12, max 1.18
