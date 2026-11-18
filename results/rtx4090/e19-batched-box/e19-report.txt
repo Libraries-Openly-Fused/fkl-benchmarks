@@ -1,0 +1,15 @@
+quiet runs: quiet-run1, quiet-run2, quiet-run3; every value is the mean of 100 calls of one frame (30 crops), in us
+whole_call:
+  fkl_loop: median 74.29 (min 74.22, max 74.38; runs 74.29 / 74.38 / 74.22); spread 0.22 %
+  opencv_cuda: median 239.48 (min 239.14, max 239.66; runs 239.14 / 239.66 / 239.48); spread 0.21 %
+  npp: median 214.84 (min 213.92, max 216.98; runs 213.92 / 216.98 / 214.84); spread 1.43 %
+  opencv_cuda / fkl_loop: median 3.222 (min 3.219, max 3.227; runs 3.219 / 3.222 / 3.227)
+  npp / fkl_loop: median 2.895 (min 2.879, max 2.917; runs 2.879 / 2.917 / 2.895)
+kernel_only:
+  fkl_loop: median 73.57 (min 73.52, max 73.86; runs 73.52 / 73.57 / 73.86); spread 0.46 %
+  opencv_cuda: median 237.64 (min 237.64, max 237.91; runs 237.64 / 237.91 / 237.64); spread 0.11 %
+  npp: median 212.10 (min 212.04, max 212.28; runs 212.28 / 212.04 / 212.10); spread 0.11 %
+  opencv_cuda / fkl_loop: median 3.232 (min 3.217, max 3.234; runs 3.232 / 3.234 / 3.217)
+  npp / fkl_loop: median 2.882 (min 2.872, max 2.887; runs 2.887 / 2.882 / 2.872)
+warmup (not used): fkl_loop whole_call 78.05; opencv_cuda whole_call 239.37; npp whole_call 214.89; fkl_loop kernel_only 74.67; opencv_cuda kernel_only 237.70; npp kernel_only 212.10
+nsys (not used): fkl_loop whole_call 95.54; opencv_cuda whole_call 404.85; npp whole_call 277.19; fkl_loop kernel_only 83.43; opencv_cuda kernel_only 262.94; npp kernel_only 231.19
