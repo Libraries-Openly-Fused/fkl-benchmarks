@@ -1,0 +1,26 @@
+whole_call:fkl_loop:
+  linearFilterDPPKernel: 3030 kernels, median 2.08, min 2.05, max 2.30 us
+kernel_only:fkl_loop:
+  linearFilterDPPKernel: 3030 kernels, median 2.02, min 1.95, max 2.24 us
+whole_call:fkl_batch:
+  morphologyDPPKernel: 101 kernels, median 20.35, min 20.19, max 21.12 us
+kernel_only:fkl_batch:
+  morphologyDPPKernel: 101 kernels, median 21.09, min 20.38, max 21.22 us
+whole_call:opencv_cuda:
+  transformSimple: 3030 kernels, median 1.12, min 1.09, max 1.79 us
+  copy: 3030 kernels, median 1.12, min 1.09, max 1.15 us
+  ForEachLargeTupleByteQuadInLargeImage: 3030 kernels, median 2.40, min 2.37, max 3.10 us
+  transformSmart: 3030 kernels, median 1.02, min 0.99, max 1.06 us
+kernel_only:opencv_cuda:
+  transformSimple: 3030 kernels, median 1.12, min 1.09, max 4.06 us
+  copy: 3030 kernels, median 1.12, min 1.09, max 5.92 us
+  ForEachLargeTupleByteQuadInLargeImage: 3030 kernels, median 2.40, min 2.37, max 12.77 us
+  transformSmart: 3030 kernels, median 1.02, min 0.99, max 6.50 us
+whole_call:npp:
+  ForEachPixelByteInLargeImage: 3030 kernels, median 1.54, min 1.50, max 2.02 us
+  ForEachLargeTupleByteQuadInLargeImage: 3030 kernels, median 3.01, min 2.94, max 3.10 us
+  ForEachTupleDWordInLargeImage: 3030 kernels, median 1.09, min 1.06, max 1.15 us
+kernel_only:npp:
+  ForEachPixelByteInLargeImage: 3030 kernels, median 1.54, min 1.50, max 7.62 us
+  ForEachLargeTupleByteQuadInLargeImage: 3030 kernels, median 3.01, min 2.94, max 11.23 us
+  ForEachTupleDWordInLargeImage: 3030 kernels, median 1.09, min 1.09, max 7.68 us
