@@ -14,3 +14,13 @@ if(TARGET e18_box_hip)
     find_package(rocprofiler-sdk-roctx CONFIG REQUIRED)
     target_link_libraries(e18_box_hip PRIVATE rocprofiler-sdk-roctx::rocprofiler-sdk-roctx)
 endif()
+
+# E19 (AMD): the 3 x 3 box filter inside a batched pipeline (grey before it, a float conversion after it) on 30 crops of one frame: FKL in a
+# loop of fused calls (fkl_loop) and in one batched call (fkl_batch), against RPP (rpp). The AMD side of opencv-cuda/stencil/e19_batched_box.cu.
+fklb_add_benchmark(e19_batched_box
+    BACKENDS hip LIBS fkl rpp
+    LAUNCHER_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/e19_batched_box.h")
+if(TARGET e19_batched_box_hip)
+    find_package(rocprofiler-sdk-roctx CONFIG REQUIRED)
+    target_link_libraries(e19_batched_box_hip PRIVATE rocprofiler-sdk-roctx::rocprofiler-sdk-roctx)
+endif()
