@@ -15,19 +15,22 @@
 // E19 batched box (NVIDIA): the 3 x 3 box filter inside a batched pipeline, with a step before it and a step after it, on 30 crops of one
 // frame. OpenCV-CUDA and NPP, one call per step and per crop: neither library has a batched call for any of these steps (OpenCV-CUDA has no
 // batched call at all; NPP's batched calls are its resize and its colour twist, and nppiColorTwistBatch keeps the channel count, so it is not
-// a grey conversion), so each library loops over the crops. The FKL rows come later.
+// a grey conversion), so each library loops over the crops. FKL (fkl_loop) as it runs at the pin 24478f0: its filter takes one image per
+// call, so it loops too, with the whole pipeline of a crop in one fused call (one kernel per crop). A batched FKL row comes when FKL's filter
+// takes a batch; fkl_loop is the reference that it must match.
 //
 // The pipeline, per frame, the same in every library:
 //   frame    one 3840 x 2160 uchar3 frame, the seeded source of E4 and E18 (an LCG with seed 12345), read as RGB: channel 0 is R
 //   crops    30 crops of 256 x 256. Crop i (0..29) starts at x = 64 + 600 * (i mod 6), y = 64 + 400 * (i div 6): a made-up layout of 30
 //            detections. The program treats it as a layout that changes on every frame: every call reads the positions from the detection
 //            table and builds every ROI and every crop pointer from them
-//   grey     RGB to grey in 8 bits, with the library's own call and weights
-//   box      3 x 3, anchor at the centre, border REPLICATE at the crop's edges (the crop's grey image is the filter's whole input), 8 bits
+//   grey     RGB to grey, with the library's own call and weights: 8 bits in OpenCV-CUDA and NPP, float in FKL (below)
+//   box      3 x 3, anchor at the centre, border REPLICATE at the crop's edges (the crop's grey image is the filter's whole input): 8 bits in
+//            OpenCV-CUDA and NPP, float in FKL
 //   float    out = (v / 255 - 0.45) / 0.225 = v * ALPHA + BETA, with ALPHA = 1 / 57.375 and BETA = -2
 //   output   plane i of one float tensor of 30 x 1 x 256 x 256: NCHW, contiguous, a plane stride of 65,536 floats and a row stride of 1,024 bytes
 // Each library reads its own copy of the same host bytes, crops its own way (OpenCV: a GpuMat ROI; NPP: a pointer into its frame and the
-// frame's step), and owns its intermediates and its tensor. No FKL object is used.
+// frame's step; FKL: fk::Ptr2D::crop2D), and owns its intermediates and its tensor. The OpenCV-CUDA and NPP rows use no FKL object.
 //   opencv_cuda  per crop:
 //                  cv::cuda::cvtColor(ROI, grey_i, COLOR_RGB2GRAY): fixed point, grey = (9798 R + 19235 G + 3735 B + 2^14) >> 15
 //                    (opencv_contrib cudev: RGB_to_GRAY_func = RGB2Gray<uchar, 3, 2>, with RY15, GY15, BY15 and CV_CUDEV_DESCALE in
@@ -46,6 +49,21 @@
 //                    (nppi_data_exchange_and_initialization.h, "Scale To Higher Bit Depth") documents dst = nMin + (nMax - nMin) / (srcMax - srcMin)
 //                    * (src - srcMin), with nMin and nMax as the destination range and the clamp: with the 8-bit range [0, 255] as the source
 //                    range, dst = v * (nMax - nMin) / 255 + nMin = v * ALPHA + BETA in one call. The float check below tests that reading
+//   fkl_loop     per crop, one fk::executeLinearFilter (FKL's linear_filter.h, its GPU_NVIDIA version), one kernel:
+//                  image read   fk::PerThreadRead<_2D, uchar3> of the crop view (crop2D of the rectangle of detection i), then
+//                               fk::ColorConversion<COLOR_RGB2GRAY, uchar3, float>, which is fk::RGB2Gray<uchar3, float> (color_conversion.h):
+//                               (R * 0.299f) + (G * 0.587f) + (B * 0.114f) in float, not rounded (its output type is float; with an integer
+//                               output type it rounds with __float2uint_rn). These two are the filter's read chain, as E18's FKL rows put the
+//                               resize there: the DPP stages the grey values of each tile with its replicated border in shared memory, the
+//                               border at the crop's own edges (readReplicate in neighborhood.h)
+//                  coefficient  fk::ConstantFilterRead<float> with 1 / 9 in float (scale / (kernel width * kernel height), computed as
+//                               fk::executeBoxFilter computes it), as E18's fkl_box_* rows (e18_box.cu, fkl_box_asym)
+//                  multiply     fk::Mul<float, float, float, fk::UnaryType>; accumulate fk::Add<float, float, float, fk::UnaryType>
+//                  write        fk::Div<float> by 255, fk::Sub<float> of 0.45, fk::Div<float> by 0.225 (correctly rounded divisions: the target is
+//                               built without fast math), then fk::PerThreadWrite<_3D, float> of the view of plane i of FKL's tensor
+//                               (fk::Tensor<float> of 256 x 256 x 30 planes, contiguous; the view is fk::Ptr::crop at (0, 0, i) with one plane)
+//                  details      fk::LinearFilterDPPDetails<float> with its defaults (a 16 x 8 tile, a largest kernel of 7 x 7)
+//                Every call builds the 30 crop views, the IOps and the details, and launches 30 kernels.
 //
 // The checks (e19_batched_box_checks.csv). Every comparison is over the 30 x 256 x 256 = 1,966,080 values. Each row is called once, after every
 // buffer it writes is filled with 0xFF bytes, so a value that the call does not write reads as 255 (NaN in the tensor):
@@ -64,10 +82,13 @@
 //            an output that is set once). The timing needs it
 //   between  opencv_cuda against npp: the differing grey and box values and the largest float difference (reported only; the libraries'
 //            grey weights differ)
+//   fkl_loop has no grey or box image (the pipeline of a crop is one kernel). Its tensor against FKL's pipeline in double (fklReference): the
+//            largest absolute difference (the timing needs at most FKL_TOLERANCE = 1e-5, and every value finite); then against the tensors of
+//            opencv_cuda and npp (reported only)
 // E19_DUMP=<folder>: the checks also write each row's grey images, box images and tensor there as raw bytes (crop by crop, row by row, 256
 // values per row; the tensor as float32), so that another rounding rule can be tested without another run.
 //
-// The timing (e19_batched_box.csv): two intervals per row, in the order opencv_cuda, npp, the same in every run. Both hold the whole frame
+// The timing (e19_batched_box.csv): two intervals per row, in the order opencv_cuda, npp, fkl_loop, the same in every run. Both hold the whole frame
 // (the 30 crops):
 //   whole_call   fklb::timeIt (common/cuda_timing.h): CUDA events around one call, 100 calls after one warm-up call (E4's and E18's
 //                interval). When the GPU waits for the host, the interval holds the host's work too
@@ -83,6 +104,14 @@
 #include <common/csv_writer.h>
 #include <common/cuda_timing.h>
 #include <common/status_check.h>
+
+#include <fused_kernel/fused_kernel.h>
+#include <fused_kernel/algorithms/basic_ops/arithmetic.h>
+#include <fused_kernel/algorithms/basic_ops/memory_operations.h>
+#include <fused_kernel/algorithms/image_processing/color_conversion.h>
+#include <fused_kernel/algorithms/image_processing/linear_filter.h>
+#include <fused_kernel/core/data/ptr_nd.h>
+#include <fused_kernel/core/data/rect.h>
 
 #include <opencv2/core.hpp>
 #include <opencv2/core/cuda.hpp>
@@ -113,6 +142,16 @@ constexpr size_t VALUES = PLANE * CROPS;                          // 1,966,080
 constexpr double ALPHA = 1.0 / 57.375, BETA = -2.0;               // (v / 255 - 0.45) / 0.225 = v / 57.375 - 2 (0.225 * 255 = 57.375)
 constexpr float NPP_MIN = -2.0f, NPP_MAX = 0.55f / 0.225f;        // the values of v = 0 and v = 255
 constexpr double FLOAT_TOLERANCE = 1e-5;
+constexpr float SCALE = 1.f;   // the scale argument of fk::executeBoxFilter: FKL's coefficient is SCALE / (BOX_W * BOX_H), as in E18
+// fkl_loop's tolerance against its reference in double, from FKL's float arithmetic (bounds, one rounding = half a unit in the last place):
+//   grey        two products, two sums, every value at most 255: at most 2.8e-5
+//   box         9 products (at most 28.3) and 8 sums (at most 255): at most 6.9e-5; the grey errors, averaged: at most 2.8e-5; 1 / 9 in float
+//               against 1 / 9: at most 1.9e-6. In all at most 1.0e-4 (in grey levels)
+//   conversion  the box error over 57.375: at most 1.8e-6; the divisions, the subtraction and the float constants 0.45f and 0.225f: at most
+//               5.1e-7
+// so FKL is within about 2.3e-6 of the reference (an FMA, where nvcc contracts a product and a sum, rounds once and stays inside the bound).
+// 1e-5 is above that and far below the 0.0174 of one grey level after the conversion.
+constexpr double FKL_TOLERANCE = 1e-5;
 
 bool selected(const std::string& name) {
     const char* e = std::getenv("E19_ONLY");
@@ -269,6 +308,7 @@ Difference8u compare8u(const std::vector<unsigned char>& a, const std::vector<un
 struct DifferenceFloat {
     size_t nonFinite = 0;   // values of `out` that are not finite
     double maxAbs = 0;      // over the finite values
+    size_t beyond = 0;      // compareToReference only: the finite values farther than the tolerance from the reference
 };
 
 // A tensor against (v / 255 - 0.45) / 0.225 in double, v the box value at the same position
@@ -293,6 +333,56 @@ DifferenceFloat compareFloats(const std::vector<float>& a, const std::vector<flo
             continue;
         }
         d.maxAbs = std::max(d.maxAbs, std::abs(static_cast<double>(a[k]) - static_cast<double>(b[k])));
+    }
+    return d;
+}
+
+// fkl_loop's reference in double: FKL's pipeline with the float constants FKL holds and no rounding of its own. The grey value is the exact sum
+// R * 0.299f + G * 0.587f + B * 0.114f (fk::RGB2Gray with a float output; every product and the sum are exact in double); the box value is
+// FKL's coefficient (SCALE / 9, rounded to float as the call computes it) times the exact sum of the 9 grey values of the 3 x 3 window, border
+// REPLICATE at the crop's edges; the output is (box / 255 - 0.45) / 0.225. Crop by crop, row by row, as the tensor
+std::vector<double> fklReference(const std::vector<unsigned char>& frame, const std::vector<Detection>& detections) {
+    const double wr = 0.299f, wg = 0.587f, wb = 0.114f;
+    const double coefficient = SCALE / static_cast<float>(BOX_W * BOX_H);
+    std::vector<double> grey(VALUES), out(VALUES);
+    for (int i = 0; i < CROPS; ++i) {
+        for (int y = 0; y < CROP_H; ++y) {
+            for (int x = 0; x < CROP_W; ++x) {
+                const unsigned char* p = frame.data() + ((static_cast<size_t>(detections[i].y) + y) * SRC_W + detections[i].x + x) * 3;
+                grey[i * PLANE + static_cast<size_t>(y) * CROP_W + x] = wr * p[0] + wg * p[1] + wb * p[2];
+            }
+        }
+    }
+    for (int i = 0; i < CROPS; ++i) {
+        const double* crop = grey.data() + i * PLANE;
+        for (int y = 0; y < CROP_H; ++y) {
+            for (int x = 0; x < CROP_W; ++x) {
+                double sum = 0;
+                for (int ky = 0; ky < BOX_H; ++ky) {
+                    for (int kx = 0; kx < BOX_W; ++kx) {
+                        const int sx = std::min(std::max(x + kx - ANCHOR_X, 0), CROP_W - 1);
+                        const int sy = std::min(std::max(y + ky - ANCHOR_Y, 0), CROP_H - 1);
+                        sum += crop[static_cast<size_t>(sy) * CROP_W + sx];
+                    }
+                }
+                out[i * PLANE + static_cast<size_t>(y) * CROP_W + x] = (coefficient * sum / 255.0 - 0.45) / 0.225;
+            }
+        }
+    }
+    return out;
+}
+
+// A tensor against a reference in double: the largest absolute difference, and how many values are farther than the tolerance
+DifferenceFloat compareToReference(const std::vector<float>& out, const std::vector<double>& reference, const double tolerance) {
+    DifferenceFloat d;
+    for (size_t k = 0; k < out.size(); ++k) {
+        if (!std::isfinite(out[k])) {
+            ++d.nonFinite;
+            continue;
+        }
+        const double diff = std::abs(static_cast<double>(out[k]) - reference[k]);
+        d.maxAbs = std::max(d.maxAbs, diff);
+        d.beyond += diff > tolerance ? 1 : 0;
     }
     return d;
 }
@@ -333,6 +423,7 @@ struct Row {
     std::function<void()> call;
     std::function<void()> fill;
     std::function<void(std::vector<unsigned char>& grey, std::vector<unsigned char>& box, std::vector<float>& tensor)> download;
+    bool intermediates = true;   // the row has grey and box images (fkl_loop has none: the pipeline of a crop is one kernel)
 };
 
 struct Result {
@@ -474,6 +565,47 @@ int launch() {
     };
     rows.push_back({"npp", callNpp, fillNpp, downloadNpp});
 
+    // ---- FKL (fkl_loop), at the pin 24478f0: one fk::executeLinearFilter per crop, the whole pipeline of the crop in its one kernel
+    // Set once: FKL's stream object of the program's stream (it depends on nothing of a frame)
+    fk::Stream_<fk::ParArch::GPU_NVIDIA> fkStream(cs);
+    // Set once: FKL's own copy of the frame (fk::Ptr2D), uploaded before the calls as in E18
+    fk::Ptr2D<uchar3> fkFrame(SRC_W, SRC_H);
+    FKLB_CUDA_CHECK(cudaMemcpy2D(fkFrame.ptr().data, fkFrame.ptr().dims.pitch, frame.data(), hostRow, hostRow, SRC_H, cudaMemcpyHostToDevice));
+    // Set once: the output tensor, fk::Tensor<float> of 256 x 256 x 30 planes (rows of 1,024 bytes, planes of 65,536 floats, contiguous); its
+    // size depends on no position
+    fk::Tensor<float> fkTensor(CROP_W, CROP_H, CROPS, 1);
+    if (fkTensor.ptr().dims.pitch != CROP_W * sizeof(float) || fkTensor.ptr().dims.plane_pitch != PLANE * sizeof(float)) {
+        throw std::runtime_error("fkl_loop: the tensor is not contiguous");
+    }
+    using FklDetails = fk::LinearFilterDPPDetails<float>;   // the default tile (16 x 8) and largest kernel (7 x 7): the call a user writes
+    using FklGrey = fk::ColorConversion<fk::ColorConversionCodes::COLOR_RGB2GRAY, uchar3, float>;
+    using FklMultiply = fk::Mul<float, float, float, fk::UnaryType>;
+    using FklAccumulate = fk::Add<float, float, float, fk::UnaryType>;
+    // The timed call (whole_call and kernel_only): the whole frame. Everything in this lambda is inside the interval
+    const auto callFkl = [&] {
+        for (int i = 0; i < CROPS; ++i) {
+            const fk::Ptr2D<uchar3> crop = fkFrame.crop2D(fk::Rect(detections[i].x, detections[i].y, CROP_W, CROP_H));
+            const auto image = fk::PerThreadRead<fk::ND::_2D, uchar3>::build(crop).then(FklGrey::build());
+            const FklDetails details{CROP_W, CROP_H, BOX_W, BOX_H, ANCHOR_X, ANCHOR_Y};
+            const float n = static_cast<float>(details.kernelWidth * details.kernelHeight);
+            const auto coefficient = fk::ConstantFilterRead<float>::build(SCALE / n);
+            const fk::Ptr<fk::ND::_3D, float> plane = fkTensor.crop(fk::Point{0, 0, i}, fk::PtrDims<fk::ND::_3D>(CROP_W, CROP_H, 1));
+            const auto output = fk::Div<float>::build(255.f)
+                                    .then(fk::Sub<float>::build(0.45f))
+                                    .then(fk::Div<float>::build(0.225f))
+                                    .then(fk::PerThreadWrite<fk::ND::_3D, float>::build(plane));
+            if (!fk::executeLinearFilter(details, fk::make_tuple(image, coefficient), FklMultiply::build(), FklAccumulate::build(), output, fkStream)) {
+                throw std::runtime_error("fkl_loop: the details are not valid");
+            }
+        }
+    };
+    // (end of the timed call)
+    const auto fillFkl = [&] { FKLB_CUDA_CHECK(cudaMemset(fkTensor.ptr().data, 0xFF, VALUES * sizeof(float))); };
+    const auto downloadFkl = [&](std::vector<unsigned char>&, std::vector<unsigned char>&, std::vector<float>& tensor) {
+        FKLB_CUDA_CHECK(cudaMemcpy(tensor.data(), fkTensor.ptr().data, VALUES * sizeof(float), cudaMemcpyDeviceToHost));
+    };
+    rows.push_back({"fkl_loop", callFkl, fillFkl, downloadFkl, false});
+
     // ---- The profile mode: a warm-up call outside any range, then E19_PROFILE_CALLS calls, each in the range "<row>:call" inside "<row>"
     if (profile) {
         for (const Row& row : rows) {
@@ -528,8 +660,10 @@ int launch() {
             }
             if (dumpDir != nullptr) {
                 const std::string base = std::string(dumpDir) + "/" + row.version;
-                writeRaw(base + "_grey.u8", r.grey.data(), VALUES);
-                writeRaw(base + "_box.u8", r.box.data(), VALUES);
+                if (row.intermediates) {
+                    writeRaw(base + "_grey.u8", r.grey.data(), VALUES);
+                    writeRaw(base + "_box.u8", r.box.data(), VALUES);
+                }
                 writeRaw(base + "_tensor.f32", r.tensor.data(), VALUES * sizeof(float));
             }
             results.push_back(std::move(r));
@@ -549,7 +683,12 @@ int launch() {
         };
         const Result* resultOpenCV = nullptr;
         const Result* resultNpp = nullptr;
+        const Result* resultFkl = nullptr;
         for (const Result& r : results) {
+            if (r.version == "fkl_loop") {   // no grey or box image: checked below, against FKL's reference
+                resultFkl = &r;
+                continue;
+            }
             const bool isOpenCV = r.version == "opencv_cuda";
             (isOpenCV ? resultOpenCV : resultNpp) = &r;
             // grey: OpenCV's fixed point; for NPP every candidate rule, the one with the fewest differing values being its reference
@@ -604,6 +743,20 @@ int launch() {
             check("opencv_cuda", "grey", "npp", "their own grey images", VALUES, dGrey.differ, dGrey.maxAbs, "", "reported", true, false);
             check("opencv_cuda", "box", "npp", "their own box images", VALUES, dBox.differ, dBox.maxAbs, "", "reported", true, false);
             check("opencv_cuda", "float", "npp", "their own tensors", VALUES, 0, dFloat.maxAbs, std::to_string(dFloat.nonFinite), "reported", true, false);
+        }
+        // fkl_loop: its tensor against FKL's pipeline in double; then against the libraries' tensors (reported only)
+        if (resultFkl != nullptr) {
+            const DifferenceFloat f = compareToReference(resultFkl->tensor, fklReference(frame, detections), FKL_TOLERANCE);
+            check("fkl_loop", "float", "fkl_reference",
+                  "grey 0.299f R + 0.587f G + 0.114f B, box (1/9 in float) * sum of 9, (v / 255 - 0.45) / 0.225, all in double; differing = beyond 1e-5",
+                  VALUES, f.beyond, f.maxAbs, std::to_string(f.nonFinite), "largest difference at most 1e-5, every value finite",
+                  f.nonFinite == 0 && f.maxAbs <= FKL_TOLERANCE, true);
+            for (const Result* other : {resultOpenCV, resultNpp}) {
+                if (other == nullptr) continue;
+                const DifferenceFloat d = compareFloats(resultFkl->tensor, other->tensor);
+                check("fkl_loop", "float", other->version.c_str(), "their own tensors", VALUES, 0, d.maxAbs, std::to_string(d.nonFinite), "reported", true,
+                      false);
+            }
         }
         std::cout << (allOk ? "E19 batched box checks passed" : "E19 batched box CHECK FAILED") << std::endl;
     }

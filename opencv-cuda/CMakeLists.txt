@@ -94,10 +94,10 @@ if(TARGET e18_box_split_cu)
 endif()
 
 # E19, the batched grey box pipeline: 30 crops of one frame, each converted to grey, box filtered (3 x 3, REPLICATE) and converted to float into
-# one NCHW tensor; OpenCV-CUDA and NPP with a loop over the crops (neither has a batched call for these steps). NPP's grey conversion is in nppicc,
-# its box filter in nppif
+# one NCHW tensor; OpenCV-CUDA and NPP with a loop over the crops (neither has a batched call for these steps), and FKL with one fused call per
+# crop (its filter takes one image per call). NPP's grey conversion is in nppicc, its box filter in nppif
 fklb_add_benchmark(e19_batched_box
-    BACKENDS cu LIBS opencv npp
+    BACKENDS cu LIBS fkl opencv npp
     SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/stencil/e19_batched_box.cu")
 if(TARGET e19_batched_box_cu)
     target_link_libraries(e19_batched_box_cu PRIVATE CUDA::nppicc CUDA::nppif)
