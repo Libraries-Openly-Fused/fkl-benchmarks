@@ -1,0 +1,20 @@
+OpenCV's grey against (9798 R + 19235 G + 3735 B + 2^14) >> 15: 0 differing values (the run: 0)
+80 candidate rules against NPP's grey image (1,966,080 values); the 12 with the fewest differing values:
+        0  float: FMA chain, G * w, then FMA R, then FMA B; + 0.5f, truncated
+       64  float: FMA chain, G * w, then FMA B, then FMA R; + 0.5f, truncated
+       90  float: B * w + G * w rounded, then FMA R; + 0.5f, truncated
+       90  float: G * w + B * w rounded, then FMA R; + 0.5f, truncated
+       99  float: products and sums rounded, B + G + R; + 0.5f, truncated
+       99  float: products and sums rounded, G + B + R; + 0.5f, truncated
+      104  float: FMA chain, B * w, then FMA G, then FMA R; + 0.5f, truncated
+      115  float: products and sums rounded, B + R + G; + 0.5f, truncated
+      115  float: products and sums rounded, R + B + G; + 0.5f, truncated
+      118  float: G * w + R * w rounded, then FMA B; + 0.5f, truncated
+      118  float: R * w + G * w rounded, then FMA B; + 0.5f, truncated
+      119  float: FMA chain, B * w, then FMA R, then FMA G; + 0.5f, truncated
+NPP's value against the exact sum of the float weights: rounded up where the fraction is (counts by fraction band)
+  fraction in [0.0, 0.4999): 982550 values, 0 rounded up
+  fraction in [0.4999, 0.5): 414 values, 381 rounded up
+  fraction in [0.5, 0.5001): 1610 values, 1541 rounded up
+  fraction in [0.5001, 1.0): 981506 values, 981506 rounded up
+best float rule: float: FMA chain, G * w, then FMA R, then FMA B; + 0.5f, truncated; best fixed rule: fixed: (156762 R + 307757 G + 59769 B + 2^18) >> 19
