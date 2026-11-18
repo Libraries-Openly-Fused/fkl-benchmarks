@@ -1,0 +1,51 @@
+2651 kernels, 0 memsets, 3 memcpys, 9292 runtime API calls in the trace
+
+fkl_loop: 10 calls in the ranges 'fkl_loop:call'
+  kernels per call: [30] (per crop: [1.0]); memsets per call: [0]; memcpys per call: [0]
+  kernels by name, per call (the same in every call):
+      30  linearFilterDPPKernel
+  runtime API calls by name, per call (the same in every call):
+      30  cuKernelGetName
+      30  cudaLaunchKernel_v7000
+  host, the call's range (the enqueue of one call), us: median 93.0, min 91.6, max 106.7
+  GPU, first kernel start to last kernel end, us: median 91.6, min 90.3, max 105.5
+  GPU, sum of the kernel durations, us: median 62.4, min 62.3, max 62.5
+
+fkl_batch: 10 calls in the ranges 'fkl_batch:call'
+  kernels per call: [1] (per crop: [0.03333333333333333]); memsets per call: [0]; memcpys per call: [0]
+  kernels by name, per call (the same in every call):
+       1  morphologyDPPKernel
+  runtime API calls by name, per call (the same in every call):
+       1  cuKernelGetName
+       1  cudaLaunchKernel_v7000
+  host, the call's range (the enqueue of one call), us: median 4.1, min 4.0, max 5.3
+  GPU, first kernel start to last kernel end, us: median 21.0, min 20.8, max 21.5
+  GPU, sum of the kernel durations, us: median 21.0, min 20.8, max 21.5
+
+opencv_cuda: 10 calls in the ranges 'opencv_cuda:call'
+  kernels per call: [120] (per crop: [4.0]); memsets per call: [0]; memcpys per call: [0]
+  kernels by name, per call (the same in every call):
+      30  ForEachLargeTupleByteQuadInLargeImage
+      30  copy
+      30  transformSimple
+      30  transformSmart
+  runtime API calls by name, per call (the same in every call):
+     120  cuKernelGetName
+     120  cudaLaunchKernel_v7000
+      30  cudaGetDeviceProperties_v12000
+  host, the call's range (the enqueue of one call), us: median 401.8, min 397.9, max 412.0
+  GPU, first kernel start to last kernel end, us: median 399.7, min 395.6, max 409.5
+  GPU, sum of the kernel durations, us: median 178.0, min 177.8, max 178.2
+
+npp: 10 calls in the ranges 'npp:call'
+  kernels per call: [90] (per crop: [3.0]); memsets per call: [0]; memcpys per call: [0]
+  kernels by name, per call (the same in every call):
+      30  ForEachLargeTupleByteQuadInLargeImage
+      30  ForEachPixelByteInLargeImage
+      30  ForEachTupleDWordInLargeImage
+  runtime API calls by name, per call (the same in every call):
+      90  cuKernelGetName
+      90  cudaLaunchKernel_v7000
+  host, the call's range (the enqueue of one call), us: median 276.5, min 271.7, max 303.9
+  GPU, first kernel start to last kernel end, us: median 275.2, min 270.3, max 300.8
+  GPU, sum of the kernel durations, us: median 177.4, min 177.1, max 177.6

@@ -1,0 +1,9 @@
+whole_call:fkl_loop: 3030 kernels in the range; per call (101 calls) 30.00; names [('linearFilterDPPKernel', 3030)]
+kernel_only:fkl_loop: 100 timed calls behind a spin; kernels per call [30]; covered 100 of 100; margin (spin end - return of the last launch) min 4900.3 us, median 4909.8 us; GPU gap spin end -> first kernel max 5.89 us, median 1.98 us; between the kernels of a call max 0.77 us, median 0.70 us
+whole_call:fkl_batch: 101 kernels in the range; per call (101 calls) 1.00; names [('morphologyDPPKernel', 101)]
+kernel_only:fkl_batch: 100 timed calls behind a spin; kernels per call [1]; covered 100 of 100; margin (spin end - return of the last launch) min 4987.7 us, median 4996.5 us; GPU gap spin end -> first kernel max 2.75 us, median 2.02 us; one kernel per call
+whole_call:opencv_cuda: 12120 kernels in the range; per call (101 calls) 120.00; names [('ForEachLargeTupleByteQuadInLargeImage', 3030), ('copy', 3030), ('transformSimple', 3030), ('transformSmart', 3030)]
+kernel_only:opencv_cuda: 100 timed calls behind a spin; kernels per call [120]; covered 100 of 100; margin (spin end - return of the last launch) min 4568.9 us, median 4602.8 us; GPU gap spin end -> first kernel max 2.94 us, median 2.08 us; between the kernels of a call max 1.12 us, median 0.74 us
+whole_call:npp: 9090 kernels in the range; per call (101 calls) 90.00; names [('ForEachLargeTupleByteQuadInLargeImage', 3030), ('ForEachPixelByteInLargeImage', 3030), ('ForEachTupleDWordInLargeImage', 3030)]
+kernel_only:npp: 100 timed calls behind a spin; kernels per call [90]; covered 100 of 100; margin (spin end - return of the last launch) min 4465.6 us, median 4734.2 us; GPU gap spin end -> first kernel max 2.69 us, median 1.95 us; between the kernels of a call max 0.80 us, median 0.67 us
+texture, array or surface API calls in the whole trace: 0 {}

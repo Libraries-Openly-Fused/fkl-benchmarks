@@ -1,0 +1,33 @@
+quiet runs: quiet-run1, quiet-run2, quiet-run3; every value is the mean of 100 calls of one frame (30 crops), in us
+whole_call:
+  fkl_loop: median 74.32 (min 74.23, max 74.34; runs 74.32 / 74.34 / 74.23); spread 0.14 %
+  fkl_batch: median 22.11 (min 22.07, max 22.11; runs 22.11 / 22.11 / 22.07); spread 0.19 %
+  opencv_cuda: median 239.12 (min 238.54, max 240.86; runs 239.12 / 240.86 / 238.54); spread 0.97 %
+  npp: median 214.17 (min 214.15, max 214.84; runs 214.15 / 214.84 / 214.17); spread 0.32 %
+  fkl_batch / fkl_loop: median 0.297 (min 0.297, max 0.298; runs 0.298 / 0.297 / 0.297)
+  opencv_cuda / fkl_loop: median 3.218 (min 3.213, max 3.240; runs 3.218 / 3.240 / 3.213)
+  npp / fkl_loop: median 2.885 (min 2.882, max 2.890; runs 2.882 / 2.890 / 2.885)
+  fkl_loop / fkl_batch: median 3.362 (min 3.361, max 3.363; runs 3.361 / 3.362 / 3.363)
+  opencv_cuda / fkl_batch: median 10.813 (min 10.808, max 10.894; runs 10.813 / 10.894 / 10.808)
+  npp / fkl_batch: median 9.704 (min 9.684, max 9.717; runs 9.684 / 9.717 / 9.704)
+kernel_only:
+  fkl_loop: median 73.61 (min 73.58, max 73.86; runs 73.86 / 73.58 / 73.61); spread 0.39 %
+  fkl_batch: median 21.83 (min 21.83, max 21.85; runs 21.83 / 21.85 / 21.83); spread 0.09 %
+  opencv_cuda: median 237.64 (min 237.63, max 237.70; runs 237.64 / 237.63 / 237.70); spread 0.03 %
+  npp: median 212.17 (min 212.14, max 212.41; runs 212.14 / 212.41 / 212.17); spread 0.13 %
+  fkl_batch / fkl_loop: median 0.297 (min 0.296, max 0.297; runs 0.296 / 0.297 / 0.297)
+  opencv_cuda / fkl_loop: median 3.229 (min 3.217, max 3.230; runs 3.217 / 3.230 / 3.229)
+  npp / fkl_loop: median 2.882 (min 2.872, max 2.887; runs 2.872 / 2.887 / 2.882)
+  fkl_loop / fkl_batch: median 3.373 (min 3.368, max 3.383; runs 3.383 / 3.368 / 3.373)
+  opencv_cuda / fkl_batch: median 10.884 (min 10.877, max 10.890; runs 10.884 / 10.877 / 10.890)
+  npp / fkl_batch: median 9.721 (min 9.716, max 9.723; runs 9.716 / 9.723 / 9.721)
+whole_call / kernel_only per row (medians): fkl_loop 1.0096; fkl_batch 1.0126; opencv_cuda 1.0062; npp 1.0095
+warmup (not used): fkl_loop whole_call 77.91; fkl_batch whole_call 22.03; opencv_cuda whole_call 239.01; npp whole_call 214.05; fkl_loop kernel_only 74.40; fkl_batch kernel_only 21.82; opencv_cuda kernel_only 238.00; npp kernel_only 212.43
+nsys (not used): fkl_loop whole_call 100.07; fkl_batch whole_call 24.56; opencv_cuda whole_call 403.11; npp whole_call 270.72; fkl_loop kernel_only 83.40; fkl_batch kernel_only 23.19; opencv_cuda kernel_only 262.63; npp kernel_only 231.49
+repeats against results/rtx4090/e19-batched-box/e19_batched_box_summary.csv: old median / new median / change / spread old, new / exceeds the larger spread? / ranges overlap? / above 3 %? / bound
+  fkl_loop whole_call: 74.29 / 74.32 us / +0.03 % / 0.22 %, 0.14 % / within the spread / overlap / below 3 % / GPU-bound
+  opencv_cuda whole_call: 239.48 / 239.12 us / -0.15 % / 0.21 %, 0.97 % / within the spread / overlap / below 3 % / GPU-bound
+  npp whole_call: 214.84 / 214.17 us / -0.31 % / 1.43 %, 0.32 % / within the spread / overlap / below 3 % / GPU-bound
+  fkl_loop kernel_only: 73.57 / 73.61 us / +0.06 % / 0.46 %, 0.39 % / within the spread / overlap / below 3 % / GPU-bound
+  opencv_cuda kernel_only: 237.64 / 237.64 us / +0.00 % / 0.11 %, 0.03 % / within the spread / overlap / below 3 % / GPU-bound
+  npp kernel_only: 212.10 / 212.17 us / +0.03 % / 0.11 %, 0.13 % / within the spread / overlap / below 3 % / GPU-bound
