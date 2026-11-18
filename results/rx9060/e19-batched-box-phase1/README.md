@@ -38,8 +38,14 @@ Exit 0. One warm-up call of each row, then three calls, each in a ROCTx range. `
 |---|---|---|
 | `fkl_loop` | 30 x `fk::linearFilterDPPKernel` | 256 x 256 x 1, 16 x 8 x 1 (16 x 32 blocks) each |
 | `fkl_batch` | 1 x `fk::morphologyDPPKernel` | **256 x 256 x 30**, 16 x 8 x 1 (16 x 32 x 30 blocks: one grid plane per crop) |
-| `rpp` | 30 x `__amd_rocclr_copyBufferRectAligned` (the 30 `hipMemcpy2DAsync`), then `color_to_greyscale_pkd3_pln1_hip_tensor`, `box_filter_3x3_pln_hip_tensor`, `crop_mirror_normalize_pln_hip_tensor` | copies 48 x 256 x 1, 16 x 16; RPP's three 32 x 256 x 30, 48 x 304 x 30 and 32 x 256 x 30 |
+| `rpp` | 30 x `__amd_rocclr_copyBufferRectAligned` (the 30 `hipMemcpy2DAsync`), then `color_to_greyscale_pkd3_pln1_hip_tensor`, `box_filter_3x3_pln_hip_tensor`, `crop_mirror_normalize_pln_hip_tensor` | copies 48 x 256 x 1 or 192 x 256 x 1 (below), 16 x 16; RPP's three 32 x 256 x 30, 48 x 304 x 30 and 32 x 256 x 30 |
 
 - **The copies are blit kernels.** HIP runs the 30 device-to-device `hipMemcpy2DAsync` as blit kernels; the memory-copy trace has no record of them as SDMA copies.
+- **The copy grids** (the 120 traced copies: 4 calls x 30 crops, by launch order) take two forms, 60 each, the same crops in every call:
+  - the crops of even columns (i mod 6 = 0, 2, 4; x = 64, 1264, 2464) get 48 x 256 x 1;
+  - the crops of odd columns (x = 664, 1864, 3064) get 192 x 256 x 1.
+  - A crop's source address in RPP's frame is `(y * 3840 + x) * 3` bytes from the frame's start. That is a multiple of 16 for the even columns and 8 modulo 16 for the odd ones. Every destination (`i * 196,608` bytes into the batch) is a multiple of 256.
+  - A row is 768 bytes, so 48 work-items per row would move 16 bytes each and 192 would move 4 bytes each. This is an observation; the cause, in HIP's choice of the blit's element size, was not checked.
+
 - **No allocations inside a call.** In no row does a call allocate, free or memset anything.
 - **The same in every call:** every row's three profiled calls launch the same kernels.
