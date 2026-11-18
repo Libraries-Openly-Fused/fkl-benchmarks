@@ -91,7 +91,7 @@
 // E19_DUMP=<folder>: the checks also write each row's grey images, box images and tensor there as raw bytes (crop by crop, row by row, 256
 // values per row; the tensor as float32), so that another rounding rule can be tested without another run.
 //
-// The timing (e19_batched_box.csv): two intervals per row, in the order opencv_cuda, npp, fkl_loop, the same in every run. Both hold the whole frame
+// The timing (e19_batched_box.csv): two intervals per row, in the order fkl_loop, opencv_cuda, npp, the same in every run. Both hold the whole frame
 // (the 30 crops):
 //   whole_call   fklb::timeIt (common/cuda_timing.h): CUDA events around one call, 100 calls after one warm-up call (E4's and E18's
 //                interval). When the GPU waits for the host, the interval holds the host's work too
@@ -462,11 +462,29 @@ int launch() {
     // The detections of the frame, the input of every call: every call reads the 30 positions from this table and builds every ROI and every
     // crop pointer from them, as it would for a new layout on every frame
     const std::vector<Detection> detections = detectionsOfTheFrame();
+    // ---- The checks' host references, computed before the first GPU call: they depend on the frame and the detections only. Built here,
+    // they do not leave the GPU idle between the checked calls and the timing (the first timed row follows the checks)
+    const std::vector<GreyRule> allGreyRules = {GreyRule::FIXED15_NEAREST,    GreyRule::EXACT_TRUNC,    GreyRule::EXACT_NEAREST,
+                                                GreyRule::FLOAT_EVAL_TRUNC,   GreyRule::FLOAT_EVAL_NEAREST, GreyRule::FIXED8_NEAREST,
+                                                GreyRule::FMA_GRB_NEAREST};
+    std::vector<std::vector<unsigned char>> greyReferences;   // the grey reference of each rule of allGreyRules
+    std::vector<std::vector<int>> greyReferenceSums;          // the box sums of each of them
+    std::vector<double> fklRef;                               // fkl_loop's reference
+    if (!profile) {
+        for (const GreyRule rule : allGreyRules) {
+            greyReferences.push_back(greyReference(frame, detections, rule));
+            greyReferenceSums.push_back(boxSums(greyReferences.back()));
+        }
+        fklRef = fklReference(frame, detections);
+    }
+    const auto referenceOf = [&](const GreyRule rule) {
+        return static_cast<size_t>(std::find(allGreyRules.begin(), allGreyRules.end(), rule) - allGreyRules.begin());
+    };
     cudaStream_t cs;
     FKLB_CUDA_CHECK(cudaStreamCreate(&cs));
     const unsigned long long spinNs = 1000ull * spinUs();
     const auto spin = [&] { gpuSpin<<<1, 1, 0, cs>>>(spinNs); };
-    // The rows, in the order in which they are checked and timed (the same in every run)
+    // The rows (put in the order of the checks and of the timing after the last one)
     std::vector<Row> rows;
 
     // ---- OpenCV-CUDA
@@ -621,6 +639,20 @@ int launch() {
     };
     rows.push_back({"fkl_loop", callFkl, fillFkl, downloadFkl, false});
 
+    // The order of the checks and of the timing, the same in every run: fkl_loop, opencv_cuda, npp. The first row timed after the checks can
+    // start at a lower SM clock (in E18's windows it ran at 2,550 MHz), so that row is FKL's, not a baseline's
+    {
+        const std::vector<std::string> order = {"fkl_loop", "opencv_cuda", "npp"};
+        std::vector<Row> ordered;
+        for (const std::string& version : order) {
+            for (const Row& row : rows) {
+                if (row.version == version) ordered.push_back(row);
+            }
+        }
+        if (ordered.size() != rows.size()) throw std::runtime_error("the row order does not name every row");
+        rows = std::move(ordered);
+    }
+
     // ---- The profile mode: a warm-up call outside any range, then E19_PROFILE_CALLS calls, each in the range "<row>:call" inside "<row>"
     if (profile) {
         for (const Row& row : rows) {
@@ -711,12 +743,12 @@ int launch() {
                 isOpenCV ? std::vector<GreyRule>{GreyRule::FIXED15_NEAREST}
                          : std::vector<GreyRule>{GreyRule::EXACT_TRUNC, GreyRule::EXACT_NEAREST, GreyRule::FLOAT_EVAL_TRUNC, GreyRule::FLOAT_EVAL_NEAREST,
                                                  GreyRule::FIXED8_NEAREST, GreyRule::FIXED15_NEAREST, GreyRule::FMA_GRB_NEAREST};
-            std::vector<std::vector<unsigned char>> greyRefs;
+            std::vector<size_t> greyRefs;   // indices into greyReferences
             std::vector<Difference8u> greyDiffs;
             size_t best = 0;
             for (size_t k = 0; k < rules.size(); ++k) {
-                greyRefs.push_back(greyReference(frame, detections, rules[k]));
-                greyDiffs.push_back(compare8u(r.grey, greyRefs.back()));
+                greyRefs.push_back(referenceOf(rules[k]));
+                greyDiffs.push_back(compare8u(r.grey, greyReferences[greyRefs.back()]));
                 if (greyDiffs[k].differ < greyDiffs[best].differ) best = k;
             }
             for (size_t k = 0; k < rules.size(); ++k) {
@@ -725,7 +757,7 @@ int launch() {
                       chosen ? (isOpenCV ? "0 differing values" : "0 differing values (the rule with the fewest: the reference)") : "reported",
                       !chosen || greyDiffs[k].differ == 0, chosen);
             }
-            const std::vector<unsigned char>& greyRef = greyRefs[best];
+            const size_t greyRef = greyRefs[best];
             // box: against the box of its own grey images, truncated and rounded; the rule with 0 differing values is its rounding
             const std::vector<int> ownSums = boxSums(r.grey);
             const std::vector<unsigned char> ownTrunc = boxRounded(ownSums, true), ownNearest = boxRounded(ownSums, false);
@@ -736,7 +768,7 @@ int launch() {
             check(r.version, "box", "box_of_own_grey", "nearest of sum / 9", VALUES, dNearest.differ, dNearest.maxAbs, "",
                   "0 differing values for one of the two rules", truncates || rounds, true);
             // the reference pipeline: the box, with the library's rounding (truncation when neither rule fits), of the reference grey
-            const std::vector<unsigned char> refBox = boxRounded(boxSums(greyRef), !rounds);
+            const std::vector<unsigned char> refBox = boxRounded(greyReferenceSums[greyRef], !rounds);
             const Difference8u dRefBox = compare8u(r.box, refBox);
             check(r.version, "box", "box_of_reference_grey", rounds ? "nearest of sum / 9" : "floor(sum / 9)", VALUES, dRefBox.differ, dRefBox.maxAbs, "",
                   "reported", true, false);
@@ -761,7 +793,7 @@ int launch() {
         }
         // fkl_loop: its tensor against FKL's pipeline in double; then against the libraries' tensors (reported only)
         if (resultFkl != nullptr) {
-            const DifferenceFloat f = compareToReference(resultFkl->tensor, fklReference(frame, detections), FKL_TOLERANCE);
+            const DifferenceFloat f = compareToReference(resultFkl->tensor, fklRef, FKL_TOLERANCE);
             check("fkl_loop", "float", "fkl_reference",
                   "grey nearbyint(fma(0.114f, B, fma(0.299f, R, 0.587f G))), box (1/9 in float) * sum of 9 in double, (v / 255 - 0.45) / 0.225 in "
                   "double; differing = beyond 1e-5",
