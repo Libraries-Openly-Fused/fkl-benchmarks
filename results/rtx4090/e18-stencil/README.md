@@ -1,5 +1,7 @@
 # E18 window (e18-stencil), 2026-11-09, 13:58:00-13:58:31: the stencil after a resize, timed (RTX 4090)
 
+**Note, 2026-11-25:** `e18_stencil_cu` was timed again at FKL 24478f0 (A) and at the pin b10fc66 (B), the merge of FKL #433 that changes `linearFilterDPPKernel`, in `../e18-retime-b10fc66/` (24 runs, the binaries of #60's identity check). This record's numbers are unchanged. (This record was measured at 1da77899, whose device code equals 24478f0's.) B against A, same window: the FKL rows -0.16 % to +2.25 %, `opencv_cuda` and `npp` 0.00 % to +0.46 %; no number crosses the 3 % flag. Against this record, the first row timed, `fkl_stencil_asym`, is flagged on both sides (+3.2 % to +6.8 %); this record ran its quiet runs back to back and that window waited before each, and its one run without a wait gave this record's values (see there).
+
 This window timed E18 (`opencv-cuda/stencil/e18_stencil.cu` at bd5900d, branch `stencil-experiment`): FKL's LinearFilterDPP in one kernel against OpenCV-CUDA and NPP, one call per step.
 - **The chain:** a 3840 x 2160 8UC3 frame (E4's seeded source) is cropped to 2560 x 1440 at (640, 360), converted to float, resized bilinearly to 1920 x 1080, sharpened with the 3 x 3 kernel 0 -1 0 / -1 5 -1 / 0 -1 0 (border REPLICATE), and converted to 8UC3 with saturation, ties to even.
 - **The implementations:** they are listed in the header comment of the program. The record of phase 1 (the agreement, the checks of FKL's path, the kernel counts and metrics) is `../e18-stencil-phase1/`.

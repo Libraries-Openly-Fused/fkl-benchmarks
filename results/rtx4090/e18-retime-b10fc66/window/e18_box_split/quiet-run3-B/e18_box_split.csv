@@ -1,0 +1,32 @@
+# experiment: E18 box split: whole-call and kernel-only times
+# repo: fkl-benchmarks unknown
+# fkl: b10fc6609426bd18020b9213c7196b528fc677a8
+# cvGPUSpeedup: 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c
+# FastNPP: a1b5e245d7dd70fba23dcb51a0aea80495dbc61d
+# nvcc: 13.4.92 (/home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/nvcc), architectures 89, -fmad on, -lineinfo on
+# hip: none (none), architectures none
+# host compiler: GNU 15.2.0, Release, -march=native, -ftemplate-depth=1000
+# opencv: 4.14.0
+# cpu: AMD Ryzen 9 5950X 16-Core Processor
+# os: Ubuntu 26.04.1 LTS
+# kernel: Linux 7.0.0-43-generic
+# gpu: NVIDIA GeForce RTX 4090, cc 8.9, 128 SMs, 24106 MiB, PCI 0000:09:00.0
+# cuda driver api: 13.3, cuda runtime: 13.4
+# nvidia-smi driver: 610.43.02
+# clocks (sm, mem, max sm, max mem, MHz): 2550 MHz, 10251 MHz, 3105 MHz, 10501 MHz
+# power limit, temperature at start: 450.00 W, 46
+version,sampling,interval,mean_ms,min_ms,host_prepare_mean_ms,host_prepare_min_ms,iterations,spin_us
+fkl_box_asym,ASYMMETRIC,whole_call,0.0436771198,0.0423359983,,,100,
+fkl_box_asym,ASYMMETRIC,kernel_only,0.0425836799,0.040959999,0.0001419,0.00011,100,5000
+fkl_trunc_halfpixel,HALF_PIXEL,whole_call,0.0395731195,0.0389119983,,,100,
+fkl_trunc_halfpixel,HALF_PIXEL,kernel_only,0.040844159,0.0399359986,0.0001429,0.00012,100,5000
+npp,HALF_PIXEL,whole_call,0.03329472,0.0327679999,,,100,
+npp,HALF_PIXEL,kernel_only,0.0339267207,0.0337920003,3.91e-05,2e-05,100,5000
+npp_resize,HALF_PIXEL,whole_call,0.0123731203,0.0112640001,,,100,
+npp_resize,HALF_PIXEL,kernel_only,0.0122896004,0.0122880004,3.87e-05,2e-05,100,5000
+fkl_resize,HALF_PIXEL,whole_call,0.0145283201,0.0141759999,,,100,
+fkl_resize,HALF_PIXEL,kernel_only,0.0146639999,0.0143360002,0.0001014,8e-05,100,5000
+npp_box,none,whole_call,0.0230259202,0.0225280002,,,100,
+npp_box,none,kernel_only,0.0235520005,0.0235520005,3.88e-05,2e-05,100,5000
+fkl_box,none,whole_call,0.0311689595,0.0307199992,,,100,
+fkl_box,none,kernel_only,0.0317683198,0.0317439996,5.48e-05,4e-05,100,5000

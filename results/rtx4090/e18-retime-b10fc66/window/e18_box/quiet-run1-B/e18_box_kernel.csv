@@ -1,0 +1,22 @@
+# experiment: E18 box: the fused kernels (cudaFuncGetAttributes, cudaOccupancyMaxActiveBlocksPerMultiprocessor)
+# repo: fkl-benchmarks unknown
+# fkl: b10fc6609426bd18020b9213c7196b528fc677a8
+# cvGPUSpeedup: 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c
+# FastNPP: a1b5e245d7dd70fba23dcb51a0aea80495dbc61d
+# nvcc: 13.4.92 (/home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/nvcc), architectures 89, -fmad on, -lineinfo on
+# hip: none (none), architectures none
+# host compiler: GNU 15.2.0, Release, -march=native, -ftemplate-depth=1000
+# opencv: 4.14.0
+# cpu: AMD Ryzen 9 5950X 16-Core Processor
+# os: Ubuntu 26.04.1 LTS
+# kernel: Linux 7.0.0-43-generic
+# gpu: NVIDIA GeForce RTX 4090, cc 8.9, 128 SMs, 24106 MiB, PCI 0000:09:00.0
+# cuda driver api: 13.3, cuda runtime: 13.4
+# nvidia-smi driver: 610.43.02
+# clocks (sm, mem, max sm, max mem, MHz): 2685 MHz, 10251 MHz, 3105 MHz, 10501 MHz
+# power limit, temperature at start: 450.00 W, 44
+version,registers,shared_static_bytes,local_bytes,const_user_bytes,block_threads,blocks_per_sm,warps_per_sm,max_warps_per_sm,theoretical_occupancy_pct,arg_details_bytes,arg_reads_bytes,arg_image_bytes,arg_coefficient_bytes,arg_multiply_bytes,arg_accumulate_bytes,arg_output_bytes,arg_total_bytes
+fkl_box_asym,40,4284,0,0,128,12,48,48,100,16,64,48,12,1,1,24,106
+fkl_box_halfpixel,40,4284,0,0,128,12,48,48,100,16,64,48,12,1,1,24,106
+fkl_trunc_asym,40,4284,0,0,128,12,48,48,100,16,64,48,12,1,1,40,122
+fkl_trunc_halfpixel,40,4284,0,0,128,12,48,48,100,16,64,48,12,1,1,40,122
