@@ -1,0 +1,26 @@
+# experiment: E19 batched box: whole-call and kernel-only times of one frame (110 crops)
+# repo: fkl-benchmarks 246b1c8c9267b850bb3aa19c904172eb8f6ffad8
+# fkl: 24478f0aa11dc3f12feea83178f7fde828322fb0
+# cvGPUSpeedup: 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c
+# FastNPP: a1b5e245d7dd70fba23dcb51a0aea80495dbc61d
+# nvcc: 13.4.92 (/home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/nvcc), architectures 89, -fmad on, -lineinfo on
+# hip: none (none), architectures none
+# host compiler: GNU 15.2.0, Release, -march=native, -ftemplate-depth=1000
+# opencv: 4.14.0
+# cpu: AMD Ryzen 9 5950X 16-Core Processor
+# os: Ubuntu 26.04.1 LTS
+# kernel: Linux 7.0.0-43-generic
+# gpu: NVIDIA GeForce RTX 4090, cc 8.9, 128 SMs, 24106 MiB, PCI 0000:09:00.0
+# cuda driver api: 13.3, cuda runtime: 13.4
+# nvidia-smi driver: 610.43.02
+# clocks (sm, mem, max sm, max mem, MHz): 2550 MHz, 10251 MHz, 3105 MHz, 10501 MHz
+# power limit, temperature at start: 450.00 W, 47
+crops,version,interval,mean_ms,min_ms,iterations,spin_us
+110,fkl_loop,whole_call,0.28431072,0.282815993,100,
+110,fkl_loop,kernel_only,0.274160951,0.272383988,100,5000
+110,fkl_batch,whole_call,0.071408321,0.0706560016,100,
+110,fkl_batch,kernel_only,0.0710048009,0.0706560016,100,5000
+110,opencv_cuda,whole_call,0.889328637,0.886784017,100,
+110,opencv_cuda,kernel_only,0.882886072,0.88063997,100,5000
+110,npp,whole_call,0.792159044,0.789824009,100,
+110,npp,kernel_only,0.791869445,0.789888024,100,5000
