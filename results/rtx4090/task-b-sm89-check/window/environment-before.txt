@@ -1,0 +1,66 @@
+2026-11-24T21:50:01+01:00
+0.11 0.50 1.01 3/1144 107480
+    PID %CPU PSR COMMAND         COMMAND
+ 107195  4.8  12 window-checks.s /bin/bash /home/oscar/tfkl-bench/worktrees/fkl-benchmarks-task-b/results/rtx4090/task-b-sm89-check/window-checks.sh
+   7844  1.7   5 localsearch-3   /usr/libexec/localsearch-3
+   9312  0.8   6 ptyxis          /usr/bin/ptyxis --gapplication-service
+   9594  0.4  16 claude          claude --resume
+   9705  0.4  27 claude          claude --resume
+ 107190  0.2   7 localsearch-ext /usr/libexec/localsearch-extractor-3 --socket-fd 3
+   9459  0.2  16 claude          claude --resume
+   7485  0.1   0 gnome-shell     /usr/bin/gnome-shell --mode=ubuntu
+   3037  0.1   1 hermes          /home/oscar/.hermes/hermes-agent/venv/bin/python -m hermes_cli.main gateway run
+   1592  0.1   3 nvidia-modeset/ [nvidia-modeset/kthread_q]
+   7860  0.0   7 dropbox         /home/oscar/.dropbox-dist/dropbox-lnx.x86_64-278.4.4020/dropbox
+   2409  0.0   5 wpa_supplicant  /usr/sbin/wpa_supplicant -u -s -O DIR=/run/wpa_supplicant GROUP=netdev
+   7442  0.0  18 gnome-remote-de /usr/libexec/gnome-remote-desktop-daemon
+    743  0.0   7 systemd-oomd    /usr/lib/systemd/systemd-oomd
+   2378  0.0   5 NetworkManager  /usr/sbin/NetworkManager --no-daemon
+compute contexts on the RTX 4090: 9312, /usr/bin/ptyxis;
+/home/oscar/tfkl-bench/worktrees/fkl-benchmarks-task-b 724cdfc6a121f6fe5d9e32427e81a65c4b81483f
+/home/oscar/tfkl-bench/worktrees/fkl-benchmarks-task-b/external/fkl 24478f0aa11dc3f12feea83178f7fde828322fb0
+/home/oscar/tfkl-bench/worktrees/fkl-benchmarks-task-b/external/FastNPP a1b5e245d7dd70fba23dcb51a0aea80495dbc61d
+/home/oscar/tfkl-bench/worktrees/fkl-benchmarks-task-b/external/cvGPUSpeedup 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c
+/home/oscar/tfkl-bench/worktrees/fkl-benchmarks-task-b/external/fkl/thread-pool 27e733f50f7f40f171fd84655e05d5acf1fdfbee
+/home/oscar/tfkl-bench/worktrees/fkl-benchmarks-task-b-after b4fb59487e8f3cc7077bc9576e413080dddd2512
+ M external/fkl
+ M opencv-cuda/stencil/e18_box.cu
+ M opencv-cuda/stencil/e18_box_split.cu
+ M opencv-cuda/stencil/e18_stencil.cu
+ M opencv-cuda/stencil/e19_batched_box.cu
+ M opencv-cuda/stencil/e19_crop_sweep.cu
+/home/oscar/tfkl-bench/worktrees/fkl-benchmarks-task-b-after/external/fkl 4b11bc6892a79d9481406da7903138ca567e2c6a
+/home/oscar/tfkl-bench/worktrees/fkl-pr433-base-24478f0 24478f0aa11dc3f12feea83178f7fde828322fb0
+/home/oscar/tfkl-bench/worktrees/fkl-pr433-4b11bc6 4b11bc6892a79d9481406da7903138ca567e2c6a
+libraries of e19_crop_sweep_cu (before):
+	libcudart.so.13 => /home/oscar/tfkl-bench/toolchains/cuda-13.4.3/lib64/libcudart.so.13 (0x0000735fc9e00000)
+	libnppicc.so.13 => /home/oscar/tfkl-bench/toolchains/cuda-13.4.3/lib64/libnppicc.so.13 (0x0000735fc5600000)
+	libnppif.so.13 => /home/oscar/tfkl-bench/toolchains/cuda-13.4.3/lib64/libnppif.so.13 (0x0000735fbe400000)
+	libopencv_cudaimgproc.so.414 => /home/oscar/tfkl-bench/deps/opencv-4.14-cuda13.4/install/lib/libopencv_cudaimgproc.so.414 (0x0000735fbdc00000)
+	libopencv_cudafilters.so.414 => /home/oscar/tfkl-bench/deps/opencv-4.14-cuda13.4/install/lib/libopencv_cudafilters.so.414 (0x0000735fb9600000)
+	libopencv_core.so.414 => /home/oscar/tfkl-bench/deps/opencv-4.14-cuda13.4/install/lib/libopencv_core.so.414 (0x0000735fb8400000)
+	libnppidei.so.13 => /home/oscar/tfkl-bench/toolchains/cuda-13.4.3/lib64/libnppidei.so.13 (0x0000735fb3200000)
+	libnppc.so.13 => /home/oscar/tfkl-bench/toolchains/cuda-13.4.3/lib64/libnppc.so.13 (0x0000735fb2600000)
+	libnppial.so.13 => /home/oscar/tfkl-bench/toolchains/cuda-13.4.3/lib64/libnppial.so.13 (0x0000735fb0e00000)
+	libnppist.so.13 => /home/oscar/tfkl-bench/toolchains/cuda-13.4.3/lib64/libnppist.so.13 (0x0000735fae400000)
+	libopencv_cudaarithm.so.414 => /home/oscar/tfkl-bench/deps/opencv-4.14-cuda13.4/install/lib/libopencv_cudaarithm.so.414 (0x0000735fac200000)
+	libopencv_imgproc.so.414 => /home/oscar/tfkl-bench/deps/opencv-4.14-cuda13.4/install/lib/libopencv_imgproc.so.414 (0x0000735faa400000)
+	libnppim.so.13 => /home/oscar/tfkl-bench/toolchains/cuda-13.4.3/lib64/libnppim.so.13 (0x0000735fa6400000)
+	libnppig.so.13 => /home/oscar/tfkl-bench/toolchains/cuda-13.4.3/lib64/libnppig.so.13 (0x0000735fa3c00000)
+	libnppitc.so.13 => /home/oscar/tfkl-bench/toolchains/cuda-13.4.3/lib64/libnppitc.so.13 (0x0000735fa0e00000)
+libraries of e19_crop_sweep_cu (after):
+	libcudart.so.13 => /home/oscar/tfkl-bench/toolchains/cuda-13.4.3/lib64/libcudart.so.13 (0x00007bc8db000000)
+	libnppicc.so.13 => /home/oscar/tfkl-bench/toolchains/cuda-13.4.3/lib64/libnppicc.so.13 (0x00007bc8d6800000)
+	libnppif.so.13 => /home/oscar/tfkl-bench/toolchains/cuda-13.4.3/lib64/libnppif.so.13 (0x00007bc8cf600000)
+	libopencv_cudaimgproc.so.414 => /home/oscar/tfkl-bench/deps/opencv-4.14-cuda13.4/install/lib/libopencv_cudaimgproc.so.414 (0x00007bc8cee00000)
+	libopencv_cudafilters.so.414 => /home/oscar/tfkl-bench/deps/opencv-4.14-cuda13.4/install/lib/libopencv_cudafilters.so.414 (0x00007bc8ca800000)
+	libopencv_core.so.414 => /home/oscar/tfkl-bench/deps/opencv-4.14-cuda13.4/install/lib/libopencv_core.so.414 (0x00007bc8c9600000)
+	libnppidei.so.13 => /home/oscar/tfkl-bench/toolchains/cuda-13.4.3/lib64/libnppidei.so.13 (0x00007bc8c4400000)
+	libnppc.so.13 => /home/oscar/tfkl-bench/toolchains/cuda-13.4.3/lib64/libnppc.so.13 (0x00007bc8c3800000)
+	libnppial.so.13 => /home/oscar/tfkl-bench/toolchains/cuda-13.4.3/lib64/libnppial.so.13 (0x00007bc8c2000000)
+	libnppist.so.13 => /home/oscar/tfkl-bench/toolchains/cuda-13.4.3/lib64/libnppist.so.13 (0x00007bc8bf600000)
+	libopencv_cudaarithm.so.414 => /home/oscar/tfkl-bench/deps/opencv-4.14-cuda13.4/install/lib/libopencv_cudaarithm.so.414 (0x00007bc8bd400000)
+	libopencv_imgproc.so.414 => /home/oscar/tfkl-bench/deps/opencv-4.14-cuda13.4/install/lib/libopencv_imgproc.so.414 (0x00007bc8bb600000)
+	libnppim.so.13 => /home/oscar/tfkl-bench/toolchains/cuda-13.4.3/lib64/libnppim.so.13 (0x00007bc8b7600000)
+	libnppig.so.13 => /home/oscar/tfkl-bench/toolchains/cuda-13.4.3/lib64/libnppig.so.13 (0x00007bc8b4e00000)
+	libnppitc.so.13 => /home/oscar/tfkl-bench/toolchains/cuda-13.4.3/lib64/libnppitc.so.13 (0x00007bc8b2000000)
