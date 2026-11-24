@@ -1,0 +1,30 @@
+E19 batched box (AMD), N = 40 crops: the checks, then the timing
+rpp grey vs (0.299f R + 0.587f G) + 0.114f B in float, no FMA, ties to even: 194 differing/beyond, max 1, non-finite 0 [RPP's source rule]
+rpp grey vs t = 0.587f G; t = fma(0.299f, R, t); t = fma(0.114f, B, t), ties to even: 0 differing/beyond, max 0, non-finite 0 [candidate]
+rpp grey vs t = 0.299f R; t = fma(0.587f, G, t); t = fma(0.114f, B, t), ties to even: 230 differing/beyond, max 1, non-finite 0 [candidate]
+rpp grey vs t = 0.299f R + 0.587f G (rounded); t = fma(0.114f, B, t), ties to even: 177 differing/beyond, max 1, non-finite 0 [candidate]
+rpp grey vs 0.299f R + 0.587f G + 0.114f B exactly, ties to even: 1212 differing/beyond, max 1, non-finite 0 [candidate]
+rpp grey vs the rule with the fewest: t = 0.587f G; t = fma(0.299f, R, t); t = fma(0.114f, B, t): 0 differing/beyond, max 0, non-finite 0 [one rule with 0 differing values: ok]
+rpp box vs round(sum / 9) of its own grey, REPLICATE: 0 differing/beyond, max 0, non-finite 0 [0 differing values: ok]
+rpp box vs floor(sum / 9) of its own grey (informational): 1164361 differing/beyond, max 1, non-finite 0 [informational]
+rpp float vs (v / 255 - 0.45) / 0.225 in double, v its own box: 0 differing/beyond, max 1.34532e-07, non-finite 0 [within 1e-5, all finite: ok]
+fkl_loop float vs fklReference, grey (0.299f R + 0.587f G) + 0.114f B in float, no FMA: 1740 differing/beyond, max 0.00387332, non-finite 0 [candidate]
+fkl_loop float vs fklReference, grey t = 0.587f G; t = fma(0.299f, R, t); t = fma(0.114f, B, t): 0 differing/beyond, max 7.01231e-07, non-finite 0 [candidate]
+fkl_loop float vs fklReference, grey t = 0.299f R; t = fma(0.587f, G, t); t = fma(0.114f, B, t): 2061 differing/beyond, max 0.00387336, non-finite 0 [candidate]
+fkl_loop float vs fklReference, grey t = 0.299f R + 0.587f G (rounded); t = fma(0.114f, B, t): 1584 differing/beyond, max 0.00387332, non-finite 0 [candidate]
+fkl_loop float vs fklReference, grey 0.299f R + 0.587f G + 0.114f B exactly: 10832 differing/beyond, max 0.00387342, non-finite 0 [candidate]
+fkl_loop float vs fklReference, the grey order with the fewest: t = 0.587f G; t = fma(0.299f, R, t); t = fma(0.114f, B, t): 0 differing/beyond, max 7.01231e-07, non-finite 0 [one order within 1e-5, all finite: ok]
+fkl_batch float vs fklReference, grey (0.299f R + 0.587f G) + 0.114f B in float, no FMA: 1740 differing/beyond, max 0.00387332, non-finite 0 [candidate]
+fkl_batch float vs fklReference, grey t = 0.587f G; t = fma(0.299f, R, t); t = fma(0.114f, B, t): 0 differing/beyond, max 3.56459e-07, non-finite 0 [candidate]
+fkl_batch float vs fklReference, grey t = 0.299f R; t = fma(0.587f, G, t); t = fma(0.114f, B, t): 2061 differing/beyond, max 0.00387326, non-finite 0 [candidate]
+fkl_batch float vs fklReference, grey t = 0.299f R + 0.587f G (rounded); t = fma(0.114f, B, t): 1584 differing/beyond, max 0.00387332, non-finite 0 [candidate]
+fkl_batch float vs fklReference, grey 0.299f R + 0.587f G + 0.114f B exactly: 10832 differing/beyond, max 0.00387332, non-finite 0 [candidate]
+fkl_batch float vs fklReference, the grey order with the fewest: t = 0.587f G; t = fma(0.299f, R, t); t = fma(0.114f, B, t): 0 differing/beyond, max 3.56459e-07, non-finite 0 [one order within 1e-5, all finite: ok]
+rpp float vs fkl_loop: 0 differing/beyond, max 0.00774699, non-finite 0 [reported]
+fkl_batch float vs fkl_loop: 0 differing/beyond, max 7.7486e-07, non-finite 0 [reported]
+E19 checks passed
+fkl_loop: whole call mean 0.276474 ms (min 0.245082); kernel only mean 0.27035 ms (min 0.263922); sclk 3476 / 3015 / 3015 / 3447 MHz
+fkl_batch: whole call mean 0.144791 ms (min 0.131122); kernel only mean 0.130677 ms (min 0.128841); sclk 3447 / 3115 / 3115 / 3470 MHz
+rpp: whole call mean 0.258141 ms (min 0.251402); kernel only mean 0.252195 ms (min 0.249722); sclk 3470 / 3389 / 3389 / 3471 MHz
+clock warm-up: one gpuSpin of 2000 ms; sclk 92 MHz before it, 3476 MHz after it
+E19 timing (realtime ns): warm-up start 1795505602579044709, timing start 1795505604580947330, timing end 1795505606244801575
