@@ -1,0 +1,35 @@
+# 2026-11-24T23:14:11+01:00 pin-433 identity builds start (compile only, CUDA_VISIBLE_DEVICES=''); script sha256 0416a4233d1f78cfea6c767af7f19c8fddf05b9c249336a974dc5ccf17b8085a
+/home/oscar/tfkl-bench/worktrees/fkl-benchmarks-task-b-after/build/local-rtx4090/bin/e18_box_cu: OK
+/home/oscar/tfkl-bench/worktrees/fkl-benchmarks-task-b-after/build/local-rtx4090/bin/e18_box_split_cu: OK
+/home/oscar/tfkl-bench/worktrees/fkl-benchmarks-task-b-after/build/local-rtx4090/bin/e18_stencil_cu: OK
+/home/oscar/tfkl-bench/worktrees/fkl-benchmarks-task-b-after/build/local-rtx4090/bin/e19_batched_box_cu: OK
+/home/oscar/tfkl-bench/worktrees/fkl-benchmarks-task-b-after/build/local-rtx4090/bin/e19_crop_sweep_cu: OK
+# 2026-11-24T23:14:11+01:00 base: fkl-benchmarks a8f9daa, FKL 24478f0; head: fkl-benchmarks 2160c70, FKL b10fc66; cvGS 6d26c65, FastNPP a1b5e24; load 0.33 0.25 0.13
+# 2026-11-25T00:01:49+01:00 base build ended, exit 0
+# 2026-11-25T00:01:49+01:00 head build ended, exit 0
+== base-24478f0
+bench: 44 targets: batch_build_compilation_time_cpp batch_build_compilation_time_cu benchmark_CPU_NPP_vs_FastNPP_cu benchmark_CPU_OpenCV_vs_cvGS_cu benchmark_CPUandGPU_cvGS_vs_fk_cu benchmark_batched_
+bench: build finished after 2854 s (2854.11 s wall, largest resident set of one process 2508344 KiB)
+bench: 44 targets, 44 compiled, 0 failed, 0 not built
+  OK 44
+== head-b10fc66
+bench: 44 targets: batch_build_compilation_time_cpp batch_build_compilation_time_cu benchmark_CPU_NPP_vs_FastNPP_cu benchmark_CPU_OpenCV_vs_cvGS_cu benchmark_CPUandGPU_cvGS_vs_fk_cu benchmark_batched_
+bench: build finished after 2847 s (2846.86 s wall, largest resident set of one process 2509664 KiB)
+bench: 44 targets, 44 compiled, 0 failed, 0 not built
+  OK 44
+# 2026-11-25T00:01:49+01:00 1. sass_identity base vs head
+# 2026-11-25T00:09:10+01:00 sass_identity exit 1
+arch sm_89, executables in both: 39, only in A: [], only in B: []
+TOTAL: kernels A 1834, B 1834; pairs 1834, of which renamed 151; identical SASS 1815, different 19; only in A 0, only in B 0; key collisions 0; BinaryType arguments removed from the names: A 15862, B 15862
+  resize_convention_cu: pairs 2, same 2, hash_only 0, default 0, default_with_anon 0, unpaired 0
+  vf_fused_time_probe_cu: pairs 5, same 4, hash_only 1, default 0, default_with_anon 0, unpaired 0
+TOTAL: pairs 1834, same 1683, hash_only 151, default 0, default_with_anon 0, unpaired 0
+# 2026-11-25T00:15:54+01:00 2. sass_identity task B after vs head, the 5 programs
+# 2026-11-25T00:15:57+01:00 sass_identity exit 0
+arch sm_89, executables in both: 5, only in A: [], only in B: []
+TOTAL: kernels A 44, B 44; pairs 44, of which renamed 5; identical SASS 44, different 0; only in A 0, only in B 0; key collisions 0; BinaryType arguments removed from the names: A 158, B 158
+  e19_batched_box_cu: pairs 3, same 2, hash_only 1, default 0, default_with_anon 0, unpaired 0
+  e19_crop_sweep_cu: pairs 18, same 17, hash_only 1, default 0, default_with_anon 0, unpaired 0
+TOTAL: pairs 44, same 39, hash_only 5, default 0, default_with_anon 0, unpaired 0
+# 2026-11-25T00:16:00+01:00 binaries: base 44, head 44; byte-identical pairs 1
+# 2026-11-25T00:16:00+01:00 pin-433 identity builds ended (exit codes: identity 1 = 1, identity 2 = 0); load 1.74 1.95 6.80

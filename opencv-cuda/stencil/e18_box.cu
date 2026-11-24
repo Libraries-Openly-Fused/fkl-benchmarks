@@ -407,7 +407,7 @@ int launch() {
                                .then(fk::SaturateCast<float3, uchar3>::build())
                                .then(fk::Cast<uchar3, float3>::build());
         const auto output = fk::SaturateCast<float3, uchar3>::build().then(fk::PerThreadWrite<fk::ND::_2D, uchar3>::build(outAsym));
-        const Details details{OUT_W, OUT_H, BOX_W, BOX_H, ANCHOR_X, ANCHOR_Y};
+        const Details details{BOX_W, BOX_H, ANCHOR_X, ANCHOR_Y};
         const float n = static_cast<float>(details.kernelWidth * details.kernelHeight);
         const auto coefficient = fk::ConstantFilterRead<float3>::build(make_float3(SCALE, SCALE, SCALE) / make_float3(n, n, n));
         if (!fk::executeLinearFilter(details, fk::make_tuple(image, coefficient), Multiply::build(), Accumulate::build(), output, fkStream)) {
@@ -417,7 +417,7 @@ int launch() {
     // its kernel-only measurement: the same building as the preparation (host), the launch alone behind the spin (GPU)
     const auto prepareAsym = [&] {
         const fk::Ptr2D<uchar3> crop = dInput.crop2D(fk::Rect(CROP_X, CROP_Y, CROP_W, CROP_H));
-        const Details details{OUT_W, OUT_H, BOX_W, BOX_H, ANCHOR_X, ANCHOR_Y};
+        const Details details{BOX_W, BOX_H, ANCHOR_X, ANCHOR_Y};
         const float n = static_cast<float>(details.kernelWidth * details.kernelHeight);
         const auto reads = fk::make_tuple(fk::PerThreadRead<fk::ND::_2D, uchar3>::build(crop)
                                               .then(ResizeAsym::build(fk::Size(OUT_W, OUT_H)))
@@ -436,7 +436,7 @@ int launch() {
                                .then(fk::SaturateCast<float3, uchar3>::build())
                                .then(fk::Cast<uchar3, float3>::build());
         const auto output = fk::SaturateCast<float3, uchar3>::build().then(fk::PerThreadWrite<fk::ND::_2D, uchar3>::build(outHalf));
-        const Details details{OUT_W, OUT_H, BOX_W, BOX_H, ANCHOR_X, ANCHOR_Y};
+        const Details details{BOX_W, BOX_H, ANCHOR_X, ANCHOR_Y};
         const float n = static_cast<float>(details.kernelWidth * details.kernelHeight);
         const auto coefficient = fk::ConstantFilterRead<float3>::build(make_float3(SCALE, SCALE, SCALE) / make_float3(n, n, n));
         if (!fk::executeLinearFilter(details, fk::make_tuple(image, coefficient), Multiply::build(), Accumulate::build(), output, fkStream)) {
@@ -445,7 +445,7 @@ int launch() {
     };
     const auto prepareHalf = [&] {
         const fk::Ptr2D<uchar3> crop = dInput.crop2D(fk::Rect(CROP_X, CROP_Y, CROP_W, CROP_H));
-        const Details details{OUT_W, OUT_H, BOX_W, BOX_H, ANCHOR_X, ANCHOR_Y};
+        const Details details{BOX_W, BOX_H, ANCHOR_X, ANCHOR_Y};
         const float n = static_cast<float>(details.kernelWidth * details.kernelHeight);
         const auto reads = fk::make_tuple(fk::PerThreadRead<fk::ND::_2D, uchar3>::build(crop)
                                               .then(ResizeHalf::build(fk::Size(OUT_W, OUT_H)))
@@ -467,7 +467,7 @@ int launch() {
                                .then(ResizeAsym::build(fk::Size(OUT_W, OUT_H)))
                                .then(fk::SaturateCast<float3, uchar3>::build())
                                .then(fk::Cast<uchar3, float3>::build());
-        const Details details{OUT_W, OUT_H, BOX_W, BOX_H, ANCHOR_X, ANCHOR_Y};
+        const Details details{BOX_W, BOX_H, ANCHOR_X, ANCHOR_Y};
         const float n = static_cast<float>(details.kernelWidth * details.kernelHeight);
         const auto weights = fk::ConstantFilterRead<float3>::build(make_float3(SCALE, SCALE, SCALE));
         const auto output = fk::Div<float3>::build(make_float3(n, n, n))
@@ -479,7 +479,7 @@ int launch() {
     };
     const auto prepareTruncAsym = [&] {
         const fk::Ptr2D<uchar3> crop = dInput.crop2D(fk::Rect(CROP_X, CROP_Y, CROP_W, CROP_H));
-        const Details details{OUT_W, OUT_H, BOX_W, BOX_H, ANCHOR_X, ANCHOR_Y};
+        const Details details{BOX_W, BOX_H, ANCHOR_X, ANCHOR_Y};
         const float n = static_cast<float>(details.kernelWidth * details.kernelHeight);
         const auto reads = fk::make_tuple(fk::PerThreadRead<fk::ND::_2D, uchar3>::build(crop)
                                               .then(ResizeAsym::build(fk::Size(OUT_W, OUT_H)))
@@ -499,7 +499,7 @@ int launch() {
                                .then(ResizeHalf::build(fk::Size(OUT_W, OUT_H)))
                                .then(fk::SaturateCast<float3, uchar3>::build())
                                .then(fk::Cast<uchar3, float3>::build());
-        const Details details{OUT_W, OUT_H, BOX_W, BOX_H, ANCHOR_X, ANCHOR_Y};
+        const Details details{BOX_W, BOX_H, ANCHOR_X, ANCHOR_Y};
         const float n = static_cast<float>(details.kernelWidth * details.kernelHeight);
         const auto weights = fk::ConstantFilterRead<float3>::build(make_float3(SCALE, SCALE, SCALE));
         const auto output = fk::Div<float3>::build(make_float3(n, n, n))
@@ -511,7 +511,7 @@ int launch() {
     };
     const auto prepareTruncHalf = [&] {
         const fk::Ptr2D<uchar3> crop = dInput.crop2D(fk::Rect(CROP_X, CROP_Y, CROP_W, CROP_H));
-        const Details details{OUT_W, OUT_H, BOX_W, BOX_H, ANCHOR_X, ANCHOR_Y};
+        const Details details{BOX_W, BOX_H, ANCHOR_X, ANCHOR_Y};
         const float n = static_cast<float>(details.kernelWidth * details.kernelHeight);
         const auto reads = fk::make_tuple(fk::PerThreadRead<fk::ND::_2D, uchar3>::build(crop)
                                               .then(ResizeHalf::build(fk::Size(OUT_W, OUT_H)))
@@ -531,7 +531,7 @@ int launch() {
     };
     // the build-once variants: valid only while the crop (its position and size) does not change
     const fk::Ptr2D<uchar3> cropOnce = dInput.crop2D(fk::Rect(CROP_X, CROP_Y, CROP_W, CROP_H));
-    const Details detailsOnce{OUT_W, OUT_H, BOX_W, BOX_H, ANCHOR_X, ANCHOR_Y};
+    const Details detailsOnce{BOX_W, BOX_H, ANCHOR_X, ANCHOR_Y};
     const float nOnce = static_cast<float>(detailsOnce.kernelWidth * detailsOnce.kernelHeight);
     const auto coefficientOnce = fk::ConstantFilterRead<float3>::build(make_float3(SCALE, SCALE, SCALE) / make_float3(nOnce, nOnce, nOnce));
     const auto readsAsymOnce = fk::make_tuple(fk::PerThreadRead<fk::ND::_2D, uchar3>::build(cropOnce)
@@ -813,7 +813,7 @@ int launch() {
         {
             fk::Ptr2D<uchar3> dChainAsym(OUT_W, OUT_H), dChainHalf(OUT_W, OUT_H);
             const fk::Ptr2D<uchar3> crop = dInput.crop2D(fk::Rect(CROP_X, CROP_Y, CROP_W, CROP_H));
-            const Details details{OUT_W, OUT_H, BOX_W, BOX_H, ANCHOR_X, ANCHOR_Y};
+            const Details details{BOX_W, BOX_H, ANCHOR_X, ANCHOR_Y};
             const auto imageAsym = fk::PerThreadRead<fk::ND::_2D, uchar3>::build(crop)
                                        .then(ResizeAsym::build(fk::Size(OUT_W, OUT_H)))
                                        .then(fk::SaturateCast<float3, uchar3>::build())
@@ -855,7 +855,7 @@ int launch() {
             fk::Ptr2D<uchar3> dBoxIn(OUT_W, OUT_H), dBoxOut(OUT_W, OUT_H);
             FKLB_CUDA_CHECK(cudaMemcpy2D(dBoxIn.ptr().data, dBoxIn.ptr().dims.pitch, boxImage.data(), boxRow, boxRow, OUT_H, cudaMemcpyHostToDevice));
             {
-                const Details details{OUT_W, OUT_H, BOX_W, BOX_H, ANCHOR_X, ANCHOR_Y};
+                const Details details{BOX_W, BOX_H, ANCHOR_X, ANCHOR_Y};
                 const float n = static_cast<float>(details.kernelWidth * details.kernelHeight);
                 const auto image = fk::PerThreadRead<fk::ND::_2D, uchar3>::build(dBoxIn).then(fk::Cast<uchar3, float3>::build());
                 const auto coefficient = fk::ConstantFilterRead<float3>::build(make_float3(SCALE, SCALE, SCALE) / make_float3(n, n, n));
@@ -867,7 +867,7 @@ int launch() {
             // FKL, truncating: the call of the truncating variants with the same plain read
             fk::Ptr2D<uchar3> dBoxTruncOut(OUT_W, OUT_H);
             {
-                const Details details{OUT_W, OUT_H, BOX_W, BOX_H, ANCHOR_X, ANCHOR_Y};
+                const Details details{BOX_W, BOX_H, ANCHOR_X, ANCHOR_Y};
                 const float n = static_cast<float>(details.kernelWidth * details.kernelHeight);
                 const auto image = fk::PerThreadRead<fk::ND::_2D, uchar3>::build(dBoxIn).then(fk::Cast<uchar3, float3>::build());
                 const auto weights = fk::ConstantFilterRead<float3>::build(make_float3(SCALE, SCALE, SCALE));

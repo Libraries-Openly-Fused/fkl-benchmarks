@@ -10,6 +10,8 @@ This folder holds the CUDA check, which compares the head with its base:
 - **head:** 4b11bc6892a79d9481406da7903138ca567e2c6a (branch LTS-C++17-batched-filter-dpps, 6 commits, 19 files);
 - **base:** 24478f0aa11dc3f12feea83178f7fde828322fb0, the FKL pin of this repository.
 
+**Note, 2026-11-25:** #433 was merged by Oscar on 2026-11-24 at 22:02:02Z as `b10fc6609426bd18020b9213c7196b528fc677a8`, whose tree (`62024145`) is the tree of 4b11bc6, the head checked here. The pin move is fkl-benchmarks #60 (`../fkl-pr433-pin-check/`).
+
 Nothing is timed in this task. This repository's pin does not change.
 
 **State.** Everything is done:
