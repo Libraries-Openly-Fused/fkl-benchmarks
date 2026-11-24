@@ -310,7 +310,7 @@ int launch() {
         const auto multiply = fk::Mul<float3, float3, float3, fk::UnaryType>::build();
         const auto accumulate = fk::Add<float3, float3, float3, fk::UnaryType>::build();
         const auto output = fk::SaturateCast<float3, uchar3>::build().then(fk::PerThreadWrite<fk::ND::_2D, uchar3>::build(outAsym));
-        const Details details{OUT_W, OUT_H, KERNEL_W, KERNEL_H, ANCHOR_X, ANCHOR_Y};
+        const Details details{KERNEL_W, KERNEL_H, ANCHOR_X, ANCHOR_Y};
         if (!fk::executeLinearFilter(details, fk::make_tuple(image, weights), multiply, accumulate, output, fkStream)) {
             throw std::runtime_error("fkl_stencil_asym: the details are not valid");
         }
@@ -326,7 +326,7 @@ int launch() {
         const auto output = fk::SaturateCast<float3, uchar3>::build().then(fk::PerThreadWrite<fk::ND::_2D, uchar3>::build(outAsym));
         return FilterArguments<std::decay_t<decltype(reads)>, std::decay_t<decltype(multiply)>, std::decay_t<decltype(accumulate)>,
                                std::decay_t<decltype(output)>>{reads, multiply, accumulate, output,
-                                                               Details{OUT_W, OUT_H, KERNEL_W, KERNEL_H, ANCHOR_X, ANCHOR_Y}};
+                                                               Details{KERNEL_W, KERNEL_H, ANCHOR_X, ANCHOR_Y}};
     };
     // fkl_stencil_halfpixel: the same with ResizeSampling::HALF_PIXEL
     const auto callHalf = [&] {
@@ -337,7 +337,7 @@ int launch() {
         const auto multiply = fk::Mul<float3, float3, float3, fk::UnaryType>::build();
         const auto accumulate = fk::Add<float3, float3, float3, fk::UnaryType>::build();
         const auto output = fk::SaturateCast<float3, uchar3>::build().then(fk::PerThreadWrite<fk::ND::_2D, uchar3>::build(outHalf));
-        const Details details{OUT_W, OUT_H, KERNEL_W, KERNEL_H, ANCHOR_X, ANCHOR_Y};
+        const Details details{KERNEL_W, KERNEL_H, ANCHOR_X, ANCHOR_Y};
         if (!fk::executeLinearFilter(details, fk::make_tuple(image, weights), multiply, accumulate, output, fkStream)) {
             throw std::runtime_error("fkl_stencil_halfpixel: the details are not valid");
         }
@@ -353,7 +353,7 @@ int launch() {
         const auto output = fk::SaturateCast<float3, uchar3>::build().then(fk::PerThreadWrite<fk::ND::_2D, uchar3>::build(outHalf));
         return FilterArguments<std::decay_t<decltype(reads)>, std::decay_t<decltype(multiply)>, std::decay_t<decltype(accumulate)>,
                                std::decay_t<decltype(output)>>{reads, multiply, accumulate, output,
-                                                               Details{OUT_W, OUT_H, KERNEL_W, KERNEL_H, ANCHOR_X, ANCHOR_Y}};
+                                                               Details{KERNEL_W, KERNEL_H, ANCHOR_X, ANCHOR_Y}};
     };
     const auto launchPrepared = [&](const auto& a) {
         if (!fk::executeLinearFilter(a.details, a.reads, a.multiply, a.accumulate, a.output, fkStream)) {
@@ -373,7 +373,7 @@ int launch() {
     const auto accumulateOnce = fk::Add<float3, float3, float3, fk::UnaryType>::build();
     const auto outputAsymOnce = fk::SaturateCast<float3, uchar3>::build().then(fk::PerThreadWrite<fk::ND::_2D, uchar3>::build(outAsymOnce));
     const auto outputHalfOnce = fk::SaturateCast<float3, uchar3>::build().then(fk::PerThreadWrite<fk::ND::_2D, uchar3>::build(outHalfOnce));
-    const Details detailsOnce{OUT_W, OUT_H, KERNEL_W, KERNEL_H, ANCHOR_X, ANCHOR_Y};
+    const Details detailsOnce{KERNEL_W, KERNEL_H, ANCHOR_X, ANCHOR_Y};
     const auto callAsymOnce = [&] {
         if (!fk::executeLinearFilter(detailsOnce, readsAsymOnce, multiplyOnce, accumulateOnce, outputAsymOnce, fkStream)) {
             throw std::runtime_error("fkl_stencil_asym_once: the details are not valid");
@@ -516,7 +516,7 @@ int launch() {
         for (const fklb::ResizeSampling sampling : {fklb::ResizeSampling::ASYMMETRIC, fklb::ResizeSampling::HALF_PIXEL}) {
             fk::Ptr2D<float3> dResized(OUT_W, OUT_H), dIdentityOut(OUT_W, OUT_H);
             const fk::Ptr2D<uchar3> crop = dInput.crop2D(fk::Rect(CROP_X, CROP_Y, CROP_W, CROP_H));
-            const Details details{OUT_W, OUT_H, KERNEL_W, KERNEL_H, ANCHOR_X, ANCHOR_Y};
+            const Details details{KERNEL_W, KERNEL_H, ANCHOR_X, ANCHOR_Y};
             const auto multiply = fk::Mul<float3, float3, float3, fk::UnaryType>::build();
             const auto accumulate = fk::Add<float3, float3, float3, fk::UnaryType>::build();
             bool valid = false;

@@ -501,7 +501,7 @@ int launch() {
         const auto multiply = fk::Mul<float3, float3, float3, fk::UnaryType>::build();
         const auto accumulate = fk::Add<float3, float3, float3, fk::UnaryType>::build();
         const auto output = fk::SaturateCast<float3, uchar3>::build().then(fk::PerThreadWrite<fk::ND::_2D, uchar3>::build(outBox));
-        const Details details{OUT_W, OUT_H, KERNEL_W, KERNEL_H, ANCHOR_X, ANCHOR_Y};
+        const Details details{KERNEL_W, KERNEL_H, ANCHOR_X, ANCHOR_Y};
         if (!fk::executeLinearFilter(details, fk::make_tuple(image, coefficient), multiply, accumulate, output, fkStream)) {
             throw std::runtime_error("fkl_box_halfpixel: the details are not valid");
         }
@@ -519,7 +519,7 @@ int launch() {
         const auto output = fk::SaturateCast<float3, uchar3>::build().then(fk::PerThreadWrite<fk::ND::_2D, uchar3>::build(outBox));
         return FilterArguments<std::decay_t<decltype(reads)>, std::decay_t<decltype(multiply)>, std::decay_t<decltype(accumulate)>,
                                std::decay_t<decltype(output)>>{reads, multiply, accumulate, output,
-                                                               Details{OUT_W, OUT_H, KERNEL_W, KERNEL_H, ANCHOR_X, ANCHOR_Y}};
+                                                               Details{KERNEL_W, KERNEL_H, ANCHOR_X, ANCHOR_Y}};
     };
     const auto launchPrepared = [&](const auto& a) {
         if (!fk::executeLinearFilter(a.details, a.reads, a.multiply, a.accumulate, a.output, fkStream)) {
@@ -537,7 +537,7 @@ int launch() {
     const auto multiplyOnce = fk::Mul<float3, float3, float3, fk::UnaryType>::build();
     const auto accumulateOnce = fk::Add<float3, float3, float3, fk::UnaryType>::build();
     const auto outputOnce = fk::SaturateCast<float3, uchar3>::build().then(fk::PerThreadWrite<fk::ND::_2D, uchar3>::build(outOnce));
-    const Details detailsOnce{OUT_W, OUT_H, KERNEL_W, KERNEL_H, ANCHOR_X, ANCHOR_Y};
+    const Details detailsOnce{KERNEL_W, KERNEL_H, ANCHOR_X, ANCHOR_Y};
     const auto callOnce = [&] {
         if (!fk::executeLinearFilter(detailsOnce, readsOnce, multiplyOnce, accumulateOnce, outputOnce, fkStream)) {
             throw std::runtime_error("fkl_half_once: the details are not valid");
@@ -675,7 +675,7 @@ int launch() {
                                                     fk::ResizeSampling::HALF_PIXEL>::build(fk::Size(OUT_W, OUT_H)))
                                    .then(fk::SaturateCast<float3, uchar3>::build())
                                    .then(fk::Cast<uchar3, float3>::build());
-            const Details details{OUT_W, OUT_H, KERNEL_W, KERNEL_H, ANCHOR_X, ANCHOR_Y};
+            const Details details{KERNEL_W, KERNEL_H, ANCHOR_X, ANCHOR_Y};
             if (!fk::executeLinearFilter(details, fk::make_tuple(image, fk::PerThreadRead<fk::ND::_2D, float3>::build(dIdentity)),
                                          fk::Mul<float3, float3, float3, fk::UnaryType>::build(), fk::Add<float3, float3, float3, fk::UnaryType>::build(),
                                          fk::SaturateCast<float3, uchar3>::build().then(fk::PerThreadWrite<fk::ND::_2D, uchar3>::build(dFklResized)),
@@ -703,7 +703,7 @@ int launch() {
         FKLB_HIP_CHECK(hipMemcpy2D(dBoxIn.ptr().data, dBoxIn.ptr().dims.pitch, boxInput.data(), static_cast<size_t>(OUT_W) * 3,
                                    static_cast<size_t>(OUT_W) * 3, OUT_H, hipMemcpyHostToDevice));
         {
-            const Details details{OUT_W, OUT_H, KERNEL_W, KERNEL_H, ANCHOR_X, ANCHOR_Y};
+            const Details details{KERNEL_W, KERNEL_H, ANCHOR_X, ANCHOR_Y};
             if (!fk::executeLinearFilter(details,
                                          fk::make_tuple(fk::PerThreadRead<fk::ND::_2D, uchar3>::build(dBoxIn).then(fk::Cast<uchar3, float3>::build()),
                                                         fk::ConstantFilterRead<float3>::build(float3{1.f, 1.f, 1.f} / float3{9.f, 9.f, 9.f})),
