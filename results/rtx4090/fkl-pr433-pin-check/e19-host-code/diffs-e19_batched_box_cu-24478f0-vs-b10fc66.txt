@@ -1,0 +1,4322 @@
+A = /home/oscar/tfkl-bench/scratch/pin-433/base-24478f0/bench-build/bin/e19_batched_box_cu
+B = /home/oscar/tfkl-bench/scratch/pin-433/head-b10fc66/bench-build/bin/e19_batched_box_cu
+per function that differs: the unified diff of its normalised instructions (see host_compare.py)
+
+== launch()
+   5258 -> 5257 instructions; reached by: no timed call
+--- A
++++ B
+@@ -30,7 +30,7 @@
+ lea D(%rip),%rdi # <_IO_stdin_used+OFF>
+ call <F:(anonymous namespace)::envIs1(char const*)@0>
+ lea D(%rip),%rdi # <_IO_stdin_used+OFF>
+-mov %al,-0xc40(%rbp)
++mov %al,-0xc18(%rbp)
+ call <getenv@plt>
+ test %rax,%rax
+ je <SELF@253>
+@@ -50,7 +50,7 @@
+ mov %rax,%rdi
+ mov %rax,-0xcf0(%rbp)
+ call <std::basic_ostream<char, std::char_traits<char> >& std::__ostream_insert<char, std::char_traits<char> >(std::basic_ostream<char, std::char_traits<char> >&, char const*, long)@plt>
+-cmpb $0x0,-0xc40(%rbp)
++cmpb $0x0,-0xc18(%rbp)
+ jne <SELF@265>
+ movb $0x1,-0xcdb(%rbp)
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+@@ -76,17 +76,17 @@
+ movdqa D(%rip),%xmm0 # <cuda::std::__4::__cpo::iter_swap+OFF>
+ movq $0x0,-0xa88(%rbp)
+ movups %xmm0,0xc(%rax)
+-cmpb $0x0,-0xc40(%rbp)
+-jne <SELF@4695>
++cmpb $0x0,-0xc18(%rbp)
++jne <SELF@4694>
+ movq $0x0,-0xcb0(%rbp)
+ mov %rax,%rbx
+ add $0x1c,%rax
+ mov %rax,-0xbd0(%rbp)
+-movq $0x0,-0xc30(%rbp)
++movq $0x0,-0xc38(%rbp)
+ movq $0x0,-0xca8(%rbp)
+ movq $0x0,-0xcb8(%rbp)
+-movq $0x0,-0xc28(%rbp)
+-movq $0x0,-0xc18(%rbp)
++movq $0x0,-0xc30(%rbp)
++movq $0x0,-0xc20(%rbp)
+ jmp <SELF@115>
+ movq %r12,%xmm1
+ mov %r13,0x10(%rax)
+@@ -94,14 +94,14 @@
+ add $0x18,%rax
+ punpcklqdq %xmm0,%xmm1
+ movups %xmm1,-0x18(%rax)
+-mov %rax,-0xc28(%rbp)
++mov %rax,-0xc30(%rbp)
+ lea -0xa50(%rbp),%rdi
+ mov %r12,%rsi
+ call <F:(anonymous namespace)::boxSums(std::vector<unsigned char, std::allocator<unsigned char> > const&)@0>
+ mov -0xa50(%rbp),%r12
+ mov -0xa40(%rbp),%r13
+ movq -0xa48(%rbp),%xmm0
+-mov -0xc30(%rbp),%rax
++mov -0xc38(%rbp),%rax
+ cmp %rax,-0xcb0(%rbp)
+ je <SELF@269>
+ movq %r12,%xmm1
+@@ -110,7 +110,7 @@
+ add $0x4,%rbx
+ punpcklqdq %xmm0,%xmm1
+ movups %xmm1,-0x18(%rax)
+-mov %rax,-0xc30(%rbp)
++mov %rax,-0xc38(%rbp)
+ cmp -0xbd0(%rbp),%rbx
+ je <SELF@365>
+ mov (%rbx),%ecx
+@@ -121,11 +121,11 @@
+ mov -0xa70(%rbp),%r12
+ mov -0xa60(%rbp),%r13
+ movq -0xa68(%rbp),%xmm0
+-mov -0xc28(%rbp),%rax
++mov -0xc30(%rbp),%rax
+ cmp %rax,-0xcb8(%rbp)
+ jne <SELF@90>
+ mov -0xcb8(%rbp),%rcx
+-sub -0xc18(%rbp),%rcx
++sub -0xc20(%rbp),%rcx
+ movabs $0xaaaaaaaaaaaaaaab,%rax
+ mov %rcx,%rdx
+ sar $0x3,%rdx
+@@ -152,13 +152,13 @@
+ mov %rax,%r8
+ mov -0xb90(%rbp),%rsi
+ movhps -0xbc0(%rbp),%xmm1
+-mov -0xc18(%rbp),%r10
++mov -0xc20(%rbp),%r10
+ mov %r13,0x10(%rax,%rcx,1)
+ lea (%rax,%rsi,1),%r13
+ movups %xmm1,(%rax,%rcx,1)
+-mov -0xc28(%rbp),%rcx
++mov -0xc30(%rbp),%rcx
+ cmp %r10,%rcx
+-je <SELF@4802>
++je <SELF@4801>
+ sub $0x18,%rcx
+ mov %r10,%rax
+ movabs $0xaaaaaaaaaaaaaab,%rsi
+@@ -167,13 +167,13 @@
+ imul %rsi,%rcx
+ movabs $0x1fffffffffffffff,%rsi
+ and %rsi,%rcx
+-je <SELF@4788>
++je <SELF@4787>
+ mov %r8,%rsi
+ mov %r8,%rdx
+ sub %r10,%rsi
+ sub $0x8,%rsi
+ cmp $0x20,%rsi
+-jbe <SELF@4788>
++jbe <SELF@4787>
+ lea 0x1(%rcx),%rdi
+ mov %rdi,%rsi
+ shr $1,%rsi
+@@ -195,7 +195,7 @@
+ test $0x1,%dil
+ je <SELF@205>
+ and $0xfffffffffffffffe,%rdi
+-mov -0xc18(%rbp),%rsi
++mov -0xc20(%rbp),%rsi
+ lea (%rdi,%rdi,2),%rax
+ shl $0x3,%rax
+ lea (%rsi,%rax,1),%rdx
+@@ -207,8 +207,8 @@
+ lea (%r8,%rax,8),%rax
+ lea 0x18(%rax),%r12
+ add $0x30,%rax
+-mov %rax,-0xc28(%rbp)
+-mov -0xc18(%rbp),%rax
++mov %rax,-0xc30(%rbp)
++mov -0xc20(%rbp),%rax
+ test %rax,%rax
+ je <SELF@219>
+ mov -0xcb8(%rbp),%rsi
+@@ -218,7 +218,7 @@
+ call <operator delete(void*, unsigned long)@plt>
+ mov -0xb90(%rbp),%r8
+ mov %r13,-0xcb8(%rbp)
+-mov %r8,-0xc18(%rbp)
++mov %r8,-0xc20(%rbp)
+ jmp <SELF@97>
+ cmpb $0x31,(%rdi)
+ jne <SELF@24>
+@@ -230,7 +230,7 @@
+ lea D(%rip),%rdi # <_IO_stdin_used+OFF>
+ call <getenv@plt>
+ test %rax,%rax
+-je <SELF@4835>
++je <SELF@4834>
+ lea D(%rip),%rdi # <_IO_stdin_used+OFF>
+ call <getenv@plt>
+ mov $0xa,%edx
+@@ -247,7 +247,7 @@
+ mov %rax,%rdi
+ mov %rax,-0xcf0(%rbp)
+ call <std::basic_ostream<char, std::char_traits<char> >& std::__ostream_insert<char, std::char_traits<char> >(std::basic_ostream<char, std::char_traits<char> >&, char const*, long)@plt>
+-movb $0x1,-0xc40(%rbp)
++movb $0x1,-0xc18(%rbp)
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ movb $0x0,-0xcdb(%rbp)
+ jmp <SELF@56>
+@@ -261,9 +261,9 @@
+ mov %rax,-0xcf0(%rbp)
+ call <std::basic_ostream<char, std::char_traits<char> >& std::__ostream_insert<char, std::char_traits<char> >(std::basic_ostream<char, std::char_traits<char> >&, char const*, long)@plt>
+ movl $0xa,-0xbb0(%rbp)
+-cmpb $0x0,-0xc40(%rbp)
++cmpb $0x0,-0xc18(%rbp)
+ je <SELF@54>
+-movb $0x0,-0xc40(%rbp)
++movb $0x0,-0xc18(%rbp)
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ movb $0x0,-0xcdb(%rbp)
+ jmp <SELF@56>
+@@ -299,9 +299,9 @@
+ mov %r13,0x10(%rax,%rcx,1)
+ lea (%rax,%rsi,1),%r12
+ movups %xmm1,(%rax,%rcx,1)
+-mov -0xc30(%rbp),%rcx
++mov -0xc38(%rbp),%rcx
+ cmp %rcx,%r11
+-je <SELF@4810>
++je <SELF@4809>
+ sub $0x18,%rcx
+ mov %r11,%rax
+ movabs $0xaaaaaaaaaaaaaab,%rsi
+@@ -310,13 +310,13 @@
+ imul %rsi,%rcx
+ movabs $0x1fffffffffffffff,%rsi
+ and %rsi,%rcx
+-je <SELF@4774>
++je <SELF@4773>
+ mov %r8,%rsi
+ mov %r8,%rdx
+ sub %r11,%rsi
+ sub $0x8,%rsi
+ cmp $0x20,%rsi
+-jbe <SELF@4774>
++jbe <SELF@4773>
+ lea 0x1(%rcx),%rdi
+ mov -0xbd0(%rbp),%r10
+ mov %rdi,%rsi
+@@ -348,7 +348,7 @@
+ movups %xmm0,(%r8,%rax,1)
+ lea (%rcx,%rcx,2),%rax
+ lea 0x30(%r8,%rax,8),%rax
+-mov %rax,-0xc30(%rbp)
++mov %rax,-0xc38(%rbp)
+ mov -0xca8(%rbp),%rax
+ test %rax,%rax
+ je <SELF@360>
+@@ -390,8 +390,8 @@
+ mov %eax,%r12d
+ lea -0xb60(%rbp),%rax
+ movq %rbx,%xmm0
+-movq %rax,%xmm5
+-punpcklqdq %xmm5,%xmm0
++movq %rax,%xmm3
++punpcklqdq %xmm3,%xmm0
+ test %r12d,%r12d
+ jne <F:launch() [clone .cold]@1952>
+ lea D(%rip),%rdi # <_IO_stdin_used+OFF>
+@@ -436,7 +436,7 @@
+ mov %rax,%rdi
+ mov %r12,-0x738(%rbp)
+ movl $0x1010000,-0x740(%rbp)
+-mov %rsi,-0xc20(%rbp)
++mov %rsi,-0xc28(%rbp)
+ mov %rax,-0xce8(%rbp)
+ call <cv::cuda::GpuMat::upload(cv::_InputArray const&)@plt>
+ mov %r12,%rdi
+@@ -489,7 +489,7 @@
+ movl $0x0,-0x740(%rbp)
+ cmp %rax,%r14
+ jne <SELF@452>
+-mov -0xc20(%rbp),%rcx
++mov -0xc28(%rbp),%rcx
+ lea -0xa10(%rbp),%rdi
+ lea D(%rip),%rdx # <(anonymous namespace)::CROP_W>
+ lea D(%rip),%rsi # <(anonymous namespace)::CROP_H>
+@@ -497,7 +497,7 @@
+ call <F:void std::vector<cv::cuda::GpuMat, std::allocator<cv::cuda::GpuMat> >::_M_realloc_append<int const&, int const&, int>(int const&, int const&, int&&)@0>
+ jmp <SELF@466>
+ lea -0x9f0(%rbp),%rax
+-mov -0xc20(%rbp),%rcx
++mov -0xc28(%rbp),%rcx
+ lea D(%rip),%rdx # <(anonymous namespace)::CROP_W>
+ lea D(%rip),%rsi # <(anonymous namespace)::CROP_H>
+ mov %rax,%rdi
+@@ -506,7 +506,7 @@
+ sub $0x1,%ebx
+ jne <SELF@486>
+ call <cv::cuda::GpuMat::defaultAllocator()@plt>
+-mov -0xc20(%rbp),%rcx
++mov -0xc28(%rbp),%rcx
+ pxor %xmm0,%xmm0
+ mov $0x5,%edx
+ mov %rax,-0x788(%rbp)
+@@ -935,7 +935,7 @@
+ call <operator new(unsigned long)@plt>
+ movq $0x0,0x10(%rax)
+ pxor %xmm0,%xmm0
+-mov -0xc20(%rbp),%rdi
++mov -0xc28(%rbp),%rdi
+ movl $0x1,0x10(%rax)
+ movups %xmm0,(%rax)
+ mov %rax,-0x780(%rbp)
+@@ -953,7 +953,7 @@
+ call <F:fk::gpuAssert(cudaError, char const*, int, bool) [clone .constprop.0]@0>
+ mov -0x768(%rbp),%esi
+ test %esi,%esi
+-jne <SELF@4677>
++jne <SELF@4676>
+ mov -0x770(%rbp),%eax
+ mov -0x76c(%rbp),%ecx
+ lea -0xb00(%rbp),%rsi
+@@ -1112,7 +1112,7 @@
+ movaps %xmm0,-0x630(%rbp)
+ call <operator new(unsigned long)@plt>
+ lea D(%rip),%rdx # <F:std::_Function_handler<void (std::vector<unsigned char, std::allocator<unsigned char> >&, std::vector<unsigned char, std::allocator<unsigned char> >&, std::vector<float, std::allocator<float> >&), launch()::{lambda(std::vector<unsigned char, std::allocator<unsigned char> >&, std::vector<unsigned char, std::allocator<unsigned char> >&, std::vector<float, std::allocator<float> >&)#3}>::_M_invoke(std::_Any_data const&, std::vector<unsigned char, std::allocator<unsigned char> >&, std::vector<unsigned char, std::allocator<unsigned char> >&, std::vector<float, std::allocator<float> >&)@0>
+-mov -0xc20(%rbp),%rbx
++mov -0xc28(%rbp),%rbx
+ movq D(%rip),%xmm1 # <C.176.1+OFF>
+ lea -0x780(%rbp),%rcx
+ movq %rdx,%xmm4
+@@ -1198,7 +1198,7 @@
+ mov -0xa28(%rbp),%r12
+ mov %rax,-0xbe8(%rbp)
+ mov -0xa20(%rbp),%rax
+-mov %rax,-0xc48(%rbp)
++mov %rax,-0xc50(%rbp)
+ call <F:(anonymous namespace)::Row::~Row()@0>
+ mov $0x80,%edi
+ call <operator new(unsigned long)@plt>
+@@ -1221,7 +1221,7 @@
+ mov -0xba0(%rbp),%rax
+ mov %rax,-0x888(%rbp)
+ cmp %rax,-0xbf0(%rbp)
+-je <SELF@4816>
++je <SELF@4815>
+ mov -0xbf0(%rbp),%rax
+ xor %r15d,%r15d
+ movq $0x0,-0xbd8(%rbp)
+@@ -1241,7 +1241,7 @@
+ cmp 0x8(%rax),%r14
+ jne <SELF@1234>
+ test %r14,%r14
+-je <SELF@1748>
++je <SELF@1747>
+ mov (%rax),%rsi
+ mov -0x60(%r13),%rdi
+ mov %r14,%rdx
+@@ -1249,14 +1249,14 @@
+ test %eax,%eax
+ jne <SELF@1234>
+ cmp %r15,-0xbd8(%rbp)
+-je <SELF@1758>
++je <SELF@1757>
+ lea 0x10(%r15),%rdi
+ lea 0x1(%r14),%rdx
+ mov %rdi,(%r15)
+ mov -0x60(%r13),%rbx
+ mov %r14,-0x910(%rbp)
+ cmp $0xf,%r14
+-jbe <SELF@1934>
++jbe <SELF@1933>
+ lea -0x910(%rbp),%rsi
+ xor %edx,%edx
+ mov %r15,%rdi
+@@ -1267,9 +1267,9 @@
+ mov %rax,0x10(%r15)
+ lea 0x1(%rax),%rdx
+ test %rax,%rax
+-je <SELF@1754>
++je <SELF@1753>
+ test %rdx,%rdx
+-jne <SELF@1934>
++jne <SELF@1933>
+ mov $0xffffffffffffffff,%rax
+ mov %rax,0x8(%r15)
+ mov -0x30(%r13),%rax
+@@ -1333,8 +1333,8 @@
+ sub %rcx,%rax
+ punpcklqdq %xmm5,%xmm0
+ cmp %rax,%rdx
+-jne <F:launch() [clone .cold]@1315>
+-mov -0xc48(%rbp),%rax
++jne <F:launch() [clone .cold]@1313>
++mov -0xc50(%rbp),%rax
+ mov -0xbf8(%rbp),%rdi
+ movaps %xmm0,-0x870(%rbp)
+ mov %rax,-0x860(%rbp)
+@@ -1357,8 +1357,8 @@
+ mov -0xbf0(%rbp),%rdi
+ mov $0x80,%esi
+ call <operator delete(void*, unsigned long)@plt>
+-cmpb $0x0,-0xc40(%rbp)
+-je <SELF@3386>
++cmpb $0x0,-0xc18(%rbp)
++je <SELF@3385>
+ mov -0xbe0(%rbp),%rax
+ mov %rax,%rbx
+ cmp %rax,%r15
+@@ -1371,9 +1371,9 @@
+ call <cudaStreamSynchronize@plt>
+ mov %eax,%r13d
+ test %eax,%eax
+-jne <F:launch() [clone .cold]@1254>
++jne <F:launch() [clone .cold]@1252>
+ cmpq $0x0,0x30(%rbx)
+-je <F:launch() [clone .cold]@1236>
++je <F:launch() [clone .cold]@1234>
+ lea 0x20(%rbx),%rax
+ mov %rax,-0xbc0(%rbp)
+ mov %rax,%rdi
+@@ -1382,7 +1382,7 @@
+ call <cudaStreamSynchronize@plt>
+ mov %eax,%r13d
+ test %eax,%eax
+-jne <F:launch() [clone .cold]@1175>
++jne <F:launch() [clone .cold]@1173>
+ mov D(%rip),%rax # <nvtxGlobals_v3+OFF>
+ lea D(%rip),%r12 # <nvtxGlobals_v3>
+ test %rax,%rax
+@@ -1407,14 +1407,14 @@
+ movabs $0x7ffffffffffffffe,%rax
+ sub -0x648(%rbp),%rax
+ cmp %rdx,%rax
+-jb <F:launch() [clone .cold]@1164>
++jb <F:launch() [clone .cold]@1162>
+ mov -0xb90(%rbp),%rdi
+ mov %r13,%rsi
+ call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_append(char const*, unsigned long)@plt>
+ movabs $0x8000000000000006,%rax
+ add -0x648(%rbp),%rax
+ cmp $0x4,%rax
+-jbe <F:launch() [clone .cold]@1155>
++jbe <F:launch() [clone .cold]@1153>
+ mov -0xb90(%rbp),%rdi
+ mov $0x5,%edx
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+@@ -1431,7 +1431,7 @@
+ lea 0x1(%rax),%rsi
+ call <operator delete(void*, unsigned long)@plt>
+ cmpq $0x0,0x30(%rbx)
+-je <F:launch() [clone .cold]@1069>
++je <F:launch() [clone .cold]@1067>
+ mov -0xbc0(%rbp),%rdi
+ call *0x38(%rbx)
+ mov 0x80(%r12),%rax
+@@ -1470,11 +1470,11 @@
+ call <F:std::basic_ostream<char, std::char_traits<char> >& std::endl<char, std::char_traits<char> >(std::basic_ostream<char, std::char_traits<char> >&) [clone .isra.0]#2@0>
+ movb $0x1,-0xb6d(%rbp)
+ cmpb $0x0,-0xcdb(%rbp)
+-je <SELF@3155>
++je <SELF@3154>
+ lea -0x670(%rbp),%rax
+ mov %rax,-0xb80(%rbp)
+ lea D(%rip),%rax # <_IO_stdin_used+OFF>
+-mov %rax,-0xc10(%rbp)
++mov %rax,-0xc18(%rbp)
+ mov %rax,%rsi
+ mov -0xb80(%rbp),%rdi
+ call <F:std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string<std::allocator<char> >(char const*, std::allocator<char> const&) [clone .constprop.0]@0>
+@@ -1506,14 +1506,14 @@
+ mov %rax,%rbx
+ cmp %rax,%r15
+ jne <SELF@1602>
+-jmp <SELF@4692>
++jmp <SELF@4691>
+ mov $0xa,%edx
+ xor %esi,%esi
+ mov %rax,%rdi
+ call <__isoc23_strtoull@plt>
+-mov %rax,-0xbe8(%rbp)
++mov %rax,-0xbd0(%rbp)
+ cmpq $0x6,-0x450(%rbp)
+-jne <SELF@5131>
++jne <SELF@5128>
+ mov 0x8(%rbx),%rax
+ mov (%rbx),%rdx
+ mov -0xb90(%rbp),%rdi
+@@ -1547,7 +1547,7 @@
+ mov -0xb90(%rbp),%rdi
+ mov $0x2c,%esi
+ call <F:std::basic_ostream<char, std::char_traits<char> >& std::operator<< <std::char_traits<char> >(std::basic_ostream<char, std::char_traits<char> >&, char) [clone .isra.0]@0>
+-mov -0xbe8(%rbp),%rsi
++mov -0xbd0(%rbp),%rsi
+ mov -0xb90(%rbp),%rdi
+ call <std::ostream& std::ostream::_M_insert<unsigned long long>(unsigned long long)@plt>
+ mov -0xb90(%rbp),%rdi
+@@ -1561,45 +1561,45 @@
+ mov $0x12,%edx
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ mov %rax,%rdi
+-mov %rax,-0xbe8(%rbp)
++mov %rax,-0xbd0(%rbp)
+ call <std::basic_ostream<char, std::char_traits<char> >& std::__ostream_insert<char, std::char_traits<char> >(std::basic_ostream<char, std::char_traits<char> >&, char const*, long)@plt>
+ movsd -0xbc0(%rbp),%xmm0
+-mov -0xbe8(%rbp),%rdi
++mov -0xbd0(%rbp),%rdi
+ call <std::ostream& std::ostream::_M_insert<double>(double)@plt>
+ mov $0x9,%edx
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ mov %rax,%rdi
+ mov %rax,-0xbc0(%rbp)
+ call <std::basic_ostream<char, std::char_traits<char> >& std::__ostream_insert<char, std::char_traits<char> >(std::basic_ostream<char, std::char_traits<char> >&, char const*, long)@plt>
+-movsd -0xbd0(%rbp),%xmm0
+ mov -0xbc0(%rbp),%rdi
++movq %r14,%xmm0
+ call <std::ostream& std::ostream::_M_insert<double>(double)@plt>
+ mov $0x14,%edx
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ mov %rax,%rdi
+-mov %rax,-0xbc0(%rbp)
++mov %rax,%r14
+ call <std::basic_ostream<char, std::char_traits<char> >& std::__ostream_insert<char, std::char_traits<char> >(std::basic_ostream<char, std::char_traits<char> >&, char const*, long)@plt>
+ movsd -0xbb0(%rbp),%xmm0
+-mov -0xbc0(%rbp),%rdi
++mov %r14,%rdi
+ call <std::ostream& std::ostream::_M_insert<double>(double)@plt>
+ mov $0x9,%edx
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ mov %rax,%rdi
+-mov %rax,-0xbb0(%rbp)
++mov %rax,%r14
+ call <std::basic_ostream<char, std::char_traits<char> >& std::__ostream_insert<char, std::char_traits<char> >(std::basic_ostream<char, std::char_traits<char> >&, char const*, long)@plt>
+-mov -0xbb0(%rbp),%rdi
+ movq %r12,%xmm0
++mov %r14,%rdi
+ call <std::ostream& std::ostream::_M_insert<double>(double)@plt>
+ mov $0x1,%edx
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ mov %rax,%rdi
+-mov %rax,%r12
++mov %rax,%r14
+ call <std::basic_ostream<char, std::char_traits<char> >& std::__ostream_insert<char, std::char_traits<char> >(std::basic_ostream<char, std::char_traits<char> >&, char const*, long)@plt>
+-mov %r12,%rdi
++mov %r14,%rdi
+ call <F:std::basic_ostream<char, std::char_traits<char> >& std::endl<char, std::char_traits<char> >(std::basic_ostream<char, std::char_traits<char> >&) [clone .isra.0]#2@0>
+ add $0x88,%rbx
+ cmp %rbx,%r15
+-je <SELF@4692>
++je <SELF@4691>
+ mov %rbx,%rdi
+ call <F:(anonymous namespace)::selected(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)@0>
+ test %al,%al
+@@ -1608,38 +1608,17 @@
+ mov -0xb68(%rbp),%rdi
+ movaps %xmm3,-0x870(%rbp)
+ call <cudaStreamSynchronize@plt>
+-mov %eax,-0xbb0(%rbp)
++mov %eax,%r14d
+ test %eax,%eax
+ jne <F:launch() [clone .cold]@968>
+ mov 0x8(%rbx),%rcx
+-mov (%rbx),%r12
+-lea -0x660(%rbp),%rax
+-movq $0x0,-0x668(%rbp)
++mov (%rbx),%rdx
++lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ mov -0xb80(%rbp),%rdi
+-mov %rax,-0x670(%rbp)
+-lea 0xb(%rcx),%rsi
+-mov %rcx,-0xbb0(%rbp)
+-movb $0x0,-0x660(%rbp)
+-call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::reserve(unsigned long)@plt>
+-movabs $0x800000000000000c,%rax
+-add -0x668(%rbp),%rax
+-cmp $0xa,%rax
+-jbe <F:launch() [clone .cold]@1501>
+-mov -0xb80(%rbp),%rdi
+-mov $0xb,%edx
+-lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+-call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_append(char const*, unsigned long)@plt>
+-movabs $0x7ffffffffffffffe,%rax
+-sub -0x668(%rbp),%rax
+-cmp -0xbb0(%rbp),%rax
+-jb <F:launch() [clone .cold]@1496>
+-mov -0xbb0(%rbp),%rdx
+-mov -0xb80(%rbp),%rdi
+-mov %r12,%rsi
+-call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_append(char const*, unsigned long)@plt>
++call <F:std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > std::operator+<char, std::char_traits<char>, std::allocator<char> >(char const*, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) [clone .isra.0]@0>
+ mov D(%rip),%rax # <nvtxGlobals_v3+OFF>
+ test %rax,%rax
+-je <SELF@1644>
++je <SELF@1623>
+ mov -0x670(%rbp),%rdi
+ call *%rax
+ mov -0xb80(%rbp),%rdi
+@@ -1652,25 +1631,45 @@
+ call <F:void fklb::timeIt<std::function<void ()> >(CUstream_st*, std::function<void ()> const&, fklb::Timing&)@0>
+ movsd -0x8b0(%rbp),%xmm3
+ mov D(%rip),%rax # <nvtxGlobals_v3+OFF>
++mov -0x8a8(%rbp),%r14
+ movsd %xmm3,-0xbc0(%rbp)
+-movsd -0x8a8(%rbp),%xmm3
+-movsd %xmm3,-0xbd0(%rbp)
+ test %rax,%rax
+-je <SELF@1660>
++je <SELF@1638>
+ call *%rax
+ mov -0xb68(%rbp),%rdi
+ call <cudaStreamSynchronize@plt>
+ mov %eax,-0xbb0(%rbp)
+ test %eax,%eax
+-jne <F:launch() [clone .cold]@1421>
++jne <F:launch() [clone .cold]@1511>
+ mov 0x8(%rbx),%rcx
+-mov (%rbx),%rdx
+-lea D(%rip),%rsi # <_IO_stdin_used+OFF>
++mov (%rbx),%r12
++lea -0x660(%rbp),%rax
++movq $0x0,-0x668(%rbp)
+ mov -0xb80(%rbp),%rdi
+-call <F:std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > std::operator+<char, std::char_traits<char>, std::allocator<char> >(char const*, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) [clone .isra.0]@0>
++mov %rax,-0x670(%rbp)
++lea 0xc(%rcx),%rsi
++mov %rcx,-0xbb0(%rbp)
++movb $0x0,-0x660(%rbp)
++call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::reserve(unsigned long)@plt>
++movabs $0x800000000000000d,%rax
++add -0x668(%rbp),%rax
++cmp $0xb,%rax
++jbe <F:launch() [clone .cold]@1424>
++mov -0xb80(%rbp),%rdi
++mov $0xc,%edx
++lea D(%rip),%rsi # <_IO_stdin_used+OFF>
++call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_append(char const*, unsigned long)@plt>
++movabs $0x7ffffffffffffffe,%rax
++sub -0x668(%rbp),%rax
++cmp -0xbb0(%rbp),%rax
++jb <F:launch() [clone .cold]@1419>
++mov -0xbb0(%rbp),%rdx
++mov -0xb80(%rbp),%rdi
++mov %r12,%rsi
++call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_append(char const*, unsigned long)@plt>
+ mov D(%rip),%rax # <nvtxGlobals_v3+OFF>
+ test %rax,%rax
+-je <SELF@1675>
++je <SELF@1674>
+ mov -0x670(%rbp),%rdi
+ call *%rax
+ mov -0xb80(%rbp),%rdi
+@@ -1684,15 +1683,15 @@
+ mov %rbx,-0x8d0(%rbp)
+ movaps %xmm3,-0x890(%rbp)
+ call <F:void fklb::timePreparedLaunch<launch()::{lambda()#9}, launch()::{lambda()#1}, launch()::{lambda(int)#1}>(CUstream_st*, launch()::{lambda()#9} const&, launch()::{lambda()#1} const&, launch()::{lambda(int)#1} const&, fklb::Timing&, fklb::Timing&) [clone .isra.0]@0>
+-movsd -0x890(%rbp),%xmm5
++movsd -0x890(%rbp),%xmm3
+ mov D(%rip),%rax # <nvtxGlobals_v3+OFF>
+ mov -0x888(%rbp),%r12
+-movsd %xmm5,-0xbb0(%rbp)
++movsd %xmm3,-0xbb0(%rbp)
+ test %rax,%rax
+-je <SELF@1693>
++je <SELF@1692>
+ call *%rax
+ cmpq $0x6,-0x450(%rbp)
+-jne <SELF@5127>
++jne <SELF@5124>
+ mov 0x8(%rbx),%rax
+ mov (%rbx),%rdx
+ mov -0xb90(%rbp),%rdi
+@@ -1714,8 +1713,8 @@
+ mov -0xb90(%rbp),%rdi
+ mov $0x2c,%esi
+ call <F:std::basic_ostream<char, std::char_traits<char> >& std::operator<< <std::char_traits<char> >(std::basic_ostream<char, std::char_traits<char> >&, char) [clone .isra.0]@0>
+-movsd -0xbd0(%rbp),%xmm0
+ mov -0xb90(%rbp),%rdi
++movq %r14,%xmm0
+ call <std::ostream& std::ostream::_M_insert<double>(double)@plt>
+ mov -0xb90(%rbp),%rdi
+ mov $0x2c,%esi
+@@ -1726,7 +1725,7 @@
+ mov -0xb90(%rbp),%rdi
+ mov $0x2c,%esi
+ call <F:std::basic_ostream<char, std::char_traits<char> >& std::operator<< <std::char_traits<char> >(std::basic_ostream<char, std::char_traits<char> >&, char) [clone .isra.0]@0>
+-mov -0xc10(%rbp),%rdx
++mov -0xc18(%rbp),%rdx
+ mov -0xb90(%rbp),%rdi
+ xor %esi,%esi
+ call <F:fklb::CsvWriter::putText(std::basic_string_view<char, std::char_traits<char> >)@0>
+@@ -1742,12 +1741,12 @@
+ xor %esi,%esi
+ lea D(%rip),%rdi # <_IO_stdin_used+OFF>
+ call <__isoc23_strtoull@plt>
+-mov %rax,-0xbe8(%rbp)
++mov %rax,-0xbd0(%rbp)
+ cmpq $0x6,-0x450(%rbp)
+ je <SELF@1516>
+-jmp <F:launch() [clone .cold]@1364>
++jmp <F:launch() [clone .cold]@1362>
+ cmp %r15,-0xbd8(%rbp)
+-je <SELF@1758>
++je <SELF@1757>
+ lea 0x10(%r15),%rdi
+ mov %rdi,(%r15)
+ mov -0x60(%r13),%rbx
+@@ -1764,7 +1763,7 @@
+ imul %rax,%rdx
+ movabs $0xf0f0f0f0f0f0f0,%rax
+ cmp %rax,%rdx
+-je <F:launch() [clone .cold]@1377>
++je <F:launch() [clone .cold]@1375>
+ test %rdx,%rdx
+ mov $0x1,%eax
+ cmovne %rdx,%rax
+@@ -1783,10 +1782,10 @@
+ mov -0x60(%r13),%r8
+ mov %r14,-0x8f0(%rbp)
+ cmp $0xf,%r14
+-ja <SELF@1968>
++ja <SELF@1967>
+ lea 0x1(%r14),%rdx
+ test %r14,%r14
+-je <SELF@1964>
++je <SELF@1963>
+ mov %r8,%rsi
+ call <memcpy@plt>
+ mov -0x8f0(%rbp),%rax
+@@ -1797,7 +1796,7 @@
+ movq $0x0,0x38(%rbx)
+ movups %xmm3,0x20(%rbx)
+ test %rax,%rax
+-je <SELF@1807>
++je <SELF@1806>
+ lea 0x20(%rbx),%r14
+ lea -0x40(%r13),%rsi
+ mov $0x2,%edx
+@@ -1811,7 +1810,7 @@
+ movq $0x0,0x58(%rbx)
+ movups %xmm3,0x40(%rbx)
+ test %rax,%rax
+-je <SELF@1821>
++je <SELF@1820>
+ lea 0x40(%rbx),%r14
+ lea -0x20(%r13),%rsi
+ mov $0x2,%edx
+@@ -1825,7 +1824,7 @@
+ movq $0x0,0x78(%rbx)
+ movups %xmm5,0x60(%rbx)
+ test %rax,%rax
+-je <SELF@1835>
++je <SELF@1834>
+ lea 0x60(%rbx),%r14
+ mov $0x2,%edx
+ mov %r13,%rsi
+@@ -1839,8 +1838,8 @@
+ mov -0xbe0(%rbp),%rax
+ mov %rax,%rbx
+ cmp %r15,%rax
+-jne <SELF@1898>
+-jmp <SELF@1921>
++jne <SELF@1897>
++jmp <SELF@1920>
+ mov %rdx,(%r14)
+ mov 0x10(%rbx),%rdx
+ mov %rdx,0x10(%r14)
+@@ -1856,7 +1855,7 @@
+ movq $0x0,0x30(%r14)
+ movups %xmm3,0x20(%r14)
+ test %rax,%rax
+-je <SELF@1864>
++je <SELF@1863>
+ movdqu 0x20(%rbx),%xmm0
+ mov %rax,0x30(%r14)
+ pxor %xmm4,%xmm4
+@@ -1869,7 +1868,7 @@
+ mov %rax,0x58(%r14)
+ mov 0x50(%rbx),%rax
+ test %rax,%rax
+-je <SELF@1877>
++je <SELF@1876>
+ movdqu 0x40(%rbx),%xmm0
+ mov %rax,0x50(%r14)
+ pxor %xmm6,%xmm6
+@@ -1882,7 +1881,7 @@
+ mov %rax,0x78(%r14)
+ mov 0x70(%rbx),%rax
+ test %rax,%rax
+-je <SELF@1890>
++je <SELF@1889>
+ movdqu 0x60(%rbx),%xmm0
+ mov %rax,0x70(%r14)
+ pxor %xmm3,%xmm3
+@@ -1895,34 +1894,34 @@
+ mov %al,-0x8(%r14)
+ call <F:(anonymous namespace)::Row::~Row()@0>
+ cmp %r15,%rbx
+-je <SELF@1921>
++je <SELF@1920>
+ lea 0x10(%r14),%rcx
+ lea 0x10(%rbx),%rax
+ mov %rcx,(%r14)
+ mov (%rbx),%rdx
+ cmp %rax,%rdx
+-jne <SELF@1843>
++jne <SELF@1842>
+ mov 0x8(%rbx),%rdx
+ lea 0x1(%rdx),%rsi
+ cmp $0x8,%esi
+-jae <SELF@1938>
++jae <SELF@1937>
+ test $0x4,%sil
+-jne <SELF@4685>
++jne <SELF@4684>
+ test %esi,%esi
+-je <SELF@1847>
++je <SELF@1846>
+ movzbl (%rax),%edx
+ mov %dl,(%rcx)
+ test $0x2,%sil
+-je <SELF@1846>
++je <SELF@1845>
+ mov %esi,%esi
+ movzwl -0x2(%rax,%rsi,1),%edx
+ mov %dx,-0x2(%rcx,%rsi,1)
+ mov 0x8(%rbx),%rdx
+-jmp <SELF@1847>
++jmp <SELF@1846>
+ mov -0xbe0(%rbp),%rdi
+ lea 0x88(%r14),%r15
+ test %rdi,%rdi
+-je <SELF@1928>
++je <SELF@1927>
+ mov -0xbd8(%rbp),%rsi
+ sub %rdi,%rsi
+ call <operator delete(void*, unsigned long)@plt>
+@@ -1949,7 +1948,7 @@
+ sub %rcx,%r8
+ and $0xfffffff8,%esi
+ cmp $0x8,%esi
+-jb <SELF@1846>
++jb <SELF@1845>
+ mov -0xb80(%rbp),%r11
+ and $0xfffffff8,%esi
+ xor %ecx,%ecx
+@@ -1958,14 +1957,14 @@
+ mov (%r8,%rdi,1),%r9
+ mov %r9,(%rdx,%rdi,1)
+ cmp %esi,%ecx
+-jb <SELF@1955>
++jb <SELF@1954>
+ mov %r11,-0xb80(%rbp)
+ mov 0x8(%rbx),%rdx
+-jmp <SELF@1847>
++jmp <SELF@1846>
+ movzbl (%r8),%eax
+ mov %al,(%rdi)
+ mov -0x8f0(%rbp),%rax
+-jmp <SELF@1792>
++jmp <SELF@1791>
+ lea -0x8f0(%rbp),%rsi
+ xor %edx,%edx
+ mov %rbx,%rdi
+@@ -1978,11 +1977,11 @@
+ test %rax,%rax
+ mov %rax,0x10(%rbx)
+ lea 0x1(%rax),%rdx
+-je <SELF@1964>
++je <SELF@1963>
+ mov $0xffffffffffffffff,%rax
+ test %rdx,%rdx
+-je <SELF@1792>
+-jmp <SELF@1789>
++je <SELF@1791>
++jmp <SELF@1788>
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ mov -0xba0(%rbp),%rdi
+ mov %rdx,-0xc70(%rbp)
+@@ -2010,21 +2009,21 @@
+ lea -0x680(%rbp),%rax
+ add $0x30,%rsp
+ cmp %rax,%rdi
+-je <SELF@2016>
++je <SELF@2015>
+ mov -0x680(%rbp),%rax
+ lea 0x1(%rax),%rsi
+ call <operator delete(void*, unsigned long)@plt>
+ mov -0x670(%rbp),%rdi
+ lea -0x660(%rbp),%rax
+ cmp %rax,%rdi
+-je <SELF@2023>
++je <SELF@2022>
+ mov -0x660(%rbp),%rax
+ lea 0x1(%rax),%rsi
+ call <operator delete(void*, unsigned long)@plt>
+ addq $0x1,-0xbd0(%rbp)
+ mov -0xbd0(%rbp),%rax
+ cmp %rax,-0xbf0(%rbp)
+-jne <SELF@4068>
++jne <SELF@4067>
+ mov -0xc88(%rbp),%rax
+ mov -0xc60(%rbp),%rsi
+ lea -0x910(%rbp),%rdi
+@@ -2039,7 +2038,7 @@
+ mov %rax,%r13
+ mov %rax,-0xbd0(%rbp)
+ sar $0x2,%r13
+-je <SELF@4666>
++je <SELF@4665>
+ mov %r13,%rdi
+ call <operator new(unsigned long)@plt>
+ lea (%rax,%r13,1),%rcx
+@@ -2051,10 +2050,10 @@
+ mov %rax,-0x8f0(%rbp)
+ mov %rcx,-0x8e0(%rbp)
+ sub $0x1,%rbx
+-jne <SELF@4330>
++jne <SELF@4329>
+ mov %rdi,-0x8e8(%rbp)
+ cmpq $0x0,-0xbd0(%rbp)
+-je <SELF@4672>
++je <SELF@4671>
+ movslq (%r14),%rax
+ mov %rax,%rdx
+ imul $0x38e38e39,%rax,%rax
+@@ -2074,21 +2073,21 @@
+ lea 0x1(%r12),%rdi
+ mov %rax,-0xbd0(%rbp)
+ mov %rax,-0x8c0(%rbp)
+-je <SELF@2081>
++je <SELF@2080>
+ xor %esi,%esi
+ call <memset@plt>
+ mov -0xbd0(%rbp),%rdi
+ movdqa D(%rip),%xmm1 # <cuda::std::__4::__cpo::iter_swap+OFF>
+ mov %rdi,-0x8c8(%rbp)
+ cmp $0xe,%rbx
+-jbe <SELF@4746>
++jbe <SELF@4745>
+ add $0x1,%rbx
+ lea (%r14,%rbx,4),%rax
+ cmp %rax,%r12
+-jae <SELF@2091>
++jae <SELF@2090>
+ lea (%r12,%rbx,1),%rax
+ cmp %rax,%r14
+-jb <SELF@4746>
++jb <SELF@4745>
+ mov %rbx,%rcx
+ mov $0x4,%esi
+ pcmpeqd %xmm4,%xmm4
+@@ -2104,7 +2103,7 @@
+ movdqu 0x10(%rax),%xmm5
+ add $0x40,%rax
+ add $0x10,%rdx
+-movdqa -0xc40(%rbp),%xmm12
++movdqa -0xc50(%rbp),%xmm12
+ movdqu -0x20(%rax),%xmm7
+ paddd %xmm3,%xmm2
+ paddd %xmm3,%xmm5
+@@ -2234,9 +2233,9 @@
+ packuswb %xmm5,%xmm0
+ movups %xmm0,-0x10(%rdx)
+ cmp %rax,%rcx
+-jne <SELF@2102>
++jne <SELF@2101>
+ test $0xf,%bl
+-je <SELF@2403>
++je <SELF@2402>
+ mov %rbx,%rax
+ and $0xfffffffffffffff0,%rax
+ mov (%r14,%rax,4),%ecx
+@@ -2249,7 +2248,7 @@
+ mov %dl,(%r12,%rax,1)
+ lea 0x1(%rax),%rdx
+ cmp %r13,%rdx
+-jae <SELF@2403>
++jae <SELF@2402>
+ mov 0x4(%r14,%rax,4),%ecx
+ add $0x4,%ecx
+ movslq %ecx,%rdx
+@@ -2260,7 +2259,7 @@
+ mov %dl,0x1(%r12,%rax,1)
+ lea 0x2(%rax),%rdx
+ cmp %r13,%rdx
+-jae <SELF@2403>
++jae <SELF@2402>
+ mov 0x8(%r14,%rax,4),%ecx
+ add $0x4,%ecx
+ movslq %ecx,%rdx
+@@ -2271,7 +2270,7 @@
+ mov %dl,0x2(%r12,%rax,1)
+ lea 0x3(%rax),%rdx
+ cmp %r13,%rdx
+-jae <SELF@2403>
++jae <SELF@2402>
+ mov 0xc(%r14,%rax,4),%ecx
+ add $0x4,%ecx
+ movslq %ecx,%rdx
+@@ -2282,7 +2281,7 @@
+ mov %dl,0x3(%r12,%rax,1)
+ lea 0x4(%rax),%rdx
+ cmp %r13,%rdx
+-jae <SELF@2403>
++jae <SELF@2402>
+ mov 0x10(%r14,%rax,4),%ecx
+ add $0x4,%ecx
+ movslq %ecx,%rdx
+@@ -2293,7 +2292,7 @@
+ mov %dl,0x4(%r12,%rax,1)
+ lea 0x5(%rax),%rdx
+ cmp %r13,%rdx
+-jae <SELF@2403>
++jae <SELF@2402>
+ mov 0x14(%r14,%rax,4),%ecx
+ add $0x4,%ecx
+ movslq %ecx,%rdx
+@@ -2304,7 +2303,7 @@
+ mov %dl,0x5(%r12,%rax,1)
+ lea 0x6(%rax),%rdx
+ cmp %r13,%rdx
+-jae <SELF@2403>
++jae <SELF@2402>
+ mov 0x18(%r14,%rax,4),%ecx
+ add $0x4,%ecx
+ movslq %ecx,%rdx
+@@ -2315,7 +2314,7 @@
+ mov %dl,0x6(%r12,%rax,1)
+ lea 0x7(%rax),%rdx
+ cmp %r13,%rdx
+-jae <SELF@2403>
++jae <SELF@2402>
+ mov 0x1c(%r14,%rax,4),%ecx
+ add $0x4,%ecx
+ movslq %ecx,%rdx
+@@ -2326,7 +2325,7 @@
+ mov %dl,0x7(%r12,%rax,1)
+ lea 0x8(%rax),%rdx
+ cmp %r13,%rdx
+-jae <SELF@2403>
++jae <SELF@2402>
+ mov 0x20(%r14,%rax,4),%ecx
+ add $0x4,%ecx
+ movslq %ecx,%rdx
+@@ -2337,7 +2336,7 @@
+ mov %dl,0x8(%r12,%rax,1)
+ lea 0x9(%rax),%rdx
+ cmp %r13,%rdx
+-jae <SELF@2403>
++jae <SELF@2402>
+ mov 0x24(%r14,%rax,4),%ecx
+ add $0x4,%ecx
+ movslq %ecx,%rdx
+@@ -2348,7 +2347,7 @@
+ mov %dl,0x9(%r12,%rax,1)
+ lea 0xa(%rax),%rdx
+ cmp %r13,%rdx
+-jae <SELF@2403>
++jae <SELF@2402>
+ mov 0x28(%r14,%rax,4),%ecx
+ add $0x4,%ecx
+ movslq %ecx,%rdx
+@@ -2359,7 +2358,7 @@
+ mov %dl,0xa(%r12,%rax,1)
+ lea 0xb(%rax),%rdx
+ cmp %r13,%rdx
+-jae <SELF@2403>
++jae <SELF@2402>
+ mov 0x2c(%r14,%rax,4),%ecx
+ add $0x4,%ecx
+ movslq %ecx,%rdx
+@@ -2370,7 +2369,7 @@
+ mov %dl,0xb(%r12,%rax,1)
+ lea 0xc(%rax),%rdx
+ cmp %r13,%rdx
+-jae <SELF@2403>
++jae <SELF@2402>
+ mov 0x30(%r14,%rax,4),%ecx
+ add $0x4,%ecx
+ movslq %ecx,%rdx
+@@ -2381,7 +2380,7 @@
+ mov %dl,0xc(%r12,%rax,1)
+ lea 0xd(%rax),%rdx
+ cmp %r13,%rdx
+-jae <SELF@2403>
++jae <SELF@2402>
+ mov 0x34(%r14,%rax,4),%ecx
+ add $0x4,%ecx
+ movslq %ecx,%rdx
+@@ -2392,7 +2391,7 @@
+ mov %dl,0xd(%r12,%rax,1)
+ lea 0xe(%rax),%rdx
+ cmp %r13,%rdx
+-jae <SELF@2403>
++jae <SELF@2402>
+ mov 0x38(%r14,%rax,4),%ecx
+ add $0x4,%ecx
+ movslq %ecx,%rdx
+@@ -2413,7 +2412,7 @@
+ mov %rdx,-0xc70(%rbp)
+ call <F:(anonymous namespace)::compare8u(std::vector<unsigned char, std::allocator<unsigned char> > const&, std::vector<unsigned char, std::allocator<unsigned char> > const&)@0>
+ test %r11,%r11
+-mov -0xc10(%rbp),%rsi
++mov -0xc18(%rbp),%rsi
+ mov -0xb80(%rbp),%rdi
+ sete -0xbf0(%rbp)
+ test %rax,%rax
+@@ -2452,7 +2451,7 @@
+ call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_dispose()@plt>
+ mov -0xb80(%rbp),%rdi
+ call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_dispose()@plt>
+-mov -0xc10(%rbp),%rsi
++mov -0xc18(%rbp),%rsi
+ mov -0xb80(%rbp),%rdi
+ call <F:std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string<std::allocator<char> >(char const*, std::allocator<char> const&) [clone .constprop.0]@0>
+ mov -0xba0(%rbp),%rdi
+@@ -2496,7 +2495,7 @@
+ mov -0xbf0(%rbp),%rsi
+ mov -0xbd0(%rbp),%rdi
+ call <F:(anonymous namespace)::compare8u(std::vector<unsigned char, std::allocator<unsigned char> > const&, std::vector<unsigned char, std::allocator<unsigned char> > const&)@0>
+-mov -0xc10(%rbp),%rsi
++mov -0xc18(%rbp),%rsi
+ mov -0xb80(%rbp),%rdi
+ mov %rax,-0xc68(%rbp)
+ mov %rdx,-0xc80(%rbp)
+@@ -2543,7 +2542,7 @@
+ mov -0x890(%rbp),%rsi
+ movl $0x0,-0xbd0(%rbp)
+ test %rsi,%rsi
+-jne <SELF@2551>
++jne <SELF@2550>
+ xor %eax,%eax
+ movsd D(%rip),%xmm3 # <cuda::std::__4::__cpo::iter_swap+OFF>
+ comisd -0x888(%rbp),%xmm3
+@@ -2608,40 +2607,40 @@
+ mov -0xba0(%rbp),%rdi
+ call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_dispose()@plt>
+ cmpb $0x0,-0xcd9(%rbp)
+-jne <SELF@4637>
++jne <SELF@4636>
+ mov -0x8b0(%rbp),%rdi
+ test %rdi,%rdi
+-je <SELF@2617>
++je <SELF@2616>
+ mov -0x8a0(%rbp),%rsi
+ sub %rdi,%rsi
+ call <operator delete(void*, unsigned long)@plt>
+ test %r12,%r12
+-je <SELF@2622>
++je <SELF@2621>
+ mov %r13,%rsi
+ mov %r12,%rdi
+ call <operator delete(void*, unsigned long)@plt>
+ mov -0xc60(%rbp),%rdi
+ test %rdi,%rdi
+-je <SELF@2627>
++je <SELF@2626>
+ mov %r13,%rsi
+ call <operator delete(void*, unsigned long)@plt>
+ test %r14,%r14
+-je <SELF@2633>
++je <SELF@2632>
+ mov -0x900(%rbp),%rsi
+ mov %r14,%rdi
+ sub %r14,%rsi
+ call <operator delete(void*, unsigned long)@plt>
+ mov -0xbc0(%rbp),%rax
+ test %rax,%rax
+-je <SELF@2640>
+-mov -0xc48(%rbp),%rsi
++je <SELF@2639>
++mov -0xc40(%rbp),%rsi
+ mov %rax,%rdi
+ sub %rax,%rsi
+ call <operator delete(void*, unsigned long)@plt>
+ mov -0xc88(%rbp),%rax
+ test %rax,%rax
+-je <SELF@2647>
+-mov -0xc50(%rbp),%rsi
++je <SELF@2646>
++mov -0xc10(%rbp),%rsi
+ mov %rax,%rdi
+ sub %rax,%rsi
+ call <operator delete(void*, unsigned long)@plt>
+@@ -2651,13 +2650,13 @@
+ addq $0x68,-0xbb0(%rbp)
+ mov -0xbb0(%rbp),%rax
+ cmp %rax,-0xc98(%rbp)
+-jne <SELF@3984>
++jne <SELF@3983>
+ mov -0xd38(%rbp),%r11
+ test %r11,%r11
+-je <SELF@2779>
++je <SELF@2778>
+ mov -0xd40(%rbp),%r13
+ test %r13,%r13
+-je <SELF@2779>
++je <SELF@2778>
+ lea 0x20(%r11),%rdi
+ lea 0x20(%r13),%rsi
+ call <F:(anonymous namespace)::compare8u(std::vector<unsigned char, std::allocator<unsigned char> > const&, std::vector<unsigned char, std::allocator<unsigned char> > const&)@0>
+@@ -2672,7 +2671,7 @@
+ lea 0x50(%r13),%rdx
+ mov %rax,%r12
+ call <F:(anonymous namespace)::compareFloats(std::vector<float, std::allocator<float> > const&, std::vector<float, std::allocator<float> > const&)@0>
+-mov -0xc10(%rbp),%rsi
++mov -0xc18(%rbp),%rsi
+ mov -0xb80(%rbp),%rdi
+ call <F:std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string<std::allocator<char> >(char const*, std::allocator<char> const&) [clone .constprop.0]@0>
+ mov -0xba0(%rbp),%rdi
+@@ -2709,7 +2708,7 @@
+ call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_dispose()@plt>
+ mov -0xb80(%rbp),%rdi
+ call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_dispose()@plt>
+-mov -0xc10(%rbp),%rsi
++mov -0xc18(%rbp),%rsi
+ mov -0xb80(%rbp),%rdi
+ call <F:std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string<std::allocator<char> >(char const*, std::allocator<char> const&) [clone .constprop.0]@0>
+ pxor %xmm3,%xmm3
+@@ -2779,7 +2778,7 @@
+ call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_dispose()@plt>
+ mov -0xd60(%rbp),%rax
+ test %rax,%rax
+-je <SELF@2890>
++je <SELF@2889>
+ lea 0x50(%rax),%r13
+ mov -0xd28(%rbp),%rax
+ movsd D(%rip),%xmm6 # <cuda::std::__4::__cpo::iter_swap+OFF>
+@@ -2794,7 +2793,7 @@
+ call <F:(anonymous namespace)::compareToReference(std::vector<float, std::allocator<float> > const&, std::vector<double, std::allocator<double> > const&, double)@0>
+ mov -0x890(%rbp),%rsi
+ test %rsi,%rsi
+-jne <SELF@2800>
++jne <SELF@2799>
+ xor %r12d,%r12d
+ comisd -0x888(%rbp),%xmm6
+ setae %r12b
+@@ -2844,7 +2843,7 @@
+ mov %rax,-0x6c8(%rbp)
+ mov (%rbx),%r14
+ test %r14,%r14
+-je <SELF@2887>
++je <SELF@2886>
+ mov -0xbf8(%rbp),%rdi
+ mov %r13,%rsi
+ lea 0x50(%r14),%rdx
+@@ -2852,10 +2851,10 @@
+ mov -0x870(%rbp),%rsi
+ mov -0xc58(%rbp),%rdi
+ call <F:std::__cxx11::to_string(unsigned long)@0>
+-movsd -0x868(%rbp),%xmm3
++movsd -0x868(%rbp),%xmm5
+ mov -0xb80(%rbp),%rdi
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+-movsd %xmm3,-0xbb0(%rbp)
++movsd %xmm5,-0xbb0(%rbp)
+ call <F:std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string<std::allocator<char> >(char const*, std::allocator<char> const&) [clone .constprop.0]@0>
+ mov (%r14),%rcx
+ mov -0xba0(%rbp),%r14
+@@ -2887,10 +2886,10 @@
+ call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_dispose()@plt>
+ add $0x8,%rbx
+ cmp %rbx,%r12
+-jne <SELF@2844>
++jne <SELF@2843>
+ mov -0xd68(%rbp),%rax
+ test %rax,%rax
+-je <SELF@3095>
++je <SELF@3094>
+ lea 0x50(%rax),%r13
+ mov -0xd30(%rbp),%rax
+ movsd D(%rip),%xmm6 # <cuda::std::__4::__cpo::iter_swap+OFF>
+@@ -2905,7 +2904,7 @@
+ call <F:(anonymous namespace)::compareToReference(std::vector<float, std::allocator<float> > const&, std::vector<double, std::allocator<double> > const&, double)@0>
+ mov -0x890(%rbp),%rsi
+ test %rsi,%rsi
+-jne <SELF@2911>
++jne <SELF@2910>
+ xor %r12d,%r12d
+ comisd -0x888(%rbp),%xmm6
+ setae %r12b
+@@ -2952,12 +2951,12 @@
+ mov 0x50(%rax),%rsi
+ mov 0x58(%rax),%rdi
+ cmp %rdi,%rsi
+-je <SELF@4852>
++je <SELF@4851>
+ lea -0x4(%rdi),%rcx
+ mov %rsi,%rax
+ sub %rsi,%rcx
+ cmp $0xc,%rcx
+-jbe <SELF@4877>
++jbe <SELF@4876>
+ pcmpeqd %xmm4,%xmm4
+ shr $0x2,%rcx
+ pxor %xmm1,%xmm1
+@@ -2979,14 +2978,14 @@
+ paddq %xmm3,%xmm0
+ paddq %xmm0,%xmm1
+ cmp %rax,%rdx
+-jne <SELF@2971>
++jne <SELF@2970>
+ movdqa %xmm1,%xmm0
+ mov %rbx,-0xbd0(%rbp)
+ psrldq $0x8,%xmm0
+ paddq %xmm0,%xmm1
+ movq %xmm1,%r12
+ test $0x3,%cl
+-je <SELF@3016>
++je <SELF@3015>
+ and $0xfffffffffffffffc,%rcx
+ lea (%rsi,%rcx,4),%rsi
+ xor %eax,%eax
+@@ -2995,21 +2994,21 @@
+ add %rax,%r12
+ lea 0x4(%rsi),%rax
+ cmp %rax,%rdi
+-je <SELF@3016>
++je <SELF@3015>
+ xor %eax,%eax
+ cmpl $0xffffffff,0x4(%rsi)
+ sete %al
+ add %rax,%r12
+ lea 0x8(%rsi),%rax
+ cmp %rax,%rdi
+-je <SELF@3016>
++je <SELF@3015>
+ xor %eax,%eax
+ cmpl $0xffffffff,0x8(%rsi)
+ sete %al
+ add %rax,%r12
+ lea 0xc(%rsi),%rax
+ cmp %rax,%rdi
+-je <SELF@3016>
++je <SELF@3015>
+ xor %eax,%eax
+ cmpl $0xffffffff,0xc(%rsi)
+ sete %al
+@@ -3017,7 +3016,7 @@
+ xor %ebx,%ebx
+ test %r12,%r12
+ sete %bl
+-mov -0xc10(%rbp),%rsi
++mov -0xc18(%rbp),%rsi
+ mov -0xb80(%rbp),%rdi
+ call <F:std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string<std::allocator<char> >(char const*, std::allocator<char> const&) [clone .constprop.0]@0>
+ mov -0xba0(%rbp),%r14
+@@ -3055,7 +3054,7 @@
+ call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_dispose()@plt>
+ mov -0xd60(%rbp),%rax
+ test %rax,%rax
+-je <SELF@3095>
++je <SELF@3094>
+ mov -0xbf8(%rbp),%rdi
+ mov %r13,%rsi
+ lea 0x50(%rax),%rdx
+@@ -3106,46 +3105,46 @@
+ mov -0xcd0(%rbp),%rax
+ mov -0xc98(%rbp),%r14
+ mov %rax,%rbx
+-cmp -0xc98(%rbp),%rax
+-je <SELF@3138>
++cmp %rax,-0xc98(%rbp)
++je <SELF@3137>
+ mov 0x50(%rbx),%rdi
+ test %rdi,%rdi
+-je <SELF@3116>
++je <SELF@3115>
+ mov 0x60(%rbx),%rsi
+ sub %rdi,%rsi
+ call <operator delete(void*, unsigned long)@plt>
+ mov 0x38(%rbx),%rdi
+ test %rdi,%rdi
+-je <SELF@3122>
++je <SELF@3121>
+ mov 0x48(%rbx),%rsi
+ sub %rdi,%rsi
+ call <operator delete(void*, unsigned long)@plt>
+ mov 0x20(%rbx),%rdi
+ test %rdi,%rdi
+-je <SELF@3128>
++je <SELF@3127>
+ mov 0x30(%rbx),%rsi
+ sub %rdi,%rsi
+ call <operator delete(void*, unsigned long)@plt>
+ mov (%rbx),%rdi
+ lea 0x10(%rbx),%rax
+ cmp %rax,%rdi
+-je <SELF@3135>
++je <SELF@3134>
+ mov 0x10(%rbx),%rax
+ lea 0x1(%rax),%rsi
+ call <operator delete(void*, unsigned long)@plt>
+ add $0x68,%rbx
+ cmp %rbx,%r14
+-jne <SELF@3110>
++jne <SELF@3109>
+ cmpq $0x0,-0xcd0(%rbp)
+-je <SELF@3144>
++je <SELF@3143>
+ mov -0xcd8(%rbp),%rsi
+ mov -0xcd0(%rbp),%rdi
+ sub %rdi,%rsi
+ call <operator delete(void*, unsigned long)@plt>
+ cmpb $0x0,-0xcdb(%rbp)
+-je <SELF@3155>
++je <SELF@3154>
+ cmpb $0x0,-0xb6d(%rbp)
+-jne <SELF@4879>
++jne <SELF@4878>
+ mov -0xcf0(%rbp),%rbx
+ mov $0x19,%edx
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+@@ -3157,7 +3156,7 @@
+ call <cudaStreamSynchronize@plt>
+ mov %eax,%ebx
+ test %eax,%eax
+-jne <F:launch() [clone .cold]@1527>
++jne <F:launch() [clone .cold]@1430>
+ mov -0xb58(%rbp),%rdi
+ call <cudaFree@plt>
+ mov %eax,%ebx
+@@ -3178,7 +3177,7 @@
+ jne <F:launch() [clone .cold]@840>
+ add $0x8,%rbx
+ cmp $0xf0,%rbx
+-jne <SELF@3166>
++jne <SELF@3165>
+ mov -0xb48(%rbp),%rdi
+ call <cudaFree@plt>
+ mov %eax,%ebx
+@@ -3190,7 +3189,7 @@
+ test %eax,%eax
+ jne <F:launch() [clone .cold]@0>
+ movzbl -0xb6d(%rbp),%eax
+-mov -0xc20(%rbp),%rdi
++mov -0xc28(%rbp),%rdi
+ xor $0x1,%eax
+ movzbl %al,%ebx
+ call <F:fk::Ptr<(fk::ND)3, float>::freePtr()@0>
+@@ -3200,47 +3199,47 @@
+ lea D(%rip),%rax # <vtable for fk::Stream_<(fk::ParArch)1>+OFF>
+ mov %rax,-0x850(%rbp)
+ test %rdi,%rdi
+-je <SELF@3204>
++je <SELF@3203>
+ call <F:std::_Sp_counted_base<(__gnu_cxx::_Lock_policy)2>::_M_release()@0>
+ lea D(%rip),%rax # <vtable for fk::Ref+OFF>
+ mov %rax,-0x850(%rbp)
+ mov -0x848(%rbp),%rax
+ test %rax,%rax
+-je <SELF@3216>
++je <SELF@3215>
+ lock subl $0x1,(%rax)
+-jne <SELF@3216>
++jne <SELF@3215>
+ mov -0x848(%rbp),%rdi
+ test %rdi,%rdi
+-je <SELF@3216>
++je <SELF@3215>
+ mov $0x4,%esi
+ call <operator delete(void*, unsigned long)@plt>
+ mov -0x970(%rbp),%rdi
+ test %rdi,%rdi
+-je <SELF@3222>
++je <SELF@3221>
+ mov -0x960(%rbp),%rsi
+ sub %rdi,%rsi
+ call <operator delete(void*, unsigned long)@plt>
+ mov -0x990(%rbp),%rdi
+ test %rdi,%rdi
+-je <SELF@3228>
++je <SELF@3227>
+ mov -0x980(%rbp),%rsi
+ sub %rdi,%rsi
+ call <operator delete(void*, unsigned long)@plt>
+ mov -0x9b0(%rbp),%rdi
+ test %rdi,%rdi
+-je <SELF@3234>
++je <SELF@3233>
+ mov -0x9a0(%rbp),%rsi
+ sub %rdi,%rsi
+ call <operator delete(void*, unsigned long)@plt>
+ mov -0x9d0(%rbp),%rdi
+ test %rdi,%rdi
+-je <SELF@3240>
++je <SELF@3239>
+ mov -0x9c0(%rbp),%rsi
+ sub %rdi,%rsi
+ call <operator delete(void*, unsigned long)@plt>
+ mov -0xb08(%rbp),%rdi
+ test %rdi,%rdi
+-je <SELF@3244>
++je <SELF@3243>
+ call <F:std::_Sp_counted_base<(__gnu_cxx::_Lock_policy)2>::_M_release()@0>
+ mov -0xcc0(%rbp),%rdi
+ call <cv::cuda::GpuMat::release()@plt>
+@@ -3248,16 +3247,16 @@
+ mov -0x9e8(%rbp),%r12
+ mov %rax,%rdi
+ cmp %rax,%r12
+-je <SELF@3258>
++je <SELF@3257>
+ mov %rdi,%r14
+ call <cv::cuda::GpuMat::release()@plt>
+ lea 0x40(%r14),%rax
+ mov %rax,%rdi
+ cmp %rax,%r12
+-jne <SELF@3251>
++jne <SELF@3250>
+ mov -0x9f0(%rbp),%rdi
+ test %rdi,%rdi
+-je <SELF@3263>
++je <SELF@3262>
+ mov -0x9e0(%rbp),%rsi
+ sub %rdi,%rsi
+ call <operator delete(void*, unsigned long)@plt>
+@@ -3265,16 +3264,16 @@
+ mov -0xa08(%rbp),%r12
+ mov %rax,%rdi
+ cmp %rax,%r12
+-je <SELF@3275>
++je <SELF@3274>
+ mov %rdi,%r14
+ call <cv::cuda::GpuMat::release()@plt>
+ lea 0x40(%r14),%rax
+ mov %rax,%rdi
+ cmp %rax,%r12
+-jne <SELF@3268>
++jne <SELF@3267>
+ mov -0xa10(%rbp),%rdi
+ test %rdi,%rdi
+-je <SELF@3280>
++je <SELF@3279>
+ mov -0xa00(%rbp),%rsi
+ sub %rdi,%rsi
+ call <operator delete(void*, unsigned long)@plt>
+@@ -3282,7 +3281,7 @@
+ call <cv::cuda::GpuMat::release()@plt>
+ mov -0xb18(%rbp),%rdi
+ test %rdi,%rdi
+-je <SELF@3286>
++je <SELF@3285>
+ call <F:std::_Sp_counted_base<(__gnu_cxx::_Lock_policy)2>::_M_release()@0>
+ mov -0xbe0(%rbp),%rax
+ mov -0xcc8(%rbp),%rdi
+@@ -3293,23 +3292,23 @@
+ call <F:std::vector<(anonymous namespace)::Row, std::allocator<(anonymous namespace)::Row> >::~vector()@0>
+ mov -0xd30(%rbp),%rdi
+ test %rdi,%rdi
+-je <SELF@3299>
++je <SELF@3298>
+ mov -0xd50(%rbp),%rsi
+ sub %rdi,%rsi
+ call <operator delete(void*, unsigned long)@plt>
+ mov -0xd28(%rbp),%rdi
+ test %rdi,%rdi
+-je <SELF@3305>
++je <SELF@3304>
+ mov -0xd48(%rbp),%rsi
+ sub %rdi,%rsi
+ call <operator delete(void*, unsigned long)@plt>
+ mov -0xca8(%rbp),%rax
+ mov %rax,%rsi
+-cmp -0xc30(%rbp),%rax
+-je <SELF@3321>
++cmp -0xc38(%rbp),%rax
++je <SELF@3320>
+ mov (%rsi),%rdi
+ test %rdi,%rdi
+-je <SELF@3376>
++je <SELF@3375>
+ mov 0x10(%rsi),%rax
+ lea 0x18(%rsi),%r15
+ mov %rax,%rsi
+@@ -3317,21 +3316,21 @@
+ sub %rdi,%rsi
+ call <operator delete(void*, unsigned long)@plt>
+ mov %r15,%rsi
+-cmp %r15,-0xc30(%rbp)
+-jne <SELF@3309>
++cmp %r15,-0xc38(%rbp)
++jne <SELF@3308>
+ cmpq $0x0,-0xca8(%rbp)
+-je <SELF@3327>
++je <SELF@3326>
+ mov -0xcb0(%rbp),%rsi
+ mov -0xca8(%rbp),%rdi
+ sub %rdi,%rsi
+ call <operator delete(void*, unsigned long)@plt>
+-mov -0xc18(%rbp),%rax
++mov -0xc20(%rbp),%rax
+ mov %rax,%rsi
+-cmp -0xc28(%rbp),%rax
+-je <SELF@3343>
++cmp -0xc30(%rbp),%rax
++je <SELF@3342>
+ mov (%rsi),%rdi
+ test %rdi,%rdi
+-je <SELF@3381>
++je <SELF@3380>
+ mov 0x10(%rsi),%rax
+ lea 0x18(%rsi),%r15
+ mov %rax,%rsi
+@@ -3339,12 +3338,12 @@
+ sub %rdi,%rsi
+ call <operator delete(void*, unsigned long)@plt>
+ mov %r15,%rsi
+-cmp -0xc28(%rbp),%r15
+-jne <SELF@3331>
+-cmpq $0x0,-0xc18(%rbp)
+-je <SELF@3349>
++cmp -0xc30(%rbp),%r15
++jne <SELF@3330>
++cmpq $0x0,-0xc20(%rbp)
++je <SELF@3348>
+ mov -0xcb8(%rbp),%rsi
+-mov -0xc18(%rbp),%rdi
++mov -0xc20(%rbp),%rdi
+ sub %rdi,%rsi
+ call <operator delete(void*, unsigned long)@plt>
+ mov -0xc08(%rbp),%rdi
+@@ -3352,19 +3351,19 @@
+ call <operator delete(void*, unsigned long)@plt>
+ mov -0xad0(%rbp),%rdi
+ test %rdi,%rdi
+-je <SELF@3358>
++je <SELF@3357>
+ mov -0xac0(%rbp),%rsi
+ sub %rdi,%rsi
+ call <operator delete(void*, unsigned long)@plt>
+ mov -0xd00(%rbp),%rdi
+ test %rdi,%rdi
+-je <SELF@3364>
++je <SELF@3363>
+ mov -0xae0(%rbp),%rsi
+ sub %rdi,%rsi
+ call <operator delete(void*, unsigned long)@plt>
+ mov -0x38(%rbp),%rax
+ sub %fs:0x28,%rax
+-jne <SELF@4881>
++jne <SELF@4880>
+ lea -0x28(%rbp),%rsp
+ mov %ebx,%eax
+ pop %rbx
+@@ -3376,17 +3375,17 @@
+ ret
+ lea 0x18(%rsi),%rax
+ mov %rax,%rsi
+-cmp %rax,-0xc30(%rbp)
+-jne <SELF@3309>
+-jmp <SELF@3321>
++cmp %rax,-0xc38(%rbp)
++jne <SELF@3308>
++jmp <SELF@3320>
+ lea 0x18(%rsi),%rax
+ mov %rax,%rsi
+-cmp -0xc28(%rbp),%rax
+-jne <SELF@3331>
+-jmp <SELF@3343>
++cmp -0xc30(%rbp),%rax
++jne <SELF@3330>
++jmp <SELF@3342>
+ movb $0x1,-0xb6d(%rbp)
+ cmp -0xbe0(%rbp),%r15
+-je <SELF@3928>
++je <SELF@3927>
+ movq $0x0,-0xcd8(%rbp)
+ mov -0xbe0(%rbp),%rbx
+ movq $0x0,-0xc98(%rbp)
+@@ -3394,7 +3393,7 @@
+ movq $0x0,-0xd18(%rbp)
+ movq $0x0,-0xd58(%rbp)
+ movb $0x1,-0xcda(%rbp)
+-jmp <SELF@3534>
++jmp <SELF@3533>
+ mov -0xb80(%rbp),%rdi
+ lea 0x8(%rdx),%rsi
+ lea -0x660(%rbp),%rax
+@@ -3501,7 +3500,7 @@
+ call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_dispose()@plt>
+ mov -0xc98(%rbp),%r12
+ cmp -0xcd8(%rbp),%r12
+-je <SELF@3792>
++je <SELF@3791>
+ mov -0xb90(%rbp),%rsi
+ mov %r12,%rdi
+ call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&)@plt>
+@@ -3519,28 +3518,28 @@
+ movups %xmm0,0x50(%r12)
+ mov -0x650(%rbp),%rdi
+ cmp %r14,%rdi
+-je <SELF@3525>
++je <SELF@3524>
+ mov -0x640(%rbp),%rax
+ lea 0x1(%rax),%rsi
+ call <operator delete(void*, unsigned long)@plt>
+ mov -0xbb0(%rbp),%rdi
+ test %rdi,%rdi
+-je <SELF@3531>
++je <SELF@3530>
+ mov -0xbc0(%rbp),%rsi
+ sub %rdi,%rsi
+ call <operator delete(void*, unsigned long)@plt>
+ add $0x88,%rbx
+ cmp %rbx,%r15
+-je <SELF@3934>
++je <SELF@3933>
+ mov %rbx,%rdi
+ call <F:(anonymous namespace)::selected(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)@0>
+ test %al,%al
+-je <SELF@3531>
++je <SELF@3530>
+ movq $0x0,-0x868(%rbp)
+ movq $0x0,-0xbc0(%rbp)
+ movq $0x0,-0xbb0(%rbp)
+ cmpq $0xb,0x8(%rbx)
+-je <SELF@3770>
++je <SELF@3769>
+ cmpq $0x0,0x50(%rbx)
+ je <F:launch() [clone .cold]@947>
+ lea 0x40(%rbx),%rdi
+@@ -3564,11 +3563,11 @@
+ mov %r14,-0x650(%rbp)
+ mov %rax,-0x8d0(%rbp)
+ cmp $0xf,%rax
+-ja <SELF@3777>
++ja <SELF@3776>
+ lea 0x1(%rax),%rdx
+ mov %r14,%rdi
+ test %rax,%rax
+-je <SELF@3766>
++je <SELF@3765>
+ mov %r12,%rsi
+ call <memcpy@plt>
+ mov -0x8d0(%rbp),%rax
+@@ -3625,10 +3624,10 @@
+ lea 0x60(%rbx),%rdi
+ call *0x78(%rbx)
+ cmpq $0xb,0x8(%rbx)
+-je <SELF@3670>
++je <SELF@3669>
+ mov -0xc10(%rbp),%rsi
+ test %rsi,%rsi
+-je <SELF@3501>
++je <SELF@3500>
+ lea -0x690(%rbp),%r12
+ mov %r12,%rdi
+ mov %r12,-0xba0(%rbp)
+@@ -3663,17 +3662,17 @@
+ mov -0x6b0(%rbp),%r12
+ mov -0x6a8(%rbp),%rdx
+ cmpb $0x0,0x80(%rbx)
+-jne <SELF@3397>
++jne <SELF@3396>
+ lea -0x660(%rbp),%rax
+ mov -0x600(%rbp),%r13
+ mov %rax,-0xba0(%rbp)
+-jmp <SELF@3468>
++jmp <SELF@3467>
+ movabs $0x635f76636e65706f,%rdx
+ mov (%rbx),%rax
+ cmp %rdx,(%rax)
+-jne <SELF@3628>
++jne <SELF@3627>
+ cmpl $0x61647563,0x7(%rax)
+-jne <SELF@3628>
++jne <SELF@3627>
+ lea -0x890(%rbp),%rcx
+ xor %r13d,%r13d
+ pxor %xmm0,%xmm0
+@@ -3697,7 +3696,7 @@
+ movdqa -0x930(%rbp),%xmm0
+ mov -0x920(%rbp),%rax
+ cmp $0x780,%r13
+-jne <SELF@3681>
++jne <SELF@3680>
+ mov -0x7a8(%rbp),%rax
+ mov -0xb80(%rbp),%rsi
+ lea -0x930(%rbp),%rdi
+@@ -3711,10 +3710,10 @@
+ sar $0x3,%rcx
+ mov %rcx,-0xd58(%rbp)
+ test %rax,%rax
+-je <SELF@3759>
++je <SELF@3758>
+ lea -0x1(%rcx),%rax
+ cmp $0x1,%rax
+-jbe <SELF@4833>
++jbe <SELF@4832>
+ mov %rcx,%rdx
+ mov -0xbb0(%rbp),%r8
+ xor %eax,%eax
+@@ -3731,14 +3730,14 @@
+ por %xmm1,%xmm0
+ psubq %xmm0,%xmm2
+ cmp %rax,%rdx
+-jne <SELF@3724>
++jne <SELF@3723>
+ movdqa %xmm2,%xmm0
+ psrldq $0x8,%xmm0
+ paddq %xmm0,%xmm2
+ movq %xmm2,%rax
+ add %rax,-0xd18(%rbp)
+ test $0x1,%cl
+-je <SELF@4771>
++je <SELF@4770>
+ mov %rcx,%rax
+ and $0xfffffffffffffffe,%rax
+ mov -0xbb0(%rbp),%r10
+@@ -3750,7 +3749,7 @@
+ lea 0x1(%rax),%rdx
+ mov -0xd18(%rbp),%r11
+ cmp %rcx,%rdx
+-jae <SELF@3759>
++jae <SELF@3758>
+ mov 0x8(%r10,%rax,8),%rcx
+ cmp %rcx,0x8(%rdi,%rax,8)
+ setne %al
+@@ -3760,21 +3759,21 @@
+ cmpq $0x0,-0xd18(%rbp)
+ sete -0xcda(%rbp)
+ test %rdi,%rdi
+-je <SELF@3628>
++je <SELF@3627>
+ sub %rdi,%rsi
+ call <operator delete(void*, unsigned long)@plt>
+-jmp <SELF@3628>
++jmp <SELF@3627>
+ movzbl (%r12),%eax
+ mov %al,(%rdi)
+ mov -0x8d0(%rbp),%rax
+-jmp <SELF@3574>
++jmp <SELF@3573>
+ movabs $0x635f76636e65706f,%rdx
+ mov (%rbx),%rax
+ cmp %rdx,(%rax)
+-je <SELF@4706>
++je <SELF@4705>
+ movq $0x0,-0xbc0(%rbp)
+ movq $0x0,-0xbb0(%rbp)
+-jmp <SELF@3543>
++jmp <SELF@3542>
+ mov -0xb90(%rbp),%rdi
+ lea -0x8d0(%rbp),%rsi
+ xor %edx,%edx
+@@ -3785,11 +3784,11 @@
+ mov %rax,-0x640(%rbp)
+ lea 0x1(%rax),%rdx
+ test %rax,%rax
+-je <SELF@3766>
++je <SELF@3765>
+ mov $0xffffffffffffffff,%rax
+ test %rdx,%rdx
+-je <SELF@3574>
+-jmp <SELF@3571>
++je <SELF@3573>
++jmp <SELF@3570>
+ movabs $0x4ec4ec4ec4ec4ec5,%rax
+ mov %r12,%r13
+ sub -0xcd0(%rbp),%r13
+@@ -3834,14 +3833,14 @@
+ movaps %xmm0,-0x610(%rbp)
+ movaps %xmm0,-0x600(%rbp)
+ cmp %rax,-0xc98(%rbp)
+-je <SELF@4821>
++je <SELF@4820>
+ mov -0xb80(%rbp),%rax
+ mov %rbx,-0xbd0(%rbp)
+ mov %r12,-0xb80(%rbp)
+ mov -0xc98(%rbp),%rbx
+ mov -0xb80(%rbp),%rdi
+ mov %rax,%r12
+-jmp <SELF@3848>
++jmp <SELF@3847>
+ mov -0xb80(%rbp),%rax
+ add $0x68,%rax
+ mov %rax,-0xb80(%rbp)
+@@ -3871,20 +3870,20 @@
+ mov 0x60(%r13),%rdx
+ mov %rdx,0x60(%rax)
+ test %rdi,%rdi
+-je <SELF@3877>
++je <SELF@3876>
+ mov 0x30(%r13),%rsi
+ sub %rdi,%rsi
+ call <operator delete(void*, unsigned long)@plt>
+ mov 0x0(%r13),%rdi
+ lea 0x10(%r13),%rdx
+ cmp %rdx,%rdi
+-je <SELF@3884>
++je <SELF@3883>
+ mov 0x10(%r13),%rax
+ lea 0x1(%rax),%rsi
+ call <operator delete(void*, unsigned long)@plt>
+ add $0x68,%r13
+ cmp %r13,%rbx
+-jne <SELF@3844>
++jne <SELF@3843>
+ mov %r12,%rax
+ mov -0xb80(%rbp),%r12
+ mov -0x600(%rbp),%r13
+@@ -3896,7 +3895,7 @@
+ mov -0xcd0(%rbp),%rax
+ sub %r13,%rdx
+ test %rax,%rax
+-je <SELF@3905>
++je <SELF@3904>
+ mov -0xcd8(%rbp),%rsi
+ mov %rax,%rdi
+ mov %rdx,-0xbd0(%rbp)
+@@ -3907,7 +3906,7 @@
+ add -0xb80(%rbp),%rax
+ mov %rax,-0xcd8(%rbp)
+ test %r13,%r13
+-je <SELF@3913>
++je <SELF@3912>
+ mov %rdx,%rsi
+ mov %r13,%rdi
+ call <operator delete(void*, unsigned long)@plt>
+@@ -3915,17 +3914,17 @@
+ mov -0x608(%rbp),%rsi
+ sub %rdi,%rsi
+ test %rdi,%rdi
+-je <SELF@3919>
++je <SELF@3918>
+ call <operator delete(void*, unsigned long)@plt>
+ mov -0x630(%rbp),%rdi
+ test %rdi,%rdi
+-je <SELF@3925>
++je <SELF@3924>
+ mov -0x620(%rbp),%rsi
+ sub %rdi,%rsi
+ call <operator delete(void*, unsigned long)@plt>
+ mov -0xb80(%rbp),%rax
+ mov %rax,-0xcd0(%rbp)
+-jmp <SELF@3519>
++jmp <SELF@3518>
+ movq $0x0,-0xcd8(%rbp)
+ movq $0x0,-0xc98(%rbp)
+ movq $0x0,-0xcd0(%rbp)
+@@ -3935,14 +3934,14 @@
+ mov -0xb90(%rbp),%r13
+ lea -0xb6d(%rbp),%rax
+ lea -0x670(%rbp),%rbx
+-movq %rax,%xmm5
++movq %rax,%xmm3
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ mov %rbx,%rdi
+ mov %rbx,-0xb80(%rbp)
+-movq %r13,%xmm3
+-mov %rsi,-0xc10(%rbp)
+-punpcklqdq %xmm5,%xmm3
+-movaps %xmm3,-0xbb0(%rbp)
++movq %r13,%xmm5
++mov %rsi,-0xc18(%rbp)
++punpcklqdq %xmm3,%xmm5
++movaps %xmm5,-0xbb0(%rbp)
+ call <F:std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string<std::allocator<char> >(char const*, std::allocator<char> const&) [clone .constprop.0]@0>
+ lea -0x690(%rbp),%r14
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+@@ -3967,11 +3966,11 @@
+ call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_dispose()@plt>
+ mov %rbx,%rdi
+ call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_dispose()@plt>
+-movdqa -0xbb0(%rbp),%xmm3
++movdqa -0xbb0(%rbp),%xmm5
+ mov -0xcd0(%rbp),%rax
+-movaps %xmm3,-0xb00(%rbp)
+-cmp -0xc98(%rbp),%rax
+-je <SELF@3095>
++movaps %xmm5,-0xb00(%rbp)
++cmp %rax,-0xc98(%rbp)
++je <SELF@3094>
+ mov %rax,-0xbb0(%rbp)
+ mov $0x38e38e39,%eax
+ movq $0x0,-0xd68(%rbp)
+@@ -3981,20 +3980,20 @@
+ psrad $0x1f,%xmm5
+ movq $0x0,-0xd40(%rbp)
+ movq $0x0,-0xd38(%rbp)
+-movaps %xmm5,-0xc40(%rbp)
++movaps %xmm5,-0xc50(%rbp)
+ mov -0xbb0(%rbp),%rax
+ mov 0x8(%rax),%rax
+ cmp $0x8,%rax
+-je <SELF@4220>
++je <SELF@4219>
+ cmp $0x9,%rax
+-je <SELF@4230>
++je <SELF@4229>
+ cmp $0xb,%rax
+-jne <SELF@3997>
++jne <SELF@3996>
+ mov -0xbb0(%rbp),%rax
+ movabs $0x635f76636e65706f,%rdx
+ mov (%rax),%rax
+ cmp %rdx,(%rax)
+-je <SELF@4759>
++je <SELF@4758>
+ mov $0x1c,%edi
+ call <operator new(unsigned long)@plt>
+ movdqa D(%rip),%xmm0 # <cuda::std::__4::__cpo::iter_swap+OFF>
+@@ -4011,43 +4010,43 @@
+ xor %r14d,%r14d
+ xor %r12d,%r12d
+ xor %ebx,%ebx
+-movq $0x0,-0xc48(%rbp)
++movq $0x0,-0xc40(%rbp)
+ xor %r13d,%r13d
+ movq $0x0,-0xbc0(%rbp)
+ add $0x1c,%rax
+ mov %rax,-0xbd0(%rbp)
+ mov -0xbb0(%rbp),%rax
+ movq $0x0,-0xc88(%rbp)
+-movq $0x0,-0xc50(%rbp)
++movq $0x0,-0xc10(%rbp)
+ add $0x20,%rax
+ mov %rax,-0xc60(%rbp)
+ mov -0xbe8(%rbp),%rax
+ mov -0xbd0(%rbp),%rcx
+ mov (%rax,%r13,4),%edx
+ mov -0xc08(%rbp),%rax
+-jmp <SELF@4031>
++jmp <SELF@4030>
+ add $0x4,%rax
+ cmp %rax,%rcx
+-je <SELF@4104>
++je <SELF@4103>
+ cmp (%rax),%edx
+-jne <SELF@4028>
++jne <SELF@4027>
+ sub -0xc08(%rbp),%rax
+ mov %rcx,-0xbd0(%rbp)
+ sar $0x2,%rax
+ mov %rax,%rdx
+-cmp -0xc50(%rbp),%r12
+-je <SELF@4108>
++cmp %r12,-0xc10(%rbp)
++je <SELF@4107>
+ mov %rdx,(%r12)
+ add $0x8,%r12
+-mov -0xc18(%rbp),%rcx
++mov -0xc20(%rbp),%rcx
+ lea (%rdx,%rdx,2),%rax
+ mov -0xc60(%rbp),%rdi
+ lea (%rcx,%rax,8),%rsi
+ call <F:(anonymous namespace)::compare8u(std::vector<unsigned char, std::allocator<unsigned char> > const&, std::vector<unsigned char, std::allocator<unsigned char> > const&)@0>
+ mov %rdx,%rcx
+ mov %rax,%rdx
+-cmp -0xc48(%rbp),%r14
+-je <SELF@4157>
++cmp -0xc40(%rbp),%r14
++je <SELF@4156>
+ mov %rax,(%r14)
+ add $0x10,%r14
+ mov %rcx,-0x8(%r14)
+@@ -4061,10 +4060,10 @@
+ cmovb %r13,%rbx
+ add $0x1,%r13
+ cmp -0xbf0(%rbp),%r13
+-jne <SELF@4023>
++jne <SELF@4022>
+ cmpb $0x0,-0xcd9(%rbp)
+ movq $0x0,-0xbd0(%rbp)
+-jne <SELF@4240>
++jne <SELF@4239>
+ lea D(%rip),%r14 # <_IO_stdin_used+OFF>
+ xor %eax,%eax
+ cmp -0xbd0(%rbp),%rbx
+@@ -4072,8 +4071,8 @@
+ sete %al
+ lea D(%rip),%r12 # <_IO_stdin_used+OFF>
+ mov %eax,-0xc68(%rbp)
+-je <SELF@4212>
+-mov -0xc10(%rbp),%rsi
++je <SELF@4211>
++mov -0xc18(%rbp),%rsi
+ mov -0xb80(%rbp),%rdi
+ call <F:std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string<std::allocator<char> >(char const*, std::allocator<char> const&) [clone .constprop.0]@0>
+ mov -0xbd0(%rbp),%rcx
+@@ -4085,30 +4084,30 @@
+ cvtsi2sdl 0x8(%rsi,%rax,1),%xmm0
+ mov -0xbe8(%rbp),%rax
+ cmpl $0x6,(%rax,%rcx,4)
+-ja <SELF@4228>
++ja <SELF@4227>
+ mov (%rax,%rcx,4),%eax
+ movslq (%r14,%rax,4),%rax
+ add %r14,%rax
+ notrack jmp *%rax
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+-jmp <SELF@1986>
+-lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+-jmp <SELF@1986>
+-lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+-jmp <SELF@1986>
+-lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+-jmp <SELF@1986>
+-lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+-jmp <SELF@1986>
+-lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+-jmp <SELF@1986>
++jmp <SELF@1985>
++lea D(%rip),%rsi # <_IO_stdin_used+OFF>
++jmp <SELF@1985>
++lea D(%rip),%rsi # <_IO_stdin_used+OFF>
++jmp <SELF@1985>
++lea D(%rip),%rsi # <_IO_stdin_used+OFF>
++jmp <SELF@1985>
++lea D(%rip),%rsi # <_IO_stdin_used+OFF>
++jmp <SELF@1985>
++lea D(%rip),%rsi # <_IO_stdin_used+OFF>
++jmp <SELF@1985>
+ mov %rcx,-0xbd0(%rbp)
+ mov $0x7,%edx
+-cmp -0xc50(%rbp),%r12
+-jne <SELF@4039>
++cmp %r12,-0xc10(%rbp)
++jne <SELF@4038>
++mov -0xc10(%rbp),%r8
++sub -0xc88(%rbp),%r8
+ movabs $0xfffffffffffffff,%rcx
+-mov %r12,%r8
+-sub -0xc88(%rbp),%r8
+ mov %r8,%rax
+ sar $0x3,%rax
+ cmp %rcx,%rax
+@@ -4131,7 +4130,7 @@
+ mov %rax,%rcx
+ mov %rdx,(%rax,%r8,1)
+ test %r8,%r8
+-je <SELF@4141>
++je <SELF@4140>
+ mov -0xc88(%rbp),%rsi
+ mov %r8,%rdx
+ mov %rax,%rdi
+@@ -4142,8 +4141,8 @@
+ mov -0xc88(%rbp),%rax
+ lea 0x8(%rcx,%r8,1),%r12
+ test %rax,%rax
+-je <SELF@4151>
+-mov -0xc50(%rbp),%rsi
++je <SELF@4150>
++mov -0xc10(%rbp),%rsi
+ mov %rax,%rdi
+ mov %rcx,-0xc68(%rbp)
+ sub %rax,%rsi
+@@ -4153,8 +4152,8 @@
+ mov %rcx,-0xc88(%rbp)
+ mov -0x8(%r12),%rdx
+ add %rcx,%rax
+-mov %rax,-0xc50(%rbp)
+-jmp <SELF@4041>
++mov %rax,-0xc10(%rbp)
++jmp <SELF@4040>
+ movabs $0x7ffffffffffffff,%rdi
+ mov %r14,%rsi
+ sub -0xbc0(%rbp),%rsi
+@@ -4182,7 +4181,7 @@
+ mov -0xbc0(%rbp),%rdx
+ mov %rcx,0x8(%rax,%rsi,1)
+ cmp %rdx,%r14
+-je <SELF@4744>
++je <SELF@4743>
+ mov %r14,%rsi
+ mov -0xbd0(%rbp),%rdi
+ mov %rax,%rcx
+@@ -4192,14 +4191,14 @@
+ add $0x10,%rcx
+ movups %xmm0,-0x10(%rcx)
+ cmp %rdx,%r14
+-jne <SELF@4189>
++jne <SELF@4188>
+ mov %rdi,-0xbd0(%rbp)
+ lea (%rax,%rsi,1),%rdx
+ mov -0xbc0(%rbp),%rcx
+ lea 0x10(%rdx),%r14
+ test %rcx,%rcx
+-je <SELF@4207>
+-mov -0xc48(%rbp),%rsi
++je <SELF@4206>
++mov -0xc40(%rbp),%rsi
+ mov %rcx,%rdi
+ mov %rax,-0xbc0(%rbp)
+ sub %rcx,%rsi
+@@ -4208,8 +4207,8 @@
+ mov -0xc00(%rbp),%rcx
+ mov %rax,-0xbc0(%rbp)
+ add %rax,%rcx
+-mov %rcx,-0xc48(%rbp)
+-jmp <SELF@4053>
++mov %rcx,-0xc40(%rbp)
++jmp <SELF@4052>
+ mov -0xbc0(%rbp),%rcx
+ mov %rbx,%rax
+ xor %r13d,%r13d
+@@ -4217,27 +4216,27 @@
+ shl $0x4,%rax
+ cmpq $0x0,(%rcx,%rax,1)
+ sete %r13b
+-jmp <SELF@4075>
++jmp <SELF@4074>
+ mov -0xbb0(%rbp),%rax
+ mov (%rax),%rdx
+ movabs $0x706f6f6c5f6c6b66,%rax
+ cmp %rax,(%rdx)
+-jne <SELF@3997>
++jne <SELF@3996>
+ mov -0xbb0(%rbp),%rax
+ mov %rax,-0xd60(%rbp)
+-jmp <SELF@2650>
+-lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+-jmp <SELF@1986>
++jmp <SELF@2649>
++lea D(%rip),%rsi # <_IO_stdin_used+OFF>
++jmp <SELF@1985>
+ mov -0xbb0(%rbp),%rax
+ movabs $0x637461625f6c6b66,%rdx
+ mov (%rax),%rax
+ cmp %rdx,(%rax)
+-jne <SELF@3997>
++jne <SELF@3996>
+ cmpb $0x68,0x8(%rax)
+-jne <SELF@3997>
++jne <SELF@3996>
+ mov -0xbb0(%rbp),%rax
+ mov %rax,-0xd68(%rbp)
+-jmp <SELF@2650>
++jmp <SELF@2649>
+ lea D(%rip),%r14 # <_IO_stdin_used+OFF>
+ xor %eax,%eax
+ cmp -0xbd0(%rbp),%rbx
+@@ -4245,8 +4244,8 @@
+ sete %al
+ lea D(%rip),%r12 # <_IO_stdin_used+OFF>
+ mov %eax,-0xc68(%rbp)
+-je <SELF@4320>
+-mov -0xc10(%rbp),%rsi
++je <SELF@4319>
++mov -0xc18(%rbp),%rsi
+ mov -0xb80(%rbp),%rdi
+ call <F:std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string<std::allocator<char> >(char const*, std::allocator<char> const&) [clone .constprop.0]@0>
+ mov -0xbd0(%rbp),%rcx
+@@ -4258,7 +4257,7 @@
+ cvtsi2sdl 0x8(%rsi,%rax,1),%xmm0
+ mov -0xbe8(%rbp),%rax
+ cmpl $0x6,(%rax,%rcx,4)
+-ja <SELF@4328>
++ja <SELF@4327>
+ mov (%rax,%rcx,4),%eax
+ movslq (%r14,%rax,4),%rax
+ add %r14,%rax
+@@ -4290,34 +4289,34 @@
+ lea -0x680(%rbp),%rax
+ add $0x30,%rsp
+ cmp %rax,%rdi
+-je <SELF@4296>
++je <SELF@4295>
+ mov -0x680(%rbp),%rax
+ lea 0x1(%rax),%rsi
+ call <operator delete(void*, unsigned long)@plt>
+ mov -0x670(%rbp),%rdi
+ lea -0x660(%rbp),%rax
+ cmp %rax,%rdi
+-je <SELF@4303>
++je <SELF@4302>
+ mov -0x660(%rbp),%rax
+ lea 0x1(%rax),%rsi
+ call <operator delete(void*, unsigned long)@plt>
+ addq $0x1,-0xbd0(%rbp)
+ mov -0xbf0(%rbp),%rcx
+ cmp %rcx,-0xbd0(%rbp)
+-jne <SELF@4241>
+-jmp <SELF@2027>
+-lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+-jmp <SELF@4266>
+-lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+-jmp <SELF@4266>
+-lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+-jmp <SELF@4266>
+-lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+-jmp <SELF@4266>
+-lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+-jmp <SELF@4266>
+-lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+-jmp <SELF@4266>
++jne <SELF@4240>
++jmp <SELF@2026>
++lea D(%rip),%rsi # <_IO_stdin_used+OFF>
++jmp <SELF@4265>
++lea D(%rip),%rsi # <_IO_stdin_used+OFF>
++jmp <SELF@4265>
++lea D(%rip),%rsi # <_IO_stdin_used+OFF>
++jmp <SELF@4265>
++lea D(%rip),%rsi # <_IO_stdin_used+OFF>
++jmp <SELF@4265>
++lea D(%rip),%rsi # <_IO_stdin_used+OFF>
++jmp <SELF@4265>
++lea D(%rip),%rsi # <_IO_stdin_used+OFF>
++jmp <SELF@4265>
+ mov -0xbc0(%rbp),%rcx
+ mov %rbx,%rax
+ xor %r13d,%r13d
+@@ -4325,9 +4324,9 @@
+ shl $0x4,%rax
+ cmpq $0x0,(%rcx,%rax,1)
+ sete %r13b
+-jmp <SELF@4248>
+-lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+-jmp <SELF@4266>
++jmp <SELF@4247>
++lea D(%rip),%rsi # <_IO_stdin_used+OFF>
++jmp <SELF@4265>
+ xor %esi,%esi
+ mov %rbx,%rdx
+ mov %rcx,-0xbf0(%rbp)
+@@ -4336,13 +4335,13 @@
+ cmpq $0x0,-0xbd0(%rbp)
+ movdqa D(%rip),%xmm1 # <cuda::std::__4::__cpo::iter_swap+OFF>
+ mov %rcx,-0x8e8(%rbp)
+-je <SELF@4672>
++je <SELF@4671>
+ cmp $0xe,%rbx
+-jbe <SELF@4857>
++jbe <SELF@4856>
+ cmp %rcx,%r14
+-jae <SELF@4345>
++jae <SELF@4344>
+ cmp %r12,-0xc60(%rbp)
+-jb <SELF@4857>
++jb <SELF@4856>
+ mov %r13,%rcx
+ pcmpeqd %xmm3,%xmm3
+ mov -0xc60(%rbp),%rdx
+@@ -4355,7 +4354,7 @@
+ movdqu 0x10(%rax),%xmm4
+ add $0x40,%rax
+ add $0x10,%rdx
+-movdqa -0xc40(%rbp),%xmm11
++movdqa -0xc50(%rbp),%xmm11
+ movdqu -0x20(%rax),%xmm6
+ movdqa %xmm2,%xmm7
+ movdqa %xmm2,%xmm0
+@@ -4481,11 +4480,11 @@
+ packuswb %xmm4,%xmm0
+ movups %xmm0,-0x10(%rdx)
+ cmp %rax,%rcx
+-jne <SELF@4353>
++jne <SELF@4352>
+ mov %r13,%rax
+ and $0xfffffffffffffff0,%rax
+ test $0xf,%r13b
+-je <SELF@2064>
++je <SELF@2063>
+ movslq (%r14,%rax,4),%rdx
+ mov -0xc60(%rbp),%rsi
+ mov %rdx,%rcx
+@@ -4496,7 +4495,7 @@
+ mov %dl,(%rsi,%rax,1)
+ lea 0x1(%rax),%rdx
+ cmp %r13,%rdx
+-jae <SELF@2064>
++jae <SELF@2063>
+ movslq 0x4(%r14,%rax,4),%rdx
+ mov %rdx,%rcx
+ imul $0x38e38e39,%rdx,%rdx
+@@ -4506,7 +4505,7 @@
+ mov %dl,0x1(%rsi,%rax,1)
+ lea 0x2(%rax),%rdx
+ cmp %r13,%rdx
+-jae <SELF@2064>
++jae <SELF@2063>
+ movslq 0x8(%r14,%rax,4),%rdx
+ mov %rdx,%rcx
+ imul $0x38e38e39,%rdx,%rdx
+@@ -4516,7 +4515,7 @@
+ mov %dl,0x2(%rsi,%rax,1)
+ lea 0x3(%rax),%rdx
+ cmp %r13,%rdx
+-jae <SELF@2064>
++jae <SELF@2063>
+ movslq 0xc(%r14,%rax,4),%rdx
+ mov %rdx,%rcx
+ imul $0x38e38e39,%rdx,%rdx
+@@ -4526,7 +4525,7 @@
+ mov %dl,0x3(%rsi,%rax,1)
+ lea 0x4(%rax),%rdx
+ cmp %r13,%rdx
+-jae <SELF@2064>
++jae <SELF@2063>
+ movslq 0x10(%r14,%rax,4),%rdx
+ mov %rdx,%rcx
+ imul $0x38e38e39,%rdx,%rdx
+@@ -4536,7 +4535,7 @@
+ mov %dl,0x4(%rsi,%rax,1)
+ lea 0x5(%rax),%rdx
+ cmp %r13,%rdx
+-jae <SELF@2064>
++jae <SELF@2063>
+ movslq 0x14(%r14,%rax,4),%rdx
+ mov %rdx,%rcx
+ imul $0x38e38e39,%rdx,%rdx
+@@ -4546,7 +4545,7 @@
+ mov %dl,0x5(%rsi,%rax,1)
+ lea 0x6(%rax),%rdx
+ cmp %r13,%rdx
+-jae <SELF@2064>
++jae <SELF@2063>
+ movslq 0x18(%r14,%rax,4),%rdx
+ mov %rdx,%rcx
+ imul $0x38e38e39,%rdx,%rdx
+@@ -4556,7 +4555,7 @@
+ mov %dl,0x6(%rsi,%rax,1)
+ lea 0x7(%rax),%rdx
+ cmp %r13,%rdx
+-jae <SELF@2064>
++jae <SELF@2063>
+ movslq 0x1c(%r14,%rax,4),%rdx
+ mov %rdx,%rcx
+ imul $0x38e38e39,%rdx,%rdx
+@@ -4566,7 +4565,7 @@
+ mov %dl,0x7(%rsi,%rax,1)
+ lea 0x8(%rax),%rdx
+ cmp %r13,%rdx
+-jae <SELF@2064>
++jae <SELF@2063>
+ movslq 0x20(%r14,%rax,4),%rdx
+ mov %rdx,%rcx
+ imul $0x38e38e39,%rdx,%rdx
+@@ -4576,7 +4575,7 @@
+ mov %dl,0x8(%rsi,%rax,1)
+ lea 0x9(%rax),%rdx
+ cmp %r13,%rdx
+-jae <SELF@2064>
++jae <SELF@2063>
+ movslq 0x24(%r14,%rax,4),%rdx
+ mov %rdx,%rcx
+ imul $0x38e38e39,%rdx,%rdx
+@@ -4586,7 +4585,7 @@
+ mov %dl,0x9(%rsi,%rax,1)
+ lea 0xa(%rax),%rdx
+ cmp %r13,%rdx
+-jae <SELF@2064>
++jae <SELF@2063>
+ movslq 0x28(%r14,%rax,4),%rdx
+ mov %rdx,%rcx
+ imul $0x38e38e39,%rdx,%rdx
+@@ -4596,7 +4595,7 @@
+ mov %dl,0xa(%rsi,%rax,1)
+ lea 0xb(%rax),%rdx
+ cmp %r13,%rdx
+-jae <SELF@2064>
++jae <SELF@2063>
+ movslq 0x2c(%r14,%rax,4),%rdx
+ mov %rdx,%rcx
+ imul $0x38e38e39,%rdx,%rdx
+@@ -4606,7 +4605,7 @@
+ mov %dl,0xb(%rsi,%rax,1)
+ lea 0xc(%rax),%rdx
+ cmp %r13,%rdx
+-jae <SELF@2064>
++jae <SELF@2063>
+ movslq 0x30(%r14,%rax,4),%rdx
+ mov %rdx,%rcx
+ imul $0x38e38e39,%rdx,%rdx
+@@ -4616,7 +4615,7 @@
+ mov %dl,0xc(%rsi,%rax,1)
+ lea 0xd(%rax),%rdx
+ cmp %r13,%rdx
+-jae <SELF@2064>
++jae <SELF@2063>
+ movslq 0x34(%r14,%rax,4),%rdx
+ mov %rdx,%rcx
+ imul $0x38e38e39,%rdx,%rdx
+@@ -4626,7 +4625,7 @@
+ mov %dl,0xd(%rsi,%rax,1)
+ lea 0xe(%rax),%rdx
+ cmp %r13,%rdx
+-jae <SELF@2064>
++jae <SELF@2063>
+ movslq 0x38(%r14,%rax,4),%rdx
+ mov %rdx,%rcx
+ imul $0x38e38e39,%rdx,%rdx
+@@ -4634,8 +4633,8 @@
+ sar $0x21,%rdx
+ sub %ecx,%edx
+ mov %dl,0xe(%rsi,%rax,1)
+-jmp <SELF@2064>
+-mov -0xc10(%rbp),%rsi
++jmp <SELF@2063>
++mov -0xc18(%rbp),%rsi
+ mov -0xb80(%rbp),%rdi
+ movzbl -0xcda(%rbp),%ebx
+ call <F:std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string<std::allocator<char> >(char const*, std::allocator<char> const&) [clone .constprop.0]@0>
+@@ -4663,18 +4662,18 @@
+ call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_dispose()@plt>
+ mov -0xb80(%rbp),%rdi
+ call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_dispose()@plt>
+-jmp <SELF@2611>
++jmp <SELF@2610>
+ movq $0x0,-0x8f0(%rbp)
+ movq $0x0,-0x8e0(%rbp)
+ movq $0x0,-0x8e8(%rbp)
+ cmpq $0x0,-0xbd0(%rbp)
+-jne <SELF@4855>
++jne <SELF@4854>
+ movq $0x0,-0xc60(%rbp)
+ pxor %xmm0,%xmm0
+ xor %r12d,%r12d
+ movq $0x0,-0x8c0(%rbp)
+ movaps %xmm0,-0x8d0(%rbp)
+-jmp <SELF@2403>
++jmp <SELF@2402>
+ imul -0x76c(%rbp),%esi
+ lea -0x778(%rbp),%rdi
+ call <cudaMalloc@plt>
+@@ -4689,23 +4688,23 @@
+ mov -0x4(%rax,%rsi,1),%edx
+ mov %edx,-0x4(%rcx,%rsi,1)
+ mov 0x8(%rbx),%rdx
+-jmp <SELF@1847>
++jmp <SELF@1846>
+ mov -0xb90(%rbp),%rdi
+ call <F:fklb::CsvWriter::~CsvWriter()@0>
+-jmp <SELF@3155>
++jmp <SELF@3154>
+ movq $0x0,-0xd50(%rbp)
+ movq $0x0,-0xd30(%rbp)
+ movq $0x0,-0xd48(%rbp)
+ movq $0x0,-0xd28(%rbp)
+ movq $0x0,-0xcb0(%rbp)
+-movq $0x0,-0xc30(%rbp)
++movq $0x0,-0xc38(%rbp)
+ movq $0x0,-0xca8(%rbp)
+ movq $0x0,-0xcb8(%rbp)
+-movq $0x0,-0xc28(%rbp)
+-movq $0x0,-0xc18(%rbp)
++movq $0x0,-0xc30(%rbp)
++movq $0x0,-0xc20(%rbp)
+ jmp <SELF@386>
+ cmpl $0x61647563,0x7(%rax)
+-jne <SELF@3774>
++jne <SELF@3773>
+ lea -0x890(%rbp),%rcx
+ xor %r12d,%r12d
+ xor %edx,%edx
+@@ -4731,7 +4730,7 @@
+ mov -0x870(%rbp),%rax
+ mov -0x860(%rbp),%rdx
+ cmp $0x780,%r12
+-jne <SELF@4713>
++jne <SELF@4712>
+ mov -0x7a8(%rbp),%rax
+ mov -0xb80(%rbp),%rsi
+ mov -0xbf8(%rbp),%rdi
+@@ -4741,9 +4740,9 @@
+ mov %rax,-0xbb0(%rbp)
+ mov -0x860(%rbp),%rax
+ mov %rax,-0xbc0(%rbp)
+-jmp <SELF@3543>
++jmp <SELF@3542>
+ mov %rax,%rdx
+-jmp <SELF@4197>
++jmp <SELF@4196>
+ xor %ecx,%ecx
+ mov (%r14,%rcx,4),%eax
+ lea 0x4(%rax),%edx
+@@ -4755,10 +4754,10 @@
+ mov %al,(%r12,%rcx,1)
+ add $0x1,%rcx
+ cmp %r13,%rcx
+-jb <SELF@4747>
+-jmp <SELF@2403>
++jb <SELF@4746>
++jmp <SELF@2402>
+ cmpl $0x61647563,0x7(%rax)
+-jne <SELF@3997>
++jne <SELF@3996>
+ mov $0x4,%edi
+ call <operator new(unsigned long)@plt>
+ mov %rax,-0xbe8(%rbp)
+@@ -4768,11 +4767,11 @@
+ mov %rax,-0xd38(%rbp)
+ movq $0x1,-0xbf0(%rbp)
+ movb $0x1,-0xcd9(%rbp)
+-jmp <SELF@4009>
++jmp <SELF@4008>
+ cmpq $0x0,-0xd18(%rbp)
+ sete -0xcda(%rbp)
+-jmp <SELF@3763>
+-mov -0xc30(%rbp),%rdi
++jmp <SELF@3762>
++mov -0xc38(%rbp),%rdi
+ mov -0xbd0(%rbp),%r9
+ mov %r11,%rax
+ mov %r8,%rdx
+@@ -4783,10 +4782,10 @@
+ movups %xmm0,-0x18(%rdx)
+ mov %rsi,-0x8(%rdx)
+ cmp %rax,%rdi
+-jne <SELF@4778>
++jne <SELF@4777>
+ mov %r9,-0xbd0(%rbp)
+ jmp <SELF@348>
+-mov -0xc28(%rbp),%rdi
++mov -0xc30(%rbp),%rdi
+ mov -0xbd0(%rbp),%r9
+ mov %r10,%rax
+ mov %r8,%rdx
+@@ -4797,20 +4796,20 @@
+ movups %xmm0,-0x18(%rdx)
+ mov %rsi,-0x8(%rdx)
+ cmp %rax,%rdi
+-jne <SELF@4792>
++jne <SELF@4791>
+ mov %r9,-0xbd0(%rbp)
+ jmp <SELF@205>
+ lea 0x18(%rax),%rax
+ mov %r8,%r12
+-mov %rax,-0xc28(%rbp)
+-cmpq $0x0,-0xc18(%rbp)
+-je <SELF@4849>
++mov %rax,-0xc30(%rbp)
++cmpq $0x0,-0xc20(%rbp)
++je <SELF@4848>
+ xor %esi,%esi
+ mov %r10,%rdi
+ jmp <SELF@216>
+ lea 0x18(%rax),%rax
+ xor %esi,%esi
+-mov %rax,-0xc30(%rbp)
++mov %rax,-0xc38(%rbp)
+ cmpq $0x0,-0xca8(%rbp)
+ jne <SELF@356>
+ jmp <SELF@360>
+@@ -4826,13 +4825,13 @@
+ add %rax,%rcx
+ mov %rcx,-0xcd8(%rbp)
+ test %r13,%r13
+-je <SELF@3913>
++je <SELF@3912>
+ xor %esi,%esi
+ mov %r13,%rdi
+ call <operator delete(void*, unsigned long)@plt>
+-jmp <SELF@3913>
++jmp <SELF@3912>
+ xor %eax,%eax
+-jmp <SELF@3743>
++jmp <SELF@3742>
+ lea D(%rip),%rdi # <_IO_stdin_used+OFF>
+ call <getenv@plt>
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+@@ -4842,17 +4841,17 @@
+ mov %rax,%rdi
+ mov %rax,-0xcf0(%rbp)
+ call <std::basic_ostream<char, std::char_traits<char> >& std::__ostream_insert<char, std::char_traits<char> >(std::basic_ostream<char, std::char_traits<char> >&, char const*, long)@plt>
+-movb $0x1,-0xc40(%rbp)
++movb $0x1,-0xc18(%rbp)
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ movb $0x0,-0xcdb(%rbp)
+ movl $0xa,-0xbb0(%rbp)
+ jmp <SELF@56>
+ mov %r13,-0xcb8(%rbp)
+-mov %r8,-0xc18(%rbp)
++mov %r8,-0xc20(%rbp)
+ jmp <SELF@97>
+ mov $0x1,%ebx
+ xor %r12d,%r12d
+-jmp <SELF@3019>
++jmp <SELF@3018>
+ movq $0x0,-0xc60(%rbp)
+ xor %ebx,%ebx
+ mov -0xc60(%rbp),%rsi
+@@ -4866,18 +4865,18 @@
+ mov %al,(%rsi,%rdx,1)
+ add $0x1,%rdx
+ cmp %r13,%rdx
+-jb <SELF@4859>
++jb <SELF@4858>
+ test %r13,%r13
+-jne <SELF@2064>
++jne <SELF@2063>
+ xor %edi,%edi
+ xor %r12d,%r12d
+ mov %rdi,-0x8d0(%rbp)
+ mov %rdi,-0x8c0(%rbp)
+ xor %edi,%edi
+-jmp <SELF@2081>
++jmp <SELF@2080>
+ xor %r12d,%r12d
+-jmp <SELF@2991>
+-mov -0xc10(%rbp),%rsi
++jmp <SELF@2990>
++mov -0xc18(%rbp),%rsi
+ jmp <SELF@1478>
+ call <__stack_chk_fail@plt>
+ endbr64
+@@ -5098,44 +5097,44 @@
+ endbr64
+ jmp <F:launch() [clone .cold]@953>
+ endbr64
+-jmp <F:launch() [clone .cold]@1028>
+-endbr64
+-jmp <F:launch() [clone .cold]@1061>
++mov %rax,%rbx
++jmp <F:launch() [clone .cold]@1027>
++endbr64
++jmp <F:launch() [clone .cold]@1059>
++endbr64
++mov %rax,%rbx
++jmp <F:launch() [clone .cold]@1071>
+ endbr64
+ mov %rax,%rbx
+ jmp <F:launch() [clone .cold]@1073>
++jmp <F:launch() [clone .cold]@1078>
+ endbr64
+ mov %rax,%rbx
+ jmp <F:launch() [clone .cold]@1075>
+-jmp <F:launch() [clone .cold]@1080>
+-endbr64
+-mov %rax,%rbx
+-jmp <F:launch() [clone .cold]@1077>
+-endbr64
+-mov %rax,%rbx
+-jmp <F:launch() [clone .cold]@1160>
+-endbr64
+-jmp <F:launch() [clone .cold]@1170>
++endbr64
++mov %rax,%rbx
++jmp <F:launch() [clone .cold]@1158>
++endbr64
++jmp <F:launch() [clone .cold]@1168>
+ endbr64
+ mov %rax,%r13
+-jmp <F:launch() [clone .cold]@1382>
++jmp <F:launch() [clone .cold]@1380>
+ endbr64
+ mov %rax,%r13
+-jmp <F:launch() [clone .cold]@1411>
+-endbr64
+-mov %rax,%rbx
+-jmp <F:launch() [clone .cold]@1481>
+-jmp <F:launch() [clone .cold]@1508>
+-endbr64
+-mov %rax,%rbx
+-jmp <F:launch() [clone .cold]@1481>
+-jmp <F:launch() [clone .cold]@1364>
++jmp <F:launch() [clone .cold]@1409>
++jmp <F:launch() [clone .cold]@1491>
++endbr64
++mov %rax,%rbx
++jmp <F:launch() [clone .cold]@1027>
++jmp <F:launch() [clone .cold]@1362>
++endbr64
++jmp <F:launch() [clone .cold]@1584>
+ endbr64
+ mov %rax,%r13
+ jmp <F:launch() [clone .cold]@1589>
+ endbr64
+ mov %rax,%rbx
+-jmp <F:launch() [clone .cold]@1407>
++jmp <F:launch() [clone .cold]@1405>
+ endbr64
+ mov %rax,%rbx
+ jmp <F:launch() [clone .cold]@1711>
+@@ -5230,18 +5229,18 @@
+ jmp <F:launch() [clone .cold]@2303>
+ endbr64
+ mov %rax,%rbx
+-jmp <F:launch() [clone .cold]@1355>
++jmp <F:launch() [clone .cold]@1353>
+ endbr64
+ mov %rax,%rbx
+ jmp <F:launch() [clone .cold]@2142>
+ endbr64
+ mov %rax,%rbx
+-jmp <F:launch() [clone .cold]@1160>
++jmp <F:launch() [clone .cold]@1158>
+ endbr64
+ mov %rax,%r14
+ jmp <F:launch() [clone .cold]@2311>
+ endbr64
+-jmp <F:launch() [clone .cold]@1362>
++jmp <F:launch() [clone .cold]@1360>
+ endbr64
+ mov %rax,%r14
+ jmp <F:launch() [clone .cold]@2320>
+
+== launch() [clone .cold]
+   2842 -> 2842 instructions; reached by: no timed call
+--- A
++++ B
+@@ -87,7 +87,7 @@
+ call <operator delete(void*, unsigned long)@plt>
+ cmpq $0x0,-0xbc0(%rbp)
+ je <SELF@93>
+-mov -0xc48(%rbp),%rsi
++mov -0xc40(%rbp),%rsi
+ mov -0xbc0(%rbp),%rdi
+ sub %rdi,%rsi
+ call <operator delete(void*, unsigned long)@plt>
+@@ -106,7 +106,7 @@
+ mov -0xcd8(%rbp),%rax
+ mov %rax,-0x860(%rbp)
+ call <F:std::vector<(anonymous namespace)::Result, std::allocator<(anonymous namespace)::Result> >::~vector()@0>
+-mov -0xc20(%rbp),%rdi
++mov -0xc28(%rbp),%rdi
+ call <F:fk::Ptr<(fk::ND)3, float>::freePtr()@0>
+ mov -0xd20(%rbp),%rdi
+ call <F:fk::Ptr<(fk::ND)2, uchar3>::freePtr()@0>
+@@ -168,15 +168,15 @@
+ mov -0xca8(%rbp),%rax
+ mov -0xcc0(%rbp),%rdi
+ mov %rax,-0x7c0(%rbp)
+-mov -0xc30(%rbp),%rax
++mov -0xc38(%rbp),%rax
+ mov %rax,-0x7b8(%rbp)
+ mov -0xcb0(%rbp),%rax
+ mov %rax,-0x7b0(%rbp)
+ call <F:std::vector<std::vector<int, std::allocator<int> >, std::allocator<std::vector<int, std::allocator<int> > > >::~vector()@0>
+-mov -0xc18(%rbp),%rax
++mov -0xc20(%rbp),%rax
+ mov -0xce8(%rbp),%rdi
+ mov %rax,-0x800(%rbp)
+-mov -0xc28(%rbp),%rax
++mov -0xc30(%rbp),%rax
+ mov %rax,-0x7f8(%rbp)
+ mov -0xcb8(%rbp),%rax
+ mov %rax,-0x7f0(%rbp)
+@@ -212,7 +212,7 @@
+ sub %rdi,%rsi
+ call <operator delete(void*, unsigned long)@plt>
+ jmp <SELF@100>
+-mov -0xc50(%rbp),%rsi
++mov -0xc10(%rbp),%rsi
+ mov -0xc88(%rbp),%rdi
+ sub %rdi,%rsi
+ call <operator delete(void*, unsigned long)@plt>
+@@ -968,10 +968,10 @@
+ jmp <SELF@766>
+ mov $0x10,%edi
+ call <__cxa_allocate_exception@plt>
+-mov -0xbb0(%rbp),%edi
++mov %r14d,%edi
+ mov %rax,%r12
+ call <cudaGetErrorString@plt>
+-mov -0xbb0(%rbp),%edi
++mov %r14d,%edi
+ mov %rax,%r13
+ call <cudaGetErrorName@plt>
+ lea -0x6f0(%rbp),%rcx
+@@ -1020,14 +1020,12 @@
+ call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_dispose()@plt>
+ mov -0x38(%rbp),%rax
+ sub %fs:0x28,%rax
+-jne <SELF@1034>
++jne <SELF@1032>
+ mov D(%rip),%rdx # <std::runtime_error::~runtime_error()@GLIBCXX_3.4>
+ lea D(%rip),%rsi # <typeinfo for std::runtime_error@GLIBCXX_3.4>
+ mov %r12,%rdi
+ call <__cxa_throw@plt>
+-endbr64
+-mov -0xb80(%rbp),%rdi
+-mov %rax,%rbx
++mov -0xb80(%rbp),%rdi
+ call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_dispose()@plt>
+ mov -0xb90(%rbp),%rdi
+ call <F:fklb::CsvWriter::~CsvWriter()@0>
+@@ -1048,28 +1046,28 @@
+ call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_dispose()@plt>
+ mov %r12,%rdi
+ call <__cxa_free_exception@plt>
+-jmp <SELF@1031>
++jmp <SELF@1029>
++endbr64
++mov %rax,%r13
++jmp <SELF@1039>
++endbr64
++mov %rax,%r13
++jmp <SELF@1037>
+ endbr64
+ mov %rax,%r13
+ jmp <SELF@1041>
+ endbr64
+-mov %rax,%r13
+-jmp <SELF@1039>
+-endbr64
+-mov %rax,%r13
+-jmp <SELF@1043>
+-endbr64
+-mov %rax,%rbx
+-jmp <SELF@1031>
++mov %rax,%rbx
++jmp <SELF@1029>
++endbr64
++mov %rax,%rbx
++jmp <SELF@1044>
+ endbr64
+ mov %rax,%rbx
+ jmp <SELF@1046>
+-endbr64
+-mov %rax,%rbx
+-jmp <SELF@1048>
+-mov -0x38(%rbp),%rax
+-sub %fs:0x28,%rax
+-jne <SELF@1141>
++mov -0x38(%rbp),%rax
++sub %fs:0x28,%rax
++jne <SELF@1139>
+ call <std::__throw_bad_function_call()@plt>
+ mov -0xc58(%rbp),%rdi
+ call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_dispose()@plt>
+@@ -1134,7 +1132,7 @@
+ call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_dispose()@plt>
+ mov -0x38(%rbp),%rax
+ sub %fs:0x28,%rax
+-jne <SELF@1142>
++jne <SELF@1140>
+ mov D(%rip),%rdx # <std::runtime_error::~runtime_error()@GLIBCXX_3.4>
+ mov -0xbb0(%rbp),%rdi
+ lea D(%rip),%rsi # <typeinfo for std::runtime_error@GLIBCXX_3.4>
+@@ -1155,7 +1153,7 @@
+ jmp <SELF@932>
+ mov -0x38(%rbp),%rax
+ sub %fs:0x28,%rax
+-jne <SELF@1163>
++jne <SELF@1161>
+ lea D(%rip),%rdi # <_IO_stdin_used+OFF>
+ call <std::__throw_length_error(char const*)@plt>
+ mov -0xb90(%rbp),%rdi
+@@ -1164,7 +1162,7 @@
+ call <__stack_chk_fail@plt>
+ mov -0x38(%rbp),%rax
+ sub %fs:0x28,%rax
+-jne <SELF@1174>
++jne <SELF@1172>
+ lea D(%rip),%rdi # <_IO_stdin_used+OFF>
+ call <std::__throw_length_error(char const*)@plt>
+ endbr64
+@@ -1229,14 +1227,14 @@
+ call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_dispose()@plt>
+ mov -0x38(%rbp),%rax
+ sub %fs:0x28,%rax
+-jne <SELF@1240>
++jne <SELF@1238>
+ mov D(%rip),%rdx # <std::runtime_error::~runtime_error()@GLIBCXX_3.4>
+ mov -0xbb0(%rbp),%rdi
+ lea D(%rip),%rsi # <typeinfo for std::runtime_error@GLIBCXX_3.4>
+ call <__cxa_throw@plt>
+ mov -0x38(%rbp),%rax
+ sub %fs:0x28,%rax
+-jne <SELF@1241>
++jne <SELF@1239>
+ call <std::__throw_bad_function_call()@plt>
+ call <__stack_chk_fail@plt>
+ call <__stack_chk_fail@plt>
+@@ -1308,7 +1306,7 @@
+ call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_dispose()@plt>
+ mov -0x38(%rbp),%rax
+ sub %fs:0x28,%rax
+-jne <SELF@1328>
++jne <SELF@1326>
+ mov D(%rip),%rdx # <std::runtime_error::~runtime_error()@GLIBCXX_3.4>
+ mov -0xbb0(%rbp),%rdi
+ lea D(%rip),%rsi # <typeinfo for std::runtime_error@GLIBCXX_3.4>
+@@ -1321,7 +1319,7 @@
+ call <std::runtime_error::runtime_error(char const*)@plt>
+ mov -0x38(%rbp),%rax
+ sub %fs:0x28,%rax
+-jne <SELF@1341>
++jne <SELF@1339>
+ mov D(%rip),%rdx # <std::runtime_error::~runtime_error()@GLIBCXX_3.4>
+ lea D(%rip),%rsi # <typeinfo for std::runtime_error@GLIBCXX_3.4>
+ mov %rbx,%rdi
+@@ -1353,7 +1351,7 @@
+ call <F:std::vector<(anonymous namespace)::Row, std::allocator<(anonymous namespace)::Row> >::~vector()@0>
+ lea -0x890(%rbp),%rdi
+ call <F:std::vector<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >::~vector()@0>
+-mov -0xc48(%rbp),%rax
++mov -0xc50(%rbp),%rax
+ mov %r12,%r15
+ mov %rax,-0xbd8(%rbp)
+ mov -0xbe8(%rbp),%rax
+@@ -1361,7 +1359,7 @@
+ jmp <SELF@108>
+ endbr64
+ mov %rax,%rbx
+-jmp <SELF@1346>
++jmp <SELF@1344>
+ mov $0x10,%edi
+ call <__cxa_allocate_exception@plt>
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+@@ -1377,19 +1375,19 @@
+ call <__cxa_throw@plt>
+ mov -0x38(%rbp),%rax
+ sub %fs:0x28,%rax
+-jne <SELF@1420>
++jne <SELF@1418>
+ lea D(%rip),%rdi # <_IO_stdin_used+OFF>
+ call <std::__throw_length_error(char const*)@plt>
+ mov 0x70(%rbx),%rax
+ test %rax,%rax
+-je <SELF@1389>
++je <SELF@1387>
+ mov $0x3,%edx
+ mov %r14,%rsi
+ mov %r14,%rdi
+ call *%rax
+ mov 0x50(%rbx),%rax
+ test %rax,%rax
+-je <SELF@1396>
++je <SELF@1394>
+ lea 0x40(%rbx),%rdi
+ mov $0x3,%edx
+ mov %rdi,%rsi
+@@ -1397,7 +1395,7 @@
+ mov 0x30(%rbx),%rax
+ mov %r13,%r14
+ test %rax,%rax
+-je <SELF@1404>
++je <SELF@1402>
+ lea 0x20(%rbx),%rdi
+ mov $0x3,%edx
+ mov %rdi,%rsi
+@@ -1408,123 +1406,28 @@
+ mov -0xbd0(%rbp),%rsi
+ mov -0xbc0(%rbp),%rdi
+ call <operator delete(void*, unsigned long)@plt>
+-jmp <SELF@1346>
++jmp <SELF@1344>
+ mov 0x30(%rbx),%rax
+ test %rax,%rax
+-je <SELF@1418>
++je <SELF@1416>
+ mov $0x3,%edx
+ mov %r14,%rsi
+ mov %r14,%rdi
+ call *%rax
+ mov %r13,%r14
+-jmp <SELF@1404>
+-call <__stack_chk_fail@plt>
+-mov $0x10,%edi
+-call <__cxa_allocate_exception@plt>
+-mov -0xbb0(%rbp),%edi
+-mov %rax,%r12
+-call <cudaGetErrorString@plt>
+-mov -0xbb0(%rbp),%edi
+-mov %rax,%r13
+-call <cudaGetErrorName@plt>
+-lea -0x6f0(%rbp),%rcx
+-mov %rax,%rsi
+-mov %rcx,%rdi
+-mov %rcx,-0xbb0(%rbp)
+-call <F:std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string<std::allocator<char> >(char const*, std::allocator<char> const&) [clone .constprop.0]@0>
+-mov -0xbb0(%rbp),%rdi
+-lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+-call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::append(char const*)@plt>
+-mov %rax,%rsi
+-lea -0x6d0(%rbp),%rdi
+-call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&)@plt>
+-mov %r13,%rsi
+-lea -0x6d0(%rbp),%rdi
+-call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::append(char const*)@plt>
+-mov -0xc58(%rbp),%r14
+-mov %rax,%rsi
+-mov %r14,%rdi
+-call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&)@plt>
+-lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+-mov %r14,%rdi
+-call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::append(char const*)@plt>
+-mov -0xba0(%rbp),%r14
+-mov %rax,%rsi
+-mov %r14,%rdi
+-call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&)@plt>
+-mov -0xb80(%rbp),%rdi
+-mov $0x3ba,%r8d
+-lea D(%rip),%rcx # <_IO_stdin_used+OFF>
+-mov %r14,%rdx
+-lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+-call <F:fklb::statusMessage(char const*, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, char const*, int)@0>
+-mov -0xb80(%rbp),%rsi
+-mov %r12,%rdi
+-call <std::runtime_error::runtime_error(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)@plt>
+-mov -0xb80(%rbp),%rdi
+-call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_dispose()@plt>
+-mov -0xba0(%rbp),%rdi
+-call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_dispose()@plt>
+-mov -0xc58(%rbp),%rdi
+-call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_dispose()@plt>
+-lea -0x6d0(%rbp),%rdi
+-call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_dispose()@plt>
+-mov -0xbb0(%rbp),%rdi
+-call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_dispose()@plt>
+-mov -0x38(%rbp),%rax
+-sub %fs:0x28,%rax
+-jne <SELF@1480>
+-mov D(%rip),%rdx # <std::runtime_error::~runtime_error()@GLIBCXX_3.4>
+-lea D(%rip),%rsi # <typeinfo for std::runtime_error@GLIBCXX_3.4>
+-mov %r12,%rdi
+-call <__cxa_throw@plt>
+-call <__stack_chk_fail@plt>
+-mov -0xb80(%rbp),%rdi
+-call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_dispose()@plt>
+-jmp <SELF@1031>
+-endbr64
+-jmp <SELF@1036>
+-endbr64
+-jmp <SELF@1055>
+-endbr64
+-jmp <SELF@1052>
+-endbr64
+-jmp <SELF@1058>
+-endbr64
+-jmp <SELF@1064>
+-endbr64
+-jmp <SELF@1067>
+-mov -0x38(%rbp),%rax
+-sub %fs:0x28,%rax
+-jne <SELF@1506>
++jmp <SELF@1402>
++call <__stack_chk_fail@plt>
++mov -0x38(%rbp),%rax
++sub %fs:0x28,%rax
++jne <SELF@1429>
+ lea D(%rip),%rdi # <_IO_stdin_used+OFF>
+ call <std::__throw_length_error(char const*)@plt>
+ mov -0x38(%rbp),%rax
+ sub %fs:0x28,%rax
+-jne <SELF@1507>
++jne <SELF@1510>
+ lea D(%rip),%rdi # <_IO_stdin_used+OFF>
+ call <std::__throw_length_error(char const*)@plt>
+ call <__stack_chk_fail@plt>
+-call <__stack_chk_fail@plt>
+-mov $0x10,%edi
+-call <__cxa_allocate_exception@plt>
+-lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+-mov %rax,%rdi
+-mov %rax,%rbx
+-call <std::runtime_error::runtime_error(char const*)@plt>
+-mov -0x38(%rbp),%rax
+-sub %fs:0x28,%rax
+-jne <SELF@1521>
+-mov D(%rip),%rdx # <std::runtime_error::~runtime_error()@GLIBCXX_3.4>
+-lea D(%rip),%rsi # <typeinfo for std::runtime_error@GLIBCXX_3.4>
+-mov %rbx,%rdi
+-call <__cxa_throw@plt>
+-call <__stack_chk_fail@plt>
+-endbr64
+-mov %rbx,%rdi
+-mov %rax,%rbx
+-call <__cxa_free_exception@plt>
+-jmp <SELF@1031>
+ mov $0x10,%edi
+ call <__cxa_allocate_exception@plt>
+ mov %ebx,%edi
+@@ -1586,17 +1489,114 @@
+ lea D(%rip),%rsi # <typeinfo for std::runtime_error@GLIBCXX_3.4>
+ mov %r13,%rdi
+ call <__cxa_throw@plt>
++mov $0x10,%edi
++call <__cxa_allocate_exception@plt>
++lea D(%rip),%rsi # <_IO_stdin_used+OFF>
++mov %rax,%rdi
++mov %rax,%rbx
++call <std::runtime_error::runtime_error(char const*)@plt>
++mov -0x38(%rbp),%rax
++sub %fs:0x28,%rax
++jne <SELF@1504>
++mov D(%rip),%rdx # <std::runtime_error::~runtime_error()@GLIBCXX_3.4>
++lea D(%rip),%rsi # <typeinfo for std::runtime_error@GLIBCXX_3.4>
++mov %rbx,%rdi
++call <__cxa_throw@plt>
++call <__stack_chk_fail@plt>
++endbr64
++mov %rbx,%rdi
++mov %rax,%rbx
++call <__cxa_free_exception@plt>
++jmp <SELF@1029>
++call <__stack_chk_fail@plt>
++mov $0x10,%edi
++call <__cxa_allocate_exception@plt>
++mov -0xbb0(%rbp),%edi
++mov %rax,%r12
++call <cudaGetErrorString@plt>
++mov -0xbb0(%rbp),%edi
++mov %rax,%r13
++call <cudaGetErrorName@plt>
++lea -0x6f0(%rbp),%rcx
++mov %rax,%rsi
++mov %rcx,%rdi
++mov %rcx,-0xbb0(%rbp)
++call <F:std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string<std::allocator<char> >(char const*, std::allocator<char> const&) [clone .constprop.0]@0>
++mov -0xbb0(%rbp),%rdi
++lea D(%rip),%rsi # <_IO_stdin_used+OFF>
++call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::append(char const*)@plt>
++mov %rax,%rsi
++lea -0x6d0(%rbp),%rdi
++call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&)@plt>
++mov %r13,%rsi
++lea -0x6d0(%rbp),%rdi
++call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::append(char const*)@plt>
++mov -0xc58(%rbp),%r14
++mov %rax,%rsi
++mov %r14,%rdi
++call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&)@plt>
++lea D(%rip),%rsi # <_IO_stdin_used+OFF>
++mov %r14,%rdi
++call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::append(char const*)@plt>
++mov -0xba0(%rbp),%r14
++mov %rax,%rsi
++mov %r14,%rdi
++call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&)@plt>
++mov -0xb80(%rbp),%rdi
++mov $0x3ba,%r8d
++lea D(%rip),%rcx # <_IO_stdin_used+OFF>
++mov %r14,%rdx
++lea D(%rip),%rsi # <_IO_stdin_used+OFF>
++call <F:fklb::statusMessage(char const*, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, char const*, int)@0>
++mov -0xb80(%rbp),%rsi
++mov %r12,%rdi
++call <std::runtime_error::runtime_error(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)@plt>
++mov -0xb80(%rbp),%rdi
++call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_dispose()@plt>
++mov -0xba0(%rbp),%rdi
++call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_dispose()@plt>
++mov -0xc58(%rbp),%rdi
++call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_dispose()@plt>
++lea -0x6d0(%rbp),%rdi
++call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_dispose()@plt>
++mov -0xbb0(%rbp),%rdi
++call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_dispose()@plt>
++mov -0x38(%rbp),%rax
++sub %fs:0x28,%rax
++jne <SELF@1570>
++mov D(%rip),%rdx # <std::runtime_error::~runtime_error()@GLIBCXX_3.4>
++lea D(%rip),%rsi # <typeinfo for std::runtime_error@GLIBCXX_3.4>
++mov %r12,%rdi
++call <__cxa_throw@plt>
++call <__stack_chk_fail@plt>
++endbr64
++jmp <SELF@1034>
++endbr64
++jmp <SELF@1053>
++endbr64
++jmp <SELF@1050>
++endbr64
++jmp <SELF@1056>
++endbr64
++jmp <SELF@1062>
++endbr64
++jmp <SELF@1065>
++endbr64
++mov -0xb80(%rbp),%rdi
++mov %rax,%rbx
++call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_dispose()@plt>
++jmp <SELF@1029>
+ call <__stack_chk_fail@plt>
+ mov 0x50(%rbx),%rax
+ test %rax,%rax
+-je <SELF@1396>
++je <SELF@1394>
+ mov $0x3,%edx
+ mov %r14,%rsi
+ mov %r14,%rdi
+ call *%rax
+-jmp <SELF@1396>
+-endbr64
+-jmp <SELF@1523>
++jmp <SELF@1394>
++endbr64
++jmp <SELF@1506>
+ mov $0x10,%edi
+ call <__cxa_allocate_exception@plt>
+ mov %ebx,%edi
+@@ -1682,7 +1682,7 @@
+ call *%rax
+ mov %r15,%rdi
+ call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_dispose()@plt>
+-jmp <SELF@1346>
++jmp <SELF@1344>
+ call <__stack_chk_fail@plt>
+ endbr64
+ jmp <SELF@231>
+@@ -2329,7 +2329,7 @@
+ mov -0xbf0(%rbp),%rdi
+ mov $0x80,%esi
+ call <operator delete(void*, unsigned long)@plt>
+-jmp <SELF@1355>
++jmp <SELF@1353>
+ mov -0x990(%rbp),%rdi
+ jmp <SELF@123>
+ mov -0x9b0(%rbp),%rdi
+
+== launch()::{lambda()#6}::operator()() const
+   509 -> 541 instructions; reached by: launch():fkl_loop
+--- A
++++ B
+@@ -3,186 +3,314 @@
+ push %r15
+ push %r14
+ push %r13
++lea -0x150(%rbp),%r13
+ push %r12
+-lea -0x150(%rbp),%r12
+ push %rbx
+-sub $0x2e8,%rsp
+-mov %rdi,-0x2e8(%rbp)
+-mov %fs:0x28,%rbx
+-mov %rbx,-0x38(%rbp)
+-xor %ebx,%ebx
+-mov -0x2e8(%rbp),%rax
++sub $0x2d8,%rsp
++mov %fs:0x28,%r12
++mov %r12,-0x38(%rbp)
++mov %rdi,%r12
++movq $0x0,-0x2d8(%rbp)
++mov 0x8(%r12),%rax
++mov (%r12),%rbx
+ mov $0x100,%edx
+-lea D(%rip),%rdi # <_IO_stdin_used+OFF>
+-mov (%rax),%r13
+-mov 0x8(%rax),%rax
++mov -0x2d8(%rbp),%rdi
+ mov (%rax),%rax
+-mov 0x10(%r13),%ecx
+-lea (%rax,%rbx,8),%rax
+-movslq (%rax),%r15
+-mov 0x4(%rax),%r14d
++mov 0x10(%rbx),%ecx
++lea (%rax,%rdi,8),%rax
++lea D(%rip),%rdi # <_IO_stdin_used+OFF>
++mov (%rax),%r14d
++mov 0x4(%rax),%r15d
++mov %r14d,%esi
++call <F:fk::ptr_crop::checkAxis(char const*, int, unsigned int, unsigned int)@0>
++mov 0x14(%rbx),%ecx
++mov $0x100,%edx
+ mov %r15d,%esi
++lea D(%rip),%rdi # <_IO_stdin_used+OFF>
+ call <F:fk::ptr_crop::checkAxis(char const*, int, unsigned int, unsigned int)@0>
+-mov 0x14(%r13),%ecx
+-mov %r14d,%esi
+-mov $0x100,%edx
+-lea D(%rip),%rdi # <_IO_stdin_used+OFF>
+-call <F:fk::ptr_crop::checkAxis(char const*, int, unsigned int, unsigned int)@0>
+-mov 0x18(%r13),%ecx
++mov 0x18(%rbx),%ecx
+ test %ecx,%ecx
+-je <SELF@398>
+-mov %r14d,%edx
+-lea (%r15,%r15,2),%rax
+-mov %ebx,-0x2f0(%rbp)
++je <SELF@420>
++mov -0x2d8(%rbp),%eax
++mov %r15d,%edx
+ imul %ecx,%edx
++mov %eax,-0x2e4(%rbp)
++movslq %r14d,%rax
++lea (%rax,%rax,2),%rax
+ add %rax,%rdx
+-add 0x8(%r13),%rdx
+-cmpl $0x3,0x38(%r13)
+-je <SELF@217>
+-mov 0x38(%r13),%rdi
+-mov 0x0(%r13),%rax
++add 0x8(%rbx),%rdx
++cmpl $0x3,0x38(%rbx)
++je <SELF@200>
++mov 0x38(%rbx),%rdi
++mov (%rbx),%rax
+ mov %rdi,%r11
+ test %rax,%rax
+-je <SELF@193>
++je <SELF@176>
+ lock addl $0x1,0x10(%rax)
+-mov %rdx,%r14
++mov %rdx,%r15
+ mov %ecx,%r10d
+-mov %ecx,%r9d
+-mov %rdx,%r8
++mov %rdx,%r9
++mov %ecx,%r8d
+ mov D(%rip),%rsi # <cuda::std::__4::__cpo::iter_swap+OFF>
+ mov %rdx,-0x188(%rbp)
+ movl $0x0,-0x174(%rbp)
+ movl $0x0,-0x15c(%rbp)
+ mov %rsi,-0x180(%rbp)
+ mov %ecx,-0x178(%rbp)
+-mov %r14,-0x170(%rbp)
++mov %r15,-0x170(%rbp)
+ mov %rsi,-0x168(%rbp)
+ mov %r10d,-0x160(%rbp)
+ mov %rdi,-0x158(%rbp)
+ mov %rax,-0x190(%rbp)
+ lock addl $0x1,0x10(%rax)
+-mov -0x178(%rbp),%r14d
+-mov -0x180(%rbp),%r13
++mov -0x180(%rbp),%rdi
++mov -0x178(%rbp),%ebx
+ mov -0x188(%rbp),%r15
+-mov %r12,%rdi
++mov %rdi,-0x2e0(%rbp)
++mov %r13,%rdi
+ mov %rax,-0x150(%rbp)
+ mov %rdx,-0x148(%rbp)
+ mov %rsi,-0x140(%rbp)
+ mov %ecx,-0x138(%rbp)
+ mov %rsi,-0x128(%rbp)
+-mov %r8,-0x130(%rbp)
+-mov %r9d,-0x120(%rbp)
++mov %r9,-0x130(%rbp)
++mov %r8d,-0x120(%rbp)
+ mov %r11,-0x118(%rbp)
+ call <F:fk::Ptr<(fk::ND)2, uchar3>::freePtr()@0>
+-mov -0x2e8(%rbp),%rax
+-mov %r13,-0x268(%rbp)
++mov %ebx,-0x240(%rbp)
++mov 0x10(%r12),%rbx
+ xor %esi,%esi
++mov -0x2e0(%rbp),%rax
+ mov $0x100,%edx
+ lea D(%rip),%rdi # <_IO_stdin_used+OFF>
+-mov %r15,-0x270(%rbp)
+-mov 0x10(%rax),%r13
+-mov %r14d,-0x260(%rbp)
+-mov 0x10(%r13),%ecx
++mov %r15,-0x250(%rbp)
++mov 0x10(%rbx),%ecx
++mov %rax,-0x248(%rbp)
+ call <F:fk::ptr_crop::checkAxis(char const*, int, unsigned int, unsigned int)@0>
+-mov 0x14(%r13),%ecx
++mov 0x14(%rbx),%ecx
+ mov $0x100,%edx
+ xor %esi,%esi
+ lea D(%rip),%rdi # <_IO_stdin_used+OFF>
+ call <F:fk::ptr_crop::checkAxis(char const*, int, unsigned int, unsigned int)@0>
+-mov 0x18(%r13),%ecx
++mov 0x18(%rbx),%ecx
++mov -0x2e4(%rbp),%esi
+ mov $0x1,%edx
+-mov %ebx,%esi
+ lea D(%rip),%rdi # <_IO_stdin_used+OFF>
+ call <F:fk::ptr_crop::checkAxis(char const*, int, unsigned int, unsigned int)@0>
+-mov 0x1c(%r13),%edx
++mov 0x1c(%rbx),%edx
+ test %edx,%edx
+-je <SELF@360>
+-mov 0x20(%r13),%r8d
++je <SELF@384>
++mov 0x20(%rbx),%r8d
+ test %r8d,%r8d
+-je <SELF@438>
+-mov 0x24(%r13),%r15d
+-mov 0x20(%r13),%r9
++je <SELF@449>
++mov 0x24(%rbx),%r15d
++mov 0x20(%rbx),%r9
+ test %r15d,%r15d
+-je <SELF@418>
++je <SELF@469>
++mov 0x48(%rbx),%eax
+ imul %r15d,%edx
+-mov 0x48(%r13),%eax
+-imul %ebx,%edx
+-add 0x8(%r13),%rdx
++imul -0x2d8(%rbp),%edx
++add 0x8(%rbx),%rdx
+ cmp $0x3,%eax
+-je <SELF@254>
+-mov 0x0(%r13),%rsi
+-movq %rdx,%xmm4
++je <SELF@237>
++mov (%rbx),%rsi
++movq %rdx,%xmm5
+ movd %eax,%xmm1
+ mov %r9,-0x130(%rbp)
+ mov %rdx,-0x128(%rbp)
+ movq %rsi,%xmm0
+ mov %r9,-0x110(%rbp)
+-punpcklqdq %xmm4,%xmm0
++punpcklqdq %xmm5,%xmm0
+ movaps %xmm0,-0x150(%rbp)
+ movdqa D(%rip),%xmm0 # <cuda::std::__4::__cpo::iter_swap+OFF>
+ movaps %xmm0,-0x140(%rbp)
+ movaps %xmm0,-0x120(%rbp)
+-movd 0x4c(%r13),%xmm0
++movd 0x4c(%rbx),%xmm0
+ punpckldq %xmm0,%xmm1
+ movq %xmm1,-0x108(%rbp)
+ test %rsi,%rsi
+-je <SELF@210>
++je <SELF@193>
+ lock addl $0x1,0x10(%rsi)
++mov -0x138(%rbp),%eax
+ mov -0x148(%rbp),%rdx
+ movd -0x140(%rbp),%xmm0
+-movd -0x13c(%rbp),%xmm2
+-movd -0x138(%rbp),%xmm1
+-movd -0x134(%rbp),%xmm3
++movd -0x13c(%rbp),%xmm1
++cmp $0x1,%eax
++movd -0x134(%rbp),%xmm2
+ mov -0x130(%rbp),%r8d
+ mov -0x12c(%rbp),%r15d
+-mov D(%rip),%rax # <cuda::std::__4::__cpo::iter_swap+OFF>
+-punpckldq %xmm3,%xmm1
+-punpckldq %xmm2,%xmm0
+-mov $0x1,%esi
+-punpcklqdq %xmm1,%xmm0
++sete %r9b
++movd %eax,%xmm3
++mov -0x2e0(%rbp),%edi
++punpckldq %xmm1,%xmm0
++mov -0x2dc(%rbp),%esi
++punpckldq %xmm2,%xmm3
++mov -0x240(%rbp),%rax
+ mov %rdx,-0x1e0(%rbp)
+-movabs $0x2000000010,%rdi
+-mov %rax,-0x1f0(%rbp)
+-mov -0x2e8(%rbp),%rax
++punpcklqdq %xmm3,%xmm0
++test %edi,%edi
++mov D(%rip),%r10 # <cuda::std::__4::__cpo::iter_swap+OFF>
++movl $0x3e666666,-0x1e8(%rbp)
+ movups %xmm0,-0x1d8(%rbp)
+-movdqa -0x270(%rbp),%xmm0
+-mov 0x18(%rax),%rcx
+-mov -0x260(%rbp),%rax
++setne %dl
++test %esi,%esi
++movdqa -0x250(%rbp),%xmm0
++mov %rax,-0x220(%rbp)
++setne %al
++mov 0x18(%r12),%rcx
++mov %r10,-0x1f0(%rbp)
+ mov %r8d,-0x1c8(%rbp)
+-xor %r8d,%r8d
+-movl $0x3e666666,-0x1e8(%rbp)
+-mov %rax,-0x220(%rbp)
+-mov 0x10(%rcx),%r9
+-mov %rsi,%rcx
+-mov D(%rip),%rax # <cuda::std::__4::__cpo::iter_swap+OFF>
+ mov %r15d,-0x1c4(%rbp)
+ movl $0x3de38e39,-0x218(%rbp)
+-mov %rax,-0x2c8(%rbp)
++movaps %xmm0,-0x230(%rbp)
++test %al,%dl
++je <SELF@169>
++test %r9b,%r9b
++jne <SELF@272>
++mov $0x10,%edi
++call <__cxa_allocate_exception@plt>
++lea D(%rip),%rsi # <_IO_stdin_used+OFF>
++mov %rax,%rdi
++mov %rax,%rbx
++call <std::runtime_error::runtime_error(char const*)@plt>
++jmp <F:launch()::{lambda()#6}::operator()() const [clone .cold]@0>
++mov %rdx,-0x188(%rbp)
++mov %rdx,%r9
++mov %ecx,%r8d
++mov %rdx,%r15
++mov D(%rip),%rsi # <cuda::std::__4::__cpo::iter_swap+OFF>
++mov %ecx,-0x178(%rbp)
++mov %ecx,%ebx
++movl $0x0,-0x174(%rbp)
++movl $0x0,-0x15c(%rbp)
++mov %rsi,-0x180(%rbp)
++mov %rdx,-0x170(%rbp)
++mov %rsi,-0x168(%rbp)
++mov %ecx,-0x160(%rbp)
++mov %rdi,-0x158(%rbp)
++movq $0x0,-0x190(%rbp)
++mov %rsi,-0x2e0(%rbp)
++jmp <SELF@69>
++mov $0x100,%esi
++mov $0x1,%eax
++mov $0x1,%r9d
++movd %eax,%xmm2
++movd %esi,%xmm1
++movd %esi,%xmm0
++jmp <SELF@142>
++mov 0x30(%rbx),%esi
++lea D(%rip),%rdi # <_IO_stdin_used+OFF>
++mov %ecx,-0x2e8(%rbp)
++mov %rdx,-0x2e0(%rbp)
++imul %esi,%r15d
++add %rax,%r15
++add 0x20(%rbx),%r15
++call <F:fk::ptr_crop::checkedStride(char const*, unsigned int)@0>
++mov 0x38(%rbx),%r11
++mov -0x2e0(%rbp),%rdx
++mov %eax,%r10d
++mov (%rbx),%rax
++mov -0x2e8(%rbp),%ecx
++test %rax,%rax
++je <SELF@220>
++lock addl $0x1,0x10(%rax)
++mov %r11,%rdi
++mov %r15,%r9
++mov %r10d,%r8d
++jmp <SELF@53>
++mov D(%rip),%rsi # <cuda::std::__4::__cpo::iter_swap+OFF>
++mov %r15,%r9
++mov %r10d,%r8d
++mov %ecx,%ebx
++mov %r15,-0x170(%rbp)
++mov %rdx,%r15
++movl $0x0,-0x174(%rbp)
++movl $0x0,-0x15c(%rbp)
++mov %rdx,-0x188(%rbp)
++mov %rsi,-0x180(%rbp)
++mov %ecx,-0x178(%rbp)
++mov %rsi,-0x168(%rbp)
++mov %r10d,-0x160(%rbp)
++mov %r11,-0x158(%rbp)
++movq $0x0,-0x190(%rbp)
++mov %rsi,-0x2e0(%rbp)
++jmp <SELF@69>
++mov 0x40(%rbx),%esi
++lea D(%rip),%rdi # <_IO_stdin_used+OFF>
++mov 0x44(%rbx),%r14d
++mov %r9,-0x2f8(%rbp)
++imul 0x3c(%rbx),%r14d
++mov %rdx,-0x2f0(%rbp)
++imul -0x2d8(%rbp),%r14d
++mov %r8d,-0x2e8(%rbp)
++add 0x28(%rbx),%r14
++call <F:fk::ptr_crop::checkedStride(char const*, unsigned int)@0>
++mov 0x44(%rbx),%esi
++lea D(%rip),%rdi # <_IO_stdin_used+OFF>
++mov %eax,-0x2e4(%rbp)
++call <F:fk::ptr_crop::checkedStride(char const*, unsigned int)@0>
++mov %eax,%esi
++mov (%rbx),%rax
++movdqa D(%rip),%xmm0 # <cuda::std::__4::__cpo::iter_swap+OFF>
++mov %r14,-0x128(%rbp)
++mov %esi,-0x10c(%rbp)
++mov -0x2f0(%rbp),%rdx
++mov -0x2f8(%rbp),%r9
++mov -0x2e4(%rbp),%edi
++test %rax,%rax
++mov %rax,-0x150(%rbp)
++mov 0x48(%rbx),%rsi
++mov %rdx,-0x148(%rbp)
++mov %r9,-0x130(%rbp)
++mov -0x2e8(%rbp),%r8d
++mov %edi,-0x110(%rbp)
++mov %rsi,-0x108(%rbp)
++movaps %xmm0,-0x140(%rbp)
++movaps %xmm0,-0x120(%rbp)
++je <SELF@193>
++lock addl $0x1,0x10(%rax)
++jmp <SELF@133>
+ mov D(%rip),%rax # <cuda::std::__4::__cpo::iter_swap+OFF>
+-movl $0x1,-0x2c0(%rbp)
++mov 0x10(%rcx),%r9
++movl $0x1,-0x2b0(%rbp)
++movl $0x1,-0x2a0(%rbp)
+ mov %rax,-0x2b8(%rbp)
++xor %eax,%eax
++test $0xf,%dil
++setne %al
++shr $0x4,%edi
++add %edi,%eax
++mov %eax,-0x2a8(%rbp)
++xor %eax,%eax
++test $0x7,%sil
++setne %al
++shr $0x3,%esi
++xor %r8d,%r8d
++add %esi,%eax
++mov $0x1,%esi
++mov %eax,-0x2a4(%rbp)
++mov -0x2a8(%rbp),%rdi
++mov %rsi,%rcx
+ movabs $0x800000010,%rax
+ mov %rax,%rdx
+-movaps %xmm0,-0x230(%rbp)
+-movl $0x1,-0x2b0(%rbp)
+ call <__cudaPushCallConfiguration@plt>
+ test %eax,%eax
+-je <SELF@289>
++je <SELF@321>
+ call <cudaGetLastError@plt>
+-mov $0x138,%edx
++mov $0x176,%edx
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ mov %eax,%edi
+ call <F:fk::gpuAssert(cudaError, char const*, int, bool) [clone .constprop.0]@0>
+-mov %r12,%rdi
+-add $0x1,%rbx
++mov %r13,%rdi
+ call <F:fk::Ptr<(fk::ND)3, float>::freePtr()@0>
+ lea -0x190(%rbp),%rdi
+ call <F:fk::Ptr<(fk::ND)2, uchar3>::freePtr()@0>
+-cmp $0x1e,%rbx
++addq $0x1,-0x2d8(%rbp)
++cmpq $0x1e,-0x2d8(%rbp)
+ jne <SELF@13>
+ mov -0x38(%rbp),%rax
+ sub %fs:0x28,%rax
+-jne <SELF@458>
++jne <SELF@489>
+ lea -0x28(%rbp),%rsp
+ pop %rbx
+ pop %r12
+@@ -191,108 +319,12 @@
+ pop %r15
+ pop %rbp
+ ret
+-mov %rdx,-0x188(%rbp)
+-mov %ecx,%r9d
+-mov %rdx,%r8
+-mov %rdx,%r15
+-mov D(%rip),%rsi # <cuda::std::__4::__cpo::iter_swap+OFF>
+-mov %ecx,-0x178(%rbp)
+-mov %ecx,%r14d
+-movl $0x0,-0x174(%rbp)
+-movl $0x0,-0x15c(%rbp)
+-mov %rsi,%r13
+-mov %rsi,-0x180(%rbp)
+-mov %rdx,-0x170(%rbp)
+-mov %rsi,-0x168(%rbp)
+-mov %ecx,-0x160(%rbp)
+-mov %rdi,-0x158(%rbp)
+-movq $0x0,-0x190(%rbp)
+-jmp <SELF@66>
+-mov $0x1,%eax
+-movd %eax,%xmm3
+-movd %eax,%xmm1
+-mov $0x100,%eax
+-movd %eax,%xmm2
+-movd %eax,%xmm0
+-jmp <SELF@137>
+-mov 0x30(%r13),%esi
+-lea D(%rip),%rdi # <_IO_stdin_used+OFF>
+-mov %ecx,-0x2f4(%rbp)
+-mov %rdx,-0x2f0(%rbp)
+-imul %esi,%r14d
+-add %rax,%r14
+-add 0x20(%r13),%r14
+-call <F:fk::ptr_crop::checkedStride(char const*, unsigned int)@0>
+-mov 0x38(%r13),%r11
+-mov -0x2f0(%rbp),%rdx
+-mov %eax,%r10d
+-mov 0x0(%r13),%rax
+-mov -0x2f4(%rbp),%ecx
+-test %rax,%rax
+-je <SELF@237>
+-lock addl $0x1,0x10(%rax)
+-mov %r11,%rdi
+-mov %r10d,%r9d
+-mov %r14,%r8
+-jmp <SELF@51>
+-mov D(%rip),%rsi # <cuda::std::__4::__cpo::iter_swap+OFF>
+-mov %r14,%r8
+-mov %r10d,%r9d
+-mov %rdx,%r15
+-mov %r14,-0x170(%rbp)
+-mov %ecx,%r14d
+-movl $0x0,-0x174(%rbp)
+-mov %rsi,%r13
+-movl $0x0,-0x15c(%rbp)
+-mov %rdx,-0x188(%rbp)
+-mov %rsi,-0x180(%rbp)
+-mov %ecx,-0x178(%rbp)
+-mov %rsi,-0x168(%rbp)
+-mov %r10d,-0x160(%rbp)
+-mov %r11,-0x158(%rbp)
+-movq $0x0,-0x190(%rbp)
+-jmp <SELF@66>
+-mov 0x44(%r13),%r14d
+-imul 0x3c(%r13),%r14d
+-lea D(%rip),%rdi # <_IO_stdin_used+OFF>
+-mov %r9,-0x308(%rbp)
+-mov 0x40(%r13),%esi
+-mov %rdx,-0x300(%rbp)
+-mov %r8d,-0x2f4(%rbp)
+-imul %ebx,%r14d
+-add 0x28(%r13),%r14
+-call <F:fk::ptr_crop::checkedStride(char const*, unsigned int)@0>
+-mov 0x44(%r13),%esi
+-lea D(%rip),%rdi # <_IO_stdin_used+OFF>
+-mov %eax,-0x2f0(%rbp)
+-call <F:fk::ptr_crop::checkedStride(char const*, unsigned int)@0>
+-mov %eax,%esi
+-mov 0x0(%r13),%rax
+ movdqa D(%rip),%xmm0 # <cuda::std::__4::__cpo::iter_swap+OFF>
+-mov %r14,-0x128(%rbp)
+-mov %esi,-0x10c(%rbp)
+-mov -0x300(%rbp),%rdx
+-mov -0x308(%rbp),%r9
+-mov -0x2f0(%rbp),%edi
+-test %rax,%rax
+-mov %rax,-0x150(%rbp)
+-mov 0x48(%r13),%rsi
+-mov %rdx,-0x148(%rbp)
+-mov %r9,-0x130(%rbp)
+-mov -0x2f4(%rbp),%r8d
+-mov %edi,-0x110(%rbp)
+-mov %rsi,-0x108(%rbp)
+-movaps %xmm0,-0x140(%rbp)
+-movaps %xmm0,-0x120(%rbp)
+-je <SELF@210>
+-lock addl $0x1,0x10(%rax)
+-jmp <SELF@130>
+-movdqa D(%rip),%xmm0 # <cuda::std::__4::__cpo::iter_swap+OFF>
+-lea -0x250(%rbp),%rax
+-mov D(%rip),%r13 # <cuda::std::__4::__cpo::iter_swap+OFF>
+-movaps %xmm0,-0x250(%rbp)
++mov -0x2e0(%rbp),%rax
++movaps %xmm0,-0x260(%rbp)
++mov %rax,-0x228(%rbp)
+ movdqa -0x230(%rbp),%xmm0
+-mov %r13,-0x240(%rbp)
++lea -0x260(%rbp),%rax
+ movaps %xmm0,-0x210(%rbp)
+ movdqa -0x220(%rbp),%xmm0
+ movaps %xmm0,-0x200(%rbp)
+@@ -304,51 +336,108 @@
+ movaps %xmm0,-0x1a0(%rbp)
+ movq %rax,%xmm0
+ lea -0x210(%rbp),%rax
+-movq %rax,%xmm5
+-lea -0x2da(%rbp),%rax
+-punpcklqdq %xmm5,%xmm0
++movq %rax,%xmm6
++lea -0x2ca(%rbp),%rax
++punpcklqdq %xmm6,%xmm0
+ movaps %xmm0,-0x60(%rbp)
+ movq %rax,%xmm0
+-lea -0x2d9(%rbp),%rax
+-movq %rax,%xmm6
++lea -0x2c9(%rbp),%rax
++movq %rax,%xmm7
+ lea -0x1c0(%rbp),%rax
+ mov %rax,-0x40(%rbp)
+-punpcklqdq %xmm6,%xmm0
++punpcklqdq %xmm7,%xmm0
+ movaps %xmm0,-0x50(%rbp)
+ movzbl D(%rip),%eax # <_ZGVZL577__device_stub__ZN2fk21linearFilterDPPKernelILNS_7ParArchE1ENS_22LinearFilterDPPDetailsIfLi16ELi8ELi7ELi7EEENS_5TupleIJNS_25ReadInstantiableOperationINS_15FusedOperation_IvJNS5_INS_13PerThreadReadILNS_2NDE2E6uchar3EEEENS_26UnaryInstantiableOperationINS_8RGB2GrayIS9_fLNS_11GrayFormulaE0EEEEEEEEEENS5_INS_18ConstantFilterReadIfEEEEEEENSC_INS_3MulIfffNS_9UnaryTypeEEEEENSC_INS_3AddIfffSO_EEEENS_26WriteInstantiableOperationINS6_IvJNS_27BinaryInstantiableOperationINS_3DivIfffNS_10BinaryTypeEEEEENSV_INS_3SubIfffSX_EEEESZ_NSU_INS_14PerThreadWriteILS8_3EfEEEEEEEEEEEvT0_T1_T2_T3_T4_RKN2fk22LinearFilterDPPDetailsIfLi16ELi8ELi7ELi7EEERKNS_5TupleIJNS_25ReadInstantiableOperationINS_15FusedOperation_IvJNS5_INS_13PerThreadReadILNS_2NDE2E6uchar3EEEENS_26UnaryInstantiableOperationINS_8RGB2GrayIS9_fLNS_11GrayFormulaE0EEEEEEEEEENS5_INS_18ConstantFilterReadIfEEEEEEERKNSC_INS_3MulIfffNS_9UnaryTypeEEEEERKNSC_INS_3AddIfffSQ_EEEERKNS_26WriteInstantiableOperationINS6_IvJNS_27BinaryInstantiableOperationINS_3DivIfffNS_10BinaryTypeEEEEENS11_INS_3SubIfffS13_EEEES15_NS10_INS_14PerThreadWriteILS8_3EfEEEEEEEEEE5__tmp>
+ test %al,%al
+-jne <SELF@324>
++jne <SELF@356>
+ lea D(%rip),%rdi # <_ZGVZL577__device_stub__ZN2fk21linearFilterDPPKernelILNS_7ParArchE1ENS_22LinearFilterDPPDetailsIfLi16ELi8ELi7ELi7EEENS_5TupleIJNS_25ReadInstantiableOperationINS_15FusedOperation_IvJNS5_INS_13PerThreadReadILNS_2NDE2E6uchar3EEEENS_26UnaryInstantiableOperationINS_8RGB2GrayIS9_fLNS_11GrayFormulaE0EEEEEEEEEENS5_INS_18ConstantFilterReadIfEEEEEEENSC_INS_3MulIfffNS_9UnaryTypeEEEEENSC_INS_3AddIfffSO_EEEENS_26WriteInstantiableOperationINS6_IvJNS_27BinaryInstantiableOperationINS_3DivIfffNS_10BinaryTypeEEEEENSV_INS_3SubIfffSX_EEEESZ_NSU_INS_14PerThreadWriteILS8_3EfEEEEEEEEEEEvT0_T1_T2_T3_T4_RKN2fk22LinearFilterDPPDetailsIfLi16ELi8ELi7ELi7EEERKNS_5TupleIJNS_25ReadInstantiableOperationINS_15FusedOperation_IvJNS5_INS_13PerThreadReadILNS_2NDE2E6uchar3EEEENS_26UnaryInstantiableOperationINS_8RGB2GrayIS9_fLNS_11GrayFormulaE0EEEEEEEEEENS5_INS_18ConstantFilterReadIfEEEEEEERKNSC_INS_3MulIfffNS_9UnaryTypeEEEEERKNSC_INS_3AddIfffSQ_EEEERKNS_26WriteInstantiableOperationINS6_IvJNS_27BinaryInstantiableOperationINS_3DivIfffNS_10BinaryTypeEEEEENS11_INS_3SubIfffS13_EEEES15_NS10_INS_14PerThreadWriteILS8_3EfEEEEEEEEEE5__tmp>
+ call <__cxa_guard_acquire@plt>
+ test %eax,%eax
+-jne <SELF@351>
+-lea -0x2d0(%rbp),%rcx
+-lea -0x2d8(%rbp),%rdx
+-mov %r13,-0x2a8(%rbp)
+-lea -0x298(%rbp),%rsi
+-lea -0x2a8(%rbp),%rdi
+-movl $0x1,-0x2a0(%rbp)
+-mov %r13,-0x298(%rbp)
++jne <SELF@440>
++mov D(%rip),%rax # <cuda::std::__4::__cpo::iter_swap+OFF>
++lea -0x2c0(%rbp),%rcx
++lea -0x2c8(%rbp),%rdx
+ movl $0x1,-0x290(%rbp)
++lea -0x288(%rbp),%rsi
++lea -0x298(%rbp),%rdi
++movl $0x1,-0x280(%rbp)
++mov %rax,-0x298(%rbp)
++mov %rax,-0x288(%rbp)
+ call <__cudaPopCallConfiguration@plt>
+ test %eax,%eax
+-jne <SELF@170>
+-mov -0x2a8(%rbp),%rsi
+-mov -0x2a0(%rbp),%edx
++jne <SELF@298>
++mov -0x298(%rbp),%rsi
++mov -0x290(%rbp),%edx
+ lea -0x60(%rbp),%r9
+-mov -0x298(%rbp),%rcx
+-mov -0x290(%rbp),%r8d
+-mov %rsi,-0x288(%rbp)
++mov -0x288(%rbp),%rcx
++mov -0x280(%rbp),%r8d
++mov %rsi,-0x278(%rbp)
+ mov D(%rip),%rdi # <_ZZL577__device_stub__ZN2fk21linearFilterDPPKernelILNS_7ParArchE1ENS_22LinearFilterDPPDetailsIfLi16ELi8ELi7ELi7EEENS_5TupleIJNS_25ReadInstantiableOperationINS_15FusedOperation_IvJNS5_INS_13PerThreadReadILNS_2NDE2E6uchar3EEEENS_26UnaryInstantiableOperationINS_8RGB2GrayIS9_fLNS_11GrayFormulaE0EEEEEEEEEENS5_INS_18ConstantFilterReadIfEEEEEEENSC_INS_3MulIfffNS_9UnaryTypeEEEEENSC_INS_3AddIfffSO_EEEENS_26WriteInstantiableOperationINS6_IvJNS_27BinaryInstantiableOperationINS_3DivIfffNS_10BinaryTypeEEEEENSV_INS_3SubIfffSX_EEEESZ_NSU_INS_14PerThreadWriteILS8_3EfEEEEEEEEEEEvT0_T1_T2_T3_T4_RKN2fk22LinearFilterDPPDetailsIfLi16ELi8ELi7ELi7EEERKNS_5TupleIJNS_25ReadInstantiableOperationINS_15FusedOperation_IvJNS5_INS_13PerThreadReadILNS_2NDE2E6uchar3EEEENS_26UnaryInstantiableOperationINS_8RGB2GrayIS9_fLNS_11GrayFormulaE0EEEEEEEEEENS5_INS_18ConstantFilterReadIfEEEEEEERKNSC_INS_3MulIfffNS_9UnaryTypeEEEEERKNSC_INS_3AddIfffSQ_EEEERKNS_26WriteInstantiableOperationINS6_IvJNS_27BinaryInstantiableOperationINS_3DivIfffNS_10BinaryTypeEEEEENS11_INS_3SubIfffS13_EEEES15_NS10_INS_14PerThreadWriteILS8_3EfEEEEEEEEEE8__handle>
+-mov %edx,-0x280(%rbp)
+-mov %rcx,-0x27c(%rbp)
+-mov %r8d,-0x274(%rbp)
+-push -0x2d0(%rbp)
+-push -0x2d8(%rbp)
++mov %edx,-0x270(%rbp)
++mov %rcx,-0x26c(%rbp)
++mov %r8d,-0x264(%rbp)
++push -0x2c0(%rbp)
++push -0x2c8(%rbp)
+ call <__cudaLaunchKernel@plt>
+ pop %rax
+ pop %rdx
+-jmp <SELF@170>
++jmp <SELF@298>
++lea -0xa0(%rbp),%rbx
++xor %esi,%esi
++mov %rbx,%rdi
++mov %rbx,-0x2d8(%rbp)
++call <F:std::__cxx11::to_string(unsigned int)@0>
++mov $0x1,%esi
++lea -0x100(%rbp),%rdi
++call <F:std::__cxx11::to_string(unsigned int)@0>
++lea D(%rip),%rdx # <_IO_stdin_used+OFF>
++xor %esi,%esi
++lea -0x100(%rbp),%rdi
++call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::insert(unsigned long, char const*)@plt>
++mov %rax,%rsi
++lea -0xe0(%rbp),%rdi
++call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&)@plt>
++lea D(%rip),%rsi # <_IO_stdin_used+OFF>
++lea -0xe0(%rbp),%rdi
++call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::append(char const*)@plt>
++mov %rax,%rsi
++lea -0xc0(%rbp),%rdi
++call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&)@plt>
++mov %rbx,%rdx
++lea -0xc0(%rbp),%rsi
++lea -0x80(%rbp),%rdi
++call <F:std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > std::operator+<char, std::char_traits<char>, std::allocator<char> >(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&)@0>
++lea D(%rip),%rsi # <_IO_stdin_used+OFF>
++lea -0x80(%rbp),%rdi
++call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::append(char const*)@plt>
++mov %rax,%rsi
++lea -0x60(%rbp),%rdi
++call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&)@plt>
++mov -0x38(%rbp),%rax
++sub %fs:0x28,%rax
++jne <SELF@489>
++lea -0x60(%rbp),%rdi
++call <F:fk::ptr_crop::fail(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)@0>
++lea D(%rip),%rsi # <_IO_stdin_used+OFF>
++lea -0x60(%rbp),%rdi
++call <F:std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string<std::allocator<char> >(char const*, std::allocator<char> const&) [clone .constprop.0]@0>
++lea D(%rip),%rsi # <_IO_stdin_used+OFF>
++lea -0x60(%rbp),%rdi
++call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::append(char const*)@plt>
++mov %rax,%rsi
++lea -0x80(%rbp),%rdi
++call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&)@plt>
++lea D(%rip),%rsi # <_IO_stdin_used+OFF>
++lea -0x80(%rbp),%rdi
++call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::append(char const*)@plt>
++mov %rax,%rsi
++lea -0xa0(%rbp),%rdi
++call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&)@plt>
++mov -0x38(%rbp),%rax
++sub %fs:0x28,%rax
++jne <SELF@489>
++lea -0xa0(%rbp),%rdi
++call <F:fk::ptr_crop::fail(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)@0>
+ lea D(%rip),%rsi # <F:void fk::linearFilterDPPKernel<(fk::ParArch)1, fk::LinearFilterDPPDetails<float, 16, 8, 7, 7>, fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void, fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2, uchar3> >, fk::UnaryInstantiableOperation<fk::RGB2Gray<uchar3, float, (fk::GrayFormula)0> > > >, fk::ReadInstantiableOperation<fk::ConstantFilterRead<float> > >, fk::UnaryInstantiableOperation<fk::Mul<float, float, float, fk::UnaryType> >, fk::UnaryInstantiableOperation<fk::Add<float, float, float, fk::UnaryType> >, fk::WriteInstantiableOperation<fk::FusedOperation_<void, fk::BinaryInstantiableOperation<fk::Div<float, float, float, fk::BinaryType> >, fk::BinaryInstantiableOperation<fk::Sub<float, float, float, fk::BinaryType> >, fk::BinaryInstantiableOperation<fk::Div<float, float, float, fk::BinaryType> >, fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)3, float> > > > >(fk::LinearFilterDPPDetails<float, 16, 8, 7, 7>, fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void, fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2, uchar3> >, fk::UnaryInstantiableOperation<fk::RGB2Gray<uchar3, float, (fk::GrayFormula)0> > > >, fk::ReadInstantiableOperation<fk::ConstantFilterRead<float> > >, fk::UnaryInstantiableOperation<fk::Mul<float, float, float, fk::UnaryType> >, fk::UnaryInstantiableOperation<fk::Add<float, float, float, fk::UnaryType> >, fk::WriteInstantiableOperation<fk::FusedOperation_<void, fk::BinaryInstantiableOperation<fk::Div<float, float, float, fk::BinaryType> >, fk::BinaryInstantiableOperation<fk::Sub<float, float, float, fk::BinaryType> >, fk::BinaryInstantiableOperation<fk::Div<float, float, float, fk::BinaryType> >, fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)3, float> > > >)@0>
+ lea D(%rip),%rdi # <_ZZL577__device_stub__ZN2fk21linearFilterDPPKernelILNS_7ParArchE1ENS_22LinearFilterDPPDetailsIfLi16ELi8ELi7ELi7EEENS_5TupleIJNS_25ReadInstantiableOperationINS_15FusedOperation_IvJNS5_INS_13PerThreadReadILNS_2NDE2E6uchar3EEEENS_26UnaryInstantiableOperationINS_8RGB2GrayIS9_fLNS_11GrayFormulaE0EEEEEEEEEENS5_INS_18ConstantFilterReadIfEEEEEEENSC_INS_3MulIfffNS_9UnaryTypeEEEEENSC_INS_3AddIfffSO_EEEENS_26WriteInstantiableOperationINS6_IvJNS_27BinaryInstantiableOperationINS_3DivIfffNS_10BinaryTypeEEEEENSV_INS_3SubIfffSX_EEEESZ_NSU_INS_14PerThreadWriteILS8_3EfEEEEEEEEEEEvT0_T1_T2_T3_T4_RKN2fk22LinearFilterDPPDetailsIfLi16ELi8ELi7ELi7EEERKNS_5TupleIJNS_25ReadInstantiableOperationINS_15FusedOperation_IvJNS5_INS_13PerThreadReadILNS_2NDE2E6uchar3EEEENS_26UnaryInstantiableOperationINS_8RGB2GrayIS9_fLNS_11GrayFormulaE0EEEEEEEEEENS5_INS_18ConstantFilterReadIfEEEEEEERKNSC_INS_3MulIfffNS_9UnaryTypeEEEEERKNSC_INS_3AddIfffSQ_EEEERKNS_26WriteInstantiableOperationINS6_IvJNS_27BinaryInstantiableOperationINS_3DivIfffNS_10BinaryTypeEEEEENS11_INS_3SubIfffS13_EEEES15_NS10_INS_14PerThreadWriteILS8_3EfEEEEEEEEEE8__handle>
+ call <__cudaGetKernel@plt>
+@@ -357,44 +446,26 @@
+ sete %al
+ mov %al,D(%rip) # <_ZZL577__device_stub__ZN2fk21linearFilterDPPKernelILNS_7ParArchE1ENS_22LinearFilterDPPDetailsIfLi16ELi8ELi7ELi7EEENS_5TupleIJNS_25ReadInstantiableOperationINS_15FusedOperation_IvJNS5_INS_13PerThreadReadILNS_2NDE2E6uchar3EEEENS_26UnaryInstantiableOperationINS_8RGB2GrayIS9_fLNS_11GrayFormulaE0EEEEEEEEEENS5_INS_18ConstantFilterReadIfEEEEEEENSC_INS_3MulIfffNS_9UnaryTypeEEEEENSC_INS_3AddIfffSO_EEEENS_26WriteInstantiableOperationINS6_IvJNS_27BinaryInstantiableOperationINS_3DivIfffNS_10BinaryTypeEEEEENSV_INS_3SubIfffSX_EEEESZ_NSU_INS_14PerThreadWriteILS8_3EfEEEEEEEEEEEvT0_T1_T2_T3_T4_RKN2fk22LinearFilterDPPDetailsIfLi16ELi8ELi7ELi7EEERKNS_5TupleIJNS_25ReadInstantiableOperationINS_15FusedOperation_IvJNS5_INS_13PerThreadReadILNS_2NDE2E6uchar3EEEENS_26UnaryInstantiableOperationINS_8RGB2GrayIS9_fLNS_11GrayFormulaE0EEEEEEEEEENS5_INS_18ConstantFilterReadIfEEEEEEERKNSC_INS_3MulIfffNS_9UnaryTypeEEEEERKNSC_INS_3AddIfffSQ_EEEERKNS_26WriteInstantiableOperationINS6_IvJNS_27BinaryInstantiableOperationINS_3DivIfffNS_10BinaryTypeEEEEENS11_INS_3SubIfffS13_EEEES15_NS10_INS_14PerThreadWriteILS8_3EfEEEEEEEEEE5__tmp>
+ call <__cxa_guard_release@plt>
+-jmp <SELF@324>
+-lea -0xa0(%rbp),%rbx
+-xor %esi,%esi
+-mov %rbx,%rdi
+-mov %rbx,-0x2e8(%rbp)
+-call <F:std::__cxx11::to_string(unsigned int)@0>
+-mov $0x1,%esi
+-lea -0x100(%rbp),%rdi
+-call <F:std::__cxx11::to_string(unsigned int)@0>
+-mov $0x1e,%r8d
+-xor %edx,%edx
+-xor %esi,%esi
+-lea D(%rip),%rcx # <_IO_stdin_used+OFF>
+-lea -0x100(%rbp),%rdi
+-call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::replace(unsigned long, unsigned long, char const*, unsigned long)@plt>
+-mov %rax,%rsi
+-lea -0xe0(%rbp),%rdi
+-call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&)@plt>
+-lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+-lea -0xe0(%rbp),%rdi
+-call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::append(char const*)@plt>
+-mov %rax,%rsi
+-lea -0xc0(%rbp),%rdi
+-call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&)@plt>
+-mov %rbx,%rdx
+-lea -0xc0(%rbp),%rsi
+-lea -0x80(%rbp),%rdi
+-call <F:std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > std::operator+<char, std::char_traits<char>, std::allocator<char> >(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&)@0>
+-lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+-lea -0x80(%rbp),%rdi
+-call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::append(char const*)@plt>
+-mov %rax,%rsi
+-lea -0x60(%rbp),%rdi
++jmp <SELF@356>
++lea D(%rip),%rsi # <_IO_stdin_used+OFF>
++lea -0x60(%rbp),%rdi
++call <F:std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string<std::allocator<char> >(char const*, std::allocator<char> const&) [clone .constprop.0]@0>
++lea D(%rip),%rsi # <_IO_stdin_used+OFF>
++lea -0x60(%rbp),%rdi
++call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::append(char const*)@plt>
++mov %rax,%rsi
++lea -0x80(%rbp),%rdi
++call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&)@plt>
++lea D(%rip),%rsi # <_IO_stdin_used+OFF>
++lea -0x80(%rbp),%rdi
++call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::append(char const*)@plt>
++mov %rax,%rsi
++lea -0xa0(%rbp),%rdi
+ call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&)@plt>
+ mov -0x38(%rbp),%rax
+ sub %fs:0x28,%rax
+-jne <SELF@458>
+-lea -0x60(%rbp),%rdi
++jne <SELF@489>
++lea -0xa0(%rbp),%rdi
+ call <F:fk::ptr_crop::fail(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)@0>
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ lea -0x60(%rbp),%rdi
+@@ -413,97 +484,58 @@
+ call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&)@plt>
+ mov -0x38(%rbp),%rax
+ sub %fs:0x28,%rax
+-jne <SELF@458>
+-lea -0xa0(%rbp),%rdi
+-call <F:fk::ptr_crop::fail(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)@0>
+-lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+-lea -0x60(%rbp),%rdi
+-call <F:std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string<std::allocator<char> >(char const*, std::allocator<char> const&) [clone .constprop.0]@0>
+-lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+-lea -0x60(%rbp),%rdi
+-call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::append(char const*)@plt>
+-mov %rax,%rsi
+-lea -0x80(%rbp),%rdi
+-call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&)@plt>
+-lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+-lea -0x80(%rbp),%rdi
+-call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::append(char const*)@plt>
+-mov %rax,%rsi
+-lea -0xa0(%rbp),%rdi
+-call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&)@plt>
+-mov -0x38(%rbp),%rax
+-sub %fs:0x28,%rax
+-jne <SELF@458>
+-lea -0xa0(%rbp),%rdi
+-call <F:fk::ptr_crop::fail(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)@0>
+-lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+-lea -0x60(%rbp),%rdi
+-call <F:std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string<std::allocator<char> >(char const*, std::allocator<char> const&) [clone .constprop.0]@0>
+-lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+-lea -0x60(%rbp),%rdi
+-call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::append(char const*)@plt>
+-mov %rax,%rsi
+-lea -0x80(%rbp),%rdi
+-call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&)@plt>
+-lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+-lea -0x80(%rbp),%rdi
+-call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::append(char const*)@plt>
+-mov %rax,%rsi
+-lea -0xa0(%rbp),%rdi
+-call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&)@plt>
+-mov -0x38(%rbp),%rax
+-sub %fs:0x28,%rax
+-jne <SELF@458>
++jne <SELF@489>
+ lea -0xa0(%rbp),%rdi
+ call <F:fk::ptr_crop::fail(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)@0>
+ call <__stack_chk_fail@plt>
+ endbr64
+-mov %rax,%rbx
+-jmp <F:launch()::{lambda()#6}::operator()() const [clone .cold]@0>
+-endbr64
+-mov %rax,%rbx
+-jmp <F:launch()::{lambda()#6}::operator()() const [clone .cold]@2>
+-endbr64
+-mov %rax,%rbx
+-jmp <F:launch()::{lambda()#6}::operator()() const [clone .cold]@37>
++jmp <F:launch()::{lambda()#6}::operator()() const [clone .cold]@7>
++endbr64
++mov %rax,%rbx
++jmp <F:launch()::{lambda()#6}::operator()() const [clone .cold]@21>
++endbr64
++mov %rax,%rbx
++jmp <F:launch()::{lambda()#6}::operator()() const [clone .cold]@51>
++endbr64
++jmp <F:launch()::{lambda()#6}::operator()() const [clone .cold]@60>
++endbr64
++mov %rax,%rbx
++jmp <F:launch()::{lambda()#6}::operator()() const [clone .cold]@11>
++endbr64
++jmp <F:launch()::{lambda()#6}::operator()() const [clone .cold]@38>
++endbr64
++mov %rax,%rbx
++jmp <F:launch()::{lambda()#6}::operator()() const [clone .cold]@44>
++endbr64
++mov %rax,%rbx
++jmp <F:launch()::{lambda()#6}::operator()() const [clone .cold]@46>
++endbr64
++mov %rax,%rbx
++jmp <F:launch()::{lambda()#6}::operator()() const [clone .cold]@48>
+ endbr64
+ mov %rax,%rbx
+ jmp <F:launch()::{lambda()#6}::operator()() const [clone .cold]@30>
+ endbr64
+ mov %rax,%rbx
++jmp <F:launch()::{lambda()#6}::operator()() const [clone .cold]@32>
++endbr64
++mov %rax,%rbx
++jmp <F:launch()::{lambda()#6}::operator()() const [clone .cold]@28>
++endbr64
++mov %rax,%rbx
++jmp <F:launch()::{lambda()#6}::operator()() const [clone .cold]@56>
++endbr64
++mov %rax,%rbx
++jmp <F:launch()::{lambda()#6}::operator()() const [clone .cold]@48>
++endbr64
++mov %rax,%rbx
++jmp <F:launch()::{lambda()#6}::operator()() const [clone .cold]@54>
++endbr64
++mov %rax,%rbx
++jmp <F:launch()::{lambda()#6}::operator()() const [clone .cold]@15>
++endbr64
++mov %rax,%rbx
++jmp <F:launch()::{lambda()#6}::operator()() const [clone .cold]@17>
++endbr64
++mov %rax,%rbx
+ jmp <F:launch()::{lambda()#6}::operator()() const [clone .cold]@13>
+-endbr64
+-mov %rax,%rbx
+-jmp <F:launch()::{lambda()#6}::operator()() const [clone .cold]@15>
+-endbr64
+-mov %rax,%rbx
+-jmp <F:launch()::{lambda()#6}::operator()() const [clone .cold]@41>
+-endbr64
+-mov %rax,%rbx
+-jmp <F:launch()::{lambda()#6}::operator()() const [clone .cold]@28>
+-endbr64
+-mov %rax,%rbx
+-jmp <F:launch()::{lambda()#6}::operator()() const [clone .cold]@25>
+-endbr64
+-mov %rax,%rbx
+-jmp <F:launch()::{lambda()#6}::operator()() const [clone .cold]@4>
+-endbr64
+-mov %rax,%rbx
+-jmp <F:launch()::{lambda()#6}::operator()() const [clone .cold]@39>
+-endbr64
+-mov %rax,%rbx
+-jmp <F:launch()::{lambda()#6}::operator()() const [clone .cold]@6>
+-endbr64
+-mov %rax,%rbx
+-jmp <F:launch()::{lambda()#6}::operator()() const [clone .cold]@23>
+-endbr64
+-mov %rax,%rbx
+-jmp <F:launch()::{lambda()#6}::operator()() const [clone .cold]@17>
+-endbr64
+-mov %rax,%rbx
+-jmp <F:launch()::{lambda()#6}::operator()() const [clone .cold]@43>
+-endbr64
+-jmp <F:launch()::{lambda()#6}::operator()() const [clone .cold]@33>
+-endbr64
+-mov %rax,%rbx
+-jmp <F:launch()::{lambda()#6}::operator()() const [clone .cold]@4>
+
+== launch()::{lambda()#6}::operator()() const [clone .cold]
+   48 -> 62 instructions; reached by: launch():fkl_loop
+--- A
++++ B
+@@ -1,14 +1,29 @@
+-lea -0xa0(%rbp),%rdi
++mov -0x38(%rbp),%rax
++sub %fs:0x28,%rax
++jne <SELF@37>
++mov D(%rip),%rdx # <std::runtime_error::~runtime_error()@GLIBCXX_3.4>
++lea D(%rip),%rsi # <typeinfo for std::runtime_error@GLIBCXX_3.4>
++mov %rbx,%rdi
++call <__cxa_throw@plt>
++lea -0x60(%rbp),%rdi
++mov %rax,-0x2e0(%rbp)
+ call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_dispose()@plt>
++mov -0x2e0(%rbp),%rbx
+ lea -0x80(%rbp),%rdi
+ call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_dispose()@plt>
+-lea -0x60(%rbp),%rdi
++lea -0xc0(%rbp),%rdi
++call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_dispose()@plt>
++lea -0xe0(%rbp),%rdi
++call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_dispose()@plt>
++lea -0x100(%rbp),%rdi
++call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_dispose()@plt>
++mov -0x2d8(%rbp),%rdi
+ call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_dispose()@plt>
+ lea -0x190(%rbp),%rdi
+ call <F:fk::Ptr<(fk::ND)2, uchar3>::freePtr()@0>
+ mov -0x38(%rbp),%rax
+ sub %fs:0x28,%rax
+-jne <SELF@22>
++jne <SELF@37>
+ mov %rbx,%rdi
+ call <_Unwind_Resume@plt>
+ lea -0xa0(%rbp),%rdi
+@@ -19,30 +34,29 @@
+ call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_dispose()@plt>
+ mov -0x38(%rbp),%rax
+ sub %fs:0x28,%rax
+-je <SELF@11>
++je <SELF@26>
+ call <__stack_chk_fail@plt>
++mov %rbx,%rdi
++mov %rax,%rbx
++call <__cxa_free_exception@plt>
++mov %r13,%rdi
++call <F:fk::Ptr<(fk::ND)3, float>::freePtr()@0>
++jmp <SELF@21>
+ lea -0xa0(%rbp),%rdi
+ call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_dispose()@plt>
+ lea -0x80(%rbp),%rdi
+ call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_dispose()@plt>
+-jmp <SELF@4>
++lea -0x60(%rbp),%rdi
++call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_dispose()@plt>
++jmp <SELF@21>
+ lea D(%rip),%rdi # <_ZGVZL577__device_stub__ZN2fk21linearFilterDPPKernelILNS_7ParArchE1ENS_22LinearFilterDPPDetailsIfLi16ELi8ELi7ELi7EEENS_5TupleIJNS_25ReadInstantiableOperationINS_15FusedOperation_IvJNS5_INS_13PerThreadReadILNS_2NDE2E6uchar3EEEENS_26UnaryInstantiableOperationINS_8RGB2GrayIS9_fLNS_11GrayFormulaE0EEEEEEEEEENS5_INS_18ConstantFilterReadIfEEEEEEENSC_INS_3MulIfffNS_9UnaryTypeEEEEENSC_INS_3AddIfffSO_EEEENS_26WriteInstantiableOperationINS6_IvJNS_27BinaryInstantiableOperationINS_3DivIfffNS_10BinaryTypeEEEEENSV_INS_3SubIfffSX_EEEESZ_NSU_INS_14PerThreadWriteILS8_3EfEEEEEEEEEEEvT0_T1_T2_T3_T4_RKN2fk22LinearFilterDPPDetailsIfLi16ELi8ELi7ELi7EEERKNS_5TupleIJNS_25ReadInstantiableOperationINS_15FusedOperation_IvJNS5_INS_13PerThreadReadILNS_2NDE2E6uchar3EEEENS_26UnaryInstantiableOperationINS_8RGB2GrayIS9_fLNS_11GrayFormulaE0EEEEEEEEEENS5_INS_18ConstantFilterReadIfEEEEEEERKNSC_INS_3MulIfffNS_9UnaryTypeEEEEERKNSC_INS_3AddIfffSQ_EEEERKNS_26WriteInstantiableOperationINS6_IvJNS_27BinaryInstantiableOperationINS_3DivIfffNS_10BinaryTypeEEEEENS11_INS_3SubIfffS13_EEEES15_NS10_INS_14PerThreadWriteILS8_3EfEEEEEEEEEE5__tmp>
+ call <__cxa_guard_abort@plt>
+-mov %r12,%rdi
+-call <F:fk::Ptr<(fk::ND)3, float>::freePtr()@0>
+-jmp <SELF@6>
+-lea -0x60(%rbp),%rdi
+-mov %rax,-0x2f0(%rbp)
++jmp <SELF@41>
++lea -0xa0(%rbp),%rdi
+ call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_dispose()@plt>
+-mov -0x2f0(%rbp),%rbx
+ lea -0x80(%rbp),%rdi
+ call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_dispose()@plt>
+-lea -0xc0(%rbp),%rdi
+-call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_dispose()@plt>
+-lea -0xe0(%rbp),%rdi
+-call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_dispose()@plt>
+-lea -0x100(%rbp),%rdi
+-call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_dispose()@plt>
+-mov -0x2e8(%rbp),%rdi
+-call <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_dispose()@plt>
+-jmp <SELF@6>
++jmp <SELF@48>
++endbr64
++mov %rax,%rbx
++jmp <SELF@41>
+
+== void fk::linearFilterDPPKernel<(fk::ParArch)1, fk::LinearFilterDPPDetails<float, 16, 8, 7, 7>, fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void, fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2, uchar3> >, fk::UnaryInstantiableOperation<fk::RGB2Gray<uchar3, float, (fk::GrayFormula)0> > > >, fk::ReadInstantiableOperation<fk::ConstantFilterRead<float> > >, fk::UnaryInstantiableOperation<fk::Mul<float, float, float, fk::UnaryType> >, fk::UnaryInstantiableOperation<fk::Add<float, float, float, fk::UnaryType> >, fk::WriteInstantiableOperation<fk::FusedOperation_<void, fk::BinaryInstantiableOperation<fk::Div<float, float, float, fk::BinaryType> >, fk::BinaryInstantiableOperation<fk::Sub<float, float, float, fk::BinaryType> >, fk::BinaryInstantiableOperation<fk::Div<float, float, float, fk::BinaryType> >, fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)3, float> > > > >(fk::LinearFilterDPPDetails<float, 16, 8, 7, 7>, fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void, fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2, uchar3> >, fk::UnaryInstantiableOperation<fk::RGB2Gray<uchar3, float, (fk::GrayFormula)0> > > >, fk::ReadInstantiableOperation<fk::ConstantFilterRead<float> > >, fk::UnaryInstantiableOperation<fk::Mul<float, float, float, fk::UnaryType> >, fk::UnaryInstantiableOperation<fk::Add<float, float, float, fk::UnaryType> >, fk::WriteInstantiableOperation<fk::FusedOperation_<void, fk::BinaryInstantiableOperation<fk::Div<float, float, float, fk::BinaryType> >, fk::BinaryInstantiableOperation<fk::Sub<float, float, float, fk::BinaryType> >, fk::BinaryInstantiableOperation<fk::Div<float, float, float, fk::BinaryType> >, fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)3, float> > > >)
+   68 -> 70 instructions; reached by: launch():fkl_loop
+--- A
++++ B
+@@ -1,56 +1,58 @@
+ endbr64
+ push %rbx
+-sub $0x90,%rsp
++sub $0xa0,%rsp
++mov %rdi,0x10(%rsp)
++mov %rsi,0x18(%rsp)
+ mov %fs:0x28,%rax
+-mov %rax,0x88(%rsp)
+-lea 0xb8(%rsp),%rax
+-lea 0xa0(%rsp),%rdx
+-movq %rdx,%xmm0
++mov %rax,0x98(%rsp)
++lea 0x10(%rsp),%rax
++movq %rax,%xmm0
++lea 0xb0(%rsp),%rax
+ movq %rax,%xmm1
+ lea 0xf(%rsp),%rax
+ punpcklqdq %xmm1,%xmm0
+-movaps %xmm0,0x60(%rsp)
++movaps %xmm0,0x70(%rsp)
+ movq %rax,%xmm0
+ lea 0xe(%rsp),%rax
+ movq %rax,%xmm2
+-lea 0xd8(%rsp),%rax
+-mov %rax,0x80(%rsp)
++lea 0xd0(%rsp),%rax
++mov %rax,0x90(%rsp)
+ punpcklqdq %xmm2,%xmm0
+-movaps %xmm0,0x70(%rsp)
++movaps %xmm0,0x80(%rsp)
+ movzbl D(%rip),%eax # <_ZGVZL577__device_stub__ZN2fk21linearFilterDPPKernelILNS_7ParArchE1ENS_22LinearFilterDPPDetailsIfLi16ELi8ELi7ELi7EEENS_5TupleIJNS_25ReadInstantiableOperationINS_15FusedOperation_IvJNS5_INS_13PerThreadReadILNS_2NDE2E6uchar3EEEENS_26UnaryInstantiableOperationINS_8RGB2GrayIS9_fLNS_11GrayFormulaE0EEEEEEEEEENS5_INS_18ConstantFilterReadIfEEEEEEENSC_INS_3MulIfffNS_9UnaryTypeEEEEENSC_INS_3AddIfffSO_EEEENS_26WriteInstantiableOperationINS6_IvJNS_27BinaryInstantiableOperationINS_3DivIfffNS_10BinaryTypeEEEEENSV_INS_3SubIfffSX_EEEESZ_NSU_INS_14PerThreadWriteILS8_3EfEEEEEEEEEEEvT0_T1_T2_T3_T4_RKN2fk22LinearFilterDPPDetailsIfLi16ELi8ELi7ELi7EEERKNS_5TupleIJNS_25ReadInstantiableOperationINS_15FusedOperation_IvJNS5_INS_13PerThreadReadILNS_2NDE2E6uchar3EEEENS_26UnaryInstantiableOperationINS_8RGB2GrayIS9_fLNS_11GrayFormulaE0EEEEEEEEEENS5_INS_18ConstantFilterReadIfEEEEEEERKNSC_INS_3MulIfffNS_9UnaryTypeEEEEERKNSC_INS_3AddIfffSQ_EEEERKNS_26WriteInstantiableOperationINS6_IvJNS_27BinaryInstantiableOperationINS_3DivIfffNS_10BinaryTypeEEEEENS11_INS_3SubIfffS13_EEEES15_NS10_INS_14PerThreadWriteILS8_3EfEEEEEEEEEE5__tmp>
+ test %al,%al
+-jne <SELF@26>
++jne <SELF@28>
+ lea D(%rip),%rdi # <_ZGVZL577__device_stub__ZN2fk21linearFilterDPPKernelILNS_7ParArchE1ENS_22LinearFilterDPPDetailsIfLi16ELi8ELi7ELi7EEENS_5TupleIJNS_25ReadInstantiableOperationINS_15FusedOperation_IvJNS5_INS_13PerThreadReadILNS_2NDE2E6uchar3EEEENS_26UnaryInstantiableOperationINS_8RGB2GrayIS9_fLNS_11GrayFormulaE0EEEEEEEEEENS5_INS_18ConstantFilterReadIfEEEEEEENSC_INS_3MulIfffNS_9UnaryTypeEEEEENSC_INS_3AddIfffSO_EEEENS_26WriteInstantiableOperationINS6_IvJNS_27BinaryInstantiableOperationINS_3DivIfffNS_10BinaryTypeEEEEENSV_INS_3SubIfffSX_EEEESZ_NSU_INS_14PerThreadWriteILS8_3EfEEEEEEEEEEEvT0_T1_T2_T3_T4_RKN2fk22LinearFilterDPPDetailsIfLi16ELi8ELi7ELi7EEERKNS_5TupleIJNS_25ReadInstantiableOperationINS_15FusedOperation_IvJNS5_INS_13PerThreadReadILNS_2NDE2E6uchar3EEEENS_26UnaryInstantiableOperationINS_8RGB2GrayIS9_fLNS_11GrayFormulaE0EEEEEEEEEENS5_INS_18ConstantFilterReadIfEEEEEEERKNSC_INS_3MulIfffNS_9UnaryTypeEEEEERKNSC_INS_3AddIfffSQ_EEEERKNS_26WriteInstantiableOperationINS6_IvJNS_27BinaryInstantiableOperationINS_3DivIfffNS_10BinaryTypeEEEEENS11_INS_3SubIfffS13_EEEES15_NS10_INS_14PerThreadWriteILS8_3EfEEEEEEEEEE5__tmp>
+ call <__cxa_guard_acquire@plt>
+ test %eax,%eax
+-jne <SELF@55>
++jne <SELF@57>
+ mov D(%rip),%rax # <cuda::std::__4::__cpo::iter_swap+OFF>
+-lea 0x20(%rsp),%rcx
+-lea 0x18(%rsp),%rdx
+-movl $0x1,0x30(%rsp)
+-lea 0x38(%rsp),%rsi
+-lea 0x28(%rsp),%rdi
++lea 0x30(%rsp),%rcx
++lea 0x28(%rsp),%rdx
+ movl $0x1,0x40(%rsp)
+-mov %rax,0x28(%rsp)
++lea 0x48(%rsp),%rsi
++lea 0x38(%rsp),%rdi
++movl $0x1,0x50(%rsp)
+ mov %rax,0x38(%rsp)
++mov %rax,0x48(%rsp)
+ call <__cudaPopCallConfiguration@plt>
+ test %eax,%eax
+-jne <SELF@49>
+-push 0x20(%rsp)
++jne <SELF@51>
++push 0x30(%rsp)
+ mov D(%rip),%rdi # <_ZZL577__device_stub__ZN2fk21linearFilterDPPKernelILNS_7ParArchE1ENS_22LinearFilterDPPDetailsIfLi16ELi8ELi7ELi7EEENS_5TupleIJNS_25ReadInstantiableOperationINS_15FusedOperation_IvJNS5_INS_13PerThreadReadILNS_2NDE2E6uchar3EEEENS_26UnaryInstantiableOperationINS_8RGB2GrayIS9_fLNS_11GrayFormulaE0EEEEEEEEEENS5_INS_18ConstantFilterReadIfEEEEEEENSC_INS_3MulIfffNS_9UnaryTypeEEEEENSC_INS_3AddIfffSO_EEEENS_26WriteInstantiableOperationINS6_IvJNS_27BinaryInstantiableOperationINS_3DivIfffNS_10BinaryTypeEEEEENSV_INS_3SubIfffSX_EEEESZ_NSU_INS_14PerThreadWriteILS8_3EfEEEEEEEEEEEvT0_T1_T2_T3_T4_RKN2fk22LinearFilterDPPDetailsIfLi16ELi8ELi7ELi7EEERKNS_5TupleIJNS_25ReadInstantiableOperationINS_15FusedOperation_IvJNS5_INS_13PerThreadReadILNS_2NDE2E6uchar3EEEENS_26UnaryInstantiableOperationINS_8RGB2GrayIS9_fLNS_11GrayFormulaE0EEEEEEEEEENS5_INS_18ConstantFilterReadIfEEEEEEERKNSC_INS_3MulIfffNS_9UnaryTypeEEEEERKNSC_INS_3AddIfffSQ_EEEERKNS_26WriteInstantiableOperationINS6_IvJNS_27BinaryInstantiableOperationINS_3DivIfffNS_10BinaryTypeEEEEENS11_INS_3SubIfffS13_EEEES15_NS10_INS_14PerThreadWriteILS8_3EfEEEEEEEEEE8__handle>
+-push 0x20(%rsp)
+-mov 0x48(%rsp),%rcx
+-mov 0x50(%rsp),%r8d
+-mov 0x38(%rsp),%rsi
+-mov 0x40(%rsp),%edx
+-lea 0x70(%rsp),%r9
++push 0x30(%rsp)
++mov 0x58(%rsp),%rcx
++mov 0x60(%rsp),%r8d
++mov 0x48(%rsp),%rsi
++mov 0x50(%rsp),%edx
++lea 0x80(%rsp),%r9
+ call <__cudaLaunchKernel@plt>
+ pop %rax
+ pop %rdx
+-mov 0x88(%rsp),%rax
++mov 0x98(%rsp),%rax
+ sub %fs:0x28,%rax
+-jne <SELF@64>
+-add $0x90,%rsp
++jne <SELF@66>
++add $0xa0,%rsp
+ pop %rbx
+ ret
+ lea D(%rip),%rsi # <SELF@0>
+@@ -61,7 +63,7 @@
+ sete %al
+ mov %al,D(%rip) # <_ZZL577__device_stub__ZN2fk21linearFilterDPPKernelILNS_7ParArchE1ENS_22LinearFilterDPPDetailsIfLi16ELi8ELi7ELi7EEENS_5TupleIJNS_25ReadInstantiableOperationINS_15FusedOperation_IvJNS5_INS_13PerThreadReadILNS_2NDE2E6uchar3EEEENS_26UnaryInstantiableOperationINS_8RGB2GrayIS9_fLNS_11GrayFormulaE0EEEEEEEEEENS5_INS_18ConstantFilterReadIfEEEEEEENSC_INS_3MulIfffNS_9UnaryTypeEEEEENSC_INS_3AddIfffSO_EEEENS_26WriteInstantiableOperationINS6_IvJNS_27BinaryInstantiableOperationINS_3DivIfffNS_10BinaryTypeEEEEENSV_INS_3SubIfffSX_EEEESZ_NSU_INS_14PerThreadWriteILS8_3EfEEEEEEEEEEEvT0_T1_T2_T3_T4_RKN2fk22LinearFilterDPPDetailsIfLi16ELi8ELi7ELi7EEERKNS_5TupleIJNS_25ReadInstantiableOperationINS_15FusedOperation_IvJNS5_INS_13PerThreadReadILNS_2NDE2E6uchar3EEEENS_26UnaryInstantiableOperationINS_8RGB2GrayIS9_fLNS_11GrayFormulaE0EEEEEEEEEENS5_INS_18ConstantFilterReadIfEEEEEEERKNSC_INS_3MulIfffNS_9UnaryTypeEEEEERKNSC_INS_3AddIfffSQ_EEEERKNS_26WriteInstantiableOperationINS6_IvJNS_27BinaryInstantiableOperationINS_3DivIfffNS_10BinaryTypeEEEEENS11_INS_3SubIfffS13_EEEES15_NS10_INS_14PerThreadWriteILS8_3EfEEEEEEEEEE5__tmp>
+ call <__cxa_guard_release@plt>
+-jmp <SELF@26>
++jmp <SELF@28>
+ call <__stack_chk_fail@plt>
+ endbr64
+ mov %rax,%rbx
+
+== void fk::linearFilterDPPKernel<(fk::ParArch)1, fk::LinearFilterDPPDetails<float, 16, 8, 7, 7>, fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void, fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2, uchar3> >, fk::UnaryInstantiableOperation<fk::RGB2Gray<uchar3, float, (fk::GrayFormula)0> > > >, fk::ReadInstantiableOperation<fk::ConstantFilterRead<float> > >, fk::UnaryInstantiableOperation<fk::Mul<float, float, float, fk::UnaryType> >, fk::UnaryInstantiableOperation<fk::Add<float, float, float, fk::UnaryType> >, fk::WriteInstantiableOperation<fk::FusedOperation_<void, fk::BinaryInstantiableOperation<fk::Div<float, float, float, fk::BinaryType> >, fk::BinaryInstantiableOperation<fk::Sub<float, float, float, fk::BinaryType> >, fk::BinaryInstantiableOperation<fk::Div<float, float, float, fk::BinaryType> >, fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)3, float> > > > >(fk::LinearFilterDPPDetails<float, 16, 8, 7, 7>, fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void, fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2, uchar3> >, fk::UnaryInstantiableOperation<fk::RGB2Gray<uchar3, float, (fk::GrayFormula)0> > > >, fk::ReadInstantiableOperation<fk::ConstantFilterRead<float> > >, fk::UnaryInstantiableOperation<fk::Mul<float, float, float, fk::UnaryType> >, fk::UnaryInstantiableOperation<fk::Add<float, float, float, fk::UnaryType> >, fk::WriteInstantiableOperation<fk::FusedOperation_<void, fk::BinaryInstantiableOperation<fk::Div<float, float, float, fk::BinaryType> >, fk::BinaryInstantiableOperation<fk::Sub<float, float, float, fk::BinaryType> >, fk::BinaryInstantiableOperation<fk::Div<float, float, float, fk::BinaryType> >, fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)3, float> > > >) [clone .cold]
+   8 -> 8 instructions; reached by: launch():fkl_loop
+--- A
++++ B
+@@ -1,6 +1,6 @@
+ lea D(%rip),%rdi # <_ZGVZL577__device_stub__ZN2fk21linearFilterDPPKernelILNS_7ParArchE1ENS_22LinearFilterDPPDetailsIfLi16ELi8ELi7ELi7EEENS_5TupleIJNS_25ReadInstantiableOperationINS_15FusedOperation_IvJNS5_INS_13PerThreadReadILNS_2NDE2E6uchar3EEEENS_26UnaryInstantiableOperationINS_8RGB2GrayIS9_fLNS_11GrayFormulaE0EEEEEEEEEENS5_INS_18ConstantFilterReadIfEEEEEEENSC_INS_3MulIfffNS_9UnaryTypeEEEEENSC_INS_3AddIfffSO_EEEENS_26WriteInstantiableOperationINS6_IvJNS_27BinaryInstantiableOperationINS_3DivIfffNS_10BinaryTypeEEEEENSV_INS_3SubIfffSX_EEEESZ_NSU_INS_14PerThreadWriteILS8_3EfEEEEEEEEEEEvT0_T1_T2_T3_T4_RKN2fk22LinearFilterDPPDetailsIfLi16ELi8ELi7ELi7EEERKNS_5TupleIJNS_25ReadInstantiableOperationINS_15FusedOperation_IvJNS5_INS_13PerThreadReadILNS_2NDE2E6uchar3EEEENS_26UnaryInstantiableOperationINS_8RGB2GrayIS9_fLNS_11GrayFormulaE0EEEEEEEEEENS5_INS_18ConstantFilterReadIfEEEEEEERKNSC_INS_3MulIfffNS_9UnaryTypeEEEEERKNSC_INS_3AddIfffSQ_EEEERKNS_26WriteInstantiableOperationINS6_IvJNS_27BinaryInstantiableOperationINS_3DivIfffNS_10BinaryTypeEEEEENS11_INS_3SubIfffS13_EEEES15_NS10_INS_14PerThreadWriteILS8_3EfEEEEEEEEEE5__tmp>
+ call <__cxa_guard_abort@plt>
+-mov 0x88(%rsp),%rax
++mov 0x98(%rsp),%rax
+ sub %fs:0x28,%rax
+ jne <SELF@7>
+ mov %rbx,%rdi

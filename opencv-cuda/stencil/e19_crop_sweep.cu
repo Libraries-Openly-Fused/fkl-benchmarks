@@ -754,7 +754,7 @@ int launchWithCrops() {
         for (int i = 0; i < CROPS; ++i) {
             const fk::Ptr2D<uchar3> crop = fkFrame.crop2D(fk::Rect(detections[i].x, detections[i].y, CROP_W, CROP_H));
             const auto image = fk::PerThreadRead<fk::ND::_2D, uchar3>::build(crop).then(FklGrey::build());
-            const FklDetails details{CROP_W, CROP_H, BOX_W, BOX_H, ANCHOR_X, ANCHOR_Y};
+            const FklDetails details{BOX_W, BOX_H, ANCHOR_X, ANCHOR_Y};
             const float n = static_cast<float>(details.kernelWidth * details.kernelHeight);
             const auto coefficient = fk::ConstantFilterRead<float>::build(SCALE / n);
             const fk::Ptr<fk::ND::_3D, float> plane = fkTensor.crop(fk::Point{0, 0, i}, fk::PtrDims<fk::ND::_3D>(CROP_W, CROP_H, 1));
