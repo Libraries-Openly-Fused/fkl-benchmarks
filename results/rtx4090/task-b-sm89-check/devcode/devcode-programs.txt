@@ -1,0 +1,70 @@
+A = before: /home/oscar/tfkl-bench/worktrees/fkl-benchmarks-task-b/build/local-rtx4090/bin
+B = after: /home/oscar/tfkl-bench/worktrees/fkl-benchmarks-task-b-after/build/local-rtx4090/bin
+arch sm_89; Build cuda_13.4.r13.4/compiler.38855100_0; executables matching e1[89]_*_cu: A 5, B 5, in both 5
+only in A: []
+only in B: []
+kernels: A 44, B 44; identical 25, different 19, only in A 0, only in B 0
+per executable:
+  e18_box_cu: kernels A 9, B 9; identical 1, different 8, only in A 0, only in B 0
+  e18_box_split_cu: kernels A 7, B 7; identical 2, different 5, only in A 0, only in B 0
+  e18_stencil_cu: kernels A 7, B 7; identical 3, different 4, only in A 0, only in B 0
+  e19_batched_box_cu: kernels A 3, B 3; identical 2, different 1, only in A 0, only in B 0
+  e19_crop_sweep_cu: kernels A 18, B 18; identical 17, different 1, only in A 0, only in B 0
+every kernel that is different or on one side only (A = before, B = after):
+  e18_box_cu: DIFFERENT  void fk::linearFilterDPPKernel<(fk::ParArch)1, fk::LinearFilterDPPDetails<float3, 16, 8, 7, 7>, fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void, fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2, uchar3> >, fk::UnaryInstantiableOperation<fk::Cast<uchar3, float3> > > >, fk::ReadInstantiableOperation<fk::ConstantFilterRead<float3> > >, fk::UnaryInstantiableOperation<fk::Mul<
+      A: 856 instructions, 38 registers, stack 0 B, shared 4284 B, local 0 B, cbank0 448 B
+      B: 864 instructions, 39 registers, stack 0 B, shared 4284 B, local 0 B, cbank0 440 B
+  e18_box_cu: DIFFERENT  void fk::linearFilterDPPKernel<(fk::ParArch)1, fk::LinearFilterDPPDetails<float3, 16, 8, 7, 7>, fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void, fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2, uchar3> >, fk::UnaryInstantiableOperation<fk::Cast<uchar3, float3> > > >, fk::ReadInstantiableOperation<fk::ConstantFilterRead<float3> > >, fk::UnaryInstantiableOperation<fk::Mul<
+      A: 920 instructions, 38 registers, stack 0 B, shared 4284 B, local 0 B, cbank0 464 B
+      B: 928 instructions, 39 registers, stack 0 B, shared 4284 B, local 0 B, cbank0 456 B
+  e18_box_cu: DIFFERENT  void fk::linearFilterDPPKernel<(fk::ParArch)1, fk::LinearFilterDPPDetails<float3, 16, 8, 7, 7>, fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void, fk::ReadBackInstantiableOperation<fk::ResizeComplete<(fk::AspectRatio)1, fk::TernaryInstantiableOperation<fk::InterpolateComplete<(fk::InterpolationType)1, fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2, uchar3> > > >, (fk::Res
+      A: 944 instructions, 40 registers, stack 0 B, shared 4284 B, local 0 B, cbank0 480 B
+      B: 952 instructions, 40 registers, stack 0 B, shared 4284 B, local 0 B, cbank0 472 B
+  e18_box_cu: DIFFERENT  void fk::linearFilterDPPKernel<(fk::ParArch)1, fk::LinearFilterDPPDetails<float3, 16, 8, 7, 7>, fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void, fk::ReadBackInstantiableOperation<fk::ResizeComplete<(fk::AspectRatio)1, fk::TernaryInstantiableOperation<fk::InterpolateComplete<(fk::InterpolationType)1, fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2, uchar3> > > >, (fk::Res
+      A: 864 instructions, 40 registers, stack 0 B, shared 4284 B, local 0 B, cbank0 488 B
+      B: 872 instructions, 40 registers, stack 0 B, shared 4284 B, local 0 B, cbank0 480 B
+  e18_box_cu: DIFFERENT  void fk::linearFilterDPPKernel<(fk::ParArch)1, fk::LinearFilterDPPDetails<float3, 16, 8, 7, 7>, fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void, fk::ReadBackInstantiableOperation<fk::ResizeComplete<(fk::AspectRatio)1, fk::TernaryInstantiableOperation<fk::InterpolateComplete<(fk::InterpolationType)1, fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2, uchar3> > > >, (fk::Res
+      A: 800 instructions, 40 registers, stack 0 B, shared 4284 B, local 0 B, cbank0 472 B
+      B: 816 instructions, 40 registers, stack 0 B, shared 4284 B, local 0 B, cbank0 464 B
+  e18_box_cu: DIFFERENT  void fk::linearFilterDPPKernel<(fk::ParArch)1, fk::LinearFilterDPPDetails<float3, 16, 8, 7, 7>, fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void, fk::ReadBackInstantiableOperation<fk::ResizeComplete<(fk::AspectRatio)1, fk::TernaryInstantiableOperation<fk::InterpolateComplete<(fk::InterpolationType)1, fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2, uchar3> > > >, (fk::Res
+      A: 952 instructions, 40 registers, stack 0 B, shared 4284 B, local 0 B, cbank0 480 B
+      B: 960 instructions, 40 registers, stack 0 B, shared 4284 B, local 0 B, cbank0 472 B
+  e18_box_cu: DIFFERENT  void fk::linearFilterDPPKernel<(fk::ParArch)1, fk::LinearFilterDPPDetails<float3, 16, 8, 7, 7>, fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void, fk::ReadBackInstantiableOperation<fk::ResizeComplete<(fk::AspectRatio)1, fk::TernaryInstantiableOperation<fk::InterpolateComplete<(fk::InterpolationType)1, fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2, uchar3> > > >, (fk::Res
+      A: 872 instructions, 40 registers, stack 0 B, shared 4284 B, local 0 B, cbank0 488 B
+      B: 880 instructions, 40 registers, stack 0 B, shared 4284 B, local 0 B, cbank0 480 B
+  e18_box_cu: DIFFERENT  void fk::linearFilterDPPKernel<(fk::ParArch)1, fk::LinearFilterDPPDetails<float3, 16, 8, 7, 7>, fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void, fk::ReadBackInstantiableOperation<fk::ResizeComplete<(fk::AspectRatio)1, fk::TernaryInstantiableOperation<fk::InterpolateComplete<(fk::InterpolationType)1, fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2, uchar3> > > >, (fk::Res
+      A: 808 instructions, 40 registers, stack 0 B, shared 4284 B, local 0 B, cbank0 472 B
+      B: 816 instructions, 40 registers, stack 0 B, shared 4284 B, local 0 B, cbank0 464 B
+  e18_box_split_cu: DIFFERENT  void fk::linearFilterDPPKernel<(fk::ParArch)1, fk::LinearFilterDPPDetails<float3, 16, 8, 7, 7>, fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void, fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2, uchar3> >, fk::UnaryInstantiableOperation<fk::Cast<uchar3, float3> > > >, fk::ReadInstantiableOperation<fk::ConstantFilterRead<float3> > >, fk::UnaryInstantiableOperation<fk::Mul<
+      A: 920 instructions, 38 registers, stack 0 B, shared 4284 B, local 0 B, cbank0 464 B
+      B: 928 instructions, 39 registers, stack 0 B, shared 4284 B, local 0 B, cbank0 456 B
+  e18_box_split_cu: DIFFERENT  void fk::linearFilterDPPKernel<(fk::ParArch)1, fk::LinearFilterDPPDetails<float3, 16, 8, 7, 7>, fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void, fk::ReadBackInstantiableOperation<fk::ResizeComplete<(fk::AspectRatio)1, fk::TernaryInstantiableOperation<fk::InterpolateComplete<(fk::InterpolationType)1, fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2, uchar3> > > >, (fk::Res
+      A: 944 instructions, 40 registers, stack 0 B, shared 4284 B, local 0 B, cbank0 480 B
+      B: 952 instructions, 40 registers, stack 0 B, shared 4284 B, local 0 B, cbank0 472 B
+  e18_box_split_cu: DIFFERENT  void fk::linearFilterDPPKernel<(fk::ParArch)1, fk::LinearFilterDPPDetails<float3, 16, 8, 7, 7>, fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void, fk::ReadBackInstantiableOperation<fk::ResizeComplete<(fk::AspectRatio)1, fk::TernaryInstantiableOperation<fk::InterpolateComplete<(fk::InterpolationType)1, fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2, uchar3> > > >, (fk::Res
+      A: 800 instructions, 40 registers, stack 0 B, shared 4284 B, local 0 B, cbank0 472 B
+      B: 816 instructions, 40 registers, stack 0 B, shared 4284 B, local 0 B, cbank0 464 B
+  e18_box_split_cu: DIFFERENT  void fk::linearFilterDPPKernel<(fk::ParArch)1, fk::LinearFilterDPPDetails<float3, 16, 8, 7, 7>, fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void, fk::ReadBackInstantiableOperation<fk::ResizeComplete<(fk::AspectRatio)1, fk::TernaryInstantiableOperation<fk::InterpolateComplete<(fk::InterpolationType)1, fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2, uchar3> > > >, (fk::Res
+      A: 952 instructions, 40 registers, stack 0 B, shared 4284 B, local 0 B, cbank0 480 B
+      B: 960 instructions, 40 registers, stack 0 B, shared 4284 B, local 0 B, cbank0 472 B
+  e18_box_split_cu: DIFFERENT  void fk::linearFilterDPPKernel<(fk::ParArch)1, fk::LinearFilterDPPDetails<float3, 16, 8, 7, 7>, fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void, fk::ReadBackInstantiableOperation<fk::ResizeComplete<(fk::AspectRatio)1, fk::TernaryInstantiableOperation<fk::InterpolateComplete<(fk::InterpolationType)1, fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2, uchar3> > > >, (fk::Res
+      A: 872 instructions, 40 registers, stack 0 B, shared 4284 B, local 0 B, cbank0 488 B
+      B: 880 instructions, 40 registers, stack 0 B, shared 4284 B, local 0 B, cbank0 480 B
+  e18_stencil_cu: DIFFERENT  void fk::linearFilterDPPKernel<(fk::ParArch)1, fk::LinearFilterDPPDetails<float3, 16, 8, 7, 7>, fk::Tuple<fk::ReadBackInstantiableOperation<fk::ResizeComplete<(fk::AspectRatio)1, fk::TernaryInstantiableOperation<fk::InterpolateComplete<(fk::InterpolationType)1, fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2, uchar3> > > >, (fk::ResizeSampling)0> >, fk::ReadInstantiableOperation<fk::PerT
+      A: 752 instructions, 40 registers, stack 0 B, shared 4284 B, local 0 B, cbank0 480 B
+      B: 760 instructions, 40 registers, stack 0 B, shared 4284 B, local 0 B, cbank0 472 B
+  e18_stencil_cu: DIFFERENT  void fk::linearFilterDPPKernel<(fk::ParArch)1, fk::LinearFilterDPPDetails<float3, 16, 8, 7, 7>, fk::Tuple<fk::ReadBackInstantiableOperation<fk::ResizeComplete<(fk::AspectRatio)1, fk::TernaryInstantiableOperation<fk::InterpolateComplete<(fk::InterpolationType)1, fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2, uchar3> > > >, (fk::ResizeSampling)0> >, fk::ReadInstantiableOperation<fk::PerT
+      A: 840 instructions, 40 registers, stack 0 B, shared 4284 B, local 0 B, cbank0 480 B
+      B: 856 instructions, 40 registers, stack 0 B, shared 4284 B, local 0 B, cbank0 472 B
+  e18_stencil_cu: DIFFERENT  void fk::linearFilterDPPKernel<(fk::ParArch)1, fk::LinearFilterDPPDetails<float3, 16, 8, 7, 7>, fk::Tuple<fk::ReadBackInstantiableOperation<fk::ResizeComplete<(fk::AspectRatio)1, fk::TernaryInstantiableOperation<fk::InterpolateComplete<(fk::InterpolationType)1, fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2, uchar3> > > >, (fk::ResizeSampling)1> >, fk::ReadInstantiableOperation<fk::PerT
+      A: 760 instructions, 40 registers, stack 0 B, shared 4284 B, local 0 B, cbank0 480 B
+      B: 768 instructions, 40 registers, stack 0 B, shared 4284 B, local 0 B, cbank0 472 B
+  e18_stencil_cu: DIFFERENT  void fk::linearFilterDPPKernel<(fk::ParArch)1, fk::LinearFilterDPPDetails<float3, 16, 8, 7, 7>, fk::Tuple<fk::ReadBackInstantiableOperation<fk::ResizeComplete<(fk::AspectRatio)1, fk::TernaryInstantiableOperation<fk::InterpolateComplete<(fk::InterpolationType)1, fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2, uchar3> > > >, (fk::ResizeSampling)1> >, fk::ReadInstantiableOperation<fk::PerT
+      A: 848 instructions, 40 registers, stack 0 B, shared 4284 B, local 0 B, cbank0 480 B
+      B: 864 instructions, 40 registers, stack 0 B, shared 4284 B, local 0 B, cbank0 472 B
+  e19_batched_box_cu: DIFFERENT  void fk::linearFilterDPPKernel<(fk::ParArch)1, fk::LinearFilterDPPDetails<float, 16, 8, 7, 7>, fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void, fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2, uchar3> >, fk::UnaryInstantiableOperation<fk::RGB2Gray<uchar3, float, (fk::GrayFormula)0> > > >, fk::ReadInstantiableOperation<fk::ConstantFilterRead<float> > >, fk::UnaryInstantia
+      A: 688 instructions, 39 registers, stack 0 B, shared 1428 B, local 0 B, cbank0 464 B
+      B: 696 instructions, 39 registers, stack 0 B, shared 1428 B, local 0 B, cbank0 456 B
+  e19_crop_sweep_cu: DIFFERENT  void fk::linearFilterDPPKernel<(fk::ParArch)1, fk::LinearFilterDPPDetails<float, 16, 8, 7, 7>, fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void, fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2, uchar3> >, fk::UnaryInstantiableOperation<fk::RGB2Gray<uchar3, float, (fk::GrayFormula)0> > > >, fk::ReadInstantiableOperation<fk::ConstantFilterRead<float> > >, fk::UnaryInstantia
+      A: 688 instructions, 39 registers, stack 0 B, shared 1428 B, local 0 B, cbank0 464 B
+      B: 696 instructions, 39 registers, stack 0 B, shared 1428 B, local 0 B, cbank0 456 B
