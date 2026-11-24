@@ -1,0 +1,50 @@
+# e19_batched_box_hip build B: the .text functions reached from the fkl_loop roots by direct calls and jumps
+root	std::_Function_handler<void (), launch()::{lambda()#1}>::_M_invoke(std::_Any_data const&)
+function	same	shared	_ZNK2fk3PtrILNS_2NDE2ENS_6Uchar3EE4cropILS1_2ETnNSt9enable_ifIXeqT_LS1_2EEiE4typeELi0EEES3_RKNS_5Rect_IjiEE
+function	same	shared	__clang_call_terminate
+function	CHANGED	own	bool fk::executeLinearFilter<fk::LinearFilterDPPDetails<float, 16, 8, 7, 7>, fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void, fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2, fk::Uchar3> >, fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3, float, (fk::GrayFormula)0> > > >, fk::ReadInstantiableOperation<fk::ConstantFilterRead<float> > >, fk::UnaryInstantiableOperation<fk::Mul<float, float, float, fk::UnaryType> >, fk::UnaryInstantiableOperation<fk::Add<float, float, float, fk::UnaryType> >, fk::WriteInstantiableOperation<fk::FusedOperation_<void, fk::BinaryInstantiableOperation<fk::Div<float, float, float, fk::BinaryType> >, fk::BinaryInstantiableOperation<fk::Sub<float, float, float, fk::BinaryType> >, fk::BinaryInstantiableOperation<fk::Div<float, float, float, fk::BinaryType> >, fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)3, float> > > > >(fk::LinearFilterDPPDetails<float, 16, 8, 7, 7> const&, fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void, fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2, fk::Uchar3> >, fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3, float, (fk::GrayFormula)0> > > >, fk::ReadInstantiableOperation<fk::ConstantFilterRead<float> > > const&, fk::UnaryInstantiableOperation<fk::Mul<float, float, float, fk::UnaryType> > const&, fk::UnaryInstantiableOperation<fk::Add<float, float, float, fk::UnaryType> > const&, fk::WriteInstantiableOperation<fk::FusedOperation_<void, fk::BinaryInstantiableOperation<fk::Div<float, float, float, fk::BinaryType> >, fk::BinaryInstantiableOperation<fk::Sub<float, float, float, fk::BinaryType> >, fk::BinaryInstantiableOperation<fk::Div<float, float, float, fk::BinaryType> >, fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)3, float> > > > const&, fk::Stream_<(fk::ParArch)3>&)
+function	same	shared	fk::Ptr<(fk::ND)2, fk::Uchar3>::crop(fk::Point_<int, (fk::ND)3>, fk::PtrDims<(fk::ND)2> const&) const
+function	same	shared	fk::Ptr<(fk::ND)2, fk::Uchar3>::freePtr()
+function	same	own	fk::Ptr<(fk::ND)3, float>::crop(fk::Point_<int, (fk::ND)3>, fk::PtrDims<(fk::ND)3> const&) const
+function	same	own	fk::Ptr<(fk::ND)3, float>::freePtr()
+function	same	own	fk::PtrCrop<(fk::ND)3, float>::check(fk::PtrDims<(fk::ND)3> const&, fk::Point_<int, (fk::ND)3>, fk::PtrDims<(fk::ND)3> const&)
+function	same	shared	fk::gpuAssert(hipError_t, char const*, int, bool)
+function	same	shared	fk::ptr_crop::checkAxis(char const*, int, unsigned int, unsigned int)
+function	same	shared	fk::ptr_crop::checkNoAxis(char const*, int)
+function	same	shared	fk::ptr_crop::checkStride(char const*, unsigned int, unsigned int)
+function	same	shared	fk::ptr_crop::checkedStride(char const*, unsigned int)
+function	same	shared	fk::ptr_crop::fail(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)
+function	CHANGED	own	std::_Function_handler<void (), launch()::{lambda()#1}>::_M_invoke(std::_Any_data const&)
+function	same	shared	std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > std::operator+<char, std::char_traits<char>, std::allocator<char> >(char const*, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&)
+function	same	shared	std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > std::operator+<char, std::char_traits<char>, std::allocator<char> >(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&, char const*)
+function	same	shared	std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > std::operator+<char, std::char_traits<char>, std::allocator<char> >(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&)
+function	same	shared	std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string<std::allocator<char> >(char const*, std::allocator<char> const&)
+function	same	shared	std::__cxx11::to_string(int)
+function	same	shared	std::__cxx11::to_string(unsigned int)
+plt	_Unwind_Resume@plt
+plt	__cxa_allocate_exception@plt
+plt	__cxa_begin_catch@plt
+plt	__cxa_free_exception@plt
+plt	__cxa_throw@plt
+plt	__hipPopCallConfiguration@plt
+plt	__hipPushCallConfiguration@plt
+plt	free@plt
+plt	hipFree@plt
+plt	hipGetErrorString@plt
+plt	hipGetLastError@plt
+plt	hipHostFree@plt
+plt	hipLaunchKernel@plt
+plt	memcpy@plt
+plt	operator delete(void*, unsigned long)@plt
+plt	std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_append(char const*, unsigned long)@plt
+plt	std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_create(unsigned long&, unsigned long)@plt
+plt	std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_replace(unsigned long, unsigned long, char const*, unsigned long)@plt
+plt	std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::reserve(unsigned long)@plt
+plt	std::__throw_length_error(char const*)@plt
+plt	std::__throw_logic_error(char const*)@plt
+plt	std::runtime_error::runtime_error(char const*)@plt
+plt	std::runtime_error::runtime_error(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)@plt
+plt	std::terminate()@plt
+plt	strlen@plt
+indirect	fk::Ptr<(fk::ND)2, fk::Uchar3>::freePtr()	jmp    *%rax
+indirect	fk::Ptr<(fk::ND)3, float>::freePtr()	jmp    *%rax

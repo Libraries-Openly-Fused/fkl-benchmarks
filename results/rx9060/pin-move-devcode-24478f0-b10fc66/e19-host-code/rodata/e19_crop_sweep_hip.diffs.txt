@@ -1,0 +1,416 @@
+=== bool fk::executeLinearFilter<fk::LinearFilterDPPDetails<float, 16, 8, 7, 7>, fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void, fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2, fk::Uchar3> >, fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3, float, (fk::GrayFormula)0> > > >, fk::ReadInstantiableOperation<fk::ConstantFilterRead<float> > >, fk::UnaryInstantiableOperation<fk::Mul<float, float, float, fk::UnaryType> >, fk::UnaryInstantiableOperation<fk::Add<float, float, float, fk::UnaryType> >, fk::WriteInstantiableOperation<fk::FusedOperation_<void, fk::BinaryInstantiableOperation<fk::Div<float, float, float, fk::BinaryType> >, fk::BinaryInstantiableOperation<fk::Sub<float, float, float, fk::BinaryType> >, fk::BinaryInstantiableOperation<fk::Div<float, float, float, fk::BinaryType> >, fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)3, float> > > > >(fk::LinearFilterDPPDetails<float, 16, 8, 7, 7> const&, fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void, fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2, fk::Uchar3> >, fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3, float, (fk::GrayFormula)0> > > >, fk::ReadInstantiableOperation<fk::ConstantFilterRead<float> > > const&, fk::UnaryInstantiableOperation<fk::Mul<float, float, float, fk::UnaryType> > const&, fk::UnaryInstantiableOperation<fk::Add<float, float, float, fk::UnaryType> > const&, fk::WriteInstantiableOperation<fk::FusedOperation_<void, fk::BinaryInstantiableOperation<fk::Div<float, float, float, fk::BinaryType> >, fk::BinaryInstantiableOperation<fk::Sub<float, float, float, fk::BinaryType> >, fk::BinaryInstantiableOperation<fk::Div<float, float, float, fk::BinaryType> >, fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)3, float> > > > const&, fk::Stream_<(fk::ParArch)3>&)
+--- A
++++ B
+@@ -1,58 +1,45 @@
++movdqu (%rdi),%xmm0
++movq X(%rip),%xmm1 # <.rodata>=b:ffffffffffffffff
++paddd %xmm0,%xmm1
++movdqa X(%rip),%xmm2 # <.rodata>=b:07000000070000000000000000000000
++punpcklqdq %xmm0,%xmm2
++movdqa X(%rip),%xmm0 # <.rodata>=b:00000080000000800000008000000080
++pxor %xmm0,%xmm1
++pxor %xmm0,%xmm2
++pcmpgtd %xmm1,%xmm2
++movmskps %xmm2,%edx
++xor %eax,%eax
++cmp $0xf,%edx
++jne L1
++mov %rdi,%rcx
++cmpl $0x0,0x8(%rdi)
++js L1
++mov 0x8(%rsi),%rdi
++xor %eax,%eax
++mov %rdi,%rdx
++shr $0x20,%rdx
++je L1
++mov %edi,%r10d
++test %r10,%r10
++je L1
++cmpl $0x1,0x20(%r8)
++jne L1
+ push %r15
+ push %r14
+-push %r12
+ push %rbx
+-sub $0xe8,%rsp
+-movups (%rdi),%xmm0
+-movq 0x10(%rdi),%xmm1
+-pshufd $0x50,%xmm1,%xmm1
+-mov $0x8,%eax
+-movd %eax,%xmm2
+-movdqa %xmm1,%xmm3
+-shufps $0x24,%xmm2,%xmm3
+-pcmpeqd %xmm2,%xmm2
+-shufps $0xe4,%xmm0,%xmm2
+-shufps $0xb8,%xmm0,%xmm2
+-pxor %xmm4,%xmm4
+-pcmpgtd %xmm2,%xmm3
+-movaps %xmm0,%xmm5
+-pcmpgtd %xmm4,%xmm5
+-packssdw %xmm3,%xmm5
+-movdqa X(%rip),%xmm3 # <.rodata>=b:00000080000000800000008000000080
+-pxor %xmm3,%xmm1
+-pxor %xmm3,%xmm2
+-pcmpgtd %xmm1,%xmm2
+-packssdw %xmm2,%xmm1
+-movdqa X(%rip),%xmm2 # <.rodata>=b:ffffffffffffffffffff00000000ffff
+-pand %xmm2,%xmm5
+-pandn %xmm1,%xmm2
+-por %xmm5,%xmm2
+-pshufd $0xff,%xmm0,%xmm1
+-movd %xmm1,%eax
+-cmp $0x8,%eax
+-setl %al
+-packsswb %xmm2,%xmm2
+-pmovmskb %xmm2,%ecx
+-cmp $0xff,%cl
+-sete %bl
+-and %al,%bl
+-cmp $0x1,%bl
+-jne L1
+-mov %rsi,%r15
+-mov %r8,%r14
+-mov %rdi,%r12
+-mov (%rdi),%eax
+-lea 0xf(%rax),%ecx
+-add $0x1e,%eax
+-test %ecx,%ecx
+-cmovns %ecx,%eax
+-sar $0x4,%eax
+-pshufd $0x55,%xmm0,%xmm0
+-movd %xmm0,%edi
+-lea 0x7(%rdi),%ecx
+-add $0xe,%edi
+-test %ecx,%ecx
+-cmovns %ecx,%edi
+-sar $0x3,%edi
++sub $0xd0,%rsp
++mov %rcx,%r15
++mov %rsi,%r14
++mov %r8,%rbx
++mov %edi,%eax
++shr $0x4,%eax
++mov %edi,%ecx
++and $0xf,%ecx
++cmp $0x1,%ecx
++sbb $0xffffffff,%eax
++shr $0x23,%rdi
++and $0x7,%edx
++cmp $0x1,%edx
++sbb $0xffffffff,%edi
+ shl $0x20,%rdi
+ or %rax,%rdi
+@@ -65,21 +52,19 @@
+ test %eax,%eax
+ jne L0
+-mov 0x10(%r12),%rax
+-mov %rax,0x80(%rsp)
+-movups (%r12),%xmm0
+-movaps %xmm0,0x70(%rsp)
+-movups (%r15),%xmm0
+-movups 0x10(%r15),%xmm1
+-movaps %xmm1,0xa0(%rsp)
+-movaps %xmm0,0x90(%rsp)
+-movdqu (%r14),%xmm0
+-movdqu 0x10(%r14),%xmm1
+-movdqu 0x20(%r14),%xmm2
+-movdqa %xmm2,0xd0(%rsp)
+-movdqa %xmm1,0xc0(%rsp)
+-movdqa %xmm0,0xb0(%rsp)
++movdqu (%r15),%xmm0
++movups (%r14),%xmm1
++movups 0x10(%r14),%xmm2
++movaps %xmm2,0x90(%rsp)
++movaps %xmm1,0x80(%rsp)
++movdqu (%rbx),%xmm1
++movups 0x10(%rbx),%xmm2
++movups 0x20(%rbx),%xmm3
++movaps %xmm3,0xc0(%rsp)
++movaps %xmm2,0xb0(%rsp)
++movdqa %xmm1,0xa0(%rsp)
++movdqa %xmm0,0x70(%rsp)
+ lea 0x70(%rsp),%rax
+ mov %rax,0x40(%rsp)
+-lea 0x90(%rsp),%rax
++lea 0x80(%rsp),%rax
+ mov %rax,0x48(%rsp)
+ lea 0xf(%rsp),%rax
+@@ -87,5 +72,5 @@
+ lea 0xe(%rsp),%rax
+ mov %rax,0x58(%rsp)
+-lea 0xb0(%rsp),%rax
++lea 0xa0(%rsp),%rax
+ mov %rax,0x60(%rsp)
+ lea 0x30(%rsp),%rdi
+@@ -107,11 +92,10 @@
+ lea X(%rip),%rsi # <.rodata>=s:2f686f6d652f6375646569726f2f726f636d2d666b6c2d62656e63686d61726b732f746d702f767372632f70696e3433332d686561642f65787465726e616c2f666b6c2f696e636c7564652f66757365645f6b65726e656c2f616c676f726974686d732f696d6167655f70726f63657373696e672f6c696e6561725f66696c7465722e68
+ mov %eax,%edi
+-mov $0x1bf,%edx
++mov $0x206,%edx
+ mov $0x1,%ecx
+ call <fk::gpuAssert(hipError_t, char const*, int, bool)>
+-mov %ebx,%eax
+-add $0xe8,%rsp
++mov $0x1,%al
++add $0xd0,%rsp
+ pop %rbx
+-pop %r12
+ pop %r14
+ pop %r15
+=== e19amd::runCrops<100>()::{lambda()#1}::operator()() const
+--- A
++++ B
+@@ -44,8 +44,6 @@
+ movups 0x0(%rbp),%xmm0
+ movaps %xmm0,0x70(%rsp)
+-movups X(%rip),%xmm0 # <.rodata>=b:00010000000100000300000003000000
++movups X(%rip),%xmm0 # <.rodata>=b:03000000030000000100000001000000
+ movaps %xmm0,0x90(%rsp)
+-movabs $0x100000001,%rax
+-mov %rax,0xa0(%rsp)
+ mov 0x10(%rbx),%rsi
+ movaps X(%rip),%xmm0 # <.rodata>=b:00010000000100000100000001000000
+=== e19amd::runCrops<10>()::{lambda()#1}::operator()() const
+--- A
++++ B
+@@ -44,8 +44,6 @@
+ movups 0x0(%rbp),%xmm0
+ movaps %xmm0,0x70(%rsp)
+-movups X(%rip),%xmm0 # <.rodata>=b:00010000000100000300000003000000
++movups X(%rip),%xmm0 # <.rodata>=b:03000000030000000100000001000000
+ movaps %xmm0,0x90(%rsp)
+-movabs $0x100000001,%rax
+-mov %rax,0xa0(%rsp)
+ mov 0x10(%rbx),%rsi
+ movaps X(%rip),%xmm0 # <.rodata>=b:00010000000100000100000001000000
+=== e19amd::runCrops<110>()::{lambda()#1}::operator()() const
+--- A
++++ B
+@@ -44,8 +44,6 @@
+ movups 0x0(%rbp),%xmm0
+ movaps %xmm0,0x70(%rsp)
+-movups X(%rip),%xmm0 # <.rodata>=b:00010000000100000300000003000000
++movups X(%rip),%xmm0 # <.rodata>=b:03000000030000000100000001000000
+ movaps %xmm0,0x90(%rsp)
+-movabs $0x100000001,%rax
+-mov %rax,0xa0(%rsp)
+ mov 0x10(%rbx),%rsi
+ movaps X(%rip),%xmm0 # <.rodata>=b:00010000000100000100000001000000
+=== e19amd::runCrops<120>()::{lambda()#1}::operator()() const
+--- A
++++ B
+@@ -44,8 +44,6 @@
+ movups 0x0(%rbp),%xmm0
+ movaps %xmm0,0x70(%rsp)
+-movups X(%rip),%xmm0 # <.rodata>=b:00010000000100000300000003000000
++movups X(%rip),%xmm0 # <.rodata>=b:03000000030000000100000001000000
+ movaps %xmm0,0x90(%rsp)
+-movabs $0x100000001,%rax
+-mov %rax,0xa0(%rsp)
+ mov 0x10(%rbx),%rsi
+ movaps X(%rip),%xmm0 # <.rodata>=b:00010000000100000100000001000000
+=== e19amd::runCrops<130>()::{lambda()#1}::operator()() const
+--- A
++++ B
+@@ -44,8 +44,6 @@
+ movups 0x0(%rbp),%xmm0
+ movaps %xmm0,0x70(%rsp)
+-movups X(%rip),%xmm0 # <.rodata>=b:00010000000100000300000003000000
++movups X(%rip),%xmm0 # <.rodata>=b:03000000030000000100000001000000
+ movaps %xmm0,0x90(%rsp)
+-movabs $0x100000001,%rax
+-mov %rax,0xa0(%rsp)
+ mov 0x10(%rbx),%rsi
+ movaps X(%rip),%xmm0 # <.rodata>=b:00010000000100000100000001000000
+=== e19amd::runCrops<140>()::{lambda()#1}::operator()() const
+--- A
++++ B
+@@ -44,8 +44,6 @@
+ movups 0x0(%rbp),%xmm0
+ movaps %xmm0,0x70(%rsp)
+-movups X(%rip),%xmm0 # <.rodata>=b:00010000000100000300000003000000
++movups X(%rip),%xmm0 # <.rodata>=b:03000000030000000100000001000000
+ movaps %xmm0,0x90(%rsp)
+-movabs $0x100000001,%rax
+-mov %rax,0xa0(%rsp)
+ mov 0x10(%rbx),%rsi
+ movaps X(%rip),%xmm0 # <.rodata>=b:00010000000100000100000001000000
+=== e19amd::runCrops<150>()::{lambda()#1}::operator()() const
+--- A
++++ B
+@@ -44,8 +44,6 @@
+ movups 0x0(%rbp),%xmm0
+ movaps %xmm0,0x70(%rsp)
+-movups X(%rip),%xmm0 # <.rodata>=b:00010000000100000300000003000000
++movups X(%rip),%xmm0 # <.rodata>=b:03000000030000000100000001000000
+ movaps %xmm0,0x90(%rsp)
+-movabs $0x100000001,%rax
+-mov %rax,0xa0(%rsp)
+ mov 0x10(%rbx),%rsi
+ movaps X(%rip),%xmm0 # <.rodata>=b:00010000000100000100000001000000
+=== e19amd::runCrops<1>()::{lambda()#1}::operator()() const
+--- A
++++ B
+@@ -39,8 +39,6 @@
+ movups (%rax),%xmm0
+ movaps %xmm0,0xe0(%rsp)
+-movups X(%rip),%xmm0 # <.rodata>=b:00010000000100000300000003000000
++movups X(%rip),%xmm0 # <.rodata>=b:03000000030000000100000001000000
+ movaps %xmm0,0x150(%rsp)
+-movabs $0x100000001,%rax
+-mov %rax,0x160(%rsp)
+ mov %rbx,0xa8(%rsp)
+ mov 0x10(%rbx),%r12
+=== e19amd::runCrops<20>()::{lambda()#1}::operator()() const
+--- A
++++ B
+@@ -44,8 +44,6 @@
+ movups 0x0(%rbp),%xmm0
+ movaps %xmm0,0x70(%rsp)
+-movups X(%rip),%xmm0 # <.rodata>=b:00010000000100000300000003000000
++movups X(%rip),%xmm0 # <.rodata>=b:03000000030000000100000001000000
+ movaps %xmm0,0x90(%rsp)
+-movabs $0x100000001,%rax
+-mov %rax,0xa0(%rsp)
+ mov 0x10(%rbx),%rsi
+ movaps X(%rip),%xmm0 # <.rodata>=b:00010000000100000100000001000000
+=== e19amd::runCrops<30>()::{lambda()#1}::operator()() const
+--- A
++++ B
+@@ -44,8 +44,6 @@
+ movups 0x0(%rbp),%xmm0
+ movaps %xmm0,0x70(%rsp)
+-movups X(%rip),%xmm0 # <.rodata>=b:00010000000100000300000003000000
++movups X(%rip),%xmm0 # <.rodata>=b:03000000030000000100000001000000
+ movaps %xmm0,0x90(%rsp)
+-movabs $0x100000001,%rax
+-mov %rax,0xa0(%rsp)
+ mov 0x10(%rbx),%rsi
+ movaps X(%rip),%xmm0 # <.rodata>=b:00010000000100000100000001000000
+=== e19amd::runCrops<40>()::{lambda()#1}::operator()() const
+--- A
++++ B
+@@ -44,8 +44,6 @@
+ movups 0x0(%rbp),%xmm0
+ movaps %xmm0,0x70(%rsp)
+-movups X(%rip),%xmm0 # <.rodata>=b:00010000000100000300000003000000
++movups X(%rip),%xmm0 # <.rodata>=b:03000000030000000100000001000000
+ movaps %xmm0,0x90(%rsp)
+-movabs $0x100000001,%rax
+-mov %rax,0xa0(%rsp)
+ mov 0x10(%rbx),%rsi
+ movaps X(%rip),%xmm0 # <.rodata>=b:00010000000100000100000001000000
+=== e19amd::runCrops<50>()::{lambda()#1}::operator()() const
+--- A
++++ B
+@@ -44,8 +44,6 @@
+ movups 0x0(%rbp),%xmm0
+ movaps %xmm0,0x70(%rsp)
+-movups X(%rip),%xmm0 # <.rodata>=b:00010000000100000300000003000000
++movups X(%rip),%xmm0 # <.rodata>=b:03000000030000000100000001000000
+ movaps %xmm0,0x90(%rsp)
+-movabs $0x100000001,%rax
+-mov %rax,0xa0(%rsp)
+ mov 0x10(%rbx),%rsi
+ movaps X(%rip),%xmm0 # <.rodata>=b:00010000000100000100000001000000
+=== e19amd::runCrops<60>()::{lambda()#1}::operator()() const
+--- A
++++ B
+@@ -44,8 +44,6 @@
+ movups 0x0(%rbp),%xmm0
+ movaps %xmm0,0x70(%rsp)
+-movups X(%rip),%xmm0 # <.rodata>=b:00010000000100000300000003000000
++movups X(%rip),%xmm0 # <.rodata>=b:03000000030000000100000001000000
+ movaps %xmm0,0x90(%rsp)
+-movabs $0x100000001,%rax
+-mov %rax,0xa0(%rsp)
+ mov 0x10(%rbx),%rsi
+ movaps X(%rip),%xmm0 # <.rodata>=b:00010000000100000100000001000000
+=== e19amd::runCrops<70>()::{lambda()#1}::operator()() const
+--- A
++++ B
+@@ -44,8 +44,6 @@
+ movups 0x0(%rbp),%xmm0
+ movaps %xmm0,0x70(%rsp)
+-movups X(%rip),%xmm0 # <.rodata>=b:00010000000100000300000003000000
++movups X(%rip),%xmm0 # <.rodata>=b:03000000030000000100000001000000
+ movaps %xmm0,0x90(%rsp)
+-movabs $0x100000001,%rax
+-mov %rax,0xa0(%rsp)
+ mov 0x10(%rbx),%rsi
+ movaps X(%rip),%xmm0 # <.rodata>=b:00010000000100000100000001000000
+=== e19amd::runCrops<80>()::{lambda()#1}::operator()() const
+--- A
++++ B
+@@ -44,8 +44,6 @@
+ movups 0x0(%rbp),%xmm0
+ movaps %xmm0,0x70(%rsp)
+-movups X(%rip),%xmm0 # <.rodata>=b:00010000000100000300000003000000
++movups X(%rip),%xmm0 # <.rodata>=b:03000000030000000100000001000000
+ movaps %xmm0,0x90(%rsp)
+-movabs $0x100000001,%rax
+-mov %rax,0xa0(%rsp)
+ mov 0x10(%rbx),%rsi
+ movaps X(%rip),%xmm0 # <.rodata>=b:00010000000100000100000001000000
+=== e19amd::runCrops<90>()::{lambda()#1}::operator()() const
+--- A
++++ B
+@@ -44,8 +44,6 @@
+ movups 0x0(%rbp),%xmm0
+ movaps %xmm0,0x70(%rsp)
+-movups X(%rip),%xmm0 # <.rodata>=b:00010000000100000300000003000000
++movups X(%rip),%xmm0 # <.rodata>=b:03000000030000000100000001000000
+ movaps %xmm0,0x90(%rsp)
+-movabs $0x100000001,%rax
+-mov %rax,0xa0(%rsp)
+ mov 0x10(%rbx),%rsi
+ movaps X(%rip),%xmm0 # <.rodata>=b:00010000000100000100000001000000
+=== fklb::writeSystemInfoHeader(std::ostream&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)
+--- A
++++ B
+@@ -51,5 +51,5 @@
+ mov %rbx,%rdi
+ call <std::basic_ostream<char, std::char_traits<char> >& std::__ostream_insert<char, std::char_traits<char> >(std::basic_ostream<char, std::char_traits<char> >&, char const*, long)@plt>
+-lea X(%rip),%rsi # <.rodata>=s:32343437386630616131316463336631326665656138333137386637666465383238333232666230
++lea X(%rip),%rsi # <.rodata>=s:62313066633636303934323662643138303230623932313363373139366235323866633637376138
+ mov $0x28,%edx
+ mov %rbx,%rdi
+=== void fk::__device_stub__linearFilterDPPKernel<(fk::ParArch)3, fk::LinearFilterDPPDetails<float, 16, 8, 7, 7>, fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void, fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2, fk::Uchar3> >, fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3, float, (fk::GrayFormula)0> > > >, fk::ReadInstantiableOperation<fk::ConstantFilterRead<float> > >, fk::UnaryInstantiableOperation<fk::Mul<float, float, float, fk::UnaryType> >, fk::UnaryInstantiableOperation<fk::Add<float, float, float, fk::UnaryType> >, fk::WriteInstantiableOperation<fk::FusedOperation_<void, fk::BinaryInstantiableOperation<fk::Div<float, float, float, fk::BinaryType> >, fk::BinaryInstantiableOperation<fk::Sub<float, float, float, fk::BinaryType> >, fk::BinaryInstantiableOperation<fk::Div<float, float, float, fk::BinaryType> >, fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)3, float> > > > >(fk::LinearFilterDPPDetails<float, 16, 8, 7, 7>, fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void, fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2, fk::Uchar3> >, fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3, float, (fk::GrayFormula)0> > > >, fk::ReadInstantiableOperation<fk::ConstantFilterRead<float> > >, fk::UnaryInstantiableOperation<fk::Mul<float, float, float, fk::UnaryType> >, fk::UnaryInstantiableOperation<fk::Add<float, float, float, fk::UnaryType> >, fk::WriteInstantiableOperation<fk::FusedOperation_<void, fk::BinaryInstantiableOperation<fk::Div<float, float, float, fk::BinaryType> >, fk::BinaryInstantiableOperation<fk::Sub<float, float, float, fk::BinaryType> >, fk::BinaryInstantiableOperation<fk::Div<float, float, float, fk::BinaryType> >, fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)3, float> > > >)
+--- A
++++ B
+@@ -1,13 +1,15 @@
+-sub $0x68,%rsp
+-lea 0x70(%rsp),%rax
+-mov %rax,0x40(%rsp)
+-lea 0x88(%rsp),%rax
+-mov %rax,0x48(%rsp)
++sub $0x78,%rsp
++mov %rdi,0x40(%rsp)
++mov %rsi,0x48(%rsp)
++lea 0x40(%rsp),%rax
++mov %rax,0x50(%rsp)
++lea 0x80(%rsp),%rax
++mov %rax,0x58(%rsp)
+ lea 0xf(%rsp),%rax
+-mov %rax,0x50(%rsp)
++mov %rax,0x60(%rsp)
+ lea 0xe(%rsp),%rax
+-mov %rax,0x58(%rsp)
+-lea 0xa8(%rsp),%rax
+-mov %rax,0x60(%rsp)
++mov %rax,0x68(%rsp)
++lea 0xa0(%rsp),%rax
++mov %rax,0x70(%rsp)
+ lea 0x30(%rsp),%rdi
+ lea 0x20(%rsp),%rsi
+@@ -20,8 +22,8 @@
+ mov 0x28(%rsp),%r8d
+ lea X(%rip),%rdi # <void fk::linearFilterDPPKernel<(fk::ParArch)3, fk::LinearFilterDPPDetails<float, 16, 8, 7, 7>, fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void, fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2, fk::Uchar3> >, fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3, float, (fk::GrayFormula)0> > > >, fk::ReadInstantiableOperation<fk::ConstantFilterRead<float> > >, fk::UnaryInstantiableOperation<fk::Mul<float, float, float, fk::UnaryType> >, fk::UnaryInstantiableOperation<fk::Add<float, float, float, fk::UnaryType> >, fk::WriteInstantiableOperation<fk::FusedOperation_<void, fk::BinaryInstantiableOperation<fk::Div<float, float, float, fk::BinaryType> >, fk::BinaryInstantiableOperation<fk::Sub<float, float, float, fk::BinaryType> >, fk::BinaryInstantiableOperation<fk::Div<float, float, float, fk::BinaryType> >, fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)3, float> > > > >(fk::LinearFilterDPPDetails<float, 16, 8, 7, 7>, fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void, fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2, fk::Uchar3> >, fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3, float, (fk::GrayFormula)0> > > >, fk::ReadInstantiableOperation<fk::ConstantFilterRead<float> > >, fk::UnaryInstantiableOperation<fk::Mul<float, float, float, fk::UnaryType> >, fk::UnaryInstantiableOperation<fk::Add<float, float, float, fk::UnaryType> >, fk::WriteInstantiableOperation<fk::FusedOperation_<void, fk::BinaryInstantiableOperation<fk::Div<float, float, float, fk::BinaryType> >, fk::BinaryInstantiableOperation<fk::Sub<float, float, float, fk::BinaryType> >, fk::BinaryInstantiableOperation<fk::Div<float, float, float, fk::BinaryType> >, fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)3, float> > > >)>
+-lea 0x40(%rsp),%r9
++lea 0x50(%rsp),%r9
+ push 0x10(%rsp)
+ push 0x20(%rsp)
+ call <hipLaunchKernel@plt>
+-add $0x78,%rsp
++add $0x88,%rsp
+ ret
