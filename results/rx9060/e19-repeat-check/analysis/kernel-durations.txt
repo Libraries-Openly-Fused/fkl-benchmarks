@@ -1,0 +1,58 @@
+trace	range	kernel	dispatches	median_us	mean_us
+E19	whole_call:fkl_batch	fk::morphologyDPPKernel	101	98.24	103.89
+E19	kernel_only:fkl_batch	fk::morphologyDPPKernel	101	94.72	96.00
+E19	kernel_only:fkl_batch	e19amd::gpuSpin	100	5025.97	5026.96
+E19	whole_call:rpp	__amd_rocclr_copyBufferRectAligned	3030	2.40	2.48
+E19	whole_call:rpp	color_to_greyscale_pkd3_pln1_hip_tensor	101	16.04	16.30
+E19	whole_call:rpp	box_filter_3x3_pln_hip_tensor	101	35.56	35.62
+E19	whole_call:rpp	crop_mirror_normalize_pln_hip_tensor	101	13.68	13.86
+E19	kernel_only:rpp	__amd_rocclr_copyBufferRectAligned	3030	2.40	2.44
+E19	kernel_only:rpp	color_to_greyscale_pkd3_pln1_hip_tensor	101	25.72	22.29
+E19	kernel_only:rpp	box_filter_3x3_pln_hip_tensor	101	35.44	35.48
+E19	kernel_only:rpp	crop_mirror_normalize_pln_hip_tensor	101	18.80	16.90
+E19	kernel_only:rpp	e19amd::gpuSpin	100	5032.33	5029.70
+A	whole_call:fkl_batch	fk::morphologyDPPKernel	101	96.80	101.53
+A	kernel_only:fkl_batch	fk::morphologyDPPKernel	101	93.24	93.32
+A	kernel_only:fkl_batch	e19amd::gpuSpin	100	5025.33	5024.41
+A	whole_call:rpp	__amd_rocclr_copyBufferRectAligned	3030	2.28	2.31
+A	whole_call:rpp	color_to_greyscale_pkd3_pln1_hip_tensor	101	13.32	13.55
+A	whole_call:rpp	box_filter_3x3_pln_hip_tensor	101	35.00	35.06
+A	whole_call:rpp	crop_mirror_normalize_pln_hip_tensor	101	11.92	12.12
+A	kernel_only:rpp	__amd_rocclr_copyBufferRectAligned	3030	2.24	2.17
+A	kernel_only:rpp	color_to_greyscale_pkd3_pln1_hip_tensor	101	15.92	15.39
+A	kernel_only:rpp	box_filter_3x3_pln_hip_tensor	101	34.96	35.01
+A	kernel_only:rpp	crop_mirror_normalize_pln_hip_tensor	101	13.52	13.26
+A	kernel_only:rpp	e19amd::gpuSpin	100	5024.49	5024.72
+B	whole_call:fkl_batch	fk::morphologyDPPKernel	101	101.16	100.84
+B	kernel_only:fkl_batch	fk::morphologyDPPKernel	101	93.44	93.50
+B	kernel_only:fkl_batch	e19amd::gpuSpin	100	5025.51	5024.92
+B	whole_call:rpp	__amd_rocclr_copyBufferRectAligned	3030	2.32	2.40
+B	whole_call:rpp	color_to_greyscale_pkd3_pln1_hip_tensor	101	13.36	13.75
+B	whole_call:rpp	box_filter_3x3_pln_hip_tensor	101	35.08	35.10
+B	whole_call:rpp	crop_mirror_normalize_pln_hip_tensor	101	12.04	12.32
+B	kernel_only:rpp	__amd_rocclr_copyBufferRectAligned	3030	2.16	2.12
+B	kernel_only:rpp	color_to_greyscale_pkd3_pln1_hip_tensor	101	15.92	15.36
+B	kernel_only:rpp	box_filter_3x3_pln_hip_tensor	101	34.88	34.90
+B	kernel_only:rpp	crop_mirror_normalize_pln_hip_tensor	101	13.52	13.29
+B	kernel_only:rpp	e19amd::gpuSpin	100	5024.40	5022.83
+sweepN30	whole_call:fkl_batch	fk::morphologyDPPKernel	101	99.00	102.75
+sweepN30	kernel_only:fkl_batch	fk::morphologyDPPKernel	101	93.40	93.54
+sweepN30	kernel_only:fkl_batch	e19amd::gpuSpin	100	5024.55	5023.31
+sweepN30	whole_call:rpp	__amd_rocclr_copyBufferRectAligned	3030	2.28	2.24
+sweepN30	whole_call:rpp	color_to_greyscale_pkd3_pln1_hip_tensor	101	13.32	13.53
+sweepN30	whole_call:rpp	box_filter_3x3_pln_hip_tensor	101	35.16	37.24
+sweepN30	whole_call:rpp	crop_mirror_normalize_pln_hip_tensor	101	11.96	12.12
+sweepN30	kernel_only:rpp	__amd_rocclr_copyBufferRectAligned	3030	2.24	2.17
+sweepN30	kernel_only:rpp	color_to_greyscale_pkd3_pln1_hip_tensor	101	15.92	15.35
+sweepN30	kernel_only:rpp	box_filter_3x3_pln_hip_tensor	101	35.08	35.12
+sweepN30	kernel_only:rpp	crop_mirror_normalize_pln_hip_tensor	101	13.60	13.33
+sweepN30	kernel_only:rpp	e19amd::gpuSpin	100	5024.47	5023.28
+
+E19	kernel_only:fkl_batch	per call after the spin: GPU span median 94.72 us, sum of kernel durations median 94.72 us (100 calls)
+E19	kernel_only:rpp	per call after the spin: GPU span median 303.08 us, sum of kernel durations median 155.82 us (100 calls)
+A	kernel_only:fkl_batch	per call after the spin: GPU span median 93.24 us, sum of kernel durations median 93.24 us (100 calls)
+A	kernel_only:rpp	per call after the spin: GPU span median 260.70 us, sum of kernel durations median 130.02 us (100 calls)
+B	kernel_only:fkl_batch	per call after the spin: GPU span median 93.44 us, sum of kernel durations median 93.44 us (100 calls)
+B	kernel_only:rpp	per call after the spin: GPU span median 247.10 us, sum of kernel durations median 127.24 us (100 calls)
+sweepN30	kernel_only:fkl_batch	per call after the spin: GPU span median 93.40 us, sum of kernel durations median 93.40 us (100 calls)
+sweepN30	kernel_only:rpp	per call after the spin: GPU span median 261.18 us, sum of kernel durations median 130.16 us (100 calls)
