@@ -12,7 +12,16 @@ This folder holds the CUDA check, which compares the head with its base:
 
 Nothing is timed in this task. This repository's pin does not change.
 
-**State.** The compile step (2026-11-24 21:23:37-21:41:29 +01:00) and the device-code comparison are done. The GPU window (`window-checks.sh`) has not run; it waits for the coordinator's grant. Its output will be `window/`.
+**State.** Everything is done:
+- the compile step, 2026-11-24 21:23:37-21:41:29 +01:00;
+- the device-code comparison;
+- the GPU window, granted by the coordinator for 724cdfc and run 21:50:01-21:51:02 +01:00 (`window/`).
+
+**Results.**
+- Everything compiles for sm_89.
+- Only the kernels of the DPPs that #433 changes have different SASS.
+- Every FKL filter test passes: 7 of 7 at 24478f0, 10 of 10 at 4b11bc6.
+- The outputs of the five programs are the same before and after, bit for bit: every check and agreement row, and every E19 dump. The one CSV that differs is the kernel-attribute table of e18_box, whose details argument is 8 B smaller, the two ints #433 removes.
 
 ## Step 2: the builds (compile only)
 
@@ -106,9 +115,47 @@ Every one of them is listed in the .txt, with all its numbers.
 
 The 8 B of constant bank 0 are the two ints that the details no longer hold.
 
-## The GPU window (`window-checks.sh`): not yet run
+## The GPU window (`window-checks.sh`), 2026-11-24 21:50:01-21:51:02 +01:00
 
-It runs only after the coordinator's GRANTED. Its steps stop at the first failure:
+The coordinator granted it for 724cdfc, with the script's sha256 241a0ba5, the manifest's 8afc521d and the port diff's ba519e3b. The times come from `window/window-console.txt`.
+
+### Results
+
+**FKL's CUDA filter tests: every test passed.**
+- At 24478f0: 7 of 7 (`window/fkl-tests-before-console.txt`).
+- At 4b11bc6: 10 of 10 (`window/fkl-tests-after-console.txt`). These are the same 7, plus test_linear_filter_batch_cu, test_median_filter_batch_cu and test_quad_dpps_batch_cu.
+
+**The checks of the five programs: 40 runs, 20 on each side, and every one passed.** Each run exited 0 with an empty standard error, printed its pass line and wrote complete CSVs.
+- before: b4fb594, FKL 24478f0;
+- after: FKL 4b11bc6, with the port.
+
+**Before against after** (`window/comparison.txt`, `window/comparison.csv`), on the CPU after the GPU steps:
+
+| | compared | equal | different |
+|---|---|---|---|
+| CSV data rows | 24 CSVs on each side | 23 | 1: e18_box_kernel.csv |
+| E19 dump files, byte for byte | 136 on each side | 136 | 0 |
+
+- **The 23 equal CSVs** are:
+  - the checks CSVs of all five programs, at all 16 N of the crop sweep;
+  - the agreement CSVs of the three E18 programs (51, 22 and 13 rows).
+- **The 136 equal dumps** are, at e19_batched_box and at each of the 16 N of the crop sweep:
+  - the tensors of fkl_loop, fkl_batch, opencv_cuda and npp;
+  - the grey and box images of opencv_cuda and npp.
+
+  fkl_loop's LinearFilterDPP kernel has different SASS (above), but its output is unchanged.
+- **The one CSV that differs, e18_box_kernel.csv**, is not an output. It is the table of the attributes of e18_box's four fused kernels (cudaFuncGetAttributes and the size of each argument). Its first difference is at data row 2:
+  - before: `fkl_box_asym,40,4284,0,0,128,12,48,48,100,24,64,48,12,1,1,24,114`
+  - after: `fkl_box_asym,40,4284,0,0,128,12,48,48,100,16,64,48,12,1,1,24,106`
+
+  `arg_details_bytes` goes from 24 to 16 B in all four rows, and `arg_total_bytes` drops by the same 8 B (114 → 106, 130 → 122): these are the two ints the details no longer hold. Registers (40), static shared memory (4,284 B), local memory and occupancy are the same.
+- **stdout** (reported only): the 4 lines that differ in e18_box and the 1 in e18_stencil print the same argument sizes (details 24 → 16 B). The other stdout files are equal line for line.
+
+The clock samples (`window/gpu_clocks.csv`, every 100 ms) read 2,550 MHz throughout, and 210 MHz while the GPU was idle. Nothing was timed.
+
+### The steps
+
+Its steps stop at the first failure:
 1. FKL's 7 CUDA filter tests of tests/image_processing at 24478f0, with `ctest -j1 --stop-on-failure`:
    - box_filter_quad_dpp, convolution_fast_dpp, linear_filter_dpp, median_fast_dpp, median_filter_dpp, morphology_fast_dpp: the 6 that #433 changes;
    - morphology_dpp: unchanged, and the DPP of E19's fkl_batch.
@@ -123,7 +170,7 @@ Then, on the CPU only, `scripts-used/compare_outputs.py` compares the outputs be
 - the data rows of every CSV, with their sha256. The `#` header lines hold the commits, the clocks and the temperature, so they are left out;
 - every E19 dump file, byte for byte, with its sha256.
 
-The dumps, about 1.8 GiB per side, stay in the scratch folder and are not committed. Their sha256 go into `window/dumps-sha256.txt`.
+The dumps, 1,539 MiB per side (136 files each), stay in the scratch folder (scratch/task-b/dumps) and are not committed. Their sha256 are in `window/dumps-sha256.txt`.
 
 The guards are those of the crop sweep's checks script:
 - no blocked program, in the binaries and in the ctest lists;
@@ -148,5 +195,11 @@ The guards are those of the crop sweep's checks script:
 | `devcode/devcode-fkl-tests.*` | the device-code comparison of FKL's CUDA tests: report (.txt) and every kernel with its numbers (.csv) |
 | `devcode/devcode-programs.*` | the same for the five programs |
 | `scripts-used/` | compile-step2.sh, devcode_sm89.py, compare_outputs.py |
+| `window/window-console.txt`, `window/window-script.sh` | the window's console and the copy of the script it ran |
+| `window/fkl-tests-{before,after}-console.txt`, `.log` | ctest's console and its output log (`-V --output-log`) |
+| `window/runs/{before,after}/<program>[/N<NNN>]/` | each run: stdout, stderr, exit code, its CSVs, the load and the clock at its end |
+| `window/comparison.txt`, `.csv` | the comparison before against after |
+| `window/dumps-sha256.txt` | the sha256 of the 272 dump files |
+| `window/environment-{before,after}.txt`, `gpu-info.csv`, `gpu_clocks.csv`, `gpu_clocks.err`, `load.log` | the machine's state and the samplers |
 
-Left out: the build trees and the binaries. The FKL builds are in the scratch folder (scratch/task-b/fkl-{before,after}-build), and the program builds are in the two worktrees' build/local-rtx4090.
+Left out: the E19 dumps (1,539 MiB per side, in scratch/task-b/dumps; their sha256 are in `window/dumps-sha256.txt`), the build trees and the binaries. The FKL builds are in the scratch folder (scratch/task-b/fkl-{before,after}-build), and the program builds are in the two worktrees' build/local-rtx4090.
