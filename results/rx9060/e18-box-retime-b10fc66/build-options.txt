@@ -1,0 +1,14 @@
+# e18_box_hip of the re-time against the binary of results/rx9060/e18-box/ (194a1dab..., built from e2fca06 with FKL 24478f0 in
+# tmp/vbuild/e18box-e2fca06-hip). Compile products only; nothing was run.
+- CMake cache (every variable, with the source and build folders replaced): the record's build = A's = B's. Release, gfx1200, amdclang++ 24
+  (ROCm 10.1.0) for CXX and HIP, CMAKE_CXX_FLAGS and CMAKE_HIP_FLAGS empty, FKLB_BUILD_RPP=ON, CUDA/NPP/OpenCV/hand-written suites off,
+  FKLB_CPU_ARCH=native, FKLB_TEMPLATE_DEPTH=1000.
+- The 4 build commands of bin/e18_box_hip (ninja -t commands: the build-info step, main.cpp, launcher.hip, the link), with the folders replaced:
+  identical in the three builds (-O3 -DNDEBUG -std=c++17, --offload-arch=gfx1200, -march=native for the host file, the same libraries).
+- The sources: e2fca06..a8f9daa changes, outside results/, cmake/fklb_write_build_info.cmake (2 lines: the -dirty paths, #52) and
+  rpp/CMakeLists.txt (the E19 targets); rpp/e18_box.h and common/ are unchanged. 2160c70 changes rpp/e18_box.h (the details, 5 lines).
+- One difference: A and B were built from a git archive (#61's pin_build.sh), so their build strings record fkl-benchmarks "unknown" and
+  cvGPUSpeedup/FastNPP "not checked out" without the pinned commit; the record's binary records e2fca06 and the pins. They record FKL
+  24478f0 (A) and b10fc66 (B). The CSV headers of the window will show this.
+- A against the record's binary: device code 6 of 6 functions identical (devcode_compare_renamed.py); host code 127 of 128 .text functions
+  identical in both forms of host_compare.py, the one that differs being fklb::writeSystemInfoHeader (those build strings).
