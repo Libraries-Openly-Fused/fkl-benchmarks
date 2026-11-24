@@ -24,3 +24,12 @@ if(TARGET e19_batched_box_hip)
     find_package(rocprofiler-sdk-roctx CONFIG REQUIRED)
     target_link_libraries(e19_batched_box_hip PRIVATE rocprofiler-sdk-roctx::rocprofiler-sdk-roctx)
 endif()
+
+# E19 crop sweep (AMD): E19 (e19_batched_box.h) at 16 numbers of crops, N = 1, 10, 20, ..., 150, one per process (E19_CROPS=<N>).
+fklb_add_benchmark(e19_crop_sweep
+    BACKENDS hip LIBS fkl rpp
+    LAUNCHER_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/e19_crop_sweep.h")
+if(TARGET e19_crop_sweep_hip)
+    find_package(rocprofiler-sdk-roctx CONFIG REQUIRED)
+    target_link_libraries(e19_crop_sweep_hip PRIVATE rocprofiler-sdk-roctx::rocprofiler-sdk-roctx)
+endif()
