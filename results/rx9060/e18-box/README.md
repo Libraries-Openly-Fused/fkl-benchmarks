@@ -2,7 +2,7 @@
 
 This window times `rpp/e18_box.h` (phase 1: `../e18-box-phase1/`). It supersedes the first window (`../e18-box-window1/`), whose first variant was timed during the clock ramp from idle.
 
-**Note, 2026-11-24: re-timed at FKL b10fc66** (the merge of FKL #433, which changes the linear-filter kernel of the FKL rows), in `../e18-box-retime-b10fc66/`. That window timed this program's code at FKL 24478f0 (A) and at b10fc66 (B) alternately, with this window's protocol. No change is flagged, and the outputs are the same.
+**Note, 2026-11-24: re-timed at FKL b10fc66** (the merge of FKL #433, which changes the linear-filter kernel of the FKL rows), in `../e18-box-retime-b10fc66/`. That window timed this program's code at FKL 24478f0 (A) and at b10fc66 (B) alternately, with this window's protocol. No change from A to B is flagged, and the outputs are the same.
 - **B against A:** `fkl_box_halfpixel` and `fkl_half_once` kernel_only are 0.9 % and 1.0 % lower, beyond their spreads; the other rows are within theirs.
 - **A against this window:** `rpp_ltrb` is 3.5 % lower in both intervals (flagged; the same code, so not the program; cause not determined).
 - The times below are FKL 24478f0's.
