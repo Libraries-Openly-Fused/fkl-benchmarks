@@ -1,0 +1,80 @@
+N = 1:
+  fkl_loop: 10 calls; kernels per call [1], expected 1: yes; names {'linearFilterDPPKernel': 1}; host enqueue median 3.6 us; GPU span median 2.1 us
+  fkl_batch: 10 calls; kernels per call [1], expected 1: yes; names {'morphologyDPPKernel': 1}; grid x,y,z / block: 16 x 32 x 1 / 16 x 8 x 1; host enqueue median 3.3 us; GPU span median 3.1 us
+  opencv_cuda: 10 calls; kernels per call [4], expected 4: yes; names {'transformSimple': 1, 'copy': 1, 'ForEachLargeTupleByteQuadInLargeImage': 1, 'transformSmart': 1}; host enqueue median 15.3 us; GPU span median 12.2 us
+  npp: 10 calls; kernels per call [3], expected 3: yes; names {'ForEachPixelByteInLargeImage': 1, 'ForEachLargeTupleByteQuadInLargeImage': 1, 'ForEachTupleDWordInLargeImage': 1}; host enqueue median 9.7 us; GPU span median 8.3 us
+N = 10:
+  fkl_loop: 10 calls; kernels per call [10], expected 10: yes; names {'linearFilterDPPKernel': 10}; host enqueue median 30.6 us; GPU span median 29.4 us
+  fkl_batch: 10 calls; kernels per call [1], expected 1: yes; names {'morphologyDPPKernel': 1}; grid x,y,z / block: 16 x 32 x 10 / 16 x 8 x 1; host enqueue median 3.6 us; GPU span median 8.1 us
+  opencv_cuda: 10 calls; kernels per call [40], expected 40: yes; names {'transformSimple': 10, 'copy': 10, 'ForEachLargeTupleByteQuadInLargeImage': 10, 'transformSmart': 10}; host enqueue median 135.0 us; GPU span median 132.8 us
+  npp: 10 calls; kernels per call [30], expected 30: yes; names {'ForEachPixelByteInLargeImage': 10, 'ForEachLargeTupleByteQuadInLargeImage': 10, 'ForEachTupleDWordInLargeImage': 10}; host enqueue median 91.8 us; GPU span median 90.4 us
+N = 20:
+  fkl_loop: 10 calls; kernels per call [20], expected 20: yes; names {'linearFilterDPPKernel': 20}; host enqueue median 63.4 us; GPU span median 62.1 us
+  fkl_batch: 10 calls; kernels per call [1], expected 1: yes; names {'morphologyDPPKernel': 1}; grid x,y,z / block: 16 x 32 x 20 / 16 x 8 x 1; host enqueue median 3.9 us; GPU span median 14.5 us
+  opencv_cuda: 10 calls; kernels per call [80], expected 80: yes; names {'transformSimple': 20, 'copy': 20, 'ForEachLargeTupleByteQuadInLargeImage': 20, 'transformSmart': 20}; host enqueue median 267.6 us; GPU span median 265.3 us
+  npp: 10 calls; kernels per call [60], expected 60: yes; names {'ForEachPixelByteInLargeImage': 20, 'ForEachLargeTupleByteQuadInLargeImage': 20, 'ForEachTupleDWordInLargeImage': 20}; host enqueue median 179.9 us; GPU span median 177.4 us
+N = 30:
+  fkl_loop: 10 calls; kernels per call [30], expected 30: yes; names {'linearFilterDPPKernel': 30}; host enqueue median 94.1 us; GPU span median 92.8 us
+  fkl_batch: 10 calls; kernels per call [1], expected 1: yes; names {'morphologyDPPKernel': 1}; grid x,y,z / block: 16 x 32 x 30 / 16 x 8 x 1; host enqueue median 4.0 us; GPU span median 21.1 us
+  opencv_cuda: 10 calls; kernels per call [120], expected 120: yes; names {'transformSimple': 30, 'copy': 30, 'ForEachLargeTupleByteQuadInLargeImage': 30, 'transformSmart': 30}; host enqueue median 405.2 us; GPU span median 402.8 us
+  npp: 10 calls; kernels per call [90], expected 90: yes; names {'ForEachPixelByteInLargeImage': 30, 'ForEachLargeTupleByteQuadInLargeImage': 30, 'ForEachTupleDWordInLargeImage': 30}; host enqueue median 271.5 us; GPU span median 270.2 us
+N = 40:
+  fkl_loop: 10 calls; kernels per call [40], expected 40: yes; names {'linearFilterDPPKernel': 40}; host enqueue median 122.5 us; GPU span median 121.5 us
+  fkl_batch: 10 calls; kernels per call [1], expected 1: yes; names {'morphologyDPPKernel': 1}; grid x,y,z / block: 16 x 32 x 40 / 16 x 8 x 1; host enqueue median 4.2 us; GPU span median 27.5 us
+  opencv_cuda: 10 calls; kernels per call [160], expected 160: yes; names {'transformSimple': 40, 'copy': 40, 'ForEachLargeTupleByteQuadInLargeImage': 40, 'transformSmart': 40}; host enqueue median 531.0 us; GPU span median 528.6 us
+  npp: 10 calls; kernels per call [120], expected 120: yes; names {'ForEachPixelByteInLargeImage': 40, 'ForEachLargeTupleByteQuadInLargeImage': 40, 'ForEachTupleDWordInLargeImage': 40}; host enqueue median 360.5 us; GPU span median 359.2 us
+N = 50:
+  fkl_loop: 10 calls; kernels per call [50], expected 50: yes; names {'linearFilterDPPKernel': 50}; host enqueue median 151.9 us; GPU span median 150.8 us
+  fkl_batch: 10 calls; kernels per call [1], expected 1: yes; names {'morphologyDPPKernel': 1}; grid x,y,z / block: 16 x 32 x 50 / 16 x 8 x 1; host enqueue median 4.3 us; GPU span median 34.0 us
+  opencv_cuda: 10 calls; kernels per call [200], expected 200: yes; names {'transformSimple': 50, 'copy': 50, 'ForEachLargeTupleByteQuadInLargeImage': 50, 'transformSmart': 50}; host enqueue median 666.5 us; GPU span median 664.2 us
+  npp: 10 calls; kernels per call [150], expected 150: yes; names {'ForEachPixelByteInLargeImage': 50, 'ForEachLargeTupleByteQuadInLargeImage': 50, 'ForEachTupleDWordInLargeImage': 50}; host enqueue median 453.1 us; GPU span median 451.7 us
+N = 60:
+  fkl_loop: 10 calls; kernels per call [60], expected 60: yes; names {'linearFilterDPPKernel': 60}; host enqueue median 183.7 us; GPU span median 182.4 us
+  fkl_batch: 10 calls; kernels per call [1], expected 1: yes; names {'morphologyDPPKernel': 1}; grid x,y,z / block: 16 x 32 x 60 / 16 x 8 x 1; host enqueue median 4.5 us; GPU span median 40.5 us
+  opencv_cuda: 10 calls; kernels per call [240], expected 240: yes; names {'transformSimple': 60, 'copy': 60, 'ForEachLargeTupleByteQuadInLargeImage': 60, 'transformSmart': 60}; host enqueue median 798.1 us; GPU span median 795.7 us
+  npp: 10 calls; kernels per call [180], expected 180: yes; names {'ForEachPixelByteInLargeImage': 60, 'ForEachLargeTupleByteQuadInLargeImage': 60, 'ForEachTupleDWordInLargeImage': 60}; host enqueue median 543.1 us; GPU span median 541.4 us
+N = 70:
+  fkl_loop: 10 calls; kernels per call [70], expected 70: yes; names {'linearFilterDPPKernel': 70}; host enqueue median 213.4 us; GPU span median 212.4 us
+  fkl_batch: 10 calls; kernels per call [1], expected 1: yes; names {'morphologyDPPKernel': 1}; grid x,y,z / block: 16 x 32 x 70 / 16 x 8 x 1; host enqueue median 4.6 us; GPU span median 47.0 us
+  opencv_cuda: 10 calls; kernels per call [280], expected 280: yes; names {'transformSimple': 70, 'copy': 70, 'ForEachLargeTupleByteQuadInLargeImage': 70, 'transformSmart': 70}; host enqueue median 929.6 us; GPU span median 926.9 us
+  npp: 10 calls; kernels per call [210], expected 210: yes; names {'ForEachPixelByteInLargeImage': 70, 'ForEachLargeTupleByteQuadInLargeImage': 70, 'ForEachTupleDWordInLargeImage': 70}; host enqueue median 630.0 us; GPU span median 628.8 us
+N = 80:
+  fkl_loop: 10 calls; kernels per call [80], expected 80: yes; names {'linearFilterDPPKernel': 80}; host enqueue median 243.3 us; GPU span median 242.3 us
+  fkl_batch: 10 calls; kernels per call [1], expected 1: yes; names {'morphologyDPPKernel': 1}; grid x,y,z / block: 16 x 32 x 80 / 16 x 8 x 1; host enqueue median 4.5 us; GPU span median 53.5 us
+  opencv_cuda: 10 calls; kernels per call [320], expected 320: yes; names {'transformSimple': 80, 'copy': 80, 'ForEachLargeTupleByteQuadInLargeImage': 80, 'transformSmart': 80}; host enqueue median 1067.0 us; GPU span median 1062.6 us
+  npp: 10 calls; kernels per call [240], expected 240: yes; names {'ForEachPixelByteInLargeImage': 80, 'ForEachLargeTupleByteQuadInLargeImage': 80, 'ForEachTupleDWordInLargeImage': 80}; host enqueue median 723.1 us; GPU span median 721.9 us
+N = 90:
+  fkl_loop: 10 calls; kernels per call [90], expected 90: yes; names {'linearFilterDPPKernel': 90}; host enqueue median 275.2 us; GPU span median 273.8 us
+  fkl_batch: 10 calls; kernels per call [1], expected 1: yes; names {'morphologyDPPKernel': 1}; grid x,y,z / block: 16 x 32 x 90 / 16 x 8 x 1; host enqueue median 4.8 us; GPU span median 60.0 us
+  opencv_cuda: 10 calls; kernels per call [360], expected 360: yes; names {'transformSimple': 90, 'copy': 90, 'ForEachLargeTupleByteQuadInLargeImage': 90, 'transformSmart': 90}; host enqueue median 1200.8 us; GPU span median 1197.4 us
+  npp: 10 calls; kernels per call [270], expected 270: yes; names {'ForEachPixelByteInLargeImage': 90, 'ForEachLargeTupleByteQuadInLargeImage': 90, 'ForEachTupleDWordInLargeImage': 90}; host enqueue median 809.0 us; GPU span median 807.7 us
+N = 100:
+  fkl_loop: 10 calls; kernels per call [100], expected 100: yes; names {'linearFilterDPPKernel': 100}; host enqueue median 304.0 us; GPU span median 302.9 us
+  fkl_batch: 10 calls; kernels per call [1], expected 1: yes; names {'morphologyDPPKernel': 1}; grid x,y,z / block: 16 x 32 x 100 / 16 x 8 x 1; host enqueue median 4.9 us; GPU span median 66.5 us
+  opencv_cuda: 10 calls; kernels per call [400], expected 400: yes; names {'transformSimple': 100, 'copy': 100, 'ForEachLargeTupleByteQuadInLargeImage': 100, 'transformSmart': 100}; host enqueue median 1324.9 us; GPU span median 1322.8 us
+  npp: 10 calls; kernels per call [300], expected 300: yes; names {'ForEachPixelByteInLargeImage': 100, 'ForEachLargeTupleByteQuadInLargeImage': 100, 'ForEachTupleDWordInLargeImage': 100}; host enqueue median 899.5 us; GPU span median 898.0 us
+N = 110:
+  fkl_loop: 10 calls; kernels per call [110], expected 110: yes; names {'linearFilterDPPKernel': 110}; host enqueue median 335.2 us; GPU span median 333.9 us
+  fkl_batch: 10 calls; kernels per call [1], expected 1: yes; names {'morphologyDPPKernel': 1}; grid x,y,z / block: 16 x 32 x 110 / 16 x 8 x 1; host enqueue median 5.1 us; GPU span median 73.0 us
+  opencv_cuda: 10 calls; kernels per call [440], expected 440: yes; names {'transformSimple': 110, 'copy': 110, 'ForEachLargeTupleByteQuadInLargeImage': 110, 'transformSmart': 110}; host enqueue median 1473.1 us; GPU span median 1470.8 us
+  npp: 10 calls; kernels per call [330], expected 330: yes; names {'ForEachPixelByteInLargeImage': 110, 'ForEachLargeTupleByteQuadInLargeImage': 110, 'ForEachTupleDWordInLargeImage': 110}; host enqueue median 983.6 us; GPU span median 982.5 us
+N = 120:
+  fkl_loop: 10 calls; kernels per call [120], expected 120: yes; names {'linearFilterDPPKernel': 120}; host enqueue median 367.5 us; GPU span median 366.2 us
+  fkl_batch: 10 calls; kernels per call [1], expected 1: yes; names {'morphologyDPPKernel': 1}; grid x,y,z / block: 16 x 32 x 120 / 16 x 8 x 1; host enqueue median 5.2 us; GPU span median 80.0 us
+  opencv_cuda: 10 calls; kernels per call [480], expected 480: yes; names {'transformSimple': 120, 'copy': 120, 'ForEachLargeTupleByteQuadInLargeImage': 120, 'transformSmart': 120}; host enqueue median 1624.6 us; GPU span median 1621.0 us
+  npp: 10 calls; kernels per call [360], expected 360: yes; names {'ForEachPixelByteInLargeImage': 120, 'ForEachLargeTupleByteQuadInLargeImage': 120, 'ForEachTupleDWordInLargeImage': 120}; host enqueue median 1082.3 us; GPU span median 1080.8 us
+N = 130:
+  fkl_loop: 10 calls; kernels per call [130], expected 130: yes; names {'linearFilterDPPKernel': 130}; host enqueue median 396.5 us; GPU span median 395.4 us
+  fkl_batch: 10 calls; kernels per call [1], expected 1: yes; names {'morphologyDPPKernel': 1}; grid x,y,z / block: 16 x 32 x 130 / 16 x 8 x 1; host enqueue median 5.3 us; GPU span median 86.0 us
+  opencv_cuda: 10 calls; kernels per call [520], expected 520: yes; names {'transformSimple': 130, 'copy': 130, 'ForEachLargeTupleByteQuadInLargeImage': 130, 'transformSmart': 130}; host enqueue median 1732.3 us; GPU span median 1729.6 us
+  npp: 10 calls; kernels per call [390], expected 390: yes; names {'ForEachPixelByteInLargeImage': 130, 'ForEachLargeTupleByteQuadInLargeImage': 130, 'ForEachTupleDWordInLargeImage': 130}; host enqueue median 1163.3 us; GPU span median 1162.2 us
+N = 140:
+  fkl_loop: 10 calls; kernels per call [140], expected 140: yes; names {'linearFilterDPPKernel': 140}; host enqueue median 426.4 us; GPU span median 425.3 us
+  fkl_batch: 10 calls; kernels per call [1], expected 1: yes; names {'morphologyDPPKernel': 1}; grid x,y,z / block: 16 x 32 x 140 / 16 x 8 x 1; host enqueue median 5.5 us; GPU span median 92.5 us
+  opencv_cuda: 10 calls; kernels per call [560], expected 560: yes; names {'transformSimple': 140, 'copy': 140, 'ForEachLargeTupleByteQuadInLargeImage': 140, 'transformSmart': 140}; host enqueue median 1878.3 us; GPU span median 1874.9 us
+  npp: 10 calls; kernels per call [420], expected 420: yes; names {'ForEachPixelByteInLargeImage': 140, 'ForEachLargeTupleByteQuadInLargeImage': 140, 'ForEachTupleDWordInLargeImage': 140}; host enqueue median 1258.2 us; GPU span median 1256.5 us
+N = 150:
+  fkl_loop: 10 calls; kernels per call [150], expected 150: yes; names {'linearFilterDPPKernel': 150}; host enqueue median 456.9 us; GPU span median 455.3 us
+  fkl_batch: 10 calls; kernels per call [1], expected 1: yes; names {'morphologyDPPKernel': 1}; grid x,y,z / block: 16 x 32 x 150 / 16 x 8 x 1; host enqueue median 5.7 us; GPU span median 99.1 us
+  opencv_cuda: 10 calls; kernels per call [600], expected 600: yes; names {'transformSimple': 150, 'copy': 150, 'ForEachLargeTupleByteQuadInLargeImage': 150, 'transformSmart': 150}; host enqueue median 2014.5 us; GPU span median 2012.1 us
+  npp: 10 calls; kernels per call [450], expected 450: yes; names {'ForEachPixelByteInLargeImage': 150, 'ForEachLargeTupleByteQuadInLargeImage': 150, 'ForEachTupleDWordInLargeImage': 150}; host enqueue median 1349.0 us; GPU span median 1347.6 us

@@ -1,0 +1,50 @@
+# experiment: E19 batched box: the checks (140 crops of 256 x 256: 9175040 values)
+# repo: fkl-benchmarks 246b1c8c9267b850bb3aa19c904172eb8f6ffad8
+# fkl: 24478f0aa11dc3f12feea83178f7fde828322fb0
+# cvGPUSpeedup: 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c
+# FastNPP: a1b5e245d7dd70fba23dcb51a0aea80495dbc61d
+# nvcc: 13.4.92 (/home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/nvcc), architectures 89, -fmad on, -lineinfo on
+# hip: none (none), architectures none
+# host compiler: GNU 15.2.0, Release, -march=native, -ftemplate-depth=1000
+# opencv: 4.14.0
+# cpu: AMD Ryzen 9 5950X 16-Core Processor
+# os: Ubuntu 26.04.1 LTS
+# kernel: Linux 7.0.0-43-generic
+# gpu: NVIDIA GeForce RTX 4090, cc 8.9, 128 SMs, 24106 MiB, PCI 0000:09:00.0
+# cuda driver api: 13.3, cuda runtime: 13.4
+# nvidia-smi driver: 610.43.02
+# clocks (sm, mem, max sm, max mem, MHz): 2550 MHz, 10501 MHz, 3105 MHz, 10501 MHz
+# power limit, temperature at start: 450.00 W, 48
+crops,version,step,compared_with,rule,values,differing_values,max_abs_difference,non_finite,criterion,ok
+140,opencv_cuda,grey,host_reference,(9798 R + 19235 G + 3735 B + 2^14) >> 15,9175040,0,0,,0 differing values,yes
+140,opencv_cuda,box,box_of_own_grey,floor(sum / 9),9175040,0,0,,0 differing values for one of the two rules,yes
+140,opencv_cuda,box,box_of_own_grey,nearest of sum / 9,9175040,4077012,1,,0 differing values for one of the two rules,yes
+140,opencv_cuda,box,box_of_reference_grey,floor(sum / 9),9175040,0,0,,reported,yes
+140,opencv_cuda,float,conversion_of_own_box,(v / 255 - 0.45) / 0.225 in double,9175040,0,1.31415905e-07,0,"largest difference at most 1e-5, every value finite",yes
+140,opencv_cuda,float,conversion_of_reference_box,(v / 255 - 0.45) / 0.225 in double,9175040,0,1.31415905e-07,0,reported,yes
+140,opencv_cuda,buffers,before_the_call,data pointers of the 140 grey and 140 box images and of the tensor,281,0,0,,0 moved,yes
+140,npp,grey,host_reference,"0.299f R + 0.587f G + 0.114f B exactly, truncated",9175040,4588166,1,,reported,yes
+140,npp,grey,host_reference,"0.299f R + 0.587f G + 0.114f B exactly, rounded half up",9175040,2017,1,,reported,yes
+140,npp,grey,host_reference,"0.299f R + 0.587f G + 0.114f B in float (each product and sum rounded, left to right), truncated",9175040,4586849,1,,reported,yes
+140,npp,grey,host_reference,"0.299f R + 0.587f G + 0.114f B in float (each product and sum rounded, left to right), + 0.5f, truncated",9175040,595,1,,reported,yes
+140,npp,grey,host_reference,(77 R + 150 G + 29 B + 128) >> 8,9175040,1225319,1,,reported,yes
+140,npp,grey,host_reference,(9798 R + 19235 G + 3735 B + 2^14) >> 15,9175040,11740,1,,reported,yes
+140,npp,grey,host_reference,"t = 0.587f G; t = fmaf(0.299f, R, t); t = fmaf(0.114f, B, t); (int)(t + 0.5f)",9175040,0,0,,0 differing values (the rule with the fewest: the reference),yes
+140,npp,box,box_of_own_grey,floor(sum / 9),9175040,0,0,,0 differing values for one of the two rules,yes
+140,npp,box,box_of_own_grey,nearest of sum / 9,9175040,4077062,1,,0 differing values for one of the two rules,yes
+140,npp,box,box_of_reference_grey,floor(sum / 9),9175040,0,0,,reported,yes
+140,npp,float,conversion_of_own_box,(v / 255 - 0.45) / 0.225 in double,9175040,0,3.48537836e-07,0,"largest difference at most 1e-5, every value finite",yes
+140,npp,float,conversion_of_reference_box,(v / 255 - 0.45) / 0.225 in double,9175040,0,3.48537836e-07,0,reported,yes
+140,opencv_cuda,grey,npp,their own grey images,9175040,11740,1,,reported,yes
+140,opencv_cuda,box,npp,their own box images,9175040,11681,1,,reported,yes
+140,opencv_cuda,float,npp,their own tensors,9175040,0,0.0174295902,0,reported,yes
+140,fkl_loop,float,fkl_reference,"grey nearbyint(fma(0.114f, B, fma(0.299f, R, 0.587f G))), box (1/9 in float) * sum of 9 in double, (v / 255 - 0.45) / 0.225 in double; differing = beyond 1e-5",9175040,0,7.11749582e-07,0,"largest difference at most 1e-5, every value finite",yes
+140,fkl_loop,float,opencv_cuda,their own tensors,9175040,0,0.0193662047,0,reported,yes
+140,fkl_loop,float,npp,their own tensors,9175040,0,0.0154929757,0,reported,yes
+140,fkl_batch,float,fkl_batch_reference,"grey nearbyint(fma(0.114f, B, fma(0.299f, R, 0.587f G))), box float(sum of 9 * (1/9 in float)), (v / 255 - 0.45) / 0.225 in double; differing = beyond 1e-5",9175040,0,2.6231238e-07,0,"largest difference at most 1e-5, every value finite",yes
+140,fkl_batch,written,fill,values still 0xFFFFFFFF (the fill's bytes),9175040,0,0,,0 left,yes
+140,fkl_batch,float,fkl_loop,their own tensors,9175040,0,7.74860382e-07,0,reported,yes
+140,fkl_batch,float,opencv_cuda,"their own tensors, in output units; differing = not equal",9175040,9175034,0.0193659663,0,reported,yes
+140,fkl_batch,float_grey_levels,opencv_cuda,"their own tensors, in grey levels (x 57.375); differing = not equal",9175040,9175034,1.11112232,0,reported,yes
+140,fkl_batch,float,npp,"their own tensors, in output units; differing = not equal",9175040,8861092,0.0154926777,0,reported,yes
+140,fkl_batch,float_grey_levels,npp,"their own tensors, in grey levels (x 57.375); differing = not equal",9175040,8861092,0.888892382,0,reported,yes

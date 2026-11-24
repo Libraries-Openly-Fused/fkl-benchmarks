@@ -1,0 +1,93 @@
+quiet sweeps: quiet-run1, quiet-run2, quiet-run3; N = 1, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150; every value is the mean of 100 calls of one frame (N crops), in us
+whole_call: median (min-max) of the 3 quiet means, spread; then the per-sweep ratios over fkl_batch, median (min-max)
+  N =   1: fkl_batch 4.71 (4.69-4.76, 1.61 %); opencv_cuda 9.74 (9.71-10.51, 8.23 %); npp 8.48 (8.45-8.55, 1.09 %); opencv_cuda/fkl_batch 2.060 (2.045-2.242); npp/fkl_batch 1.799 (1.775-1.823)
+  N =  10: fkl_batch 9.59 (9.56-9.66, 1.00 %); opencv_cuda 80.75 (80.69-80.76, 0.09 %); npp 72.49 (72.45-72.49, 0.06 %); opencv_cuda/fkl_batch 8.422 (8.352-8.443); npp/fkl_batch 7.560 (7.500-7.579)
+  N =  20: fkl_batch 15.81 (15.74-15.84, 0.68 %); opencv_cuda 159.35 (159.09-159.94, 0.54 %); npp 143.46 (143.36-143.59, 0.16 %); opencv_cuda/fkl_batch 10.095 (10.061-10.127); npp/fkl_batch 9.066 (9.055-9.125)
+  N =  30: fkl_batch 22.04 (21.93-22.06, 0.55 %); opencv_cuda 238.84 (238.66-239.09, 0.18 %); npp 214.64 (214.50-214.69, 0.08 %); opencv_cuda/fkl_batch 10.848 (10.821-10.889); npp/fkl_batch 9.741 (9.726-9.786)
+  N =  40: fkl_batch 28.22 (28.20-28.48, 0.99 %); opencv_cuda 317.22 (316.83-317.27, 0.14 %); npp 285.63 (285.54-285.75, 0.07 %); opencv_cuda/fkl_batch 11.244 (11.125-11.250); npp/fkl_batch 10.126 (10.030-10.127)
+  N =  50: fkl_batch 34.33 (34.31-34.38, 0.21 %); opencv_cuda 396.26 (396.18-396.76, 0.15 %); npp 356.90 (356.60-357.05, 0.13 %); opencv_cuda/fkl_batch 11.550 (11.523-11.556); npp/fkl_batch 10.395 (10.372-10.407)
+  N =  60: fkl_batch 40.61 (40.58-40.64, 0.15 %); opencv_cuda 473.28 (472.20-473.29, 0.23 %); npp 427.89 (427.74-428.23, 0.11 %); opencv_cuda/fkl_batch 11.647 (11.638-11.655); npp/fkl_batch 10.538 (10.537-10.542)
+  N =  70: fkl_batch 46.77 (46.72-46.80, 0.17 %); opencv_cuda 553.34 (552.98-554.15, 0.21 %); npp 499.02 (498.99-499.16, 0.03 %); opencv_cuda/fkl_batch 11.841 (11.824-11.844); npp/fkl_batch 10.670 (10.663-10.684)
+  N =  80: fkl_batch 52.58 (52.57-52.70, 0.26 %); opencv_cuda 632.73 (632.36-633.43, 0.17 %); npp 569.89 (569.82-570.46, 0.11 %); opencv_cuda/fkl_batch 12.026 (12.018-12.036); npp/fkl_batch 10.837 (10.824-10.841)
+  N =  90: fkl_batch 59.02 (58.88-59.28, 0.68 %); opencv_cuda 711.16 (710.64-711.52, 0.12 %); npp 641.02 (640.91-641.24, 0.05 %); opencv_cuda/fkl_batch 12.049 (12.002-12.069); npp/fkl_batch 10.861 (10.811-10.891)
+  N = 100: fkl_batch 65.35 (65.27-65.40, 0.20 %); opencv_cuda 803.48 (803.21-806.86, 0.45 %); npp 713.00 (712.73-715.80, 0.43 %); opencv_cuda/fkl_batch 12.306 (12.295-12.337); npp/fkl_batch 10.920 (10.911-10.945)
+  N = 110: fkl_batch 71.52 (71.41-71.55, 0.20 %); opencv_cuda 890.58 (889.33-891.31, 0.22 %); npp 792.16 (791.97-793.25, 0.16 %); opencv_cuda/fkl_batch 12.454 (12.453-12.457); npp/fkl_batch 11.086 (11.074-11.093)
+  N = 120: fkl_batch 77.67 (77.64-77.68, 0.05 %); opencv_cuda 985.64 (983.95-987.11, 0.32 %); npp 874.80 (874.06-876.12, 0.23 %); opencv_cuda/fkl_batch 12.689 (12.668-12.714); npp/fkl_batch 11.262 (11.253-11.285)
+  N = 130: fkl_batch 83.84 (83.78-83.84, 0.08 %); opencv_cuda 1080.27 (1079.41-1080.69, 0.12 %); npp 948.94 (948.34-950.85, 0.26 %); opencv_cuda/fkl_batch 12.884 (12.875-12.899); npp/fkl_batch 11.318 (11.311-11.349)
+  N = 140: fkl_batch 89.92 (89.81-89.92, 0.13 %); opencv_cuda 1168.11 (1167.72-1170.99, 0.28 %); npp 1025.35 (1025.03-1027.01, 0.19 %); opencv_cuda/fkl_batch 13.003 (12.990-13.022); npp/fkl_batch 11.414 (11.402-11.421)
+  N = 150: fkl_batch 96.08 (96.04-96.56, 0.54 %); opencv_cuda 1254.84 (1254.13-1255.55, 0.11 %); npp 1101.08 (1100.57-1104.16, 0.33 %); opencv_cuda/fkl_batch 13.059 (13.003-13.061); npp/fkl_batch 11.460 (11.435-11.460)
+kernel_only: median (min-max) of the 3 quiet means, spread; then the per-sweep ratios over fkl_batch, median (min-max)
+  N =   1: fkl_batch 4.13 (4.11-4.15, 0.94 %); opencv_cuda 8.65 (8.61-8.91, 3.47 %); npp 8.21 (8.19-8.21, 0.27 %); opencv_cuda/fkl_batch 2.092 (2.083-2.159); npp/fkl_batch 1.991 (1.978-1.991)
+  N =  10: fkl_batch 9.22 (9.22-9.22, 0.09 %); opencv_cuda 78.90 (78.90-78.90, 0.01 %); npp 72.60 (72.46-72.60, 0.19 %); opencv_cuda/fkl_batch 8.557 (8.553-8.561); npp/fkl_batch 7.871 (7.859-7.877)
+  N =  20: fkl_batch 15.38 (15.38-15.40, 0.15 %); opencv_cuda 156.91 (156.84-156.92, 0.05 %); npp 143.54 (143.53-143.56, 0.02 %); opencv_cuda/fkl_batch 10.197 (10.188-10.203); npp/fkl_batch 9.332 (9.320-9.335)
+  N =  30: fkl_batch 21.70 (21.69-21.71, 0.13 %); opencv_cuda 236.35 (236.31-236.46, 0.06 %); npp 215.05 (215.03-215.06, 0.02 %); opencv_cuda/fkl_batch 10.889 (10.883-10.903); npp/fkl_batch 9.907 (9.904-9.916)
+  N =  40: fkl_batch 28.01 (27.98-28.05, 0.26 %); opencv_cuda 315.07 (315.01-315.14, 0.04 %); npp 286.38 (286.35-286.50, 0.05 %); opencv_cuda/fkl_batch 11.247 (11.233-11.260); npp/fkl_batch 10.223 (10.212-10.235)
+  N =  50: fkl_batch 34.22 (34.21-34.38, 0.50 %); opencv_cuda 392.85 (392.79-392.86, 0.02 %); npp 357.64 (357.64-357.75, 0.03 %); opencv_cuda/fkl_batch 11.480 (11.425-11.481); npp/fkl_batch 10.452 (10.401-10.456)
+  N =  60: fkl_batch 40.46 (40.35-40.47, 0.27 %); opencv_cuda 466.99 (466.97-467.01, 0.01 %); npp 428.97 (428.96-429.03, 0.02 %); opencv_cuda/fkl_batch 11.541 (11.541-11.572); npp/fkl_batch 10.603 (10.601-10.630)
+  N =  70: fkl_batch 46.79 (46.73-46.86, 0.28 %); opencv_cuda 548.40 (548.35-548.46, 0.02 %); npp 500.46 (500.46-500.50, 0.01 %); opencv_cuda/fkl_batch 11.721 (11.705-11.735); npp/fkl_batch 10.697 (10.681-10.711)
+  N =  80: fkl_batch 52.71 (52.62-52.77, 0.28 %); opencv_cuda 628.17 (628.17-628.39, 0.03 %); npp 571.56 (571.51-571.79, 0.05 %); opencv_cuda/fkl_batch 11.922 (11.905-11.938); npp/fkl_batch 10.848 (10.832-10.861)
+  N =  90: fkl_batch 58.75 (58.74-58.77, 0.06 %); opencv_cuda 704.94 (704.78-705.05, 0.04 %); npp 643.00 (642.81-643.14, 0.05 %); opencv_cuda/fkl_batch 11.997 (11.996-12.002); npp/fkl_batch 10.944 (10.943-10.944)
+  N = 100: fkl_batch 64.98 (64.95-65.17, 0.34 %); opencv_cuda 797.20 (796.93-800.07, 0.39 %); npp 714.76 (714.70-718.61, 0.55 %); opencv_cuda/fkl_batch 12.274 (12.263-12.277); npp/fkl_batch 11.005 (10.998-11.027)
+  N = 110: fkl_batch 71.00 (70.98-71.06, 0.10 %); opencv_cuda 882.89 (882.65-885.52, 0.33 %); npp 791.87 (791.40-793.61, 0.28 %); opencv_cuda/fkl_batch 12.435 (12.434-12.462); npp/fkl_batch 11.152 (11.149-11.169)
+  N = 120: fkl_batch 77.06 (77.01-77.12, 0.14 %); opencv_cuda 978.02 (977.64-978.73, 0.11 %); npp 875.81 (875.71-878.19, 0.28 %); opencv_cuda/fkl_batch 12.691 (12.691-12.695); npp/fkl_batch 11.371 (11.365-11.388)
+  N = 130: fkl_batch 83.27 (83.24-83.41, 0.20 %); opencv_cuda 1075.15 (1074.98-1076.46, 0.14 %); npp 949.32 (949.04-951.74, 0.28 %); opencv_cuda/fkl_batch 12.909 (12.906-12.916); npp/fkl_batch 11.404 (11.396-11.410)
+  N = 140: fkl_batch 89.33 (89.32-89.49, 0.20 %); opencv_cuda 1166.46 (1166.02-1166.74, 0.06 %); npp 1025.32 (1025.26-1028.01, 0.27 %); opencv_cuda/fkl_batch 13.053 (13.037-13.060); npp/fkl_batch 11.479 (11.478-11.487)
+  N = 150: fkl_batch 95.51 (95.50-95.72, 0.22 %); opencv_cuda 1249.23 (1248.70-1249.26, 0.05 %); npp 1100.73 (1100.66-1103.56, 0.26 %); opencv_cuda/fkl_batch 13.075 (13.051-13.080); npp/fkl_batch 11.525 (11.524-11.529)
+whole_call / kernel_only of the medians (within 3 % of 1 = GPU-bound):
+  N =   1: fkl_batch 1.1424; opencv_cuda 1.1263; npp 1.0321
+  N =  10: fkl_batch 1.0401; opencv_cuda 1.0235; npp 0.9985
+  N =  20: fkl_batch 1.0280; opencv_cuda 1.0156; npp 0.9995
+  N =  30: fkl_batch 1.0154; opencv_cuda 1.0106; npp 0.9981
+  N =  40: fkl_batch 1.0074; opencv_cuda 1.0068; npp 0.9974
+  N =  50: fkl_batch 1.0034; opencv_cuda 1.0087; npp 0.9979
+  N =  60: fkl_batch 1.0036; opencv_cuda 1.0135; npp 0.9975
+  N =  70: fkl_batch 0.9996; opencv_cuda 1.0090; npp 0.9971
+  N =  80: fkl_batch 0.9976; opencv_cuda 1.0073; npp 0.9971
+  N =  90: fkl_batch 1.0046; opencv_cuda 1.0088; npp 0.9969
+  N = 100: fkl_batch 1.0056; opencv_cuda 1.0079; npp 0.9975
+  N = 110: fkl_batch 1.0072; opencv_cuda 1.0087; npp 1.0004
+  N = 120: fkl_batch 1.0079; opencv_cuda 1.0078; npp 0.9988
+  N = 130: fkl_batch 1.0068; opencv_cuda 1.0048; npp 0.9996
+  N = 140: fkl_batch 1.0067; opencv_cuda 1.0014; npp 1.0000
+  N = 150: fkl_batch 1.0059; opencv_cuda 1.0045; npp 1.0003
+repeat, N = 30 against results/rtx4090/e19-batched-box-fkl-batch/e19_batched_box_summary.csv: old median / new median / change / spread old, new / exceeds the larger spread? / ranges overlap? / above 3 %? / bound
+  fkl_batch whole_call: 22.11 / 22.04 us / -0.31 % / 0.19 %, 0.55 % / within the spread / NO overlap / below 3 % / GPU-bound
+  opencv_cuda whole_call: 239.12 / 238.84 us / -0.12 % / 0.97 %, 0.18 % / within the spread / overlap / below 3 % / GPU-bound
+  npp whole_call: 214.17 / 214.64 us / +0.22 % / 0.32 %, 0.08 % / within the spread / overlap / below 3 % / GPU-bound
+  fkl_batch kernel_only: 21.83 / 21.70 us / -0.59 % / 0.09 %, 0.13 % / EXCEEDS / NO overlap / below 3 % / GPU-bound
+  opencv_cuda kernel_only: 237.64 / 236.35 us / -0.55 % / 0.03 %, 0.06 % / EXCEEDS / NO overlap / below 3 % / GPU-bound
+  npp kernel_only: 212.17 / 215.05 us / +1.36 % / 0.13 %, 0.02 % / EXCEEDS / NO overlap / below 3 % / GPU-bound
+warmup (not used): the change of its mean against the quiet median, in %, per N:
+  N =   1: fkl_batch whole_call 4.72 (+0.1 %); opencv_cuda whole_call 9.95 (+2.1 %); npp whole_call 8.59 (+1.4 %); fkl_batch kernel_only 4.31 (+4.5 %); opencv_cuda kernel_only 8.96 (+3.6 %); npp kernel_only 8.39 (+2.2 %)
+  N =  10: fkl_batch whole_call 9.55 (-0.4 %); opencv_cuda whole_call 80.45 (-0.4 %); npp whole_call 72.39 (-0.1 %); fkl_batch kernel_only 9.22 (-0.0 %); opencv_cuda kernel_only 78.86 (-0.0 %); npp kernel_only 72.40 (-0.3 %)
+  N =  20: fkl_batch whole_call 15.75 (-0.4 %); opencv_cuda whole_call 159.44 (+0.1 %); npp whole_call 143.25 (-0.1 %); fkl_batch kernel_only 15.39 (+0.0 %); opencv_cuda kernel_only 156.49 (-0.3 %); npp kernel_only 143.42 (-0.1 %)
+  N =  30: fkl_batch whole_call 22.14 (+0.4 %); opencv_cuda whole_call 238.60 (-0.1 %); npp whole_call 214.31 (-0.2 %); fkl_batch kernel_only 21.68 (-0.1 %); opencv_cuda kernel_only 235.93 (-0.2 %); npp kernel_only 214.89 (-0.1 %)
+  N =  40: fkl_batch whole_call 28.17 (-0.2 %); opencv_cuda whole_call 318.24 (+0.3 %); npp whole_call 285.46 (-0.1 %); fkl_batch kernel_only 27.92 (-0.3 %); opencv_cuda kernel_only 314.26 (-0.3 %); npp kernel_only 286.06 (-0.1 %)
+  N =  50: fkl_batch whole_call 34.25 (-0.3 %); opencv_cuda whole_call 395.46 (-0.2 %); npp whole_call 356.13 (-0.2 %); fkl_batch kernel_only 33.98 (-0.7 %); opencv_cuda kernel_only 392.16 (-0.2 %); npp kernel_only 357.34 (-0.1 %)
+  N =  60: fkl_batch whole_call 40.65 (+0.1 %); opencv_cuda whole_call 472.79 (-0.1 %); npp whole_call 427.22 (-0.2 %); fkl_batch kernel_only 40.27 (-0.5 %); opencv_cuda kernel_only 466.95 (-0.0 %); npp kernel_only 428.50 (-0.1 %)
+  N =  70: fkl_batch whole_call 46.65 (-0.3 %); opencv_cuda whole_call 552.01 (-0.2 %); npp whole_call 498.11 (-0.2 %); fkl_batch kernel_only 46.36 (-0.9 %); opencv_cuda kernel_only 546.05 (-0.4 %); npp kernel_only 499.84 (-0.1 %)
+  N =  80: fkl_batch whole_call 52.57 (-0.0 %); opencv_cuda whole_call 632.18 (-0.1 %); npp whole_call 569.21 (-0.1 %); fkl_batch kernel_only 52.52 (-0.3 %); opencv_cuda kernel_only 627.59 (-0.1 %); npp kernel_only 571.11 (-0.1 %)
+  N =  90: fkl_batch whole_call 58.94 (-0.1 %); opencv_cuda whole_call 707.89 (-0.5 %); npp whole_call 639.83 (-0.2 %); fkl_batch kernel_only 58.48 (-0.5 %); opencv_cuda kernel_only 701.62 (-0.5 %); npp kernel_only 642.42 (-0.1 %)
+  N = 100: fkl_batch whole_call 65.34 (-0.0 %); opencv_cuda whole_call 802.26 (-0.2 %); npp whole_call 711.70 (-0.2 %); fkl_batch kernel_only 64.63 (-0.5 %); opencv_cuda kernel_only 795.22 (-0.2 %); npp kernel_only 714.08 (-0.1 %)
+  N = 110: fkl_batch whole_call 71.42 (-0.1 %); opencv_cuda whole_call 890.34 (-0.0 %); npp whole_call 791.00 (-0.1 %); fkl_batch kernel_only 70.76 (-0.3 %); opencv_cuda kernel_only 882.03 (-0.1 %); npp kernel_only 790.52 (-0.2 %)
+  N = 120: fkl_batch whole_call 77.53 (-0.2 %); opencv_cuda whole_call 982.98 (-0.3 %); npp whole_call 873.01 (-0.2 %); fkl_batch kernel_only 76.87 (-0.2 %); opencv_cuda kernel_only 975.59 (-0.2 %); npp kernel_only 875.18 (-0.1 %)
+  N = 130: fkl_batch whole_call 83.60 (-0.3 %); opencv_cuda whole_call 1078.23 (-0.2 %); npp whole_call 947.08 (-0.2 %); fkl_batch kernel_only 82.97 (-0.4 %); opencv_cuda kernel_only 1073.14 (-0.2 %); npp kernel_only 948.24 (-0.1 %)
+  N = 140: fkl_batch whole_call 89.75 (-0.2 %); opencv_cuda whole_call 1166.40 (-0.1 %); npp whole_call 1023.69 (-0.2 %); fkl_batch kernel_only 89.18 (-0.2 %); opencv_cuda kernel_only 1163.37 (-0.3 %); npp kernel_only 1024.20 (-0.1 %)
+  N = 150: fkl_batch whole_call 96.12 (+0.0 %); opencv_cuda whole_call 1254.19 (-0.1 %); npp whole_call 1100.52 (-0.1 %); fkl_batch kernel_only 95.56 (+0.1 %); opencv_cuda kernel_only 1249.42 (+0.0 %); npp kernel_only 1100.82 (+0.0 %)
+nsys (not used): the change of its mean against the quiet median, in %, per N:
+  N =   1: fkl_batch whole_call 6.35 (+34.8 %); opencv_cuda whole_call 15.92 (+63.4 %); npp whole_call 11.49 (+35.6 %); fkl_batch kernel_only 4.92 (+19.2 %); opencv_cuda kernel_only 9.88 (+14.2 %); npp kernel_only 9.04 (+10.1 %)
+  N =  10: fkl_batch whole_call 11.63 (+21.3 %); opencv_cuda whole_call 137.71 (+70.5 %); npp whole_call 91.46 (+26.2 %); fkl_batch kernel_only 10.12 (+9.8 %); opencv_cuda kernel_only 85.98 (+9.0 %); npp kernel_only 78.42 (+8.0 %)
+  N =  20: fkl_batch whole_call 18.00 (+13.9 %); opencv_cuda whole_call 269.53 (+69.1 %); npp whole_call 181.05 (+26.2 %); fkl_batch kernel_only 16.54 (+7.5 %); opencv_cuda kernel_only 170.55 (+8.7 %); npp kernel_only 155.35 (+8.2 %)
+  N =  30: fkl_batch whole_call 24.49 (+11.1 %); opencv_cuda whole_call 395.65 (+65.7 %); npp whole_call 267.15 (+24.5 %); fkl_batch kernel_only 23.07 (+6.3 %); opencv_cuda kernel_only 255.13 (+7.9 %); npp kernel_only 231.97 (+7.9 %)
+  N =  40: fkl_batch whole_call 30.81 (+9.2 %); opencv_cuda whole_call 530.70 (+67.3 %); npp whole_call 357.34 (+25.1 %); fkl_batch kernel_only 29.56 (+5.6 %); opencv_cuda kernel_only 339.67 (+7.8 %); npp kernel_only 309.25 (+8.0 %)
+  N =  50: fkl_batch whole_call 37.18 (+8.3 %); opencv_cuda whole_call 674.43 (+70.2 %); npp whole_call 464.53 (+30.2 %); fkl_batch kernel_only 36.01 (+5.2 %); opencv_cuda kernel_only 424.23 (+8.0 %); npp kernel_only 385.62 (+7.8 %)
+  N =  60: fkl_batch whole_call 43.56 (+7.3 %); opencv_cuda whole_call 815.24 (+72.3 %); npp whole_call 532.81 (+24.5 %); fkl_batch kernel_only 42.35 (+4.7 %); opencv_cuda kernel_only 508.77 (+8.9 %); npp kernel_only 463.05 (+7.9 %)
+  N =  70: fkl_batch whole_call 50.10 (+7.1 %); opencv_cuda whole_call 954.42 (+72.5 %); npp whole_call 628.07 (+25.9 %); fkl_batch kernel_only 48.77 (+4.2 %); opencv_cuda kernel_only 593.41 (+8.2 %); npp kernel_only 540.23 (+7.9 %)
+  N =  80: fkl_batch whole_call 56.72 (+7.9 %); opencv_cuda whole_call 1065.72 (+68.4 %); npp whole_call 733.11 (+28.6 %); fkl_batch kernel_only 55.11 (+4.5 %); opencv_cuda kernel_only 678.03 (+7.9 %); npp kernel_only 616.63 (+7.9 %)
+  N =  90: fkl_batch whole_call 62.61 (+6.1 %); opencv_cuda whole_call 1208.24 (+69.9 %); npp whole_call 806.05 (+25.7 %); fkl_batch kernel_only 61.49 (+4.7 %); opencv_cuda kernel_only 767.24 (+8.8 %); npp kernel_only 693.33 (+7.8 %)
+  N = 100: fkl_batch whole_call 68.95 (+5.5 %); opencv_cuda whole_call 1326.22 (+65.1 %); npp whole_call 904.65 (+26.9 %); fkl_batch kernel_only 67.80 (+4.3 %); opencv_cuda kernel_only 859.08 (+7.8 %); npp kernel_only 772.20 (+8.0 %)
+  N = 110: fkl_batch whole_call 75.37 (+5.4 %); opencv_cuda whole_call 1531.77 (+72.0 %); npp whole_call 994.98 (+25.6 %); fkl_batch kernel_only 74.11 (+4.4 %); opencv_cuda kernel_only 961.31 (+8.9 %); npp kernel_only 851.79 (+7.6 %)
+  N = 120: fkl_batch whole_call 81.74 (+5.2 %); opencv_cuda whole_call 1625.78 (+64.9 %); npp whole_call 1094.95 (+25.2 %); fkl_batch kernel_only 80.36 (+4.3 %); opencv_cuda kernel_only 1059.36 (+8.3 %); npp kernel_only 938.78 (+7.2 %)
+  N = 130: fkl_batch whole_call 88.07 (+5.0 %); opencv_cuda whole_call 1751.93 (+62.2 %); npp whole_call 1179.25 (+24.3 %); fkl_batch kernel_only 86.79 (+4.2 %); opencv_cuda kernel_only 1155.41 (+7.5 %); npp kernel_only 1023.15 (+7.8 %)
+  N = 140: fkl_batch whole_call 94.65 (+5.3 %); opencv_cuda whole_call 1949.19 (+66.9 %); npp whole_call 1296.66 (+26.5 %); fkl_batch kernel_only 93.12 (+4.3 %); opencv_cuda kernel_only 1250.66 (+7.2 %); npp kernel_only 1103.85 (+7.7 %)
+  N = 150: fkl_batch whole_call 100.82 (+4.9 %); opencv_cuda whole_call 2021.50 (+61.1 %); npp whole_call 1396.53 (+26.8 %); fkl_batch kernel_only 99.49 (+4.2 %); opencv_cuda kernel_only 1344.17 (+7.6 %); npp kernel_only 1183.94 (+7.6 %)

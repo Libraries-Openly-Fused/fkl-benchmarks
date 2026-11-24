@@ -103,6 +103,15 @@ if(TARGET e19_batched_box_cu)
     target_link_libraries(e19_batched_box_cu PRIVATE CUDA::nppicc CUDA::nppif)
 endif()
 
+# E19 crop sweep: E19's batched grey box pipeline (e19_batched_box, unchanged) with N crops of the frame, N = 1, 10, 20, ..., 150 chosen per
+# process (E19_CROPS); the 16 values are compiled in, since FKL's batched read takes N at compile time
+fklb_add_benchmark(e19_crop_sweep
+    BACKENDS cu LIBS fkl opencv npp
+    SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/stencil/e19_crop_sweep.cu")
+if(TARGET e19_crop_sweep_cu)
+    target_link_libraries(e19_crop_sweep_cu PRIVATE CUDA::nppicc CUDA::nppif)
+endif()
+
 # The data-size experiment with every size a multiple of 4 (increment 282272 instead of 282270) and only the one-channel pairs: OpenCV-CUDA's one-channel kernels are
 # vectorised (cv::transformSmart<4>) only when the element count is a multiple of 4, which the sizes of the paper's experiment alternate (results/rtx4090/e0-data-size-parity).
 fklb_add_benchmark(benchmark_image_resolution_MAD_loop_mul4
