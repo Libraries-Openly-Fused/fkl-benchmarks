@@ -2,6 +2,8 @@
 
 FKL #433 (branch `LTS-C++17-batched-filter-dpps`, head 4b11bc6) batches LinearFilterDPP, MedianFilterDPP and the four Quad DPPs, with each image at its own size, and adds vector types. This folder holds the one GPU window on the RX 9060 that its verification needs. The coordinator session granted it for de19bd3 (window.sh sha256 `452af663…`), on the condition that it start after #433's CI job on this runner.
 
+**Note, 2026-11-25:** #433 was merged by Oscar on 2026-11-24 at 22:02:02Z as `b10fc6609426bd18020b9213c7196b528fc677a8`, whose tree (`62024145`) is the tree of 4b11bc6, the head checked here. The pin move is fkl-benchmarks #60, and the HIP record is `../pin-move-devcode-24478f0-b10fc66/`.
+
 ## Results
 **Everything passed. The outputs are bit-identical before and after. The scalar median's times changed by -3.4 % to -0.2 %.**
 - **The run:**
