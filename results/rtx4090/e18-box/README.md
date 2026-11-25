@@ -1,5 +1,7 @@
 # E18 box window (e18-box), 2026-11-17, 12:09:14-12:10:01: the box filter after a resize, timed (RTX 4090)
 
+**Note, 2026-11-25:** `e18_box_cu` was timed again at FKL 24478f0 (A) and at the pin b10fc66 (B), the merge of FKL #433 that changes `linearFilterDPPKernel`, in `../e18-retime-b10fc66/` (24 runs, the binaries of #60's identity check). This record's numbers are unchanged. B against A, same window: the 16 FKL numbers -0.33 % to +1.78 % (B slower in most), `opencv_cuda` and `npp` -0.12 % to +0.26 %; no number crosses the 3 % flag. A and B against this record: no number crosses it either (at most +1.56 %).
+
 This window timed E18 with the 3 x 3 box filter (`opencv-cuda/stencil/e18_box.cu` at 7dca510, branch `e18-box`).
 
 **The pipeline:** a 3840 x 2160 uchar3 frame (E4's seeded source) is processed in three steps, in uchar from start to end:

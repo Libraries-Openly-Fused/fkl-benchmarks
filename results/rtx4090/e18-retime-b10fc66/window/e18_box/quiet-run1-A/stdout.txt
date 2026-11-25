@@ -1,0 +1,68 @@
+E18 box: checks, then the timing
+fused kernel fkl_box_asym: 40 registers, 4284 B static shared, 0 B local; 12 blocks of 128 threads per SM = 48 of 48 warps (100 %); arguments (bytes): details 24, reads 64 (image 48, coefficient 12), multiply 1, accumulate 1, output 24, total 114
+fused kernel fkl_box_halfpixel: 40 registers, 4284 B static shared, 0 B local; 12 blocks of 128 threads per SM = 48 of 48 warps (100 %); arguments (bytes): details 24, reads 64 (image 48, coefficient 12), multiply 1, accumulate 1, output 24, total 114
+fused kernel fkl_trunc_asym: 40 registers, 4284 B static shared, 0 B local; 12 blocks of 128 threads per SM = 48 of 48 warps (100 %); arguments (bytes): details 24, reads 64 (image 48, coefficient 12), multiply 1, accumulate 1, output 40, total 130
+fused kernel fkl_trunc_halfpixel: 40 registers, 4284 B static shared, 0 B local; 12 blocks of 128 threads per SM = 48 of 48 warps (100 %); arguments (bytes): details 24, reads 64 (image 48, coefficient 12), multiply 1, accumulate 1, output 40, total 130
+exact resize ASYMMETRIC: denominator 9, 0 exact ties; double resize within 7.7307e-11, its rounding differs from the exact one at 0 values
+exact resize HALF_PIXEL: denominator 36, 636525 exact ties; double resize within 7.97513e-11, its rounding differs from the exact one at 201756 values
+resize: fkl_read_chain_asym vs exact_resize_ASYMMETRIC: 0 values / 0 pixels differ, max 0 levels (0 above, 0 below); 0 at exact ties, the others within -1 of a half level; 0 of the 0 exact ties rounded up
+resize: fkl_read_chain_halfpixel vs exact_resize_HALF_PIXEL: 201593 values / 193530 pixels differ, max 1 levels (103564 above, 98029 below); 201302 at exact ties, the others within 0.0277778 of a half level; 323816 of the 636525 exact ties rounded up
+resize: opencv_cuda vs exact_resize_ASYMMETRIC: 0 values / 0 pixels differ, max 0 levels (0 above, 0 below); 0 at exact ties, the others within -1 of a half level; 0 of the 0 exact ties rounded up
+resize: fkl_read_chain_asym vs opencv_cuda_resize: 0 values / 0 pixels differ, max 0 levels (0 above, 0 below); 0 at exact ties, the others within -1 of a half level; 0 of the 0 exact ties rounded up
+resize: npp vs exact_resize_HALF_PIXEL: 318328 values / 293230 pixels differ, max 1 levels (220312 above, 98016 below); 318037 at exact ties, the others within 0.0277778 of a half level; 440577 of the 636525 exact ties rounded up
+resize: fkl_read_chain_halfpixel vs npp_resize: 116849 values / 100094 pixels differ, max 1 levels (44 above, 116805 below); 116849 at exact ties, the others within -1 of a half level; 323816 of the 636525 exact ties rounded up
+box: fkl_box vs exact_box: 0 values / 0 pixels differ, max 0 levels (0 above, 0 below); 0 at exact ties, the others within -1 of a half level; 0 of the 0 exact ties rounded up
+box: opencv_cuda vs exact_box: 2770188 values / 1719779 pixels differ, max 1 levels (0 above, 2770188 below); 0 at exact ties, the others within 0.388889 of a half level; 0 of the 0 exact ties rounded up
+box: npp vs exact_box: 2770188 values / 1719779 pixels differ, max 1 levels (0 above, 2770188 below); 0 at exact ties, the others within 0.388889 of a half level; 0 of the 0 exact ties rounded up
+box: opencv_cuda vs exact_box_truncated: 0 values / 0 pixels differ, max 0 levels (0 above, 0 below); 0 at exact ties, the others within -1 of a half level; 0 of the 0 exact ties rounded up
+box: npp vs exact_box_truncated: 0 values / 0 pixels differ, max 0 levels (0 above, 0 below); 0 at exact ties, the others within -1 of a half level; 0 of the 0 exact ties rounded up
+box: fkl_trunc vs exact_box_truncated: 0 values / 0 pixels differ, max 0 levels (0 above, 0 below); 0 at exact ties, the others within -1 of a half level; 0 of the 0 exact ties rounded up
+pipeline: fkl_box_asym vs exact_pipeline_ASYMMETRIC: 0 values / 0 pixels differ, max 0 levels (0 above, 0 below)
+pipeline: fkl_box_asym vs exact_box_of_own_resize: 0 values / 0 pixels differ, max 0 levels (0 above, 0 below)
+pipeline: fkl_box_halfpixel vs exact_pipeline_HALF_PIXEL: 183078 values / 178071 pixels differ, max 1 levels (94402 above, 88676 below)
+pipeline: fkl_box_halfpixel vs exact_box_of_own_resize: 0 values / 0 pixels differ, max 0 levels (0 above, 0 below)
+pipeline: fkl_trunc_asym vs exact_pipeline_ASYMMETRIC: 2762319 values / 1717604 pixels differ, max 1 levels (0 above, 2762319 below)
+pipeline: fkl_trunc_asym vs exact_pipeline_truncated_ASYMMETRIC: 0 values / 0 pixels differ, max 0 levels (0 above, 0 below)
+pipeline: fkl_trunc_asym vs exact_box_truncated_of_own_resize: 0 values / 0 pixels differ, max 0 levels (0 above, 0 below)
+pipeline: fkl_trunc_halfpixel vs exact_pipeline_HALF_PIXEL: 2763971 values / 1717771 pixels differ, max 1 levels (6 above, 2763965 below)
+pipeline: fkl_trunc_halfpixel vs exact_pipeline_truncated_HALF_PIXEL: 183571 values / 178567 pixels differ, max 1 levels (93976 above, 89595 below)
+pipeline: fkl_trunc_halfpixel vs exact_box_truncated_of_own_resize: 0 values / 0 pixels differ, max 0 levels (0 above, 0 below)
+pipeline: opencv_cuda vs exact_pipeline_ASYMMETRIC: 2762319 values / 1717604 pixels differ, max 1 levels (0 above, 2762319 below)
+pipeline: opencv_cuda vs exact_pipeline_truncated_ASYMMETRIC: 0 values / 0 pixels differ, max 0 levels (0 above, 0 below)
+pipeline: opencv_cuda vs exact_box_truncated_of_own_resize: 0 values / 0 pixels differ, max 0 levels (0 above, 0 below)
+pipeline: npp vs exact_pipeline_HALF_PIXEL: 2648272 values / 1681047 pixels differ, max 1 levels (87 above, 2648185 below)
+pipeline: npp vs exact_pipeline_truncated_HALF_PIXEL: 280340 values / 268599 pixels differ, max 1 levels (200291 above, 80049 below)
+pipeline: npp vs exact_box_truncated_of_own_resize: 0 values / 0 pixels differ, max 0 levels (0 above, 0 below)
+pipeline: fkl_asym_once vs exact_pipeline_ASYMMETRIC: 0 values / 0 pixels differ, max 0 levels (0 above, 0 below)
+pipeline: fkl_asym_once vs exact_box_of_own_resize: 0 values / 0 pixels differ, max 0 levels (0 above, 0 below)
+pipeline: fkl_half_once vs exact_pipeline_HALF_PIXEL: 183078 values / 178071 pixels differ, max 1 levels (94402 above, 88676 below)
+pipeline: fkl_half_once vs exact_box_of_own_resize: 0 values / 0 pixels differ, max 0 levels (0 above, 0 below)
+pipeline: fkl_trunc_asym_once vs exact_pipeline_ASYMMETRIC: 2762319 values / 1717604 pixels differ, max 1 levels (0 above, 2762319 below)
+pipeline: fkl_trunc_asym_once vs exact_pipeline_truncated_ASYMMETRIC: 0 values / 0 pixels differ, max 0 levels (0 above, 0 below)
+pipeline: fkl_trunc_asym_once vs exact_box_truncated_of_own_resize: 0 values / 0 pixels differ, max 0 levels (0 above, 0 below)
+pipeline: fkl_trunc_halfpixel_once vs exact_pipeline_HALF_PIXEL: 2763971 values / 1717771 pixels differ, max 1 levels (6 above, 2763965 below)
+pipeline: fkl_trunc_halfpixel_once vs exact_pipeline_truncated_HALF_PIXEL: 183571 values / 178567 pixels differ, max 1 levels (93976 above, 89595 below)
+pipeline: fkl_trunc_halfpixel_once vs exact_box_truncated_of_own_resize: 0 values / 0 pixels differ, max 0 levels (0 above, 0 below)
+pipeline: fkl_box_asym vs opencv_cuda: 2762319 values / 1717604 pixels differ, max 1 levels (2762319 above, 0 below)
+pipeline: fkl_box_halfpixel vs npp: 2653824 values / 1683081 pixels differ, max 1 levels (2653824 above, 0 below)
+pipeline: fkl_trunc_asym vs opencv_cuda: 0 values / 0 pixels differ, max 0 levels (0 above, 0 below)
+pipeline: fkl_trunc_halfpixel vs npp: 115927 values / 113849 pixels differ, max 1 levels (33 above, 115894 below)
+pipeline: fkl_asym_once vs opencv_cuda: 2762319 values / 1717604 pixels differ, max 1 levels (2762319 above, 0 below)
+pipeline: fkl_half_once vs npp: 2653824 values / 1683081 pixels differ, max 1 levels (2653824 above, 0 below)
+pipeline: fkl_trunc_asym_once vs opencv_cuda: 0 values / 0 pixels differ, max 0 levels (0 above, 0 below)
+pipeline: fkl_trunc_halfpixel_once vs npp: 115927 values / 113849 pixels differ, max 1 levels (33 above, 115894 below)
+once: fkl_asym_once vs fkl_box_asym: 0 values / 0 pixels differ, max 0 levels (0 above, 0 below)
+once: fkl_half_once vs fkl_box_halfpixel: 0 values / 0 pixels differ, max 0 levels (0 above, 0 below)
+once: fkl_trunc_asym_once vs fkl_trunc_asym: 0 values / 0 pixels differ, max 0 levels (0 above, 0 below)
+once: fkl_trunc_halfpixel_once vs fkl_trunc_halfpixel: 0 values / 0 pixels differ, max 0 levels (0 above, 0 below)
+E18 box checks passed
+fkl_box_asym: whole call mean 0.0423517 ms (min 0.041632); kernel only mean 0.0423952 ms (min 0.04096), host preparation mean 0.0001481 ms
+fkl_box_halfpixel: whole call mean 0.0404784 ms (min 0.039936); kernel only mean 0.041985 ms (min 0.041984), host preparation mean 0.0001386 ms
+fkl_trunc_asym: whole call mean 0.0391101 ms (min 0.038688); kernel only mean 0.0401085 ms (min 0.039936), host preparation mean 0.000141 ms
+fkl_trunc_halfpixel: whole call mean 0.0393402 ms (min 0.038912); kernel only mean 0.0408586 ms (min 0.039936), host preparation mean 0.0001485 ms
+opencv_cuda: whole call mean 0.0481702 ms (min 0.047104); kernel only mean 0.049152 ms (min 0.049152), host preparation mean 7.23e-05 ms
+npp: whole call mean 0.033417 ms (min 0.032768); kernel only mean 0.0338915 ms (min 0.033792), host preparation mean 4.58e-05 ms
+fkl_asym_once: whole call mean 0.0400419 ms (min 0.039776); kernel only mean 0.0412378 ms (min 0.04096), host preparation mean 3.72e-05 ms
+fkl_half_once: whole call mean 0.0406589 ms (min 0.039936); kernel only mean 0.0419885 ms (min 0.041984), host preparation mean 3.84e-05 ms
+fkl_trunc_asym_once: whole call mean 0.039359 ms (min 0.03872); kernel only mean 0.0402435 ms (min 0.039936), host preparation mean 3.79e-05 ms
+fkl_trunc_halfpixel_once: whole call mean 0.0394771 ms (min 0.038912); kernel only mean 0.0409498 ms (min 0.039936), host preparation mean 3.84e-05 ms
