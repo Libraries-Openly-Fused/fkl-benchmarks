@@ -7,7 +7,8 @@ head, and its tree is 4b11bc6's (62024145c9f1a1a8aa55033d182e87bbdd448827).
 fkl-benchmarks #60 (branch `pin-fkl-433`, head 2160c70d34f980b87601bebf7ad16658184a019f, one commit on a8f9daa) moves `external/fkl` from
 24478f0 to b10fc66. It also ports the details of the programs that call LinearFilterDPP: in the HIP programs these are `rpp/e18_box.h`,
 `rpp/e19_batched_box.h` and `rpp/e19_crop_sweep.h`, changed by `../task-b-gpu-window/fklb-after-details-port.diff` (sha256 ca8cc3d6...).
-This folder is the HIP evidence for that move.
+#60 was merged on 2026-11-24 at 23:32:55Z as f73522d5ebf902dcf7ec6808029392b75ca9fe1f (parents b7dad9b and 3564002). Between 2160c70
+and f73522d only `results/` changed, so this record holds for the pin as merged. This folder is the HIP evidence for that move.
 
 The check: every HIP program of this repository was built twice, once at a8f9daa with FKL 24478f0 (A) and once at 2160c70 with FKL b10fc66
 (B), with the same tool and flags. Their gfx1200 device code was compared function by function. For the two E19 programs, the x86-64 host
@@ -111,7 +112,7 @@ with GNU objdump 2.46. `step0/run_checks.sh` writes every output of this folder 
 - **The CUDA programs.** They are the NVIDIA session's check of the same move (#60).
 - **Run times.** Nothing was run.
 - **The CPU code** of the `_cpp` and opencv-cpu programs was not compared.
-- **The Pins note of `../README.md`** is not changed here. It changes after #60 is merged, as with #45.
+- **The Pins note of `../README.md`** was updated in this PR after #60 was merged, as with #45.
 
 ## Files
 
