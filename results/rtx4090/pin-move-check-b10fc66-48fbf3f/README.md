@@ -9,8 +9,28 @@ fkl-benchmarks #66 (branch `pin-fkl-435`) moves `external/fkl` to it. This recor
 - AMD's two commits: ede9e5e (`external/fkl` from b10fc66 to 48fbf3f) and a4b493c (the HIP programs, `../../rx9060/pin-move-devcode-b10fc66-48fbf3f/`, #67);
 - the four CUDA commits of this record (section 1): f3d66da, b51e53f, 8165270 and 2518c75.
 
-**The branch has one more commit, 339825b**, comments and prose only (section 1.1). It changes no compiled token and no line number, so
-everything in this record holds for 339825b too.
+**The branch had three more commits after 2518c75:**
+- **339825b:** comments and prose only (section 1.1). It changes no compiled token and no line number, so everything in this record holds
+  for 339825b too.
+- **ccfbba6:** the pin moved to #435's next head, d1cff06. That is 48fbf3f plus Oscar's fix of finding A (section 3.5), in
+  `flash_attention_mma.h` only. Its CUDA check is the section "The new head d1cff06 (fix A)" of `../fkl-pr435-check/` (#69, merged as
+  7c1c8a2):
+  - **device code:** identical to 48fbf3f in FKL's tests, the attention harness and E16;
+  - **host code:** in E16, the only change is that `flashAttentionMmaSplits`' attribute call moves into its one-time initializer.
+    `e16_query_tile` is identical. A timed call of the 6 large kernels sets the attribute once again, as at b10fc66;
+  - **the window:** FKL's 59 CUDA tests pass at d1cff06, and the 32 attention outputs are identical bit for bit to 48fbf3f's.
+- **6a23721:** the pin moved to #435 as merged, 304492a (below).
+
+**As merged.**
+- **FKL #435** was merged into LTS-C++17 by Oscar as `304492af4d777165bd556fdd6113439635724d02` (2026-11-26 18:34:17 +01:00), with
+  parents b10fc66 and d1cff06. Its tree is d1cff06's: `git rev-parse 304492a^{tree}` and `d1cff06^{tree}` are both
+  `82c51c23266900e802b371f7d00d3f95a8533545`, and no file differs.
+- **fkl-benchmarks #66** was merged into main as `af96aefb9f82aa9fa563b7967b8ee147ad21df7d`, with parents 7c1c8a2 and 6a23721.
+  `external/fkl` = 304492a, and the merge changes exactly #66's 24 files.
+
+So the record holds for the pin as merged:
+- everything checked here at 2518c75 / 48fbf3f;
+- with E16's attribute call as fixed in d1cff06, the same tree as 304492a.
 
 **The checks.** Every CUDA program of the repository was built twice, with the same tools and flags:
 - base: fkl-benchmarks 976e42b (the code of main bd019f6) with FKL b10fc66, its gitlink;
@@ -48,7 +68,7 @@ two frozen programs (compiled only, never run).
   - **E16:** every row differs, because the port moves FKL's automatic choice into the program (QA3). Its kernels are the measured ones (the choice
     check below). One difference is inside the timed calls. For the 6 measured MMA kernels with more than 48,000 B of dynamic shared memory, the
     head calls `cudaFuncSetAttribute` **twice per call** (in `fk::flashAttentionMmaSplits` and in the executor), where the base called it once
-    (section 3.5). Its effect on a time is not measured here.
+    (section 3.5). Its effect on a time is not measured here. **Fixed in d1cff06**, which is the tree as merged; see the top.
 - **Host code, the measured binary against main** (sha256 of each binary checked against its record):
   - **E1, E2, E16, NPP, CPU-time, E4 build-once (f534a38):** every function the timed calls reach is identical up to `__LINE__` and the
     build path. What differs is outside them: the build-information header (`writeSystemInfoHeader`), and for E2 one CSV note string in `launch()`.
@@ -329,6 +349,11 @@ For these kernels:
 
 That is one `cudaFuncSetAttribute` more in each launch of E16's timed blocks (event `a`, the block of launches, event `b`). The occupancy query
 of the split decision is made once per kernel type at both commits (a static local).
+
+**Fixed in d1cff06**, Oscar's decision on this finding. `flashAttentionMmaSplits` now sets the attribute inside the initializer of its static
+`wave`, and the executor sets it before each launch, so it is set once per call again. The pin as merged, 304492a, has d1cff06's tree. The check is the
+d1cff06 section of `../fkl-pr435-check/`: the 11 call sites of `flashAttentionMmaSplits` in `e16_attention_cu` move into the initializer
+(0 / 35 becomes 11 / 24), and the device code is identical.
 
 **The measured binary against main** (f27c605): all 37 timed intervals and everything they reach are identical, up to `__LINE__` and the path.
 
