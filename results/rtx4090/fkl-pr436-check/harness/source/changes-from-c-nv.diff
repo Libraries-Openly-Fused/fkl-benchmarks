@@ -1,0 +1,731 @@
+--- pr435_common.h
++++ pr436_common.h
+@@ -1,7 +1,7 @@
+-/* Task C-NV: the before/after output harness of FKL PR #435 (CUDA, RTX 4090).
+-   Common helpers of pr435_image.cu and pr435_attention.cu. Each program is compiled twice, once against FKL b10fc66 (the
+-   base) and once against e322cad (the head, with -DPR435_HEAD); only the calls into FKL differ between the two builds
+-   (#ifdef PR435_HEAD). Every case runs once on fixed inputs (an integer hash of the coordinates: no random generator) and
++/* Task C-MAIN-NV: the before/after output harness of FKL PR #436 (task C on FKL main; CUDA, RTX 4090), adapted from task C-NV's
++   harness of FKL PR #435 (scratch/pr435/harness/pr435_*). Common helpers of pr436_image.cu and pr436_attention.cu. Each program is
++   compiled twice, once against FKL main ebb3891 (the base) and once against #436's head 1df2738 (with -DPR436_HEAD); only the calls
++   into FKL differ between the two builds (#ifdef PR436_HEAD). Every case runs once on fixed inputs (an integer hash of the coordinates: no random generator) and
+    writes the bytes of its output to <out dir>/<case>.bin; compare_harness.py compares the two folders. Every output buffer
+    is filled with 0xff bytes before the call, so an element the call does not write keeps that pattern. Nothing is timed. */
+ #pragma once
+@@ -16,15 +16,15 @@
+ 
+ #include <cuda_runtime.h>
+ 
+-namespace h435 {
++namespace h436 {
+ 
+ inline std::string g_out;
+ inline int g_files = 0;
+ 
+-#ifdef PR435_HEAD
+-constexpr const char* SIDE = "head (FKL e322cad API: executeOperations<DPP>)";
++#ifdef PR436_HEAD
++constexpr const char* SIDE = "head (FKL #436 1df2738 API: executeOperations<DPP>)";
+ #else
+-constexpr const char* SIDE = "base (FKL b10fc66 API: the per-DPP entry functions)";
++constexpr const char* SIDE = "base (FKL main ebb3891 API: the per-DPP entry functions)";
+ #endif
+ 
+ inline uint32_t hash32(uint32_t x) {
+@@ -110,4 +110,4 @@
+     return 0;
+ }
+ 
+-} // namespace h435
++} // namespace h436
+--- pr435_image.cu
++++ pr436_image.cu
+@@ -1,13 +1,17 @@
+-/* Task C-NV harness, image DPPs: LinearFilterDPP, MedianFilterDPP, MorphologyDPP (single images and batches, the linear
+-   and median batches with per-image sizes), the four Quad DPPs (BoxFilterQuad, ConvQuad, MedianQuad, MorphQuad: batches of
+-   crops of different sizes and single vector images), TransformDPP and DivergentBatchTransformDPP, all on ParArch::GPU_NVIDIA.
+-   The base build calls the entry functions of b10fc66 (executeLinearFilter, executeBoxFilter, executeMedianFilter,
+-   executeErode/Dilate/Open/Close, executeBoxBlur, executeMorphology, execute{BoxFilter,Conv,Median,Morph}Quad<DPP>); the
+-   head build calls executeOperations<DPP>(stream, details, iOps...) of e322cad, with the arguments the PR says the callers
+-   build for the removed convenience functions (ConstantFilterRead of 1 / (kw * kh) with Mul and Add for executeBoxFilter;
+-   make_tuple(Min / Max ...) for erode, dilate, open, close; fk::boxBlurReducers<T, PASSES>(details) for executeBoxBlur).
+-   TransformDPP and DivergentBatchTransformDPP have the same call at both commits. See pr435_common.h. */
+-#include "pr435_common.h"
++/* Task C-MAIN-NV harness (FKL #436, task C on FKL main), image DPPs on ParArch::GPU_NVIDIA: LinearFilterDPP (with the box filter),
++   MedianFilterDPP, MorphologyDPP (erode, dilate, open, close, the box blur and explicit reducers), the four Quad DPPs
++   (BoxFilterQuad, ConvQuad, MedianQuad, MorphQuad), TransformDPP and DivergentBatchTransformDPP. Adapted from task C-NV's
++   harness of FKL #435 (scratch/pr435/harness/pr435_image.cu) to FKL main's image DPPs, which differ from LTS-C++17's (#433 is
++   not on main): the details carry the image's width and height, each call filters one image (no batches), and the Quad DPPs take
++   scalar pixels; so every case here is one image of a scalar type (float or uchar).
++   The base build calls the entry functions of main ebb3891 (executeLinearFilter, executeBoxFilter, executeMedianFilter,
++   executeErode/Dilate/Open/Close, executeBoxBlur, executeMorphology, which return false for invalid details, and
++   execute{BoxFilter,Conv,Median,Morph}Quad<DPP>); the head build calls executeOperations<DPP>(stream, details, iOps...) of
++   1df2738, with the arguments the removed convenience functions built (executeBoxFilter: ConstantFilterRead of
++   1 / (kw * kh) with Mul and Add, as main's executeBoxFilter does at ebb3891; make_tuple(Min / Max ...) for erode, dilate,
++   open, close; fk::boxBlurReducers<T, PASSES>(details) for executeBoxBlur). TransformDPP and DivergentBatchTransformDPP have
++   the same call at both commits. See pr436_common.h. */
++#include "pr436_common.h"
+ 
+ #include <fused_kernel/fused_kernel.h>
+ #include <fused_kernel/algorithms/basic_ops/arithmetic.h>
+@@ -27,22 +31,19 @@
+ #include <array>
+ #include <type_traits>
+ 
+-using namespace fk;
+-using namespace h435;
++using namespace h436;
+ 
+-namespace {
++// A named namespace, not an unnamed one: on FKL main, fk has its own vector types (fk::uint3, ...), and the host stub code that nvcc
++// adds at global scope names CUDA's uint3. A using-directive in an unnamed namespace would reach the global scope too; FKL main's
++// tests also keep theirs in a narrower scope.
++namespace h436run {
++using namespace fk;
+ 
+ constexpr ParArch GPU = ParArch::GPU_NVIDIA;
+ constexpr MemType MEM = MemType::DeviceAndPinned;
+ using GpuStream = Stream_<ParArch::GPU_NVIDIA>;
+ 
+ constexpr int FW = 61, FH = 43;
+-struct Rc { int x, y, w, h; };
+-// three crops of different sizes, two of them on the frame's edges (the linear and median batches, the Quad batches)
+-constexpr std::array<Rc, 3> VAR_CROPS{{{0, 0, 21, 13}, {38, 29, 23, 14}, {12, 9, 17, 19}}};
+-constexpr int VAR_MAX_W = 23, VAR_MAX_H = 19;
+-// three crops of one size (the morphology batches: MorphologyDPPDetails has one width and height)
+-constexpr std::array<Rc, 3> EQ_CROPS{{{0, 0, 20, 14}, {41, 29, 20, 14}, {12, 9, 20, 14}}};
+ 
+ template <typename T>
+ T pixel(const int x, const int y, const int salt) {
+@@ -88,19 +89,6 @@
+     t.upload(s);
+     return t;
+ }
+-template <typename T>
+-std::array<Ptr2D<T>, 3> cropsOf(const Ptr2D<T>& f, const std::array<Rc, 3>& r) {
+-    std::array<Ptr2D<T>, 3> c;
+-    for (size_t i = 0; i < 3; ++i)
+-        c[i] = f.crop2D(Point{r[i].x, r[i].y, 0}, PtrDims<ND::_2D>(static_cast<uint>(r[i].w), static_cast<uint>(r[i].h)));
+-    return c;
+-}
+-template <typename T>
+-std::array<Ptr2D<T>, 3> filledOutputs(GpuStream& s, const std::array<Rc, 3>& r) {
+-    std::array<Ptr2D<T>, 3> o;
+-    for (size_t i = 0; i < 3; ++i) o[i] = filled<T>(s, r[i].w, r[i].h);
+-    return o;
+-}
+ // downloads and writes every element in row order (no pitch padding)
+ template <typename T>
+ void dump(GpuStream& s, const std::string& name, Ptr2D<T>& p) {
+@@ -123,10 +111,6 @@
+     writeBin(name, v.data(), v.size() * sizeof(T));
+ }
+ template <typename T>
+-void dump(GpuStream& s, const std::string& name, std::array<Ptr2D<T>, 3>& outs) {
+-    for (size_t i = 0; i < 3; ++i) dump(s, name + "_image" + std::to_string(i), outs[i]);
+-}
+-template <typename T>
+ Ptr2D<T> coefficients(GpuStream& s, const int kw, const int kh, const int salt) {
+     Ptr2D<T> k(static_cast<uint>(kw), static_cast<uint>(kh), 0, MEM);
+     for (int y = 0; y < kh; ++y)
+@@ -145,30 +129,28 @@
+ // ---- the calls: the only lines that differ between the base and the head build ----
+ template <typename D, typename Reads, typename M, typename A, typename W>
+ void runLinear(GpuStream& s, const D& d, const Reads& r, const M& m, const A& a, const W& w) {
+-#ifdef PR435_HEAD
++#ifdef PR436_HEAD
+     executeOperations<LinearFilterDPP<GPU, D>>(s, d, r, m, a, w);
+ #else
+     require(executeLinearFilter(d, r, m, a, w, s), "executeLinearFilter returned false");
+ #endif
+ }
+-// executeBoxFilter(details, image, write, 1.f, stream) at the base; the PR's replacement at the head
++// executeBoxFilter(details, image, write, 1, stream) at the base; at the head, what it built (main ebb3891 linear_filter.h:333-339):
++// the coefficient scale / (kw * kh) in the image type, a ConstantFilterRead of it, Mul and Add of that type
+ template <typename D, typename R, typename W>
+ void runBoxFilter(GpuStream& s, const D& d, const R& image, const W& w) {
+-#ifdef PR435_HEAD
+     using T = typename D::ValueType;
+-    using Acc = typename D::AccumulatorType;
+-    const auto coefficient = ConstantFilterRead<Acc>::build(
+-        make_set<Acc>(1.f / static_cast<float>(d.kernelWidth * d.kernelHeight)));
+-    executeOperations<LinearFilterDPP<GPU, D>>(s, d, make_tuple(image, coefficient),
+-                                               Mul<T, Acc, Acc, UnaryType>::build(),
+-                                               Add<Acc, Acc, Acc, UnaryType>::build(), w);
++#ifdef PR436_HEAD
++    const T coefficient = static_cast<T>(1) / static_cast<T>(d.kernelWidth * d.kernelHeight);
++    executeOperations<LinearFilterDPP<GPU, D>>(s, d, make_tuple(image, ConstantFilterRead<T>::build(coefficient)),
++                                               Mul<T, T, T, UnaryType>::build(), Add<T, T, T, UnaryType>::build(), w);
+ #else
+-    require(executeBoxFilter(d, image, w, 1.f, s), "executeBoxFilter returned false");
++    require(executeBoxFilter(d, image, w, static_cast<T>(1), s), "executeBoxFilter returned false");
+ #endif
+ }
+ template <typename D, typename R, typename W, typename Sel>
+ void runMedian(GpuStream& s, const D& d, const R& r, const W& w, const Sel& sel) {
+-#ifdef PR435_HEAD
++#ifdef PR436_HEAD
+     executeOperations<MedianFilterDPP<GPU, D>>(s, d, r, w, sel);
+ #else
+     require(executeMedianFilter(d, r, w, sel, s), "executeMedianFilter returned false");
+@@ -176,7 +158,7 @@
+ }
+ template <typename D, typename R, typename W, typename Red>
+ void runMorphology(GpuStream& s, const D& d, const R& r, const W& w, const Red& red) {
+-#ifdef PR435_HEAD
++#ifdef PR436_HEAD
+     executeOperations<MorphologyDPP<GPU, D>>(s, d, r, w, red);
+ #else
+     require(executeMorphology(d, r, w, red, s), "executeMorphology returned false");
+@@ -186,7 +168,7 @@
+ template <Morph M, typename D, typename R, typename W>
+ void runMorphNamed(GpuStream& s, const D& d, const R& r, const W& w) {
+     using T = typename D::ValueType;
+-#ifdef PR435_HEAD
++#ifdef PR436_HEAD
+     const auto mn = Min<T, T, T, UnaryType>::build();
+     const auto mx = Max<T, T, T, UnaryType>::build();
+     if constexpr (M == Morph::Erode) executeOperations<MorphologyDPP<GPU, D>>(s, d, r, w, make_tuple(mn));
+@@ -204,32 +186,31 @@
+ }
+ template <int PASSES, typename D, typename R, typename W>
+ void runBoxBlur(GpuStream& s, const D& d, const R& r, const W& w) {
+-#ifdef PR435_HEAD
++#ifdef PR436_HEAD
+     using T = typename D::ValueType;
+     executeOperations<MorphologyDPP<GPU, D>>(s, d, r, w, boxBlurReducers<T, PASSES>(d));
+ #else
+     require(executeBoxBlur<PASSES>(d, r, w, s), "executeBoxBlur returned false");
+ #endif
+ }
++// main's execute*Quad<DPP> return nothing (they throw for invalid details)
+ template <typename DPP, typename Details, typename... IOps>
+ void runQuad(GpuStream& s, const Details& d, const IOps&... iOps) {
+-#ifdef PR435_HEAD
++#ifdef PR436_HEAD
+     executeOperations<DPP>(s, d, iOps...);
+ #else
+-    bool ok;
+-    if constexpr (std::is_same_v<Details, BoxFilterQuadDetails>) ok = executeBoxFilterQuad<DPP>(s, d, iOps...);
+-    else if constexpr (std::is_same_v<Details, ConvQuadDetails>) ok = executeConvQuad<DPP>(s, d, iOps...);
+-    else if constexpr (std::is_same_v<Details, MedianQuadDetails>) ok = executeMedianQuad<DPP>(s, d, iOps...);
+-    else ok = executeMorphQuad<DPP>(s, d, iOps...);
+-    require(ok, "execute*Quad returned false");
++    if constexpr (std::is_same_v<Details, BoxFilterQuadDetails>) executeBoxFilterQuad<DPP>(s, d, iOps...);
++    else if constexpr (std::is_same_v<Details, ConvQuadDetails>) executeConvQuad<DPP>(s, d, iOps...);
++    else if constexpr (std::is_same_v<Details, MedianQuadDetails>) executeMedianQuad<DPP>(s, d, iOps...);
++    else executeMorphQuad<DPP>(s, d, iOps...);
+ #endif
+ }
+ 
+-// ---- LinearFilterDPP ----
++// ---- LinearFilterDPP (details: width, height, kernelWidth, kernelHeight, anchorX, anchorY) ----
+ void linearCases(GpuStream& s) {
+     {   // float, a 5x3 kernel read from a buffer, anchor (2, 1)
+         using D = LinearFilterDPPDetails<float>;
+-        const D d{5, 3, 2, 1};
++        const D d{FW, FH, 5, 3, 2, 1};
+         auto img = frame<float>(s, 1);
+         auto ker = coefficients<float>(s, 5, 3, 101);
+         auto out = filled<float>(s, FW, FH);
+@@ -240,7 +221,7 @@
+     }
+     {   // float, a 7x7 kernel, fused reads and write: image * 2 + 1, kernel * 0.5, output * 0.25
+         using D = LinearFilterDPPDetails<float>;
+-        const D d{7, 7, 3, 3};
++        const D d{FW, FH, 7, 7, 3, 3};
+         auto img = frame<float>(s, 2);
+         auto ker = coefficients<float>(s, 7, 7, 102);
+         auto out = filled<float>(s, FW, FH);
+@@ -251,84 +232,44 @@
+                   Mul<float>::build(0.25f).then(PerThreadWrite<ND::_2D, float>::build(out)));
+         dump(s, "linear_f32_7x7_fused", out);
+     }
+-    {   // the box filter: executeBoxFilter at the base, its replacement at the head; float 5x5 and uchar3 3x3 (float3 out)
++    {   // the box filter: executeBoxFilter at the base, what it built at the head; float 5x5 and 3x7 (anchor (1, 3))
+         using D = LinearFilterDPPDetails<float>;
+         auto img = frame<float>(s, 3);
+         auto out = filled<float>(s, FW, FH);
+-        runBoxFilter(s, D{5, 5, 2, 2}, PerThreadRead<ND::_2D, float>::build(img), PerThreadWrite<ND::_2D, float>::build(out));
++        runBoxFilter(s, D{FW, FH, 5, 5, 2, 2}, PerThreadRead<ND::_2D, float>::build(img), PerThreadWrite<ND::_2D, float>::build(out));
+         dump(s, "linear_f32_box5x5", out);
+-        using D3 = LinearFilterDPPDetails<uchar3>;
+-        auto img3 = frame<uchar3>(s, 4);
+-        auto out3 = filled<float3>(s, FW, FH);
+-        runBoxFilter(s, D3{3, 3, 1, 1}, PerThreadRead<ND::_2D, uchar3>::build(img3),
+-                     PerThreadWrite<ND::_2D, float3>::build(out3));
+-        dump(s, "linear_u8c3_box3x3", out3);
+-    }
+-    {   // a batch of 3 crops of different sizes (per-image sizes), 3x5 kernel, written by a TensorWrite and by a BatchWrite
+-        using D = LinearFilterDPPDetails<float>;
+-        const D d{3, 5, 1, 2};
+-        auto f = frame<float>(s, 5);
+-        auto ker = coefficients<float>(s, 3, 5, 105);
+-        const auto crops = cropsOf(f, VAR_CROPS);
+-        auto tensor = tensorFilled<float>(s, VAR_MAX_W, VAR_MAX_H, 3);
+-        auto outs = filledOutputs<float>(s, VAR_CROPS);
+-        const auto reads = make_tuple(PerThreadRead<ND::_2D, float>::build(crops), PerThreadRead<ND::_2D, float>::build(ker));
+-        runLinear(s, d, reads, Mul<float, float, float, UnaryType>::build(), Add<float, float, float, UnaryType>::build(),
+-                  TensorWrite<float>::build(tensor.ptr()));
+-        runLinear(s, d, reads, Mul<float, float, float, UnaryType>::build(), Add<float, float, float, UnaryType>::build(),
+-                  PerThreadWrite<ND::_2D, float>::build(outs));
+-        dump(s, "linear_f32_batch3x5_tensor", tensor, VAR_MAX_W, VAR_MAX_H, 3);
+-        dump(s, "linear_f32_batch3x5_batchwrite", outs);
+-    }
+-    {   // a batch of 3 uchar3 crops of different sizes, float3 coefficients from a buffer, float3 out
+-        using D = LinearFilterDPPDetails<uchar3>;
+-        const D d{3, 3, 1, 1};
+-        auto f = frame<uchar3>(s, 6);
+-        auto ker = coefficients<float3>(s, 3, 3, 106);
+-        auto tensor = tensorFilled<float3>(s, VAR_MAX_W, VAR_MAX_H, 3);
+-        runLinear(s, d, make_tuple(PerThreadRead<ND::_2D, uchar3>::build(cropsOf(f, VAR_CROPS)),
+-                                   PerThreadRead<ND::_2D, float3>::build(ker)),
+-                  Mul<uchar3, float3, float3, UnaryType>::build(), Add<float3, float3, float3, UnaryType>::build(),
+-                  TensorWrite<float3>::build(tensor.ptr()));
+-        dump(s, "linear_u8c3_batch3x3_tensor", tensor, VAR_MAX_W, VAR_MAX_H, 3);
++        auto out2 = filled<float>(s, FW, FH);
++        runBoxFilter(s, D{FW, FH, 3, 7, 1, 3}, PerThreadRead<ND::_2D, float>::build(img), PerThreadWrite<ND::_2D, float>::build(out2));
++        dump(s, "linear_f32_box3x7", out2);
+     }
+ }
+ 
+-// ---- MedianFilterDPP ----
++// ---- MedianFilterDPP (details: width, height, windowWidth, windowHeight, anchorX, anchorY) ----
+ void medianCases(GpuStream& s) {
+     {
+         using D = MedianFilterDPPDetails<uchar>;
+         auto img = frame<uchar>(s, 11);
+         auto out = filled<uchar>(s, FW, FH);
+-        runMedian(s, D{3, 3, 1, 1}, PerThreadRead<ND::_2D, uchar>::build(img), PerThreadWrite<ND::_2D, uchar>::build(out),
++        runMedian(s, D{FW, FH, 3, 3, 1, 1}, PerThreadRead<ND::_2D, uchar>::build(img), PerThreadWrite<ND::_2D, uchar>::build(out),
+                   MedianWindowSelect<uchar, D::WINDOW_CAPACITY>::build());
+         dump(s, "median_u8_3x3", out);
+     }
+-    {
+-        using D = MedianFilterDPPDetails<uchar3>;
+-        auto img = frame<uchar3>(s, 12);
+-        auto out = filled<uchar3>(s, FW, FH);
+-        runMedian(s, D{5, 5, 2, 2}, PerThreadRead<ND::_2D, uchar3>::build(img), PerThreadWrite<ND::_2D, uchar3>::build(out),
+-                  MedianWindowSelect<uchar3, D::WINDOW_CAPACITY>::build());
+-        dump(s, "median_u8c3_5x5", out);
+-    }
+-    {   // a batch of 3 float crops of different sizes, read * 2 + 1, written * 0.5; the median 3x3 and the minimum 5x3
++    {   // float, read * 2 + 1, written * 0.5; the median 3x3 and the minimum 5x3
+         using D = MedianFilterDPPDetails<float, 16, 8, 7, 7>;
+-        auto f = frame<float>(s, 13);
+-        const auto read = PerThreadRead<ND::_2D, float>::build(cropsOf(f, VAR_CROPS))
+-                              .then(Mul<float>::build(2.f)).then(Add<float>::build(1.f));
+-        auto tensor = tensorFilled<float>(s, VAR_MAX_W, VAR_MAX_H, 3);
+-        auto outs = filledOutputs<float>(s, VAR_CROPS);
+-        runMedian(s, D{3, 3, 1, 1}, read, Mul<float>::build(0.5f).then(TensorWrite<float>::build(tensor.ptr())),
++        auto img = frame<float>(s, 13);
++        const auto read = PerThreadRead<ND::_2D, float>::build(img).then(Mul<float>::build(2.f)).then(Add<float>::build(1.f));
++        auto out = filled<float>(s, FW, FH);
++        auto out2 = filled<float>(s, FW, FH);
++        runMedian(s, D{FW, FH, 3, 3, 1, 1}, read, Mul<float>::build(0.5f).then(PerThreadWrite<ND::_2D, float>::build(out)),
+                   MedianWindowSelect<float, D::WINDOW_CAPACITY>::build());
+-        runMedian(s, D{5, 3, 2, 1}, read, Mul<float>::build(0.5f).then(PerThreadWrite<ND::_2D, float>::build(outs)),
++        runMedian(s, D{FW, FH, 5, 3, 2, 1}, read, Mul<float>::build(0.5f).then(PerThreadWrite<ND::_2D, float>::build(out2)),
+                   MinimumWindowSelect<float, D::WINDOW_CAPACITY>::build());
+-        dump(s, "median_f32_batch3x3_tensor", tensor, VAR_MAX_W, VAR_MAX_H, 3);
+-        dump(s, "median_f32_batch5x3_minimum_batchwrite", outs);
++        dump(s, "median_f32_fused3x3", out);
++        dump(s, "median_f32_fused5x3_minimum", out2);
+     }
+ }
+ 
+-// ---- MorphologyDPP ----
++// ---- MorphologyDPP (details: width, height, maskW, maskH, anchorX, anchorY) ----
+ void morphologyCases(GpuStream& s) {
+     {
+         using D = MorphologyDPPDetails<uchar>;
+@@ -354,97 +295,59 @@
+                                     PerThreadWrite<ND::_2D, float>::build(out2));
+         dump(s, "morph_f32_close5x5", out2);
+     }
+-    {   // the box blur: executeBoxBlur at the base, boxBlurReducers at the head
+-        // a batch of 3 float crops of one size, 1 pass 3x3, TensorWrite (as E19's fkl_batch, smaller)
++    {   // the box blur: executeBoxBlur at the base, boxBlurReducers at the head; float, 1 pass 3x3 and 2 passes 5x5
+         using D = MorphologyDPPDetails<float>;
+-        auto f = frame<float>(s, 23);
+-        auto tensor = tensorFilled<float>(s, 20, 14, 3);
+-        runBoxBlur<1>(s, D{20, 14, 3, 3, 1, 1}, PerThreadRead<ND::_2D, float>::build(cropsOf(f, EQ_CROPS)),
+-                      TensorWrite<float>::build(tensor.ptr()));
+-        dump(s, "morph_f32_boxblur1_batch3x3_tensor", tensor, 20, 14, 3);
+-        // float3, 2 passes 5x5 on one image
+-        using D3 = MorphologyDPPDetails<float3>;
+-        auto img3 = frame<float3>(s, 24);
+-        auto out3 = filled<float3>(s, FW, FH);
+-        runBoxBlur<2>(s, D3{FW, FH, 5, 5, 2, 2}, PerThreadRead<ND::_2D, float3>::build(img3),
+-                      PerThreadWrite<ND::_2D, float3>::build(out3));
+-        dump(s, "morph_f32c3_boxblur2_5x5", out3);
++        auto img = frame<float>(s, 23);
++        auto out = filled<float>(s, FW, FH);
++        runBoxBlur<1>(s, D{FW, FH, 3, 3, 1, 1}, PerThreadRead<ND::_2D, float>::build(img), PerThreadWrite<ND::_2D, float>::build(out));
++        dump(s, "morph_f32_boxblur1_3x3", out);
++        auto out2 = filled<float>(s, FW, FH);
++        runBoxBlur<2>(s, D{FW, FH, 5, 5, 2, 2}, PerThreadRead<ND::_2D, float>::build(img), PerThreadWrite<ND::_2D, float>::build(out2));
++        dump(s, "morph_f32_boxblur2_5x5", out2);
+     }
+-    {   // explicit reducers, 3 passes (Max, Min, Max), a batch of 3 uchar crops of one size, BatchWrite
++    {   // explicit reducers, 3 passes (Max, Min, Max), uchar 3x5
+         using D = MorphologyDPPDetails<uchar>;
+-        auto f = frame<uchar>(s, 25);
+-        auto outs = filledOutputs<uchar>(s, EQ_CROPS);
+-        runMorphology(s, D{20, 14, 3, 5, 1, 2}, PerThreadRead<ND::_2D, uchar>::build(cropsOf(f, EQ_CROPS)),
+-                      PerThreadWrite<ND::_2D, uchar>::build(outs),
++        auto img = frame<uchar>(s, 25);
++        auto out = filled<uchar>(s, FW, FH);
++        runMorphology(s, D{FW, FH, 3, 5, 1, 2}, PerThreadRead<ND::_2D, uchar>::build(img), PerThreadWrite<ND::_2D, uchar>::build(out),
+                       make_tuple(Max<uchar, uchar, uchar, UnaryType>::build(), Min<uchar, uchar, uchar, UnaryType>::build(),
+                                  Max<uchar, uchar, uchar, UnaryType>::build()));
+-        dump(s, "morph_u8_3pass_batch3x5_batchwrite", outs);
++        dump(s, "morph_u8_3pass3x5", out);
+     }
+ }
+ 
+-// ---- the Quad DPPs ----
++// ---- the Quad DPPs (details: width, height, kernelWidth, kernelHeight, anchorX, anchorY; scalar pixels on main) ----
+ template <typename T>
+ auto boxCompute(const int kw, const int kh) {
+     return make_tuple(Add<T, T, T, UnaryType>::build(), Sub<T, T, T, UnaryType>::build(),
+-                      Div<T>::build(make_set<T>(static_cast<float>(kw * kh))));
++                      Div<T>::build(static_cast<T>(kw * kh)));
+ }
+ ConvQuadDetails convDetails(const int kw, const int kh) {
+-    ConvQuadDetails d{kw, kh, kw / 2, kh / 2, {}};
++    ConvQuadDetails d{FW, FH, kw, kh, kw / 2, kh / 2, {}};
+     for (int i = 0; i < kw * kh; ++i) d.coefficients[i] = fval(i, 0, 301, -0.5f, 0.5f);
+     return d;
+ }
+ void quadCases(GpuStream& s) {
+-    {   // batches of 3 crops of different sizes, TensorWrite
+-        auto fu = frame<uchar>(s, 31);
+-        auto ff = frame<float>(s, 32);
+-        const auto cu = cropsOf(fu, VAR_CROPS);
+-        const auto cf = cropsOf(ff, VAR_CROPS);
+-        auto tMorph = tensorFilled<uchar>(s, VAR_MAX_W, VAR_MAX_H, 3);
+-        runQuad<MorphQuadDPP<GPU, uchar>>(s, MorphQuadDetails{3, 3, 1, 1}, PerThreadRead<ND::_2D, uchar>::build(cu),
+-                                          Min<uchar, uchar, uchar, UnaryType>::build(), TensorWrite<uchar>::build(tMorph.ptr()));
+-        dump(s, "quad_morph_u8_batch3x3_tensor", tMorph, VAR_MAX_W, VAR_MAX_H, 3);
+-        auto tMedian = tensorFilled<uchar>(s, VAR_MAX_W, VAR_MAX_H, 3);
+-        runQuad<MedianQuadDPP<GPU, uchar>>(s, MedianQuadDetails{5, 3, 2, 1}, PerThreadRead<ND::_2D, uchar>::build(cu),
+-                                           make_tuple(Min<uchar, uchar, uchar, UnaryType>::build(),
+-                                                      Max<uchar, uchar, uchar, UnaryType>::build()),
+-                                           TensorWrite<uchar>::build(tMedian.ptr()));
+-        dump(s, "quad_median_u8_batch5x3_tensor", tMedian, VAR_MAX_W, VAR_MAX_H, 3);
+-        auto tBox = tensorFilled<float>(s, VAR_MAX_W, VAR_MAX_H, 3);
+-        runQuad<BoxFilterQuadDPP<GPU, float>>(s, BoxFilterQuadDetails{5, 3, 2, 1}, PerThreadRead<ND::_2D, float>::build(cf),
+-                                              boxCompute<float>(5, 3), TensorWrite<float>::build(tBox.ptr()));
+-        dump(s, "quad_box_f32_batch5x3_tensor", tBox, VAR_MAX_W, VAR_MAX_H, 3);
+-        auto tConv = tensorFilled<float>(s, VAR_MAX_W, VAR_MAX_H, 3);
+-        runQuad<ConvQuadDPP<GPU, float>>(s, convDetails(3, 5), PerThreadRead<ND::_2D, float>::build(cf),
+-                                         make_tuple(Mul<float, float, float, UnaryType>::build(),
+-                                                    Add<float, float, float, UnaryType>::build()),
+-                                         TensorWrite<float>::build(tConv.ptr()));
+-        dump(s, "quad_conv_f32_batch3x5_tensor", tConv, VAR_MAX_W, VAR_MAX_H, 3);
+-    }
+-    {   // single vector images
+-        auto fu3 = frame<uchar3>(s, 33);
+-        auto ff4 = frame<float4>(s, 34);
+-        auto oMorph = filled<uchar3>(s, FW, FH);
+-        runQuad<MorphQuadDPP<GPU, uchar3>>(s, MorphQuadDetails{3, 3, 1, 1}, PerThreadRead<ND::_2D, uchar3>::build(fu3),
+-                                           Max<uchar3, uchar3, uchar3, UnaryType>::build(),
+-                                           PerThreadWrite<ND::_2D, uchar3>::build(oMorph));
+-        dump(s, "quad_morph_u8c3_3x3", oMorph);
+-        auto oMedian = filled<float4>(s, FW, FH);
+-        runQuad<MedianQuadDPP<GPU, float4>>(s, MedianQuadDetails{5, 3, 2, 1}, PerThreadRead<ND::_2D, float4>::build(ff4),
+-                                            make_tuple(Min<float4, float4, float4, UnaryType>::build(),
+-                                                       Max<float4, float4, float4, UnaryType>::build()),
+-                                            PerThreadWrite<ND::_2D, float4>::build(oMedian));
+-        dump(s, "quad_median_f32c4_5x3", oMedian);
+-        auto oBox = filled<float4>(s, FW, FH);
+-        runQuad<BoxFilterQuadDPP<GPU, float4>>(s, BoxFilterQuadDetails{5, 3, 2, 1}, PerThreadRead<ND::_2D, float4>::build(ff4),
+-                                               boxCompute<float4>(5, 3), PerThreadWrite<ND::_2D, float4>::build(oBox));
+-        dump(s, "quad_box_f32c4_5x3", oBox);
+-        auto oConv = filled<float3>(s, FW, FH);
+-        runQuad<ConvQuadDPP<GPU, uchar3>>(s, convDetails(3, 3), PerThreadRead<ND::_2D, uchar3>::build(fu3),
+-                                          make_tuple(Mul<float, uchar3, float3, UnaryType>::build(),
+-                                                     Add<float3, float3, float3, UnaryType>::build()),
+-                                          PerThreadWrite<ND::_2D, float3>::build(oConv));
+-        dump(s, "quad_conv_u8c3_3x3", oConv);
+-    }
++    auto fu = frame<uchar>(s, 31);
++    auto ff = frame<float>(s, 32);
++    auto oMorph = filled<uchar>(s, FW, FH);
++    runQuad<MorphQuadDPP<GPU, uchar>>(s, MorphQuadDetails{FW, FH, 3, 3, 1, 1}, PerThreadRead<ND::_2D, uchar>::build(fu),
++                                      Min<uchar, uchar, uchar, UnaryType>::build(), PerThreadWrite<ND::_2D, uchar>::build(oMorph));
++    dump(s, "quad_morph_u8_3x3", oMorph);
++    auto oMedian = filled<uchar>(s, FW, FH);
++    runQuad<MedianQuadDPP<GPU, uchar>>(s, MedianQuadDetails{FW, FH, 5, 3, 2, 1}, PerThreadRead<ND::_2D, uchar>::build(fu),
++                                       make_tuple(Min<uchar, uchar, uchar, UnaryType>::build(), Max<uchar, uchar, uchar, UnaryType>::build()),
++                                       PerThreadWrite<ND::_2D, uchar>::build(oMedian));
++    dump(s, "quad_median_u8_5x3", oMedian);
++    auto oBox = filled<float>(s, FW, FH);
++    runQuad<BoxFilterQuadDPP<GPU, float>>(s, BoxFilterQuadDetails{FW, FH, 5, 3, 2, 1}, PerThreadRead<ND::_2D, float>::build(ff),
++                                          boxCompute<float>(5, 3), PerThreadWrite<ND::_2D, float>::build(oBox));
++    dump(s, "quad_box_f32_5x3", oBox);
++    auto oConv = filled<float>(s, FW, FH);
++    runQuad<ConvQuadDPP<GPU, float>>(s, convDetails(3, 5), PerThreadRead<ND::_2D, float>::build(ff),
++                                     make_tuple(Mul<float, float, float, UnaryType>::build(), Add<float, float, float, UnaryType>::build()),
++                                     PerThreadWrite<ND::_2D, float>::build(oConv));
++    dump(s, "quad_conv_f32_3x5", oConv);
+ }
+ 
+ // ---- TransformDPP and DivergentBatchTransformDPP (the same call at both commits; only their kernel is renamed) ----
+@@ -484,10 +387,11 @@
+     }
+ }
+ 
+-} // namespace
++} // namespace h436run
+ 
+ int main(int argc, char** argv) {
+-    start(argc, argv, "pr435_image");
++    using namespace h436run;
++    start(argc, argv, "pr436_image");
+     try {
+         GpuStream s;
+         linearCases(s);
+@@ -499,5 +403,5 @@
+     } catch (const std::exception& e) {
+         fail(std::string("exception: ") + e.what());
+     }
+-    return finish("pr435_image");
++    return finish("pr436_image");
+ }
+--- pr435_attention.cu
++++ pr436_attention.cu
+@@ -1,27 +1,30 @@
+-/* Task C-NV harness, attention DPPs on ParArch::GPU_NVIDIA: SoftmaxDPP, FlashAttentionDPP (SIMT), FlashAttentionMmaDPP
+-   (explicit tiles, the automatic choice, int8 K/V), the split-KV path, and FlashDecodeDPP.
+-   Base build (b10fc66): executeSoftmax, executeFlashAttention<D, ...>, executeFlashAttentionMma<D, BQ, BKV, NW>, which
++/* Task C-MAIN-NV harness (FKL #436, task C on FKL main), attention DPPs on ParArch::GPU_NVIDIA: SoftmaxDPP, FlashAttentionDPP
++   (SIMT), FlashAttentionMmaDPP (explicit tiles, the automatic choice, int8 K/V) and the split-KV path. Adapted from task C-NV's
++   harness of FKL #435 (scratch/pr435/harness/pr435_attention.cu); the cases are C-NV's, with two changes for FKL main:
++   - softmax: main's operation-first form (Oscar's M1): executeSoftmax<256>(inIOp, outIOp, stream) at the base,
++     executeOperations<SoftmaxDPP<GPU_NVIDIA, SoftmaxDPPDetails<256>>>(stream, details, inIOp, outIOp) at the head, as main's
++     utest_softmax.h does at each commit;
++   - FlashDecodeDPP is left out: main's flash_decode.h does not compile when it is instantiated (see the note below).
++   Base build (main ebb3891): executeSoftmax, executeFlashAttention<D, ...>, executeFlashAttentionMma<D, BQ, BKV, NW>, which
+    chooses the tiles when BQ = BKV = 0 and decides the split-KV itself (then it runs the split kernel and
+-   flashFwdSplitCombineKernel), and executeFlashDecode<D>.
+-   Head build (e322cad): executeOperations<DPP>(stream, ...). For the automatic choice the head harness does what the PR
++   flashFwdSplitCombineKernel, which, as on LTS-C++17 before #435, applies no epilogue).
++   Head build (#436 1df2738): executeOperations<DPP>(stream, ...). For the automatic choice the head harness does what the PR
+    says the caller does: flashAttentionMmaTiles names the FlashAttentionMmaDPP, flashAttentionMmaSplits decides the split,
+    and with more than 1 split it runs FlashAttentionMmaSplitKVDPP into a partial buffer and then its CombineDPP.
+-   The split cases ("mma_split_*"), on the three shapes of the PR's testMmaSplit:
++   The split cases ("mma_split_*"), on the three shapes of the PR's testMmaSplit (utest_flash_attention_mma.h, which #436 adds
++   to main, Oscar's M2):
+    - identity epilogue: the base's automatic split against the head's split + combine with flashAttentionMmaSplits' count;
+      compared across the commits bit for bit;
+-   - epilogue o * 2 + 0.5: the base's split path drops it (the bug the PR fixes), so its file is compared with the base's
+-     identity file. At the head, split + combine and the unsplit FlashAttentionMmaDPP ("mma_unsplit_*", head only) are
+-     checked as the PR's test does at 48fbf3f (utest_flash_attention_mma.h testMmaSplit): against the double oracle on the
+-     bf16-rounded inputs ("mma_split_*_oracle_f64", computed here on the host as the test's cpuAttention does), within
+-     TOL = 3e-3 without the epilogue and 2 * TOL of 2 * oracle + 0.5 with it. compare_harness.py does the checks.
+-   The split count is printed: at the head flashAttentionMmaSplits; at both commits also the count of the base's formula
+-   (executeFlashAttentionMma's code, recomputed here with the occupancy of the unsplit kernel of that commit).
+-   See pr435_common.h. */
+-#include "pr435_common.h"
++   - epilogue o * 2 + 0.5: the base's split path drops it, so its file is compared with the base's identity file. At the head,
++     split + combine and the unsplit FlashAttentionMmaDPP ("mma_unsplit_*", head only) are checked against the double oracle on
++     the bf16-rounded inputs ("mma_split_*_oracle_f64", computed here on the host), within TOL = 3e-3 without the epilogue and
++     2 * TOL of 2 * oracle + 0.5 with it. compare_harness.py (task C-NV's, unchanged) does the checks.
++   The split count is printed: at the head flashAttentionMmaSplits; at both commits also the count of the base's formula.
++   See pr436_common.h. */
++#include "pr436_common.h"
+ 
+ #include <fused_kernel/algorithms/attention/flash_attention.h>
+ #include <fused_kernel/algorithms/attention/flash_attention_mma.h>
+-#include <fused_kernel/algorithms/attention/flash_decode.h>
+ #include <fused_kernel/algorithms/attention/softmax.h>
+ #include <fused_kernel/algorithms/basic_ops/arithmetic.h>
+ #include <fused_kernel/core/data/ptr_nd.h>
+@@ -32,10 +35,13 @@
+ #include <cmath>
+ #include <type_traits>
+ 
+-using namespace fk;
+-using namespace h435;
++using namespace h436;
+ 
+-namespace {
++// A named namespace, not an unnamed one: on FKL main, fk has its own vector types (fk::uint3, ...), and the host stub code that nvcc
++// adds at global scope names CUDA's uint3. A using-directive in an unnamed namespace would reach the global scope too; FKL main's
++// tests also keep theirs in a narrower scope.
++namespace h436run {
++using namespace fk;
+ 
+ constexpr ParArch GPU = ParArch::GPU_NVIDIA;
+ using GpuStream = Stream_<ParArch::GPU_NVIDIA>;
+@@ -72,10 +78,12 @@
+         Ptr2D<float> out(width, rows, 0, MemType::Device);
+         cudaCheck(cudaMemset2D(out.ptr().data, out.dims().pitch, 0xff, width * sizeof(float), rows), "cudaMemset2D");
+         const auto inRead = PerThreadRead<ND::_2D, float>::build(in.ptr());
+-#ifdef PR435_HEAD
+-        executeOperations<SoftmaxDPP<GPU, std::decay_t<decltype(inRead)>, float>>(s, inRead, out, rows, width);
++        // FKL main: the operation-first form (the sizes come from the IOps), BLOCK_SIZE 256 as in main's utest_softmax.h
++        const auto outWrite = PerThreadWrite<ND::_2D, float>::build(out.ptr());
++#ifdef PR436_HEAD
++        executeOperations<SoftmaxDPP<GPU, SoftmaxDPPDetails<256>>>(s, SoftmaxDPPDetails<256>{}, inRead, outWrite);
+ #else
+-        executeSoftmax(inRead, out, rows, width, s);
++        executeSoftmax<256>(inRead, outWrite, s);
+ #endif
+         s.sync();
+         std::vector<float> h(static_cast<size_t>(rows) * width);
+@@ -92,10 +100,12 @@
+         Ptr2D<float> out(width, rows, 0, MemType::Device);
+         cudaCheck(cudaMemset2D(out.ptr().data, out.dims().pitch, 0xff, width * sizeof(float), rows), "cudaMemset2D");
+         const auto inRead = PerThreadRead<ND::_2D, float>::build(in.ptr()).then(Mul<float>::build(0.7f));
+-#ifdef PR435_HEAD
+-        executeOperations<SoftmaxDPP<GPU, std::decay_t<decltype(inRead)>, float>>(s, inRead, out, rows, width);
++        // FKL main: the operation-first form (the sizes come from the IOps), BLOCK_SIZE 256 as in main's utest_softmax.h
++        const auto outWrite = PerThreadWrite<ND::_2D, float>::build(out.ptr());
++#ifdef PR436_HEAD
++        executeOperations<SoftmaxDPP<GPU, SoftmaxDPPDetails<256>>>(s, SoftmaxDPPDetails<256>{}, inRead, outWrite);
+ #else
+-        executeSoftmax(inRead, out, rows, width, s);
++        executeSoftmax<256>(inRead, outWrite, s);
+ #endif
+         s.sync();
+         std::vector<float> h(static_cast<size_t>(rows) * width);
+@@ -109,7 +119,7 @@
+ template <int D, typename Q, typename K, typename V, typename E = Identity>
+ void runSimt(GpuStream& s, const Q& q, const K& k, const V& v, float* o, const int bh, const int sq, const int sk,
+              const bool causal, const E& epi = {}) {
+-#ifdef PR435_HEAD
++#ifdef PR436_HEAD
+     executeOperations<FlashAttentionDPP<GPU, float, D, Q, K, V, E, 32, 4>>(s, q, k, v, o, bh, sq, sk, causal, -1.f, epi);
+ #else
+     executeFlashAttention<D, 32, 4>(q, k, v, o, bh, sq, sk, causal, s, -1.f, epi);
+@@ -167,7 +177,7 @@
+ }
+ template <int D, int BQ, int BKV, int NW, typename Q, typename K, typename V, typename E>
+ int unsplitOccupancy() {
+-#ifdef PR435_HEAD
++#ifdef PR436_HEAD
+     using DPP = FlashAttentionMmaDPP<GPU, float, D, Q, K, V, E, BQ, BKV, NW>;
+     const auto kernel = launchDPP_Kernel<DPP, typename DPP::Params>;
+ #else
+@@ -189,7 +199,7 @@
+ int runMma(GpuStream& s, const bool split, const Q& q, const K& k, const V& v, float* o, const int bh, const int sq,
+            const int sk, const bool causal, const E& epi = {}) {
+     const int formula = baseFormulaSplits(unsplitOccupancy<D, BQ, BKV, NW, Q, K, V, E>(), bh, sq, sk, causal, BQ, BKV);
+-#ifdef PR435_HEAD
++#ifdef PR436_HEAD
+     using MmaDPP = FlashAttentionMmaDPP<GPU, float, D, Q, K, V, E, BQ, BKV, NW>;
+     if (!split) {
+         executeOperations<MmaDPP>(s, q, k, v, o, bh, sq, sk, causal, -1.f, epi);
+@@ -239,7 +249,7 @@
+     std::printf("%s:\n", name);
+     const int n = runMma<D, 64, 64, 4>(s, false, makeAttentionRead(in.q, bh, sq, D), makeAttentionRead(in.k, bh, sk, D),
+                                        makeAttentionRead(in.v, bh, sk, D), o, bh, sq, sk, causal);
+-#ifndef PR435_HEAD
++#ifndef PR436_HEAD
+     require(n == 1, std::string(name) + ": the base would split this shape");
+ #endif
+     (void)n;
+@@ -251,7 +261,7 @@
+ template <int D, int BQ, int BKV, int NW, typename Q, typename K, typename V>
+ void mmaAutoRun(GpuStream& s, const Q& q, const K& k, const V& v, float* o, const int bh, const int sq, const int sk,
+                 const bool causal) {
+-#ifdef PR435_HEAD
++#ifdef PR436_HEAD
+     using MmaDPP = FlashAttentionMmaDPP<GPU, float, D, Q, K, V, Identity, BQ, BKV, NW>;
+     const int splits = flashAttentionMmaSplits<MmaDPP>(bh, sq, sk, causal);
+     std::printf("  flashAttentionMmaTiles = %d x %d x %d, flashAttentionMmaSplits = %d\n", BQ, BKV, NW, splits);
+@@ -277,7 +287,7 @@
+ template <int D, typename Q, typename K, typename V>
+ void mmaAuto(GpuStream& s, const Q& q, const K& k, const V& v, float* o, const int bh, const int sq, const int sk,
+              const bool causal) {
+-#ifdef PR435_HEAD
++#ifdef PR436_HEAD
+     constexpr bool RAW = isRawBf16Read<K> && isRawBf16Read<V>;
+     const FlashAttentionMmaTiles t = flashAttentionMmaTiles<D, K, V>(bh, sq, causal);
+     const auto is = [&](const int bq, const int bkv, const int nw) {
+@@ -384,7 +394,7 @@
+         dumpDevice(base + "_epilogue", o, in.nQ);
+         cudaFree(o);
+     }
+-#ifdef PR435_HEAD
++#ifdef PR436_HEAD
+     {   // the unsplit FlashAttentionMmaDPP on the same shape (head only: the base has no unsplit call for a split shape)
+         float* o = deviceSentinel<float>(in.nQ);
+         std::printf("mma_unsplit_%s_identity / _epilogue (head only):\n", tag);
+@@ -398,52 +408,16 @@
+ #endif
+ }
+ 
+-// ---- FlashDecodeDPP ----
+-template <int D, typename Q, typename K, typename V>
+-void runDecode(GpuStream& s, const Q& q, const K& k, const V& v, float* o, float* ws, const int bh, const int sk) {
+-#ifdef PR435_HEAD
+-    executeOperations<FlashDecodeDPP<GPU, float, D, Q, K, V>>(s, q, k, v, o, ws, bh, sk);
+-#else
+-    executeFlashDecode<D>(q, k, v, o, ws, bh, sk, s);
+-#endif
+-}
+-template <int D>
+-void decodeCase(GpuStream& s, const char* name, const int bh, const int sk, const bool int8kv, const int salt) {
+-    const int splits = flashDecodeSplits(bh, sk);
+-    const size_t nQ = static_cast<size_t>(bh) * D, nK = static_cast<size_t>(bh) * sk * D;
+-    float* ws = nullptr;
+-    if (splits > 1) {
+-        const size_t n = flashDecodeWorkspaceFloats(bh, splits, D);
+-        cudaCheck(cudaMalloc(&ws, n * sizeof(float)), "cudaMalloc workspace");
+-        cudaCheck(cudaMemset(ws, 0, n * sizeof(float)), "cudaMemset workspace");
+-    }
+-    std::printf("%s: flashDecodeSplits = %d\n", name, splits);
+-    __nv_bfloat16* q = deviceCopy(bf16s(nQ, salt));
+-    float* o = deviceSentinel<float>(nQ);
+-    const auto qR = makeAttentionRead(q, bh, 1, D);
+-    if (int8kv) {
+-        int8_t* k8 = deviceCopy(int8s(nK, salt + 1));
+-        int8_t* v8 = deviceCopy(int8s(nK, salt + 2));
+-        float* ks = deviceCopy(floats(static_cast<size_t>(bh) * sk, salt + 3, 0.002f, 0.02f));
+-        float* vs = deviceCopy(floats(static_cast<size_t>(bh) * sk, salt + 4, 0.002f, 0.02f));
+-        runDecode<D>(s, qR, makeInt8KVRead(k8, ks, bh, sk, D), makeInt8KVRead(v8, vs, bh, sk, D), o, ws, bh, sk);
+-        dumpDevice(name, o, nQ);
+-        cudaFree(k8); cudaFree(v8); cudaFree(ks); cudaFree(vs);
+-    } else {
+-        __nv_bfloat16* k = deviceCopy(bf16s(nK, salt + 1));
+-        __nv_bfloat16* v = deviceCopy(bf16s(nK, salt + 2));
+-        runDecode<D>(s, qR, makeAttentionRead(k, bh, sk, D), makeAttentionRead(v, bh, sk, D), o, ws, bh, sk);
+-        dumpDevice(name, o, nQ);
+-        cudaFree(k); cudaFree(v);
+-    }
+-    cudaFree(q); cudaFree(o);
+-    if (ws != nullptr) cudaFree(ws);
+-}
++// ---- FlashDecodeDPP: not in this harness on FKL main ----
++// main's flash_decode.h (ebb3891:69, 1df2738:73) calls attnToF32 unqualified, and main defines it in fk::low_precision
++// (softmax.h:57 / 58): FlashDecodeDPP does not compile on main at either commit when it is instantiated, and main has no test that
++// instantiates it. The C-NV harness's three decode cases are left out on both sides.
+ 
+-} // namespace
++} // namespace h436run
+ 
+ int main(int argc, char** argv) {
+-    start(argc, argv, "pr435_attention");
++    using namespace h436run;
++    start(argc, argv, "pr436_attention");
+     try {
+         GpuStream s;
+         softmaxCases(s);
+@@ -462,12 +436,9 @@
+         splitCase<64>(s, "d64_dense_b2_s64_s1024", 2, 64, 1024, false, 801);
+         splitCase<64>(s, "d64_causal_b1_s1024", 1, 1024, 1024, true, 811);
+         splitCase<128>(s, "d128_dense_b2_s70_s1500", 2, 70, 1500, false, 821);
+-        decodeCase<128>(s, "decode_d128_bf16_b8_s4096", 8, 4096, false, 901);
+-        decodeCase<64>(s, "decode_d64_int8kv_b4_s1000", 4, 1000, true, 911);
+-        decodeCase<64>(s, "decode_d64_bf16_b2_s200_one_split", 2, 200, false, 921);
+         s.sync();
+     } catch (const std::exception& e) {
+         fail(std::string("exception: ") + e.what());
+     }
+-    return finish("pr435_attention");
++    return finish("pr436_attention");
+ }
