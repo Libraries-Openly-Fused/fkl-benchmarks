@@ -1,0 +1,102 @@
+base: /home/oscar/tfkl-bench/scratch/pr435/harness-out/base-b10fc66
+head: /home/oscar/tfkl-bench/scratch/pr435/harness-out/head-48fbf3f
+files: base 62, head 68; only in base: []; only in head: ['mma_unsplit_d128_dense_b2_s70_s1500_epilogue', 'mma_unsplit_d128_dense_b2_s70_s1500_identity', 'mma_unsplit_d64_causal_b1_s1024_epilogue', 'mma_unsplit_d64_causal_b1_s1024_identity', 'mma_unsplit_d64_dense_b2_s64_s1024_epilogue', 'mma_unsplit_d64_dense_b2_s64_s1024_identity']
+
+1. bit for bit, base against head (every shared file except the mma_split_*_epilogue files):
+  equal     decode_d128_bf16_b8_s4096  4096 B  a18ce664107f42af
+  equal     decode_d64_bf16_b2_s200_one_split  512 B  746681142a603ad5
+  equal     decode_d64_int8kv_b4_s1000  1024 B  ad4150068bf42f28
+  equal     divergent_batch_f32_2planes  4096 B  3e945dee82455a82
+  equal     fa_simt_d128_causal_b2_s96  98304 B  6b8f93e8e1487fbf
+  equal     fa_simt_d64_dense_b3_s45_s77  34560 B  eb6e20eb5b8205b6
+  equal     fa_simt_d64_epilogue_b2_s33_s65  16896 B  c6e3af9663bce6d8
+  equal     fa_simt_d64_int8kv_b2_s40_s130  20480 B  94d40b8357299297
+  equal     linear_f32_5x3  10492 B  56dab85edfbf1260
+  equal     linear_f32_7x7_fused  10492 B  a62d1a017051ca4b
+  equal     linear_f32_batch3x5_batchwrite_image0  1092 B  c660e50d6cd12a8c
+  equal     linear_f32_batch3x5_batchwrite_image1  1288 B  94da2e84e55e0e35
+  equal     linear_f32_batch3x5_batchwrite_image2  1292 B  0b0d913503036f58
+  equal     linear_f32_batch3x5_tensor  5244 B  d0891253f172c07e
+  equal     linear_f32_box5x5  10492 B  d04d2da0e51564e9
+  equal     linear_u8c3_batch3x3_tensor  15732 B  2b01b5fdc768a8fa
+  equal     linear_u8c3_box3x3  31476 B  af112cbf68a9f7a4
+  equal     median_f32_batch3x3_tensor  5244 B  9d4439a9483a8fd0
+  equal     median_f32_batch5x3_minimum_batchwrite_image0  1092 B  2454d87c817d6a08
+  equal     median_f32_batch5x3_minimum_batchwrite_image1  1288 B  59bc7a2626f63add
+  equal     median_f32_batch5x3_minimum_batchwrite_image2  1292 B  88ea6460571c1246
+  equal     median_u8_3x3  2623 B  1e732edc8469a6df
+  equal     median_u8c3_5x5  7869 B  4dff7bab35652a7e
+  equal     mma_64x64x4_d128_causal_b2_s200  204800 B  7423b34d1162c2ce
+  equal     mma_64x64x4_d128_dense_b2_s70_s300  71680 B  04cef7bfb6fb34cd
+  equal     mma_64x64x4_d64_dense_b2_s128_s300  65536 B  0bbc50ab89823983
+  equal     mma_auto_d128_dense_b1_s16384  8388608 B  c45e27a8743c24bc
+  equal     mma_auto_d64_causal_b4_s1024  1048576 B  490206f3e0fc34a0
+  equal     mma_auto_d64_dense_b2_s64_s1024  32768 B  d35ea27869f0867a
+  equal     mma_auto_d64_dense_b32_s2048  16777216 B  50ea29cdc51cd64a
+  equal     mma_auto_d64_int8kv_b2_s128_s200  65536 B  7319a71ce9dc2c95
+  equal     mma_split_d128_dense_b2_s70_s1500_identity  71680 B  8814a745c287a59f
+  equal     mma_split_d128_dense_b2_s70_s1500_oracle_f64  143360 B  d93da67a216fa9a8
+  equal     mma_split_d64_causal_b1_s1024_identity  262144 B  3180ad2e907ff843
+  equal     mma_split_d64_causal_b1_s1024_oracle_f64  524288 B  fabcbcf73eb7eb94
+  equal     mma_split_d64_dense_b2_s64_s1024_identity  32768 B  1b3d08f1f1e3c709
+  equal     mma_split_d64_dense_b2_s64_s1024_oracle_f64  65536 B  843695cf10d59ef1
+  equal     morph_f32_boxblur1_batch3x3_tensor  3360 B  70c8c0d8787b7ad6
+  equal     morph_f32_close5x5  10492 B  af72f7d480722ddd
+  equal     morph_f32_open3x3  10492 B  7d41b0f7ad944343
+  equal     morph_f32c3_boxblur2_5x5  31476 B  ebe0a805f6a555fc
+  equal     morph_u8_3pass_batch3x5_batchwrite_image0  280 B  ec94802efc600117
+  equal     morph_u8_3pass_batch3x5_batchwrite_image1  280 B  402d2c09305ef1f4
+  equal     morph_u8_3pass_batch3x5_batchwrite_image2  280 B  a124870f918344f6
+  equal     morph_u8_dilate5x3  2623 B  c3bb63e08496a170
+  equal     morph_u8_erode3x3  2623 B  636bcf41b133583a
+  equal     quad_box_f32_batch5x3_tensor  5244 B  e043f13843f8d070
+  equal     quad_box_f32c4_5x3  41968 B  2cc4765a0a7c4d28
+  equal     quad_conv_f32_batch3x5_tensor  5244 B  1a805ab5740c7695
+  equal     quad_conv_u8c3_3x3  31476 B  169a6ce87a590a94
+  equal     quad_median_f32c4_5x3  41968 B  531a7b679f026528
+  equal     quad_median_u8_batch5x3_tensor  1311 B  f7b097eeb2f5dad8
+  equal     quad_morph_u8_batch3x3_tensor  1311 B  eb1667b833e3e0e6
+  equal     quad_morph_u8c3_3x3  7869 B  5d7ffb353c44c3b6
+  equal     softmax_f32_37x301  44548 B  138583107ba09916
+  equal     softmax_f32_fused_8x1024  32768 B  5f5ae16b17765ba4
+  equal     transform_f32  10492 B  e28f7500afeff537
+  equal     transform_u8_tf_61x43  2623 B  dbc92e5c93fc3685
+  equal     transform_u8_tf_64x32  2048 B  657e862275ff96b6
+  -> 59 equal, 0 different
+
+2. the split path (TOL = 0.003, as in utest_flash_attention_mma.h at 48fbf3f):
+  shape d128_dense_b2_s70_s1500:
+    PASS    the oracle is the same at both commits (17920 values)
+    PASS    head split + combine, identity, vs oracle: max error 9.726e-05 (bound 0.003)
+    PASS    head split + combine, epilogue o*2+0.5, vs 2*oracle+0.5: max error 1.945e-04 (bound 0.006)
+    PASS    head unsplit, epilogue o*2+0.5, vs 2*oracle+0.5: max error 2.023e-04 (bound 0.006)
+    PASS    head unsplit, identity, vs oracle: max error 1.012e-04 (bound 0.003)
+    reported max |head split - head unsplit|: identity 1.293e-04, epilogue 2.586e-04
+    yes     base split with the epilogue o*2+0.5 is bit for bit its split with the identity (the epilogue dropped; reported)
+    within  base split, identity, vs oracle: max error 9.726e-05 (bound 0.003, reported only)
+    outside base split, epilogue o*2+0.5, vs 2*oracle+0.5: max error 5.576e-01 (bound 0.006, reported only)
+    reported: base and head mma_split_d128_dense_b2_s70_s1500_epilogue are different (max |base - head| 5.576e-01)
+  shape d64_causal_b1_s1024:
+    PASS    the oracle is the same at both commits (65536 values)
+    PASS    head split + combine, identity, vs oracle: max error 1.315e-03 (bound 0.003)
+    PASS    head split + combine, epilogue o*2+0.5, vs 2*oracle+0.5: max error 2.630e-03 (bound 0.006)
+    PASS    head unsplit, epilogue o*2+0.5, vs 2*oracle+0.5: max error 2.630e-03 (bound 0.006)
+    PASS    head unsplit, identity, vs oracle: max error 1.315e-03 (bound 0.003)
+    reported max |head split - head unsplit|: identity 3.196e-04, epilogue 6.391e-04
+    yes     base split with the epilogue o*2+0.5 is bit for bit its split with the identity (the epilogue dropped; reported)
+    within  base split, identity, vs oracle: max error 1.315e-03 (bound 0.003, reported only)
+    outside base split, epilogue o*2+0.5, vs 2*oracle+0.5: max error 1.480e+00 (bound 0.006, reported only)
+    reported: base and head mma_split_d64_causal_b1_s1024_epilogue are different (max |base - head| 1.480e+00)
+  shape d64_dense_b2_s64_s1024:
+    PASS    the oracle is the same at both commits (8192 values)
+    PASS    head split + combine, identity, vs oracle: max error 1.249e-04 (bound 0.003)
+    PASS    head split + combine, epilogue o*2+0.5, vs 2*oracle+0.5: max error 2.499e-04 (bound 0.006)
+    PASS    head unsplit, epilogue o*2+0.5, vs 2*oracle+0.5: max error 2.594e-04 (bound 0.006)
+    PASS    head unsplit, identity, vs oracle: max error 1.297e-04 (bound 0.003)
+    reported max |head split - head unsplit|: identity 1.486e-04, epilogue 2.971e-04
+    yes     base split with the epilogue o*2+0.5 is bit for bit its split with the identity (the epilogue dropped; reported)
+    within  base split, identity, vs oracle: max error 1.249e-04 (bound 0.003, reported only)
+    outside base split, epilogue o*2+0.5, vs 2*oracle+0.5: max error 5.628e-01 (bound 0.006, reported only)
+    reported: base and head mma_split_d64_dense_b2_s64_s1024_epilogue are different (max |base - head| 5.628e-01)
+
+RESULT: PASS

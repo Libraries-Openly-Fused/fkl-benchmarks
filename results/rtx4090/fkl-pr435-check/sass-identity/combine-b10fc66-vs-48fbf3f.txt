@@ -1,0 +1,810 @@
+D = 64: 400 / 403 lines (registers renamed, branch targets and the trailing NOPs removed)
+  the lines that differ (- base, + head):
+    @@ -35 +35 @@
+    -UIMAD UR2, UR1, 0x42, URZ
+    +UMOV UR2, 0x42
+    @@ -36,0 +37 @@
+    +UIMAD UR2, UR1, UR2, 0x40
+    @@ -50 +51 @@
+    -LDG.E.CONSTANT R18, [R14.64+0x100]
+    +LDG.E.CONSTANT R18, [R14.64]
+    @@ -53 +54 @@
+    -LDG.E.CONSTANT R19, [R14.64+0x208]
+    +LDG.E.CONSTANT R19, [R14.64+0x108]
+    @@ -56 +57 @@
+    -LDG.E.CONSTANT R21, [R14.64+0x310]
+    +LDG.E.CONSTANT R21, [R14.64+0x210]
+    @@ -59 +60 @@
+    -LDG.E.CONSTANT R23, [R14.64+0x418]
+    +LDG.E.CONSTANT R23, [R14.64+0x318]
+    @@ -61 +62 @@
+    -LDG.E.CONSTANT R24, [R15.64+0x100]
+    +LDG.E.CONSTANT R24, [R15.64]
+    @@ -64 +65 @@
+    -LDG.E.CONSTANT R25, [R15.64+0x208]
+    +LDG.E.CONSTANT R25, [R15.64+0x108]
+    @@ -67 +68 @@
+    -LDG.E.CONSTANT R26, [R15.64+0x310]
+    +LDG.E.CONSTANT R26, [R15.64+0x210]
+    @@ -70 +71 @@
+    -LDG.E.CONSTANT R28, [R15.64+0x418]
+    +LDG.E.CONSTANT R28, [R15.64+0x318]
+    @@ -72 +73 @@
+    -LDG.E.CONSTANT R17, [R13.64+0x100]
+    +LDG.E.CONSTANT R17, [R13.64]
+    @@ -74 +75 @@
+    -LDG.E.CONSTANT R14, [R13.64+0x208]
+    +LDG.E.CONSTANT R14, [R13.64+0x108]
+    @@ -77 +78 @@
+    -LDG.E.CONSTANT R29, [R13.64+0x310]
+    +LDG.E.CONSTANT R29, [R13.64+0x210]
+    @@ -79,5 +80,5 @@
+    -LDG.E.CONSTANT R30, [R13.64+0x418]
+    -LDG.E.CONSTANT R12, [R20.64+0x100]
+    -LDG.E.CONSTANT R27, [R20.64+0x208]
+    -LDG.E.CONSTANT R15, [R20.64+0x310]
+    -LDG.E.CONSTANT R16, [R20.64+0x418]
+    +LDG.E.CONSTANT R30, [R13.64+0x318]
+    +LDG.E.CONSTANT R12, [R20.64]
+    +LDG.E.CONSTANT R27, [R20.64+0x108]
+    +LDG.E.CONSTANT R15, [R20.64+0x210]
+    +LDG.E.CONSTANT R16, [R20.64+0x318]
+    @@ -106 +107 @@
+    -UIMAD UR2, UR1, 0x42, URZ
+    +UMOV UR2, 0x42
+    @@ -107,0 +109 @@
+    +UIMAD UR2, UR1, UR2, 0x40
+    @@ -120 +122 @@
+    -LDG.E.CONSTANT R29, [R15.64+0x100]
+    +LDG.E.CONSTANT R29, [R15.64]
+    @@ -122 +124 @@
+    -LDG.E.CONSTANT R27, [R15.64+0x208]
+    +LDG.E.CONSTANT R27, [R15.64+0x108]
+    @@ -124 +126 @@
+    -LDG.E.CONSTANT R22, [R15.64+0x310]
+    +LDG.E.CONSTANT R22, [R15.64+0x210]
+    @@ -126,5 +128,5 @@
+    -LDG.E.CONSTANT R20, [R15.64+0x418]
+    -LDG.E.CONSTANT R18, [R13.64+0x100]
+    -LDG.E.CONSTANT R19, [R13.64+0x208]
+    -LDG.E.CONSTANT R25, [R13.64+0x310]
+    -LDG.E.CONSTANT R23, [R13.64+0x418]
+    +LDG.E.CONSTANT R20, [R15.64+0x318]
+    +LDG.E.CONSTANT R18, [R13.64]
+    +LDG.E.CONSTANT R19, [R13.64+0x108]
+    +LDG.E.CONSTANT R25, [R13.64+0x210]
+    +LDG.E.CONSTANT R23, [R13.64+0x318]
+    @@ -144 +146 @@
+    -UIMAD UR2, UR1, 0x42, URZ
+    +UMOV UR2, 0x42
+    @@ -145,0 +148 @@
+    +UIMAD UR2, UR1, UR2, 0x40
+    @@ -153,4 +156,4 @@
+    -LDG.E.CONSTANT R6, [R15.64+0x100]
+    -LDG.E.CONSTANT R13, [R15.64+0x208]
+    -LDG.E.CONSTANT R22, [R15.64+0x310]
+    -LDG.E.CONSTANT R29, [R15.64+0x418]
+    +LDG.E.CONSTANT R6, [R15.64]
+    +LDG.E.CONSTANT R13, [R15.64+0x108]
+    +LDG.E.CONSTANT R22, [R15.64+0x210]
+    +LDG.E.CONSTANT R29, [R15.64+0x318]
+    @@ -319 +322 @@
+    -BSSY B0, 0x14f0
+    +BSSY B0, 0x1520
+    @@ -322 +325 @@
+    -BSSY B1, 0x14e0
+    +BSSY B1, 0x1510
+    @@ -347 +350 @@
+    -BSSY B2, 0x18b0
+    +BSSY B2, 0x18e0
+  floating-point instructions: 95 / 95, same sequence with the same operands: True
+  memory accesses and parameter reads: 87 / 87, same sequence with the same operands: False
+D = 128: 429 / 425 lines (registers renamed, branch targets and the trailing NOPs removed)
+  the lines that differ (- base, + head):
+    @@ -9 +9 @@
+    -SHF.R.S32.HI R2, RZ, 0x1f, R1.reuse
+    +SHF.R.S32.HI R2, RZ, 0x1f, R1
+    @@ -15,5 +15,5 @@
+    -IMAD.WIDE R8, R3, c[0x0][0x170], R1
+    -IMAD R6, R6, R8, RZ
+    -IMAD.WIDE.U32 R1, R8, c[0x0][0x174], RZ
+    -IMAD R6, R3, c[0x0][0x174], R6
+    -IMAD.IADD R9, R2, 0x1, R6
+    +IMAD.WIDE R1, R3, c[0x0][0x170], R1
+    +IMAD R6, R6, R1, RZ
+    +IMAD.WIDE.U32 R8, R1, c[0x0][0x174], RZ
+    +IMAD R6, R2, c[0x0][0x174], R6
+    +IMAD.IADD R9, R3, 0x1, R6
+    @@ -35 +35 @@
+    -UIMAD UR2, UR1, 0x82, URZ
+    +UMOV UR2, 0x82
+    @@ -37,3 +37,4 @@
+    -USHF.R.S32.HI UR3, URZ, 0x1f, UR2
+    -IMAD.U32 R8, RZ, RZ, UR2
+    -IMAD.U32 R3, RZ, RZ, UR3
+    +UIMAD UR2, UR1, UR2, 0x80
+    +USHF.R.S32.HI UR3, URZ, 0x1f, UR2
+    +IMAD.U32 R13, RZ, RZ, UR2
+    +IMAD.U32 R6, RZ, RZ, UR3
+    @@ -41 +42 @@
+    -IMAD.WIDE.U32 R8, R1, 0x82, R8
+    +IMAD.WIDE.U32 R13, R8, 0x82, R13
+    @@ -43,3 +44,3 @@
+    -IMAD.IADD R3, R3, 0x1, R12
+    -LEA R13, P2, R8.reuse, c[0x0][0x160], 0x2
+    -IMAD.U32 R14, RZ, RZ, UR3
+    +IMAD.IADD R6, R6, 0x1, R12
+    +LEA R14, P2, R13.reuse, c[0x0][0x160], 0x2
+    +IMAD.U32 R15, RZ, RZ, UR3
+    @@ -47,4 +48,4 @@
+    -IMAD.U32 R6, RZ, RZ, UR4
+    -LEA.HI.X R15, R8, c[0x0][0x164], R3, 0x2, P2
+    -IMAD.WIDE.U32 R8, R1, 0x82, R14
+    -LDG.E.CONSTANT R16, [R13.64+0x200]
+    +IMAD.U32 R16, RZ, RZ, UR4
+    +LEA.HI.X R17, R13, c[0x0][0x164], R6, 0x2, P2
+    +IMAD.WIDE.U32 R13, R8, 0x82, R15
+    +LDG.E.CONSTANT R18, [R14.64]
+    @@ -52,6 +53,6 @@
+    -IMAD.IADD R3, R12, 0x1, R3
+    -LDG.E.CONSTANT R17, [R13.64+0x408]
+    -LEA R18, P2, R8.reuse, c[0x0][0x160], 0x2
+    -IMAD.U32 R19, RZ, RZ, UR3
+    -LDG.E.CONSTANT R20, [R13.64+0x610]
+    -LEA.HI.X R21, R8, c[0x0][0x164], R3, 0x2, P2
+    +IMAD.IADD R6, R12, 0x1, R6
+    +LDG.E.CONSTANT R19, [R14.64+0x208]
+    +LEA R15, P2, R13.reuse, c[0x0][0x160], 0x2
+    +IMAD.U32 R20, RZ, RZ, UR3
+    +LDG.E.CONSTANT R21, [R14.64+0x410]
+    +LEA.HI.X R16, R13, c[0x0][0x164], R6, 0x2, P2
+    @@ -59,3 +60,3 @@
+    -LDG.E.CONSTANT R23, [R13.64+0x818]
+    -IMAD.WIDE.U32 R19, R1, 0x82, R19
+    -LDG.E.CONSTANT R24, [R18.64+0x200]
+    +LDG.E.CONSTANT R23, [R14.64+0x618]
+    +IMAD.WIDE.U32 R20, R8, 0x82, R20
+    +LDG.E.CONSTANT R24, [R15.64]
+    @@ -63,21 +64,21 @@
+    -IMAD.IADD R3, R12, 0x1, R22
+    -LDG.E.CONSTANT R25, [R18.64+0x408]
+    -LEA R8, P2, R19, c[0x0][0x160], 0x2
+    -USHF.R.S32.HI UR3, URZ, 0x1f, UR2
+    -LDG.E.CONSTANT R26, [R18.64+0x610]
+    -LEA.HI.X R3, R19, c[0x0][0x164], R3, 0x2, P2
+    -IMAD.U32 R14, RZ, RZ, UR2
+    -LDG.E.CONSTANT R13, [R18.64+0x818]
+    -IMAD.U32 R6, RZ, RZ, UR3
+    -LDG.E.CONSTANT R27, [R8.64+0x200]
+    -IMAD.WIDE.U32 R14, R1, 0x82, R14
+    -LDG.E.CONSTANT R15, [R8.64+0x408]
+    -IMAD.IADD R12, R12, 0x1, R6
+    -LEA R19, P2, R14.reuse, c[0x0][0x160], 0x2
+    -LDG.E.CONSTANT R6, [R8.64+0x610]
+    -LEA.HI.X R22, R14, c[0x0][0x164], R12, 0x2, P2
+    -LDG.E.CONSTANT R28, [R8.64+0x818]
+    -LDG.E.CONSTANT R12, [R19.64+0x200]
+    -LDG.E.CONSTANT R14, [R19.64+0x408]
+    -LDG.E.CONSTANT R18, [R19.64+0x610]
+    -LDG.E.CONSTANT R21, [R19.64+0x818]
+    +IMAD.IADD R6, R12, 0x1, R22
+    +LDG.E.CONSTANT R25, [R15.64+0x208]
+    +LEA R13, P2, R20, c[0x0][0x160], 0x2
+    +USHF.R.S32.HI UR3, URZ, 0x1f, UR2
+    +LDG.E.CONSTANT R26, [R15.64+0x410]
+    +LEA.HI.X R6, R20, c[0x0][0x164], R6, 0x2, P2
+    +IMAD.U32 R27, RZ, RZ, UR2
+    +LDG.E.CONSTANT R28, [R15.64+0x618]
+    +IMAD.U32 R29, RZ, RZ, UR3
+    +LDG.E.CONSTANT R17, [R13.64]
+    +IMAD.WIDE.U32 R27, R8, 0x82, R27
+    +LDG.E.CONSTANT R14, [R13.64+0x208]
+    +IMAD.IADD R12, R12, 0x1, R29
+    +LEA R20, P2, R27.reuse, c[0x0][0x160], 0x2
+    +LDG.E.CONSTANT R29, [R13.64+0x410]
+    +LEA.HI.X R22, R27, c[0x0][0x164], R12, 0x2, P2
+    +LDG.E.CONSTANT R30, [R13.64+0x618]
+    +LDG.E.CONSTANT R12, [R20.64]
+    +LDG.E.CONSTANT R27, [R20.64+0x208]
+    +LDG.E.CONSTANT R15, [R20.64+0x410]
+    +LDG.E.CONSTANT R16, [R20.64+0x618]
+    @@ -87,4 +88,4 @@
+    -FMNMX R16, R16, R5, !PT
+    -FMNMX R16, R16, R17, !PT
+    -FMNMX R16, R16, R20, !PT
+    -FMNMX R23, R16, R23, !PT
+    +FMNMX R5, R18, R5, !PT
+    +FMNMX R19, R5, R19, !PT
+    +FMNMX R21, R19, R21, !PT
+    +FMNMX R23, R21, R23, !PT
+    @@ -93,10 +94,10 @@
+    -FMNMX R26, R25, R26, !PT
+    -FMNMX R26, R26, R13, !PT
+    -FMNMX R27, R26, R27, !PT
+    -FMNMX R27, R27, R15, !PT
+    -FMNMX R6, R27, R6, !PT
+    -FMNMX R28, R6, R28, !PT
+    -FMNMX R12, R28, R12, !PT
+    -FMNMX R12, R12, R14, !PT
+    -FMNMX R18, R12, R18, !PT
+    -FMNMX R5, R18, R21, !PT
+    +FMNMX R25, R25, R26, !PT
+    +FMNMX R28, R25, R28, !PT
+    +FMNMX R17, R28, R17, !PT
+    +FMNMX R14, R17, R14, !PT
+    +FMNMX R29, R14, R29, !PT
+    +FMNMX R30, R29, R30, !PT
+    +FMNMX R12, R30, R12, !PT
+    +FMNMX R12, R12, R27, !PT
+    +FMNMX R15, R12, R15, !PT
+    +FMNMX R5, R15, R16, !PT
+    @@ -106,4 +107,5 @@
+    -UIMAD UR2, UR1, 0x82, URZ
+    -IMAD R16, R9, 0x82, RZ
+    -USHF.R.S32.HI UR3, URZ, 0x1f, UR2
+    -IMAD.U32 R14, RZ, RZ, UR2
+    +UMOV UR2, 0x82
+    +IMAD R29, R9, 0x82, RZ
+    +UIMAD UR2, UR1, UR2, 0x80
+    +USHF.R.S32.HI UR3, URZ, 0x1f, UR2
+    +IMAD.U32 R13, RZ, RZ, UR2
+    @@ -113,4 +115,4 @@
+    -IMAD.U32 R19, RZ, RZ, UR2
+    -IMAD.WIDE.U32 R14, R1, 0x82, R14
+    -IMAD.IADD R3, R16, 0x1, R6
+    -LEA R8, P0, R14, c[0x0][0x160], 0x2
+    +IMAD.U32 R20, RZ, RZ, UR2
+    +IMAD.WIDE.U32 R13, R8, 0x82, R13
+    +IMAD.IADD R6, R29, 0x1, R6
+    +LEA R15, P0, R13, c[0x0][0x160], 0x2
+    @@ -118,13 +120,13 @@
+    -LEA.HI.X R3, R14, c[0x0][0x164], R3, 0x2, P0
+    -IMAD.WIDE.U32 R19, R1, 0x82, R19
+    -LDG.E.CONSTANT R21, [R8.64+0x200]
+    -IMAD.IADD R6, R16, 0x1, R22
+    -LDG.E.CONSTANT R18, [R8.64+0x408]
+    -LEA R14, P0, R19, c[0x0][0x160], 0x2
+    -LDG.E.CONSTANT R22, [R8.64+0x610]
+    -LEA.HI.X R6, R19, c[0x0][0x164], R6, 0x2, P0
+    -LDG.E.CONSTANT R19, [R8.64+0x818]
+    -LDG.E.CONSTANT R16, [R14.64+0x200]
+    -LDG.E.CONSTANT R12, [R14.64+0x408]
+    -LDG.E.CONSTANT R26, [R14.64+0x610]
+    -LDG.E.CONSTANT R24, [R14.64+0x818]
+    +LEA.HI.X R16, R13, c[0x0][0x164], R6, 0x2, P0
+    +IMAD.WIDE.U32 R20, R8, 0x82, R20
+    +LDG.E.CONSTANT R18, [R15.64]
+    +IMAD.IADD R6, R29, 0x1, R22
+    +LDG.E.CONSTANT R27, [R15.64+0x208]
+    +LEA R13, P0, R20, c[0x0][0x160], 0x2
+    +LDG.E.CONSTANT R26, [R15.64+0x410]
+    +LEA.HI.X R6, R20, c[0x0][0x164], R6, 0x2, P0
+    +LDG.E.CONSTANT R20, [R15.64+0x618]
+    +LDG.E.CONSTANT R24, [R13.64]
+    +LDG.E.CONSTANT R21, [R13.64+0x208]
+    +LDG.E.CONSTANT R28, [R13.64+0x410]
+    +LDG.E.CONSTANT R14, [R13.64+0x618]
+    @@ -134,8 +136,8 @@
+    -FMNMX R21, R5, R21, !PT
+    -FMNMX R18, R21, R18, !PT
+    -FMNMX R22, R18, R22, !PT
+    -FMNMX R19, R22, R19, !PT
+    -FMNMX R19, R19, R16, !PT
+    -FMNMX R19, R19, R12, !PT
+    -FMNMX R19, R19, R26, !PT
+    -FMNMX R5, R19, R24, !PT
+    +FMNMX R18, R5, R18, !PT
+    +FMNMX R18, R18, R27, !PT
+    +FMNMX R18, R18, R26, !PT
+    +FMNMX R18, R18, R20, !PT
+    +FMNMX R18, R18, R24, !PT
+    +FMNMX R18, R18, R21, !PT
+    +FMNMX R18, R18, R28, !PT
+    +FMNMX R5, R18, R14, !PT
+    @@ -144,13 +146,14 @@
+    -UIMAD UR2, UR1, 0x82, URZ
+    -IMAD R6, R9, 0x82, RZ
+    -USHF.R.S32.HI UR3, URZ, 0x1f, UR2
+    -IMAD.U32 R8, RZ, RZ, UR2
+    -IMAD.U32 R3, RZ, RZ, UR3
+    -IMAD.WIDE.U32 R8, R1, 0x82, R8
+    -IMAD.IADD R6, R3, 0x1, R6
+    -LEA R14, P0, R8, c[0x0][0x160], 0x2
+    -LEA.HI.X R6, R8, c[0x0][0x164], R6, 0x2, P0
+    -LDG.E.CONSTANT R3, [R14.64+0x200]
+    -LDG.E.CONSTANT R8, [R14.64+0x408]
+    -LDG.E.CONSTANT R22, [R14.64+0x610]
+    -LDG.E.CONSTANT R21, [R14.64+0x818]
+    +UMOV UR2, 0x82
+    +IMAD R18, R9, 0x82, RZ
+    +UIMAD UR2, UR1, UR2, 0x80
+    +USHF.R.S32.HI UR3, URZ, 0x1f, UR2
+    +IMAD.U32 R13, RZ, RZ, UR2
+    +IMAD.U32 R6, RZ, RZ, UR3
+    +IMAD.WIDE.U32 R13, R8, 0x82, R13
+    +IMAD.IADD R18, R6, 0x1, R18
+    +LEA R15, P0, R13, c[0x0][0x160], 0x2
+    +LEA.HI.X R16, R13, c[0x0][0x164], R18, 0x2, P0
+    +LDG.E.CONSTANT R6, [R15.64]
+    +LDG.E.CONSTANT R13, [R15.64+0x208]
+    +LDG.E.CONSTANT R18, [R15.64+0x410]
+    +LDG.E.CONSTANT R22, [R15.64+0x618]
+    @@ -160,4 +163,4 @@
+    -FMNMX R3, R3, R5, !PT
+    -FMNMX R8, R3, R8, !PT
+    -FMNMX R8, R8, R22, !PT
+    -FMNMX R5, R8, R21, !PT
+    +FMNMX R6, R6, R5, !PT
+    +FMNMX R13, R6, R13, !PT
+    +FMNMX R13, R13, R18, !PT
+    +FMNMX R5, R13, R22, !PT
+    @@ -168 +171 @@
+    -IMAD R6, R9, 0x82, RZ
+    +IMAD R16, R9, 0x82, RZ
+    @@ -171,9 +174,9 @@
+    -IMAD.U32 R8, RZ, RZ, UR1
+    -IMAD.U32 R3, RZ, RZ, UR2
+    -IMAD.WIDE.U32 R8, R1, 0x82, R8
+    -IMAD.IADD R6, R6, 0x1, R3
+    -LEA R14, P0, R8, c[0x0][0x160], 0x2
+    -LEA.HI.X R6, R8, c[0x0][0x164], R6, 0x2, P0
+    -IMAD.MOV.U32 R3, RZ, RZ, R6
+    -IMAD.MOV.U32 R8, RZ, RZ, R14
+    -LDG.E.CONSTANT R3, [R8.64]
+    +IMAD.U32 R13, RZ, RZ, UR1
+    +IMAD.U32 R6, RZ, RZ, UR2
+    +IMAD.WIDE.U32 R13, R8, 0x82, R13
+    +IMAD.IADD R6, R16, 0x1, R6
+    +LEA R18, P0, R13, c[0x0][0x160], 0x2
+    +LEA.HI.X R15, R13, c[0x0][0x164], R6, 0x2, P0
+    +IMAD.MOV.U32 R6, RZ, RZ, R15
+    +IMAD.MOV.U32 R13, RZ, RZ, R18
+    +LDG.E.CONSTANT R6, [R13.64]
+    @@ -181 +184 @@
+    -IADD3 R14, P2, R14, 0x208, RZ
+    +IADD3 R18, P2, R18, 0x208, RZ
+    @@ -183,6 +186,6 @@
+    -IMAD.X R6, RZ, RZ, R6, P2
+    -FMNMX R5, R3, R5, !PT
+    -@P0 BRA <target>
+    -CS2R R19, SRZ
+    -CS2R R18, SRZ
+    -IMAD.MOV.U32 R10, RZ, RZ, RZ
+    +IMAD.X R15, RZ, RZ, R15, P2
+    +FMNMX R5, R6, R5, !PT
+    +@P0 BRA <target>
+    +IMAD.MOV.U32 R18, RZ, RZ, RZ
+    +CS2R R20, SRZ
+    +CS2R R27, SRZ
+    @@ -193 +196 @@
+    -IMAD.MOV.U32 R19, RZ, RZ, RZ
+    +IMAD.MOV.U32 R18, RZ, RZ, RZ
+    @@ -195,7 +198,7 @@
+    -P2R R29, PR, RZ, 0x2
+    -@!P0 BRA <target>
+    -S2R R11, SR_TID.X
+    -IADD3 R30, -R4, c[0x0][0x174], RZ
+    -CS2R R19, SRZ
+    -CS2R R18, SRZ
+    -IMAD.MOV.U32 R10, RZ, RZ, RZ
+    +P2R R31, PR, RZ, 0x2
+    +@!P0 BRA <target>
+    +S2R R10, SR_TID.X
+    +IADD3 R32, -R4, c[0x0][0x174], RZ
+    +IMAD.MOV.U32 R18, RZ, RZ, RZ
+    +CS2R R20, SRZ
+    +CS2R R27, SRZ
+    @@ -204,3 +207,3 @@
+    -IMAD R16, R9, 0x82, RZ
+    -USHF.R.S32.HI UR3, URZ, 0x1f, UR2
+    -IMAD.U32 R14, RZ, RZ, UR2
+    +IMAD R19, R9, 0x82, RZ
+    +USHF.R.S32.HI UR3, URZ, 0x1f, UR2
+    +IMAD.U32 R13, RZ, RZ, UR2
+    @@ -208,12 +211,12 @@
+    -IMAD.WIDE.U32 R14, R1, 0x82, R14
+    -IMAD.IADD R16, R16, 0x1, R6
+    -LEA R8, P0, R14, c[0x0][0x160], 0x2
+    -LEA.HI.X R3, R14, c[0x0][0x164], R16, 0x2, P0
+    -LDG.E.CONSTANT R12, [R8.64+0x200]
+    -IADD3 R6, P0, R11, R14, RZ
+    -LDG.E.CONSTANT R24, [R8.64+0x408]
+    -IMAD.X R17, RZ, RZ, R16, P0
+    -LEA R14, P0, R6.reuse, c[0x0][0x160], 0x2
+    -LDG.E.CONSTANT R15, [R8.64+0x610]
+    -LEA.HI.X R6, R6, c[0x0][0x164], R17, 0x2, P0
+    -LDG.E.CONSTANT R31, [R8.64+0x818]
+    +IMAD.WIDE.U32 R13, R8, 0x82, R13
+    +IMAD.IADD R19, R19, 0x1, R6
+    +LEA R15, P0, R13, c[0x0][0x160], 0x2
+    +LEA.HI.X R16, R13, c[0x0][0x164], R19, 0x2, P0
+    +LDG.E.CONSTANT R12, [R15.64+0x200]
+    +IADD3 R6, P0, R10, R13, RZ
+    +LDG.E.CONSTANT R17, [R15.64+0x610]
+    +IMAD.X R11, RZ, RZ, R19, P0
+    +LDG.E.CONSTANT R33, [R15.64+0x818]
+    +LEA R13, P0, R6, c[0x0][0x160], 0x2
+    +LDG.E.CONSTANT R7, [R15.64+0x408]
+    +LEA.HI.X R6, R6, c[0x0][0x164], R11, 0x2, P0
+    @@ -222,7 +225,7 @@
+    -@P1 LDG.E.CONSTANT R23, [R14.64+0x100]
+    -@P1 LDG.E.CONSTANT R17, [R14.64]
+    -@P1 LDG.E.CONSTANT R16, [R14.64+0x80]
+    -@P1 LDG.E.CONSTANT R26, [R8.64+0x204]
+    -@P1 LDG.E.CONSTANT R25, [R14.64+0x180]
+    -@P1 FADD R20, R12, -R5
+    -@P1 FSETP.GEU.AND P2, PT, R20, -126, PT
+    +@P1 LDG.E.CONSTANT R19, [R13.64]
+    +@P1 LDG.E.CONSTANT R28, [R13.64+0x80]
+    +@P1 LDG.E.CONSTANT R25, [R13.64+0x100]
+    +@P1 LDG.E.CONSTANT R23, [R13.64+0x180]
+    +@P1 LDG.E.CONSTANT R21, [R15.64+0x204]
+    +@P1 FADD R26, R12, -R5
+    +@P1 FSETP.GEU.AND P2, PT, R26, -126, PT
+    @@ -230,29 +233,30 @@
+    -@!P0 FMUL R20, R20, 0.5
+    -@P1 MUFU.EX2 R12, R20
+    -FSETP.NEU.AND P3, PT, R24, -3.40282346638528859812e+38, PT
+    -FSETP.NEU.AND P4, PT, R15, -3.40282346638528859812e+38, PT
+    -FSETP.NEU.AND P5, PT, R31, -3.40282346638528859812e+38, PT
+    -@P3 LDG.E.CONSTANT R32, [R14.64+0x288]
+    -@!P0 FMUL R12, R12, R12
+    -@P3 LDG.E.CONSTANT R28, [R14.64+0x308]
+    -@P3 LDG.E.CONSTANT R33, [R14.64+0x388]
+    -@P3 LDG.E.CONSTANT R7, [R8.64+0x40c]
+    -@P4 LDG.E.CONSTANT R27, [R14.64+0x410]
+    -@P4 LDG.E.CONSTANT R20, [R14.64+0x510]
+    -@P5 LDG.E.CONSTANT R13, [R14.64+0x618]
+    -@P5 LDG.E.CONSTANT R34, [R8.64+0x81c]
+    -@P1 FFMA R22, R12, R23, R22
+    -@P3 LDG.E.CONSTANT R23, [R14.64+0x208]
+    -@P1 FFMA R21, R12, R17, R21
+    -@P3 FADD R17, R24, -R5
+    -@P4 LDG.E.CONSTANT R24, [R14.64+0x590]
+    -@P1 FFMA R18, R12, R16, R18
+    -@P4 FADD R16, R15, -R5
+    -@P4 LDG.E.CONSTANT R15, [R14.64+0x490]
+    -@P1 FFMA R10, R12, R26, R10
+    -@P4 LDG.E.CONSTANT R26, [R8.64+0x614]
+    -@P1 FFMA R19, R12, R25, R19
+    -@P5 LDG.E.CONSTANT R12, [R14.64+0x698]
+    -@P5 LDG.E.CONSTANT R25, [R14.64+0x718]
+    -@P5 LDG.E.CONSTANT R6, [R14.64+0x798]
+    -@P3 FSETP.GEU.AND P2, PT, R17, -126, PT
+    +@!P0 FMUL R26, R26, 0.5
+    +@P1 MUFU.EX2 R24, R26
+    +FSETP.NEU.AND P3, PT, R17, -3.40282346638528859812e+38, PT
+    +FSETP.NEU.AND P4, PT, R33, -3.40282346638528859812e+38, PT
+    +FSETP.NEU.AND P5, PT, R7, -3.40282346638528859812e+38, PT
+    +@P3 LDG.E.CONSTANT R34, [R15.64+0x614]
+    +@!P0 FMUL R24, R24, R24
+    +@P4 FADD R30, R33, -R5.reuse
+    +@P5 LDG.E.CONSTANT R35, [R13.64+0x288]
+    +@P5 FADD R11, R7, -R5
+    +@P5 LDG.E.CONSTANT R33, [R13.64+0x208]
+    +@P5 LDG.E.CONSTANT R14, [R13.64+0x388]
+    +@P3 LDG.E.CONSTANT R7, [R13.64+0x410]
+    +@P4 LDG.E.CONSTANT R12, [R13.64+0x618]
+    +@P4 LDG.E.CONSTANT R26, [R13.64+0x698]
+    +@P4 LDG.E.CONSTANT R36, [R13.64+0x798]
+    +@P1 FFMA R27, R24, R19, R27
+    +@P3 FADD R19, R17, -R5
+    +@P5 LDG.E.CONSTANT R17, [R13.64+0x308]
+    +@P1 FFMA R22, R24, R28, R22
+    +@P5 LDG.E.CONSTANT R28, [R15.64+0x40c]
+    +@P1 FFMA R20, R24, R25, R20
+    +@P3 LDG.E.CONSTANT R25, [R13.64+0x510]
+    +@P1 FFMA R18, R24, R23, R18
+    +@P4 LDG.E.CONSTANT R23, [R13.64+0x718]
+    +@P1 FFMA R29, R24, R21, R29
+    +@P3 LDG.E.CONSTANT R21, [R13.64+0x490]
+    +@P3 LDG.E.CONSTANT R24, [R13.64+0x590]
+    +@P4 LDG.E.CONSTANT R15, [R15.64+0x81c]
+    +@P5 FSETP.GEU.AND P2, PT, R11, -126, PT
+    @@ -260,3 +264,2 @@
+    -@P3 PLOP3.LUT P0, PT, P2, PT, PT, 0x80, 0x0
+    -@P5 FADD R31, R31, -R5
+    -@P4 FSETP.GEU.AND P2, PT, R16, -126, PT
+    +@P5 PLOP3.LUT P0, PT, P2, PT, PT, 0x80, 0x0
+    +@P3 FSETP.GEU.AND P2, PT, R19, -126, PT
+    @@ -264,2 +267,2 @@
+    -@P4 PLOP3.LUT P1, PT, P2, PT, PT, 0x80, 0x0
+    -@P5 FSETP.GEU.AND P6, PT, R31, -126, PT
+    +@P3 PLOP3.LUT P1, PT, P2, PT, PT, 0x80, 0x0
+    +@P4 FSETP.GEU.AND P6, PT, R30, -126, PT
+    @@ -267,15 +270,14 @@
+    -@P5 PLOP3.LUT P2, PT, P6, PT, PT, 0x80, 0x0
+    -@!P0 FMUL R17, R17, 0.5
+    -@P3 MUFU.EX2 R35, R17
+    -@!P1 FMUL R16, R16, 0.5
+    -IADD3 R30, R30, -0x4, RZ
+    -@P4 MUFU.EX2 R36, R16
+    -@!P2 FMUL R31, R31, 0.5
+    -@P5 MUFU.EX2 R37, R31
+    -@!P0 FMUL R35, R35, R35
+    -ISETP.NE.AND P0, PT, R30, RZ, PT
+    -@P3 FFMA R18, R35.reuse, R32, R18
+    -@P3 FFMA R22, R35.reuse, R28, R22
+    -@P3 FFMA R19, R35.reuse, R33, R19
+    -@!P1 FMUL R36, R36, R36
+    -@P3 FFMA R10, R35.reuse, R7, R10
+    +@P4 PLOP3.LUT P2, PT, P6, PT, PT, 0x80, 0x0
+    +@!P0 FMUL R11, R11, 0.5
+    +@P5 MUFU.EX2 R37, R11
+    +@!P1 FMUL R19, R19, 0.5
+    +@!P2 FMUL R30, R30, 0.5
+    +@P3 MUFU.EX2 R19, R19
+    +IADD3 R32, R32, -0x4, RZ
+    +@P4 MUFU.EX2 R30, R30
+    +@!P0 FMUL R37, R37, R37
+    +ISETP.NE.AND P0, PT, R32, RZ, PT
+    +@P5 FFMA R27, R37.reuse, R33, R27
+    +@P5 FFMA R22, R37.reuse, R35, R22
+    +@P5 FFMA R18, R37, R14, R18
+    +@!P1 FMUL R19, R19, R19
+    @@ -283,14 +285,15 @@
+    -@P4 FFMA R22, R36, R20, R22
+    -@!P2 FMUL R37, R37, R37
+    -@P3 FFMA R21, R35, R23, R21
+    -@P4 FFMA R21, R36.reuse, R27, R21
+    -@P4 FFMA R19, R36.reuse, R24, R19
+    -@P4 FFMA R18, R36.reuse, R15, R18
+    -@P4 FFMA R10, R36, R26, R10
+    -@P5 FFMA R21, R37.reuse, R13, R21
+    -@P5 FFMA R18, R37.reuse, R12, R18
+    -@P5 FFMA R10, R37.reuse, R34, R10
+    -@P5 FFMA R22, R37.reuse, R25, R22
+    -@P5 FFMA R19, R37, R6, R19
+    -@P0 BRA <target>
+    -ISETP.NE.AND P0, PT, R29, RZ, PT
+    +@P3 FFMA R27, R19, R7, R27
+    +@!P2 FMUL R30, R30, R30
+    +@P4 FFMA R27, R30, R12, R27
+    +@P5 FFMA R20, R37.reuse, R17, R20
+    +@P5 FFMA R29, R37, R28, R29
+    +@P3 FFMA R20, R19.reuse, R25, R20
+    +@P3 FFMA R29, R19, R34, R29
+    +@P4 FFMA R20, R30, R23, R20
+    +@P3 FFMA R22, R19.reuse, R21, R22
+    +@P3 FFMA R18, R19, R24, R18
+    +@P4 FFMA R22, R30.reuse, R26, R22
+    +@P4 FFMA R18, R30.reuse, R36, R18
+    +@P4 FFMA R29, R30, R15, R29
+    +@P0 BRA <target>
+    +ISETP.NE.AND P0, PT, R31, RZ, PT
+    @@ -299 +302 @@
+    -S2R R24, SR_TID.X
+    +S2R R23, SR_TID.X
+    @@ -301,11 +304,11 @@
+    -IMAD.U32 R8, RZ, RZ, UR1
+    -IMAD.U32 R3, RZ, RZ, UR2
+    -IMAD.WIDE.U32 R1, R1, 0x82, R8
+    -IMAD R3, R9, 0x82, RZ
+    -LEA R20, P0, R1, c[0x0][0x160], 0x2
+    -IMAD.IADD R2, R3, 0x1, R2
+    -IADD3 R20, P1, R20, 0x204, RZ
+    -LEA.HI.X R2, R1, c[0x0][0x164], R2, 0x2, P0
+    -IMAD.X R2, RZ, RZ, R2, P1
+    -IMAD.MOV.U32 R1, RZ, RZ, R20
+    -LDG.E.CONSTANT R26, [R1.64+-0x4]
+    +IMAD.U32 R13, RZ, RZ, UR1
+    +IMAD.U32 R6, RZ, RZ, UR2
+    +IMAD.WIDE.U32 R8, R8, 0x82, R13
+    +IMAD R6, R9, 0x82, RZ
+    +LEA R25, P0, R8, c[0x0][0x160], 0x2
+    +IMAD.IADD R3, R6, 0x1, R3
+    +IADD3 R25, P1, R25, 0x204, RZ
+    +LEA.HI.X R3, R8, c[0x0][0x164], R3, 0x2, P0
+    +IMAD.X R3, RZ, RZ, R3, P1
+    +IMAD.MOV.U32 R8, RZ, RZ, R25
+    +LDG.E.CONSTANT R16, [R8.64+-0x4]
+    @@ -313,8 +316,8 @@
+    -FSETP.NEU.AND P1, PT, R26, -3.40282346638528859812e+38, PT
+    -@P1 IMAD.WIDE.U32 R8, R24, 0x4, R1
+    -@P1 LDG.E.CONSTANT R6, [R1.64]
+    -@P1 LDG.E.CONSTANT R11, [R8.64+-0x204]
+    -@P1 LDG.E.CONSTANT R16, [R8.64+-0x184]
+    -@P1 LDG.E.CONSTANT R17, [R8.64+-0x104]
+    -@P1 LDG.E.CONSTANT R12, [R8.64+-0x84]
+    -@P1 FADD R9, R26, -R5
+    +FSETP.NEU.AND P1, PT, R16, -3.40282346638528859812e+38, PT
+    +@P1 IMAD.WIDE.U32 R13, R23, 0x4, R8
+    +@P1 LDG.E.CONSTANT R15, [R8.64]
+    +@P1 LDG.E.CONSTANT R10, [R13.64+-0x204]
+    +@P1 LDG.E.CONSTANT R11, [R13.64+-0x184]
+    +@P1 LDG.E.CONSTANT R19, [R13.64+-0x104]
+    +@P1 LDG.E.CONSTANT R26, [R13.64+-0x84]
+    +@P1 FADD R9, R16, -R5
+    @@ -324 +327 @@
+    -@P1 MUFU.EX2 R14, R9
+    +@P1 MUFU.EX2 R16, R9
+    @@ -326,2 +329,2 @@
+    -IADD3 R20, P2, R1, 0x208, RZ
+    -@!P0 FMUL R14, R14, R14
+    +IADD3 R25, P2, R8, 0x208, RZ
+    +@!P0 FMUL R16, R16, R16
+    @@ -329,18 +332,18 @@
+    -IMAD.X R2, RZ, RZ, R2, P2
+    -@P1 FFMA R10, R14.reuse, R6, R10
+    -@P1 FFMA R21, R14.reuse, R11, R21
+    -@P1 FFMA R18, R14.reuse, R16, R18
+    -@P1 FFMA R22, R14.reuse, R17, R22
+    -@P1 FFMA R19, R14, R12, R19
+    -@P0 BRA <target>
+    -FSETP.GT.AND P0, PT, R10, RZ, PT
+    -BSSY B0, 0x1620
+    -IMAD.MOV.U32 R5, RZ, RZ, RZ
+    -@!P0 BRA <target>
+    -IADD3 R5, R10, 0x1800000, RZ
+    -BSSY B1, 0x1610
+    -LOP3.LUT R5, R5, 0x7f800000, RZ, 0xc0, !PT
+    -ISETP.GT.U32.AND P0, PT, R5, 0x1ffffff, PT
+    -@P0 BRA <target>
+    -IMAD.MOV.U32 R1, RZ, RZ, R10
+    -MOV R3, <target>
+    +IMAD.X R3, RZ, RZ, R3, P2
+    +@P1 FFMA R29, R16.reuse, R15, R29
+    +@P1 FFMA R27, R16.reuse, R10, R27
+    +@P1 FFMA R22, R16.reuse, R11, R22
+    +@P1 FFMA R20, R16.reuse, R19, R20
+    +@P1 FFMA R18, R16, R26, R18
+    +@P0 BRA <target>
+    +FSETP.GT.AND P0, PT, R29, RZ, PT
+    +BSSY B0, 0x1660
+    +IMAD.MOV.U32 R9, RZ, RZ, RZ
+    +@!P0 BRA <target>
+    +IADD3 R9, R29, 0x1800000, RZ
+    +BSSY B1, 0x1650
+    +LOP3.LUT R9, R9, 0x7f800000, RZ, 0xc0, !PT
+    +ISETP.GT.U32.AND P0, PT, R9, 0x1ffffff, PT
+    +@P0 BRA <target>
+    +IMAD.MOV.U32 R8, RZ, RZ, R29
+    +MOV R13, <target>
+    @@ -347,0 +351 @@
+    +IMAD.MOV.U32 R9, RZ, RZ, R3
+    @@ -349,4 +353,4 @@
+    -MUFU.RCP R2, R10
+    -FFMA R5, R2, R10, -1
+    -FADD.FTZ R5, -R5, -RZ
+    -FFMA R5, R2, R5, R2
+    +MUFU.RCP R9, R29
+    +FFMA R8, R9, R29, -1
+    +FADD.FTZ R3, -R8, -RZ
+    +FFMA R9, R9, R3, R9
+    @@ -355,5 +358,0 @@
+    -S2R R1, SR_TID.Y
+    -FMUL R21, R5.reuse, R21
+    -FMUL R22, R5, R22
+    -S2R R2, SR_CTAID.X
+    -S2R R4, SR_CTAID.Y
+    @@ -361,13 +360,12 @@
+    -IMAD R1, R2, c[0x0][0x4], R1
+    -SHF.R.S32.HI R2, RZ, 0x1f, R1
+    -IMAD.WIDE R1, R4, c[0x0][0x170], R1
+    -FMUL R4, R5, R18
+    -LEA R9, P0, R1, R3, 0x7
+    -FMUL R3, R5, R19
+    -LEA.HI.X R2, R1, RZ, R2, 0x7, P0
+    -LEA R1, P0, R9, c[0x0][0x168], 0x2
+    -LEA.HI.X R2, R9, c[0x0][0x16c], R2, 0x2, P0
+    -STG.E [R1.64], R21
+    -STG.E [R1.64+0x80], R4
+    -STG.E [R1.64+0x100], R22
+    -STG.E [R1.64+0x180], R3
+    +FMUL R22, R9.reuse, R22
+    +FMUL R6, R9.reuse, R20
+    +FMUL R18, R9, R18
+    +LEA R3, P0, R1, R3, 0x7
+    +LEA.HI.X R1, R1, RZ, R2, 0x7, P0
+    +FMUL R2, R9, R27
+    +LEA R8, P0, R3, c[0x0][0x168], 0x2
+    +LEA.HI.X R3, R3, c[0x0][0x16c], R1, 0x2, P0
+    +STG.E [R8.64], R2
+    +STG.E [R8.64+0x80], R22
+    +STG.E [R8.64+0x100], R6
+    +STG.E [R8.64+0x180], R18
+    @@ -375,14 +373,14 @@
+    -IMAD.SHL.U32 R5, R1, 0x2, RZ
+    -BSSY B2, 0x1a80
+    -SHF.R.U32.HI R14, RZ, 0x18, R5
+    -ISETP.NE.U32.AND P0, PT, R14, RZ, PT
+    -@P0 BRA <target>
+    -IMAD.SHL.U32 R5, R1, 0x2, RZ
+    -ISETP.NE.AND P0, PT, R5, RZ, PT
+    -@P0 FFMA R9, R1, 1.84467440737095516160e+19, RZ
+    -@!P0 MUFU.RCP R2, R1
+    -@P0 MUFU.RCP R4, R9
+    -@P0 FFMA R5, R9, R4, -1
+    -@P0 FADD.FTZ R5, -R5, -RZ
+    -@P0 FFMA R5, R4, R5, R4
+    -@P0 FFMA R2, R5, 1.84467440737095516160e+19, RZ
+    +IMAD.SHL.U32 R9, R8, 0x2, RZ
+    +BSSY B2, 0x1a60
+    +SHF.R.U32.HI R16, RZ, 0x18, R9
+    +ISETP.NE.U32.AND P0, PT, R16, RZ, PT
+    +@P0 BRA <target>
+    +IMAD.SHL.U32 R9, R8, 0x2, RZ
+    +ISETP.NE.AND P0, PT, R9, RZ, PT
+    +@P0 FFMA R6, R8, 1.84467440737095516160e+19, RZ
+    +@!P0 MUFU.RCP R3, R8
+    +@P0 MUFU.RCP R9, R6
+    +@P0 FFMA R5, R6, R9, -1
+    +@P0 FADD.FTZ R16, -R5, -RZ
+    +@P0 FFMA R9, R9, R16, R9
+    +@P0 FFMA R3, R9, 1.84467440737095516160e+19, RZ
+    @@ -390,17 +388,25 @@
+    -IADD3 R6, R14, -0xfd, RZ
+    -ISETP.GT.U32.AND P0, PT, R6, 0x1, PT
+    -@P0 BRA <target>
+    -LOP3.LUT R5, R1, 0x7fffff, RZ, 0xc0, !PT
+    -IMAD.MOV.U32 R8, RZ, RZ, 0x3
+    -LOP3.LUT R5, R5, 0x3f800000, RZ, 0xfc, !PT
+    -SHF.L.U32 R8, R8, R6, RZ
+    -MUFU.RCP R2, R5
+    -FFMA R9, R5, R2, -1
+    -FADD.FTZ R9, -R9, -RZ
+    -FFMA.RM R4, R2.reuse, R9.reuse, R2.reuse
+    -FFMA.RP R9, R2, R9, R2
+    -LOP3.LUT R2, R4.reuse, 0x7fffff, RZ, 0xc0, !PT
+    -FSETP.NEU.FTZ.AND P0, PT, R4, R9, PT
+    -LOP3.LUT R2, R2, 0x800000, RZ, 0xfc, !PT
+    -SEL R9, RZ, 0xffffffff, !P0
+    -LOP3.LUT R8, R8, R2, RZ, 0xc0, !PT
+    +IADD3 R29, R16, -0xfd, RZ
+    +ISETP.GT.U32.AND P0, PT, R29, 0x1, PT
+    +@P0 BRA <target>
+    +LOP3.LUT R9, R8, 0x7fffff, RZ, 0xc0, !PT
+    +IMAD.MOV.U32 R15, RZ, RZ, 0x3
+    +LOP3.LUT R9, R9, 0x3f800000, RZ, 0xfc, !PT
+    +SHF.L.U32 R15, R15, R29, RZ
+    +MUFU.RCP R3, R9
+    +FFMA R6, R9, R3, -1
+    +FADD.FTZ R5, -R6, -RZ
+    +FFMA.RM R6, R3.reuse, R5.reuse, R3.reuse
+    +FFMA.RP R5, R3, R5, R3
+    +LOP3.LUT R3, R6.reuse, 0x7fffff, RZ, 0xc0, !PT
+    +FSETP.NEU.FTZ.AND P0, PT, R6, R5, PT
+    +LOP3.LUT R3, R3, 0x800000, RZ, 0xfc, !PT
+    +SEL R6, RZ, 0xffffffff, !P0
+    +LOP3.LUT R15, R15, R3, RZ, 0xc0, !PT
+    +IMAD.MOV R9, RZ, RZ, -R6
+    +SHF.R.U32.HI R15, RZ, R29, R15
+    +LOP3.LUT P1, RZ, R9, R29, R3, 0xf8, !PT
+    +LOP3.LUT P0, RZ, R15.reuse, 0x1, RZ, 0xc0, !PT
+    +LOP3.LUT P2, RZ, R15, 0x2, RZ, 0xc0, !PT
+    +PLOP3.LUT P0, PT, P0, P1, P2, 0xe0, 0x0
+    +LOP3.LUT P1, RZ, R8, 0x7fffff, RZ, 0xc0, !PT
+    +SEL R9, RZ, 0x1, !P0
+    @@ -408,14 +414,6 @@
+    -SHF.R.U32.HI R8, RZ, R6, R8
+    -LOP3.LUT P1, RZ, R9, R6, R2, 0xf8, !PT
+    -LOP3.LUT P0, RZ, R8.reuse, 0x1, RZ, 0xc0, !PT
+    -LOP3.LUT P2, RZ, R8, 0x2, RZ, 0xc0, !PT
+    -PLOP3.LUT P0, PT, P0, P1, P2, 0xe0, 0x0
+    -LOP3.LUT P1, RZ, R1, 0x7fffff, RZ, 0xc0, !PT
+    -SEL R5, RZ, 0x1, !P0
+    -IMAD.MOV R5, RZ, RZ, -R5
+    -ISETP.GE.AND P0, PT, R5, RZ, PT
+    -IADD3 R5, R14, -0xfc, RZ
+    -SHF.R.U32.HI R2, RZ, R5, R2
+    -@!P0 IADD3 R2, R2, 0x1, RZ
+    -@!P1 IMAD.SHL.U32 R2, R2, 0x2, RZ
+    -LOP3.LUT R2, R2, 0x80000000, R1, 0xf8, !PT
+    +ISETP.GE.AND P0, PT, R9, RZ, PT
+    +IADD3 R9, R16, -0xfc, RZ
+    +SHF.R.U32.HI R3, RZ, R9, R3
+    +@!P0 IADD3 R3, R3, 0x1, RZ
+    +@!P1 IMAD.SHL.U32 R3, R3, 0x2, RZ
+    +LOP3.LUT R3, R3, 0x80000000, R8, 0xf8, !PT
+    @@ -423 +421 @@
+    -MUFU.RCP R2, R1
+    +MUFU.RCP R3, R8
+    @@ -425,4 +423,2 @@
+    -IMAD.MOV.U32 R5, RZ, RZ, R2
+    -IMAD.MOV.U32 R1, RZ, RZ, R3
+    -IMAD.MOV.U32 R2, RZ, RZ, 0x0
+    -RET.REL.NODEC R1 0x0
+    +IMAD.MOV.U32 R6, RZ, RZ, 0x0
+    +RET.REL.NODEC R13 0x0
+  floating-point instructions: 107 / 107, same sequence with the same operands: False
+  memory accesses and parameter reads: 99 / 97, same sequence with the same operands: False

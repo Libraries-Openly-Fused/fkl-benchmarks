@@ -1,0 +1,29 @@
+2026-11-26T15:08:31+01:00
+0.37 0.36 0.95 4/1212 488844
+    PID %CPU PSR COMMAND         COMMAND
+ 488178  9.8   8 bash            bash results/rtx4090/fkl-pr435-check/window-script.sh
+ 416267  3.1  21 claude          claude
+   7844  2.4   1 localsearch-3   /usr/libexec/localsearch-3
+   9312  0.8   6 ptyxis          /usr/bin/ptyxis --gapplication-service
+   9594  0.4   5 claude          claude --resume
+   9705  0.3  17 claude          claude --resume
+ 488130  0.2  30 localsearch-ext /usr/libexec/localsearch-extractor-3 --socket-fd 3
+   9459  0.2   9 claude          claude --resume
+   7485  0.1   0 gnome-shell     /usr/bin/gnome-shell --mode=ubuntu
+   3037  0.1   2 hermes          /home/oscar/.hermes/hermes-agent/venv/bin/python -m hermes_cli.main gateway run
+   1592  0.1   3 nvidia-modeset/ [nvidia-modeset/kthread_q]
+   7860  0.0  19 dropbox         /home/oscar/.dropbox-dist/dropbox-lnx.x86_64-278.4.4020/dropbox
+   2409  0.0   3 wpa_supplicant  /usr/sbin/wpa_supplicant -u -s -O DIR=/run/wpa_supplicant GROUP=netdev
+   7442  0.0  18 gnome-remote-de /usr/libexec/gnome-remote-desktop-daemon
+ 450283  0.0   5 kworker/u129:0- [kworker/u129:0-writeback]
+compute contexts on the RTX 4090: 9312, /usr/bin/ptyxis;
+/home/oscar/tfkl-bench/worktrees/fkl-benchmarks-pr435 008c9d71ab4b3ea790bd6ddf8e23928135fdc718
+/home/oscar/tfkl-bench/worktrees/fkl-pr435-base-b10fc66 b10fc6609426bd18020b9213c7196b528fc677a8
+/home/oscar/tfkl-bench/worktrees/fkl-pr435-base-b10fc66/thread-pool 27e733f50f7f40f171fd84655e05d5acf1fdfbee
+/home/oscar/tfkl-bench/worktrees/fkl-pr435-e322cad 48fbf3f08e7551c3eb70ac2302d8ebc15ecad645
+/home/oscar/tfkl-bench/worktrees/fkl-pr435-e322cad/thread-pool 27e733f50f7f40f171fd84655e05d5acf1fdfbee
+libraries of utest_flash_attention_mma_cu (head):
+	libcudart.so.13 => /home/oscar/tfkl-bench/toolchains/cuda-13.4.3/lib64/libcudart.so.13 (0x0000738bc7e00000)
+	libstdc++.so.6 => /usr/lib/x86_64-linux-gnu/libstdc++.so.6 (0x0000738bc7a00000)
+libraries of pr435_attention (head):
+	libstdc++.so.6 => /usr/lib/x86_64-linux-gnu/libstdc++.so.6 (0x00007da87e600000)
