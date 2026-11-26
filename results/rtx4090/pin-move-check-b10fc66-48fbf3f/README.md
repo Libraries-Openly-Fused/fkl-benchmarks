@@ -9,6 +9,9 @@ fkl-benchmarks #66 (branch `pin-fkl-435`) moves `external/fkl` to it. This recor
 - AMD's two commits: ede9e5e (`external/fkl` from b10fc66 to 48fbf3f) and a4b493c (the HIP programs, `../../rx9060/pin-move-devcode-b10fc66-48fbf3f/`, #67);
 - the four CUDA commits of this record (section 1): f3d66da, b51e53f, 8165270 and 2518c75.
 
+**The branch has one more commit, 339825b**, comments and prose only (section 1.1). It changes no compiled token and no line number, so
+everything in this record holds for 339825b too.
+
 **The checks.** Every CUDA program of the repository was built twice, with the same tools and flags:
 - base: fkl-benchmarks 976e42b (the code of main bd019f6) with FKL b10fc66, its gitlink;
 - head: `pin-fkl-435` at 2518c75 with FKL 48fbf3f.
@@ -80,12 +83,35 @@ two frozen programs (compiled only, never run).
 - **A GCC finding (f3d66da).** `e18_box.cu` takes the address of the filter kernel for `cudaFuncGetAttributes`. With g++ 15.2.0 as the host compiler,
   `auto k = fk::launchDPP_Kernel<DPP, D, IOps...>` (a non-empty pack) does not compile: "no matches converting function". The form
   `reinterpret_cast<const void*>(&fk::launchDPP_Kernel<...>)` compiles, and so does every form with a clang host. `e18_box.cu` uses the `void*` form.
-- **Left as they are:**
-  - `fkl-self/compiletime/README.md:26` names `launchTransformDPP_Kernel` in prose about the history of E3;
-  - the comments of `e19_batched_box.cu` (lines 79 and 422) and `e19_crop_sweep.cu` (95 and 471) cite `morphology.h:179-208` and `189-208`,
-    which are b10fc66's lines. At 48fbf3f `boxBlurReducers` is at lines 182 to 216.
+- **Stale text after 2518c75**, fixed in 339825b (section 1.1):
+  - `fkl-self/compiletime/README.md:26` named `launchTransformDPP_Kernel` as E3's kernel;
+  - the comments of `e19_batched_box.cu` (lines 79 and 422) and `e19_crop_sweep.cu` (95 and 471) cited `morphology.h:179-208` and `189-208`,
+    lines of b10fc66.
 - **The scripts used to make the ports** are in `scripts-used/` (`port_e18_e19.py`, `port_e18_e19_comments.py`, `port_e16.py`). The
   comments were then wrapped by hand.
+
+### 1.1 339825b: comments and prose only
+
+This commit came after the checks of this record, on the coordinator's decision (finding E of the report, 2026-11-26).
+
+What it changes:
+- **`fkl-self/compiletime/README.md:25-27`:** E3's kernel *was* `launchTransformDPP_Kernel(...)`; since FKL #435 it is
+  `launchDPP_Kernel<TransformDPP<...>, TDPPDetails, IOps...>`, with the same parameters (`executor_kernels.h`).
+- **`e19_batched_box.cu:79` and `e19_crop_sweep.cu:95`:** `boxBlurReducers, morphology.h:179-208` becomes `182-216`, the function with its
+  comment at 48fbf3f.
+- **`e19_batched_box.cu:422` and `e19_crop_sweep.cu:471`:** `189-208` becomes `196-204`, the scale and its `fk::Mul` finalizer.
+
+The check, `comment-only-check-2518c75-339825b.txt`, was made with `scripts-used/comment_only_check.py`:
+- **Line counts:** each of the three files keeps its line count.
+- **The two programs:** after a lexer removes the comments (string, character and raw string literals kept), every line of the code is the
+  same at both commits. So the compiler sees the same tokens on the same lines: no compiled token changes, and no `__LINE__`.
+- **The README** is prose and is not compiled.
+- **The check works on code:** on 8165270 it reports the code different at exactly the three renamed lines, and on f3d66da it reports the
+  changed line counts.
+
+Other FKL line references in the ported programs were left, because they name the tree they cite:
+- `e18_box.cu:40` cites `linear_filter.h` lines "at FKL 24478f0";
+- `e19_*.cu` cite `color_conversion.h:55-69` "at 24478f0", a file #435 does not change.
 
 ## 2. Device code (`sass-identity/`)
 
@@ -335,6 +361,12 @@ script, 5 repetitions, on both trees (`e11/e11_diagnostics.csv`, `e11/logs/`). C
   They come from `chain_check.h` (lines 115, 143 and 195), and each control (the correct chain) compiles.
 - **The logs of the two trees differ only in the line numbers of `executors.h`** in the context lines (477 → 494 and others).
 - **The analysis columns are those of the prototype rows** of `../e11-diagnostics/nvcc-rows/`.
+- **Without the checks (c8fcbe8), the batch mismatch compiles with nvcc:** exit 0, no error
+  (`../e11-diagnostics/nvcc-rows/logs/unchanged-c8fcbe8_e11_batch_mismatch_nvcc.txt`).
+  - Its 154 lines are 25 g++ `-Wdeprecated-declarations` warnings, with their context lines. They name CUDA 13's 4-component 64-bit vector
+    types in FKL's `vector_utils.h:45`: `long4`, `ulong4`, `longlong4`, `ulonglong4` and `double4`, five each. None concerns the mistake.
+  - Run, the nvcc build processes the 50 images and leaves outputs 50 to 59 untouched, exit 0 (`../e11-diagnostics/batch-run/output.txt`, 2026-11-01).
+  - The type mismatch and the read in the middle give errors there, with 24 and 27 lines.
 - **The host compiler is g++ 15.2.0;** GCC 13 and Clang 23 are not on this machine (section 5).
 
 ### 4.2 VI-L: the E3 limits (nvcc 13.4.92)
@@ -390,6 +422,7 @@ sweep's own. The compile times are not a result of this check, and the timings w
 ## Files
 
 - `README.md`: this file.
+- `comment-only-check-2518c75-339825b.txt`: section 1.1 (`scripts-used/comment_only_check.py`).
 - `source-history.txt`: per measured program, its files at main (the source and the repository headers it includes), the gitlinks at the
   measured commit and at main, and `git diff --stat` and the commits between them (`scripts-used/source_history.py`).
 - `e16-choice-check.txt`: section 3.5 (`scripts-used/e16_choice_check.py` on the CSVs of `../cleanup-window-d/cleaned/e16-attention/` and of
@@ -410,6 +443,7 @@ sweep's own. The compile times are not a result of this check, and the timings w
   - `host_runs.sh` (both host comparisons), `host_compare435.py`, `moved_lines.py`, `host_summary.py`, `e4_rows.py` and `callers.py` (who calls a function, used for sections 3.2 and 3.4): section 3;
   - `source_history.py` and `e16_choice_check.py`;
   - `e3_runs.sh` and `e3_sweep_nogpu.py`: section 4.2;
-  - `port_e18_e19.py`, `port_e18_e19_comments.py` and `port_e16.py`: section 1.
+  - `port_e18_e19.py`, `port_e18_e19_comments.py` and `port_e16.py`: section 1;
+  - `comment_only_check.py`: section 1.1.
 
 Every file is complete. The files over 1 MiB are gzipped (`gzip -n -9`). Read them with `zcat`.
