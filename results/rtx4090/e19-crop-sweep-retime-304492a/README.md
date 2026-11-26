@@ -87,6 +87,17 @@ reads the GPU every 100 ms.
 
 No cause is named unless shown.
 
+**The differences** (`e19_crop_sweep_differences.csv` for A and for B, written after the window on the CPU by
+`scripts-used/rt1_differences.py`):
+- **What they are:** the largest difference of fkl_batch's tensor from each baseline, opencv_cuda and npp, per N. The header is
+  `gpu,crops,baseline,values,values_not_equal,max_abs_diff_output_units,max_abs_diff_grey_levels`.
+- **Where they come from:** the program's own in-memory comparison, as in the record. Every run's checks compare fkl_batch's tensor
+  with those of opencv_cuda and npp. These are the "between" rows of `e19_batched_box_checks.csv`: the values, those not equal, and the largest
+  absolute difference in output units and in grey levels (× 57.375). No dump is written, and the window script has no extra step.
+- **Repeatability:** the script checks that a side's runs agree at every N (its warm-up and three quiet sweeps).
+- **Tested on the record:** from the record's five sweeps, it gives the 32 rows of the record's `../e19-crop-sweep-checks/analysis/between.csv`
+  exactly. At every N, the rows are the same in all five sweeps.
+
 ## Files
 
 | path | content |
@@ -95,4 +106,4 @@ No cause is named unless shown.
 | `window-script.sh` | the window's script |
 | `compile-B/` | B's build: the report, target lists, configure log, build time, console, and the sha256 of its six binaries |
 | `resources/` | the kernels of A and B: `cuobjdump -res-usage`, the SASS comparison and its CSV, and the per-N table |
-| `scripts-used/` | `check_fkl_tree_rt.sh`, `pr435_sass_identity.py`, `fkl_batch_resources.py` and `rt1_report.py` |
+| `scripts-used/` | `check_fkl_tree_rt.sh`, `pr435_sass_identity.py`, `fkl_batch_resources.py`, `rt1_report.py` and `rt1_differences.py` |
