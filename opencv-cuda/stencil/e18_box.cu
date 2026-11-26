@@ -25,29 +25,30 @@
 //   output   1920 x 1080 uchar3
 // Every implementation reads its own copy of the same host bytes and writes its own output, each made with its own library. Each crops its own
 // way: FKL with Ptr2D::crop2D, OpenCV with a GpuMat ROI, NPP with a pointer into its frame and its step.
-//   fkl_box_asym        FKL, one kernel: LinearFilterDPP (one fk::executeLinearFilter) with the arguments that the body of fk::executeBoxFilter
-//                       builds for scale 1, and LinearFilterDPPDetails<float3> with its defaults (a 16 x 8 tile, a largest kernel of 7 x 7):
+//   fkl_box_asym        FKL, one kernel: LinearFilterDPP (one fk::executeOperations<fk::LinearFilterDPP<GPU_NVIDIA, Details>>) with the
+//                       arguments that the body of fk::executeBoxFilter built for scale 1 (FKL #435 removed it), and
+//                       LinearFilterDPPDetails<float3> with its defaults (a 16 x 8 tile, a largest kernel of 7 x 7):
 //                         image        the read of the crop view, then fk::Resize (INTER_LINEAR, ResizeSampling::ASYMMETRIC, the default) to float3,
 //                                      then fk::SaturateCast<float3, uchar3> and fk::Cast<uchar3, float3>. The resized image is rounded to uchar
 //                                      inside the one kernel, as the libraries round it between their two calls. The DPP stages a tile of these
 //                                      values, with their replicated border, in shared memory
 //                         coefficient  fk::ConstantFilterRead<float3> with 1 / 9 in every channel (scale / (kernel width * kernel height), computed
-//                                      as executeBoxFilter computes it)
+//                                      as executeBoxFilter computed it)
 //                         multiply     fk::Mul<float3, float3, float3, fk::UnaryType>, accumulate fk::Add<float3, float3, float3, fk::UnaryType>
 //                         write        fk::SaturateCast<float3, uchar3>, then the write of the output
-//                       fk::executeBoxFilter itself does not compile with float3 details at FKL 24478f0: it computes the coefficient as
+//                       fk::executeBoxFilter itself did not compile with float3 details at FKL 24478f0: it computed the coefficient as
 //                       scale / static_cast<T>(kernelWidth * kernelHeight) (linear_filter.h:325, and :460 and :501 for the other back-ends), and
 //                       float3 has no conversion from int. The call here passes the same argument types, so it launches the same kernel.
 //                       Every call builds the crop view, every IOp and the details, and launches.
 //   fkl_box_halfpixel   the same with fk::ResizeSampling::HALF_PIXEL
-//   fkl_trunc_asym      the truncating twin of fkl_box_asym, the box that OpenCV-CUDA and NPP compute; one fk::executeLinearFilter, the same
+//   fkl_trunc_asym      the truncating twin of fkl_box_asym, the box that OpenCV-CUDA and NPP compute; one such call, the same
 //                       image Read IOp and details. The coefficient Read IOp fk::ConstantFilterRead<float3> gives the weight 1 in every channel, so the
 //                       accumulator holds the exact sum of the 9 values (an integer of at most 2,295, exact in float). The write divides it by 9
 //                       (fk::Div<float3>, a correctly rounded division: the target is built without fast math) and truncates it to uchar3
 //                       (fk::Cast<float3, uchar3>). A correctly rounded sum / 9 is exactly k when the sum is 9k and lies between k and k + 1
 //                       otherwise, so the result is floor(sum / 9)
 //   fkl_trunc_halfpixel the same with fk::ResizeSampling::HALF_PIXEL
-//   fkl_asym_once       fkl_box_asym with the crop view, the IOps and the details built once; every call is fk::executeLinearFilter
+//   fkl_asym_once       fkl_box_asym with the crop view, the IOps and the details built once; every call is that fk::executeOperations
 //   fkl_half_once       the same for fkl_box_halfpixel
 //   fkl_trunc_asym_once, fkl_trunc_halfpixel_once   the same for fkl_trunc_asym and fkl_trunc_halfpixel
 //   opencv_cuda         OpenCV-CUDA, one call per step: GpuMat ROI, cv::cuda::resize (INTER_LINEAR: ASYMMETRIC, 8UC3 to 8UC3), cv::cuda::cvtColor
@@ -70,7 +71,7 @@
 // 1920 x 1080 x 3 = 6,220,800 values: the differing values and pixels, the largest difference, how many differing values are above and below,
 // and, where the unrounded value of the step is known, how many differing values are exact ties and their largest distance to a half level):
 //   resize   each library's uchar resize (its own intermediate, read after the pipeline's call) against the exact resize of its convention.
-//            FKL's read chain of each convention (the image Read IOp above, through fk::executeLinearFilter with the identity weights 0 0 0 / 0 1 0 /
+//            FKL's read chain of each convention (the image Read IOp above, through LinearFilterDPP with the identity weights 0 0 0 / 0 1 0 /
 //            0 0 0 as a 3 x 3 fk::Ptr2D<float3>, and the rounding write) against the exact resize, and against the library's resize of its convention
 //   box      on one and the same uchar3 image (1920 x 1080 values of E4's generator, seed 12345, so every level occurs next to every other): the
 //            OpenCV path (cvtColor, the box filter, cvtColor), NPP's nppiFilterBoxBorder_8u_C3R_Ctx and FKL's two calls above (rounding and
@@ -138,7 +139,7 @@ constexpr int SRC_W = 3840, SRC_H = 2160;
 constexpr int CROP_X = 640, CROP_Y = 360, CROP_W = 2560, CROP_H = 1440;
 constexpr int OUT_W = 1920, OUT_H = 1080;
 constexpr int BOX_W = 3, BOX_H = 3, ANCHOR_X = 1, ANCHOR_Y = 1;
-constexpr float SCALE = 1.f;   // the scale argument of fk::executeBoxFilter: the coefficient is SCALE / (BOX_W * BOX_H)
+constexpr float SCALE = 1.f;   // the scale argument of the removed fk::executeBoxFilter: the coefficient is SCALE / (BOX_W * BOX_H)
 constexpr size_t OUT_VALUES = static_cast<size_t>(OUT_W) * OUT_H * 3;
 
 bool selected(const std::string& name) {
@@ -347,7 +348,7 @@ using Accumulate = fk::Add<float3, float3, float3, fk::UnaryType>;
 using MultiplyIOp = decltype(Multiply::build());
 using AccumulateIOp = decltype(Accumulate::build());
 
-// The arguments of one fk::executeLinearFilter, as the kernel-only interval of the per-call FKL variants prepares them (built in place, then launched)
+// The arguments of one LinearFilterDPP call, as the kernel-only interval of the per-call FKL variants prepares them (built in place, then launched)
 template <typename Reads, typename Write>
 struct FilterArguments {
     Reads reads;
@@ -410,9 +411,8 @@ int launch() {
         const Details details{BOX_W, BOX_H, ANCHOR_X, ANCHOR_Y};
         const float n = static_cast<float>(details.kernelWidth * details.kernelHeight);
         const auto coefficient = fk::ConstantFilterRead<float3>::build(make_float3(SCALE, SCALE, SCALE) / make_float3(n, n, n));
-        if (!fk::executeLinearFilter(details, fk::make_tuple(image, coefficient), Multiply::build(), Accumulate::build(), output, fkStream)) {
-            throw std::runtime_error("fkl_box_asym: the details are not valid");
-        }
+        fk::executeOperations<fk::LinearFilterDPP<fk::ParArch::GPU_NVIDIA, Details>>(fkStream, details, fk::make_tuple(image, coefficient),
+            Multiply::build(), Accumulate::build(), output);
     };
     // its kernel-only measurement: the same building as the preparation (host), the launch alone behind the spin (GPU)
     const auto prepareAsym = [&] {
@@ -439,9 +439,8 @@ int launch() {
         const Details details{BOX_W, BOX_H, ANCHOR_X, ANCHOR_Y};
         const float n = static_cast<float>(details.kernelWidth * details.kernelHeight);
         const auto coefficient = fk::ConstantFilterRead<float3>::build(make_float3(SCALE, SCALE, SCALE) / make_float3(n, n, n));
-        if (!fk::executeLinearFilter(details, fk::make_tuple(image, coefficient), Multiply::build(), Accumulate::build(), output, fkStream)) {
-            throw std::runtime_error("fkl_box_halfpixel: the details are not valid");
-        }
+        fk::executeOperations<fk::LinearFilterDPP<fk::ParArch::GPU_NVIDIA, Details>>(fkStream, details, fk::make_tuple(image, coefficient),
+            Multiply::build(), Accumulate::build(), output);
     };
     const auto prepareHalf = [&] {
         const fk::Ptr2D<uchar3> crop = dInput.crop2D(fk::Rect(CROP_X, CROP_Y, CROP_W, CROP_H));
@@ -473,9 +472,8 @@ int launch() {
         const auto output = fk::Div<float3>::build(make_float3(n, n, n))
                                 .then(fk::Cast<float3, uchar3>::build())
                                 .then(fk::PerThreadWrite<fk::ND::_2D, uchar3>::build(outTruncAsym));
-        if (!fk::executeLinearFilter(details, fk::make_tuple(image, weights), Multiply::build(), Accumulate::build(), output, fkStream)) {
-            throw std::runtime_error("fkl_trunc_asym: the details are not valid");
-        }
+        fk::executeOperations<fk::LinearFilterDPP<fk::ParArch::GPU_NVIDIA, Details>>(fkStream, details, fk::make_tuple(image, weights),
+            Multiply::build(), Accumulate::build(), output);
     };
     const auto prepareTruncAsym = [&] {
         const fk::Ptr2D<uchar3> crop = dInput.crop2D(fk::Rect(CROP_X, CROP_Y, CROP_W, CROP_H));
@@ -505,9 +503,8 @@ int launch() {
         const auto output = fk::Div<float3>::build(make_float3(n, n, n))
                                 .then(fk::Cast<float3, uchar3>::build())
                                 .then(fk::PerThreadWrite<fk::ND::_2D, uchar3>::build(outTruncHalf));
-        if (!fk::executeLinearFilter(details, fk::make_tuple(image, weights), Multiply::build(), Accumulate::build(), output, fkStream)) {
-            throw std::runtime_error("fkl_trunc_halfpixel: the details are not valid");
-        }
+        fk::executeOperations<fk::LinearFilterDPP<fk::ParArch::GPU_NVIDIA, Details>>(fkStream, details, fk::make_tuple(image, weights),
+            Multiply::build(), Accumulate::build(), output);
     };
     const auto prepareTruncHalf = [&] {
         const fk::Ptr2D<uchar3> crop = dInput.crop2D(fk::Rect(CROP_X, CROP_Y, CROP_W, CROP_H));
@@ -525,9 +522,8 @@ int launch() {
                                                                                             details};
     };
     const auto launchPrepared = [&](const auto& a) {
-        if (!fk::executeLinearFilter(a.details, a.reads, a.multiply, a.accumulate, a.output, fkStream)) {
-            throw std::runtime_error("FKL: the details are not valid");
-        }
+        fk::executeOperations<fk::LinearFilterDPP<fk::ParArch::GPU_NVIDIA, Details>>(fkStream, a.details, a.reads, a.multiply, a.accumulate,
+            a.output);
     };
     // the build-once variants: valid only while the crop (its position and size) does not change
     const fk::Ptr2D<uchar3> cropOnce = dInput.crop2D(fk::Rect(CROP_X, CROP_Y, CROP_W, CROP_H));
@@ -558,29 +554,25 @@ int launch() {
                                          .then(fk::Cast<float3, uchar3>::build())
                                          .then(fk::PerThreadWrite<fk::ND::_2D, uchar3>::build(outTruncHalfOnce));
     const auto callAsymOnce = [&] {
-        if (!fk::executeLinearFilter(detailsOnce, readsAsymOnce, multiplyOnce, accumulateOnce, outputAsymOnce, fkStream)) {
-            throw std::runtime_error("fkl_asym_once: the details are not valid");
-        }
+        fk::executeOperations<fk::LinearFilterDPP<fk::ParArch::GPU_NVIDIA, Details>>(fkStream, detailsOnce, readsAsymOnce, multiplyOnce,
+            accumulateOnce, outputAsymOnce);
     };
     const auto callHalfOnce = [&] {
-        if (!fk::executeLinearFilter(detailsOnce, readsHalfOnce, multiplyOnce, accumulateOnce, outputHalfOnce, fkStream)) {
-            throw std::runtime_error("fkl_half_once: the details are not valid");
-        }
+        fk::executeOperations<fk::LinearFilterDPP<fk::ParArch::GPU_NVIDIA, Details>>(fkStream, detailsOnce, readsHalfOnce, multiplyOnce,
+            accumulateOnce, outputHalfOnce);
     };
     const auto callTruncAsymOnce = [&] {
-        if (!fk::executeLinearFilter(detailsOnce, readsTruncAsymOnce, multiplyOnce, accumulateOnce, outputTruncAsymOnce, fkStream)) {
-            throw std::runtime_error("fkl_trunc_asym_once: the details are not valid");
-        }
+        fk::executeOperations<fk::LinearFilterDPP<fk::ParArch::GPU_NVIDIA, Details>>(fkStream, detailsOnce, readsTruncAsymOnce, multiplyOnce,
+            accumulateOnce, outputTruncAsymOnce);
     };
     const auto callTruncHalfOnce = [&] {
-        if (!fk::executeLinearFilter(detailsOnce, readsTruncHalfOnce, multiplyOnce, accumulateOnce, outputTruncHalfOnce, fkStream)) {
-            throw std::runtime_error("fkl_trunc_halfpixel_once: the details are not valid");
-        }
+        fk::executeOperations<fk::LinearFilterDPP<fk::ParArch::GPU_NVIDIA, Details>>(fkStream, detailsOnce, readsTruncHalfOnce, multiplyOnce,
+            accumulateOnce, outputTruncHalfOnce);
     };
     const auto nothingToPrepare = [] { return 0; };
 
     // ---- The fused kernels as the CUDA runtime reports them, and the sizes of their five arguments (no kernel runs). The kernel is the
-    // instantiation that fk::executeLinearFilter launches for these argument types (linear_filter.h, linearFilterDPPKernel).
+    // instantiation that fk::executeOperations<LinearFilterDPP> launches for these argument types (fk::launchDPP_Kernel, FKL #435).
     {
         int device = 0;
         FKLB_CUDA_CHECK(cudaGetDevice(&device));
@@ -594,8 +586,11 @@ int launch() {
         const int blockThreads = Details::TILE_WIDTH * Details::TILE_HEIGHT;
         const auto report = [&](const char* version, const auto& a) {
             using A = std::decay_t<decltype(a)>;
-            const auto kernel = fk::linearFilterDPPKernel<fk::ParArch::GPU_NVIDIA, Details, decltype(A::reads), decltype(A::multiply),
-                                                          decltype(A::accumulate), decltype(A::output)>;
+            // (the address of this kernel template with its IOps converts to a function pointer only as a const void*: with GCC as nvcc's
+            // host compiler, a function-pointer variable of it does not compile; both runtime calls below take a const void*)
+            const void* const kernel = reinterpret_cast<const void*>(&fk::launchDPP_Kernel<fk::LinearFilterDPP<fk::ParArch::GPU_NVIDIA, Details>,
+                                                                                           Details, decltype(A::reads), decltype(A::multiply),
+                                                                                           decltype(A::accumulate), decltype(A::output)>);
             cudaFuncAttributes attr;
             FKLB_CUDA_CHECK(cudaFuncGetAttributes(&attr, kernel));
             int blocks = 0;
@@ -796,7 +791,7 @@ int launch() {
             return d;
         };
 
-        // ---- (a) The resize alone. FKL's read chain of each convention, through fk::executeLinearFilter with the identity weights
+        // ---- (a) The resize alone. FKL's read chain of each convention, through LinearFilterDPP with the identity weights
         fk::Ptr2D<float3> dIdentity(BOX_W, BOX_H);
         {
             std::vector<float3> id(BOX_W * BOX_H);
@@ -823,13 +818,12 @@ int launch() {
                                        .then(fk::SaturateCast<float3, uchar3>::build())
                                        .then(fk::Cast<uchar3, float3>::build());
             const auto weights = fk::PerThreadRead<fk::ND::_2D, float3>::build(dIdentity);
-            const bool okAsym = fk::executeLinearFilter(details, fk::make_tuple(imageAsym, weights), Multiply::build(), Accumulate::build(),
-                                                        fk::SaturateCast<float3, uchar3>::build().then(fk::PerThreadWrite<fk::ND::_2D, uchar3>::build(dChainAsym)),
-                                                        fkStream);
-            const bool okHalf = fk::executeLinearFilter(details, fk::make_tuple(imageHalf, weights), Multiply::build(), Accumulate::build(),
-                                                        fk::SaturateCast<float3, uchar3>::build().then(fk::PerThreadWrite<fk::ND::_2D, uchar3>::build(dChainHalf)),
-                                                        fkStream);
-            if (!okAsym || !okHalf) throw std::runtime_error("identity weights: the details are not valid");
+            fk::executeOperations<fk::LinearFilterDPP<fk::ParArch::GPU_NVIDIA, Details>>(fkStream, details, fk::make_tuple(imageAsym, weights),
+                Multiply::build(), Accumulate::build(),
+                fk::SaturateCast<float3, uchar3>::build().then(fk::PerThreadWrite<fk::ND::_2D, uchar3>::build(dChainAsym)));
+            fk::executeOperations<fk::LinearFilterDPP<fk::ParArch::GPU_NVIDIA, Details>>(fkStream, details, fk::make_tuple(imageHalf, weights),
+                Multiply::build(), Accumulate::build(),
+                fk::SaturateCast<float3, uchar3>::build().then(fk::PerThreadWrite<fk::ND::_2D, uchar3>::build(dChainHalf)));
             FKLB_CUDA_CHECK(cudaStreamSynchronize(cs));
             chainAsym = download8u(dChainAsym.ptr().data, dChainAsym.ptr().dims.pitch);
             chainHalf = download8u(dChainHalf.ptr().data, dChainHalf.ptr().dims.pitch);
@@ -860,9 +854,8 @@ int launch() {
                 const auto image = fk::PerThreadRead<fk::ND::_2D, uchar3>::build(dBoxIn).then(fk::Cast<uchar3, float3>::build());
                 const auto coefficient = fk::ConstantFilterRead<float3>::build(make_float3(SCALE, SCALE, SCALE) / make_float3(n, n, n));
                 const auto output = fk::SaturateCast<float3, uchar3>::build().then(fk::PerThreadWrite<fk::ND::_2D, uchar3>::build(dBoxOut));
-                if (!fk::executeLinearFilter(details, fk::make_tuple(image, coefficient), Multiply::build(), Accumulate::build(), output, fkStream)) {
-                    throw std::runtime_error("box alone: the details are not valid");
-                }
+                fk::executeOperations<fk::LinearFilterDPP<fk::ParArch::GPU_NVIDIA, Details>>(fkStream, details, fk::make_tuple(image, coefficient),
+                    Multiply::build(), Accumulate::build(), output);
             }
             // FKL, truncating: the call of the truncating variants with the same plain read
             fk::Ptr2D<uchar3> dBoxTruncOut(OUT_W, OUT_H);
@@ -874,9 +867,8 @@ int launch() {
                 const auto output = fk::Div<float3>::build(make_float3(n, n, n))
                                         .then(fk::Cast<float3, uchar3>::build())
                                         .then(fk::PerThreadWrite<fk::ND::_2D, uchar3>::build(dBoxTruncOut));
-                if (!fk::executeLinearFilter(details, fk::make_tuple(image, weights), Multiply::build(), Accumulate::build(), output, fkStream)) {
-                    throw std::runtime_error("box alone, truncating: the details are not valid");
-                }
+                fk::executeOperations<fk::LinearFilterDPP<fk::ParArch::GPU_NVIDIA, Details>>(fkStream, details, fk::make_tuple(image, weights),
+                    Multiply::build(), Accumulate::build(), output);
             }
             // OpenCV: the path of opencv_cuda after the resize, with the same filter object
             cv::cuda::GpuMat cvBoxIn, cvBoxIn4(cvOutSize, CV_8UC4), cvBoxOut4(cvOutSize, CV_8UC4), cvBoxOut(cvOutSize, CV_8UC3);

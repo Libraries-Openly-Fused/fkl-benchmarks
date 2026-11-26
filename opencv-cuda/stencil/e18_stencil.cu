@@ -24,14 +24,14 @@
 //   output     1920 x 1080 8UC3
 // Every implementation reads its own copy of the same host bytes and writes its own output, each made with its own library. Each crops its own
 // way: FKL with Ptr2D::crop2D, OpenCV with a GpuMat ROI, NPP with a pointer into its frame and the ROI size.
-//   fkl_stencil_asym              FKL, one kernel: LinearFilterDPP (fk::executeLinearFilter). Its image Read IOp is the read of the crop view followed by
+//   fkl_stencil_asym              FKL, one kernel: LinearFilterDPP (fk::executeOperations). Its image Read IOp is the read of the crop view followed by
 //                                 the resize (fk::Resize, ResizeSampling::ASYMMETRIC, the default), which returns float3: the DPP stages a tile of
 //                                 resized pixels, with their replicated border, in shared memory. The weights are its second Read IOp (a read of a
 //                                 3 x 3 fk::Ptr2D<float3> with each weight in the three channels). Multiply and accumulate are the Unary forms of
 //                                 fk::Mul and fk::Add on float3. The epilogue is fk::SaturateCast<float3, uchar3> followed by the write of the output.
 //                                 Every call builds the crop view, every IOp and the details of the DPP, and launches.
 //   fkl_stencil_halfpixel         the same with fk::ResizeSampling::HALF_PIXEL
-//   fkl_stencil_asym_once         fkl_stencil_asym with the crop view, the IOps and the details built once; every call is fk::executeLinearFilter
+//   fkl_stencil_asym_once         fkl_stencil_asym with the crop view, the IOps and the details built once; every call is that fk::executeOperations
 //   fkl_stencil_halfpixel_once    the same for fkl_stencil_halfpixel
 //   opencv_cuda                   OpenCV-CUDA, one call per step: GpuMat ROI, convertTo (CV_32FC3), cv::cuda::resize (INTER_LINEAR: ASYMMETRIC),
 //                                 cv::cuda::cvtColor (BGR to BGRA), the linear filter (cv::cuda::createLinearFilter, CV_32FC4, BORDER_REPLICATE),
@@ -244,7 +244,7 @@ unsigned long long spinUs() {
 
 using Details = fk::LinearFilterDPPDetails<float3>;   // the default tile (16 x 8) and largest kernel (7 x 7): the call a user writes
 
-// The arguments of one fk::executeLinearFilter, as the kernel-only interval of the per-call FKL variants prepares them (built in place, then launched)
+// The arguments of one LinearFilterDPP call, as the kernel-only interval of the per-call FKL variants prepares them (built in place, then launched)
 template <typename Reads, typename Multiply, typename Accumulate, typename Write>
 struct FilterArguments {
     Reads reads;
@@ -311,9 +311,8 @@ int launch() {
         const auto accumulate = fk::Add<float3, float3, float3, fk::UnaryType>::build();
         const auto output = fk::SaturateCast<float3, uchar3>::build().then(fk::PerThreadWrite<fk::ND::_2D, uchar3>::build(outAsym));
         const Details details{KERNEL_W, KERNEL_H, ANCHOR_X, ANCHOR_Y};
-        if (!fk::executeLinearFilter(details, fk::make_tuple(image, weights), multiply, accumulate, output, fkStream)) {
-            throw std::runtime_error("fkl_stencil_asym: the details are not valid");
-        }
+        fk::executeOperations<fk::LinearFilterDPP<fk::ParArch::GPU_NVIDIA, Details>>(fkStream, details, fk::make_tuple(image, weights), multiply,
+            accumulate, output);
     };
     // its kernel-only measurement: the same building as the preparation (host), the launch alone behind the spin (GPU)
     const auto prepareAsym = [&] {
@@ -338,9 +337,8 @@ int launch() {
         const auto accumulate = fk::Add<float3, float3, float3, fk::UnaryType>::build();
         const auto output = fk::SaturateCast<float3, uchar3>::build().then(fk::PerThreadWrite<fk::ND::_2D, uchar3>::build(outHalf));
         const Details details{KERNEL_W, KERNEL_H, ANCHOR_X, ANCHOR_Y};
-        if (!fk::executeLinearFilter(details, fk::make_tuple(image, weights), multiply, accumulate, output, fkStream)) {
-            throw std::runtime_error("fkl_stencil_halfpixel: the details are not valid");
-        }
+        fk::executeOperations<fk::LinearFilterDPP<fk::ParArch::GPU_NVIDIA, Details>>(fkStream, details, fk::make_tuple(image, weights), multiply,
+            accumulate, output);
     };
     const auto prepareHalf = [&] {
         const fk::Ptr2D<uchar3> crop = dInput.crop2D(fk::Rect(CROP_X, CROP_Y, CROP_W, CROP_H));
@@ -356,9 +354,8 @@ int launch() {
                                                                Details{KERNEL_W, KERNEL_H, ANCHOR_X, ANCHOR_Y}};
     };
     const auto launchPrepared = [&](const auto& a) {
-        if (!fk::executeLinearFilter(a.details, a.reads, a.multiply, a.accumulate, a.output, fkStream)) {
-            throw std::runtime_error("FKL: the details are not valid");
-        }
+        fk::executeOperations<fk::LinearFilterDPP<fk::ParArch::GPU_NVIDIA, Details>>(fkStream, a.details, a.reads, a.multiply, a.accumulate,
+            a.output);
     };
     // the build-once variants: valid only while the crop (its position and size) does not change
     const fk::Ptr2D<uchar3> cropOnce = dInput.crop2D(fk::Rect(CROP_X, CROP_Y, CROP_W, CROP_H));
@@ -375,14 +372,12 @@ int launch() {
     const auto outputHalfOnce = fk::SaturateCast<float3, uchar3>::build().then(fk::PerThreadWrite<fk::ND::_2D, uchar3>::build(outHalfOnce));
     const Details detailsOnce{KERNEL_W, KERNEL_H, ANCHOR_X, ANCHOR_Y};
     const auto callAsymOnce = [&] {
-        if (!fk::executeLinearFilter(detailsOnce, readsAsymOnce, multiplyOnce, accumulateOnce, outputAsymOnce, fkStream)) {
-            throw std::runtime_error("fkl_stencil_asym_once: the details are not valid");
-        }
+        fk::executeOperations<fk::LinearFilterDPP<fk::ParArch::GPU_NVIDIA, Details>>(fkStream, detailsOnce, readsAsymOnce, multiplyOnce,
+            accumulateOnce, outputAsymOnce);
     };
     const auto callHalfOnce = [&] {
-        if (!fk::executeLinearFilter(detailsOnce, readsHalfOnce, multiplyOnce, accumulateOnce, outputHalfOnce, fkStream)) {
-            throw std::runtime_error("fkl_stencil_halfpixel_once: the details are not valid");
-        }
+        fk::executeOperations<fk::LinearFilterDPP<fk::ParArch::GPU_NVIDIA, Details>>(fkStream, detailsOnce, readsHalfOnce, multiplyOnce,
+            accumulateOnce, outputHalfOnce);
     };
     const auto nothingToPrepare = [] { return 0; };
     {
@@ -519,24 +514,24 @@ int launch() {
             const Details details{KERNEL_W, KERNEL_H, ANCHOR_X, ANCHOR_Y};
             const auto multiply = fk::Mul<float3, float3, float3, fk::UnaryType>::build();
             const auto accumulate = fk::Add<float3, float3, float3, fk::UnaryType>::build();
-            bool valid = false;
             if (sampling == fklb::ResizeSampling::ASYMMETRIC) {
                 const auto image =
                     fk::PerThreadRead<fk::ND::_2D, uchar3>::build(crop).then(fk::Resize<fk::InterpolationType::INTER_LINEAR>::build(fk::Size(OUT_W, OUT_H)));
                 fk::executeOperations<fk::TransformDPP<fk::ParArch::GPU_NVIDIA, fk::TF::DISABLED>>(fkStream, image,
                                                                                                 fk::PerThreadWrite<fk::ND::_2D, float3>::build(dResized));
-                valid = fk::executeLinearFilter(details, fk::make_tuple(image, fk::PerThreadRead<fk::ND::_2D, float3>::build(dIdentity)), multiply, accumulate,
-                                                fk::PerThreadWrite<fk::ND::_2D, float3>::build(dIdentityOut), fkStream);
+                fk::executeOperations<fk::LinearFilterDPP<fk::ParArch::GPU_NVIDIA, Details>>(fkStream, details,
+                    fk::make_tuple(image, fk::PerThreadRead<fk::ND::_2D, float3>::build(dIdentity)), multiply, accumulate,
+                    fk::PerThreadWrite<fk::ND::_2D, float3>::build(dIdentityOut));
             } else {
                 const auto image = fk::PerThreadRead<fk::ND::_2D, uchar3>::build(crop).then(
                     fk::Resize<fk::InterpolationType::INTER_LINEAR, fk::AspectRatio::IGNORE_AR, NullType, fk::ResizeSampling::HALF_PIXEL>::build(
                         fk::Size(OUT_W, OUT_H)));
                 fk::executeOperations<fk::TransformDPP<fk::ParArch::GPU_NVIDIA, fk::TF::DISABLED>>(fkStream, image,
                                                                                                 fk::PerThreadWrite<fk::ND::_2D, float3>::build(dResized));
-                valid = fk::executeLinearFilter(details, fk::make_tuple(image, fk::PerThreadRead<fk::ND::_2D, float3>::build(dIdentity)), multiply, accumulate,
-                                                fk::PerThreadWrite<fk::ND::_2D, float3>::build(dIdentityOut), fkStream);
+                fk::executeOperations<fk::LinearFilterDPP<fk::ParArch::GPU_NVIDIA, Details>>(fkStream, details,
+                    fk::make_tuple(image, fk::PerThreadRead<fk::ND::_2D, float3>::build(dIdentity)), multiply, accumulate,
+                    fk::PerThreadWrite<fk::ND::_2D, float3>::build(dIdentityOut));
             }
-            if (!valid) throw std::runtime_error("identity check: the details are not valid");
             FKLB_CUDA_CHECK(cudaStreamSynchronize(cs));
             const std::vector<float> resized = download32f(dResized.ptr().data, dResized.ptr().dims.pitch);
             const std::vector<float> identity = download32f(dIdentityOut.ptr().data, dIdentityOut.ptr().dims.pitch);
