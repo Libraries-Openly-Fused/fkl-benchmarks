@@ -1,0 +1,19 @@
+# experiment: E3 compile-time sweep
+# notes: one core (8), nvcc --threads 1, -O3 -DNDEBUG -std=c++17 sm_89 +PTX -ftemplate-depth=1000 -lineinfo; GNU time for the peak RSS; timeout 3600 s per compile; the programs are not executed; fkl include /home/oscar/tfkl-bench/worktrees/fkl-benchmarks-pin-435/external/fkl/include
+# repo: 2518c75219a4af8039f9a8d062323bcbb4181487
+# fkl: 48fbf3f08e7551c3eb70ac2302d8ebc15ecad645
+# cvGPUSpeedup: 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c
+# FastNPP: a1b5e245d7dd70fba23dcb51a0aea80495dbc61d
+# python: 3.14.4 (torch not imported)
+# os: Ubuntu 26.04.1 LTS
+# kernel: Linux 7.0.0-43-generic
+# gpu: not queried (compile only; CUDA_VISIBLE_DEVICES=''; scratch/pin-435/e3_sweep_nogpu.py in place of fklb_csv.system_info_lines)
+tree,variant,n,rep,status,why,cuda_wall_s,cuda_user_s,cuda_sys_s,cuda_peak_rss_mb,phase_cudafe_s,phase_cicc_s,phase_ptxas_s,phase_gcc_s,phase_other_s,registers,spill_stores,spill_loads,stack_bytes,cmem0_bytes,sass_instructions,text_bytes,cubin_bytes,host_status,host_wall_s,host_peak_rss_mb
+current,A,1,0,ok,,2.777,2.310,0.460,297,0.890,0.739,0.013,1.116,0.007,10,0,0,0,416,32,512,18976,,,
+current,A,100,0,ok,,3.331,2.820,0.500,350,0.905,1.077,0.032,1.290,0.013,17,0,0,0,808,488,7808,272160,,,
+current,A,500,0,ok,,8.144,7.220,0.910,697,0.920,3.907,0.152,3.081,0.063,17,0,0,0,2408,1880,30080,3668512,,,
+current,A,1000,0,ok,,24.173,22.330,1.830,1477,0.928,13.336,0.456,9.300,0.124,17,0,0,0,4408,3640,58240,13315232,,,
+current,A,1500,0,ok,,55.607,52.180,3.400,2606,0.923,35.393,0.988,17.983,0.269,17,0,0,0,12840,5384,86144,28970528,,,
+current,A,2000,0,ok,,116.629,111.060,5.550,4082,0.955,84.750,1.799,28.593,0.460,17,0,0,0,14840,7136,114176,50619296,,,
+current,A,3000,0,ok,,289.980,279.740,10.220,8079,1.200,210.485,5.261,71.936,0.982,17,0,0,0,18840,10640,170240,111915936,,,
+current,A,4000,0,ok,,619.056,601.790,17.190,13474,1.003,459.475,12.081,144.581,1.733,17,0,0,0,22840,14144,226304,197217568,,,

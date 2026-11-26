@@ -1,0 +1,17 @@
+# 2026-11-26T17:20:14+01:00 E3 compiles start (compile only, CUDA_VISIBLE_DEVICES=''); script sha256 d4e8fa06b9f570fe4120fc3c0f59a6193cc99e6cb9a721ed513f6fa96e9cfef0; e3_sweep.py sha256 ef1c15a8040be5cd064bc4fa6aad3c58e5d879294f480cffd97a5b1f5f89b04a; e3_sweep_nogpu.py sha256 96b50308f952e7922814feea2256ac24e10bbb2ac57643e6309692b8ac556d6a; nvcc Cuda compilation tools, release 13.4, V13.4.92; load 0.71 2.25 4.04
+# 2026-11-26T17:39:00+01:00 variant A ended, exit 0
+# 2026-11-26T17:39:00+01:00 variant B ended, exit 0
+== A
+A N= 1000 rep 0: ok                       nvcc    24.17 s,    1477 MB  regs 17 spills 0 cmem0 4408 SASS 3640
+A N= 1500 rep 0: ok                       nvcc    55.61 s,    2606 MB  regs 17 spills 0 cmem0 12840 SASS 5384
+A N= 2000 rep 0: ok                       nvcc   116.63 s,    4082 MB  regs 17 spills 0 cmem0 14840 SASS 7136
+A N= 3000 rep 0: ok                       nvcc   289.98 s,    8079 MB  regs 17 spills 0 cmem0 18840 SASS 10640
+A N= 4000 rep 0: ok                       nvcc   619.06 s,   13474 MB  regs 17 spills 0 cmem0 22840 SASS 14144
+e3_compile.csv
+sweep.log
+== B
+B N= 3847 rep 0: ok                       nvcc   584.65 s,   12671 MB  regs 19 spills 0 cmem0 39536 SASS 30880
+B N= 3848 rep 0: failed (exit 255)        nvcc   431.24 s,   12677 MB  ptxas /home/oscar/tfkl-bench/scratch/pin-435/e3/tmp/tmpxft_000b7ef4_00000000-6_current_B_3848.ptx, line 43891; error   :
+e3_compile.csv
+sweep.log
+# 2026-11-26T17:39:00+01:00 E3 compiles ended (A exit 0, B exit 0); load 3.02 3.27 3.82

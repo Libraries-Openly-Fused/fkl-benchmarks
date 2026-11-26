@@ -1,0 +1,151 @@
+A = /home/oscar/tfkl-bench/worktrees/fkl-benchmarks-window/build/local-rtx4090/bin/benchmark_CPU_NPP_vs_FastNPP_cu (sha256 50bf1ed262d39d66310e317ea31348cc37a8fe4357483bde2bf7ee678faad1fa)
+B = /home/oscar/tfkl-bench/scratch/pin-435/base-b10fc66/bench-build/bin/benchmark_CPU_NPP_vs_FastNPP_cu (sha256 7d32b53ec97a7ec7c3839d9b87de0e7dd2b8617d967294c5f1969db1bfeb8599)
+GNU objdump (GNU Binutils for Ubuntu) 2.46
+normalised as described in host_compare435.py (host_compare.py's normalisation, no rename rule, fklb::statusMessage's __LINE__ masked)
+TOTAL: functions A 202, B 202; pairs 202; identical 171, different 31; only in A 0, only in B 0; name collisions A 4, B 4
+roots (timed calls; regular expressions ['\\{lambda', '_Function_handler<', '^void fklb::time', 'fklb::time\\w*<', 'timeCall<']): A 69, B 69
+of the different: 30 differ only in the __LINE__ of the moved lines 178:181,55:62,56:63,58:65,61:68,63:70,64:71,66:73,71:78,72:79,73:80,86:94,87:95,91:99,102:111,104:113,105:114,112:121,121:130,122:131,123:132 or by the build path's length (immediates larger by 7 in B), 1 otherwise
+every function that differs (first differing instruction; the roots that reach it in A | in B):
+  DIFFERENT (only __LINE__ / build path) autofastNPP::ResizeBatch_8u32f_C3R_Advanced_Ctx<2,102>(intconst&,intconst&,NppiImageDescriptorconst*,NppiResizeBatchROI_Advancedconst*)[clone.isra.0]
+      1379 -> 1379 instructions; first difference at 345: A: movabs $0x800000000000006c,%rax | B: movabs $0x8000000000000073,%rax
+      roots A (0): none
+      roots B (0): none
+  DIFFERENT (only __LINE__ / build path) autofastNPP::ResizeBatch_8u32f_C3R_Advanced_Ctx<2,112>(intconst&,intconst&,NppiImageDescriptorconst*,NppiResizeBatchROI_Advancedconst*)[clone.isra.0]
+      1379 -> 1379 instructions; first difference at 345: A: movabs $0x800000000000006c,%rax | B: movabs $0x8000000000000073,%rax
+      roots A (0): none
+      roots B (0): none
+  DIFFERENT (only __LINE__ / build path) autofastNPP::ResizeBatch_8u32f_C3R_Advanced_Ctx<2,122>(intconst&,intconst&,NppiImageDescriptorconst*,NppiResizeBatchROI_Advancedconst*)[clone.isra.0]
+      1379 -> 1379 instructions; first difference at 345: A: movabs $0x800000000000006c,%rax | B: movabs $0x8000000000000073,%rax
+      roots A (0): none
+      roots B (0): none
+  DIFFERENT (only __LINE__ / build path) autofastNPP::ResizeBatch_8u32f_C3R_Advanced_Ctx<2,12>(intconst&,intconst&,NppiImageDescriptorconst*,NppiResizeBatchROI_Advancedconst*)[clone.isra.0]
+      773 -> 773 instructions; first difference at 620: A: movabs $0x800000000000005b,%rax | B: movabs $0x8000000000000062,%rax
+      roots A (0): none
+      roots B (0): none
+  DIFFERENT (only __LINE__ / build path) autofastNPP::ResizeBatch_8u32f_C3R_Advanced_Ctx<2,132>(intconst&,intconst&,NppiImageDescriptorconst*,NppiResizeBatchROI_Advancedconst*)[clone.isra.0]
+      1378 -> 1378 instructions; first difference at 344: A: movabs $0x800000000000006c,%rax | B: movabs $0x8000000000000073,%rax
+      roots A (0): none
+      roots B (0): none
+  DIFFERENT (only __LINE__ / build path) autofastNPP::ResizeBatch_8u32f_C3R_Advanced_Ctx<2,142>(intconst&,intconst&,NppiImageDescriptorconst*,NppiResizeBatchROI_Advancedconst*)[clone.isra.0]
+      1378 -> 1378 instructions; first difference at 344: A: movabs $0x800000000000006c,%rax | B: movabs $0x8000000000000073,%rax
+      roots A (0): none
+      roots B (0): none
+  DIFFERENT (only __LINE__ / build path) autofastNPP::ResizeBatch_8u32f_C3R_Advanced_Ctx<2,152>(intconst&,intconst&,NppiImageDescriptorconst*,NppiResizeBatchROI_Advancedconst*)[clone.isra.0]
+      1378 -> 1378 instructions; first difference at 344: A: movabs $0x800000000000006c,%rax | B: movabs $0x8000000000000073,%rax
+      roots A (0): none
+      roots B (0): none
+  DIFFERENT (only __LINE__ / build path) autofastNPP::ResizeBatch_8u32f_C3R_Advanced_Ctx<2,42>(intconst&,intconst&,NppiImageDescriptorconst*,NppiResizeBatchROI_Advancedconst*)[clone.isra.0]
+      821 -> 821 instructions; first difference at 374: A: movabs $0x800000000000006c,%rax | B: movabs $0x8000000000000073,%rax
+      roots A (0): none
+      roots B (0): none
+  DIFFERENT (only __LINE__ / build path) autofastNPP::ResizeBatch_8u32f_C3R_Advanced_Ctx<2,52>(intconst&,intconst&,NppiImageDescriptorconst*,NppiResizeBatchROI_Advancedconst*)[clone.isra.0]
+      1102 -> 1102 instructions; first difference at 142: A: movabs $0x800000000000006c,%rax | B: movabs $0x8000000000000073,%rax
+      roots A (0): none
+      roots B (0): none
+  DIFFERENT (only __LINE__ / build path) autofastNPP::ResizeBatch_8u32f_C3R_Advanced_Ctx<2,62>(intconst&,intconst&,NppiImageDescriptorconst*,NppiResizeBatchROI_Advancedconst*)[clone.isra.0]
+      1380 -> 1380 instructions; first difference at 346: A: movabs $0x800000000000006c,%rax | B: movabs $0x8000000000000073,%rax
+      roots A (0): none
+      roots B (0): none
+  DIFFERENT (only __LINE__ / build path) autofastNPP::ResizeBatch_8u32f_C3R_Advanced_Ctx<2,72>(intconst&,intconst&,NppiImageDescriptorconst*,NppiResizeBatchROI_Advancedconst*)[clone.isra.0]
+      1377 -> 1377 instructions; first difference at 346: A: movabs $0x800000000000006c,%rax | B: movabs $0x8000000000000073,%rax
+      roots A (0): none
+      roots B (0): none
+  DIFFERENT (only __LINE__ / build path) autofastNPP::ResizeBatch_8u32f_C3R_Advanced_Ctx<2,82>(intconst&,intconst&,NppiImageDescriptorconst*,NppiResizeBatchROI_Advancedconst*)[clone.isra.0]
+      1376 -> 1376 instructions; first difference at 345: A: movabs $0x800000000000006c,%rax | B: movabs $0x8000000000000073,%rax
+      roots A (0): none
+      roots B (0): none
+  DIFFERENT (only __LINE__ / build path) autofastNPP::ResizeBatch_8u32f_C3R_Advanced_Ctx<2,92>(intconst&,intconst&,NppiImageDescriptorconst*,NppiResizeBatchROI_Advancedconst*)[clone.isra.0]
+      1379 -> 1379 instructions; first difference at 345: A: movabs $0x800000000000006c,%rax | B: movabs $0x8000000000000073,%rax
+      roots A (0): none
+      roots B (0): none
+  DIFFERENT (only __LINE__ / build path) booltest_NPP_cpu_batchresize_x_split3D<102>(unsignedlong,unsignedlong,CUstream_st*)
+      7343 -> 7343 instructions; first difference at 1505: A: movabs $0x800000000000007a,%rax | B: movabs $0x8000000000000081,%rax
+      roots A (0): none
+      roots B (0): none
+  DIFFERENT (only __LINE__ / build path) booltest_NPP_cpu_batchresize_x_split3D<112>(unsignedlong,unsignedlong,CUstream_st*)
+      7343 -> 7343 instructions; first difference at 1505: A: movabs $0x800000000000007a,%rax | B: movabs $0x8000000000000081,%rax
+      roots A (0): none
+      roots B (0): none
+  DIFFERENT (only __LINE__ / build path) booltest_NPP_cpu_batchresize_x_split3D<122>(unsignedlong,unsignedlong,CUstream_st*)
+      7376 -> 7376 instructions; first difference at 1503: A: movabs $0x800000000000007a,%rax | B: movabs $0x8000000000000081,%rax
+      roots A (0): none
+      roots B (0): none
+  DIFFERENT (only __LINE__ / build path) booltest_NPP_cpu_batchresize_x_split3D<12>(unsignedlong,unsignedlong,CUstream_st*)
+      8179 -> 8179 instructions; first difference at 2193: A: movabs $0x800000000000007a,%rax | B: movabs $0x8000000000000081,%rax
+      roots A (0): none
+      roots B (0): none
+  DIFFERENT (only __LINE__ / build path) booltest_NPP_cpu_batchresize_x_split3D<132>(unsignedlong,unsignedlong,CUstream_st*)
+      7376 -> 7376 instructions; first difference at 1503: A: movabs $0x800000000000007a,%rax | B: movabs $0x8000000000000081,%rax
+      roots A (0): none
+      roots B (0): none
+  DIFFERENT (only __LINE__ / build path) booltest_NPP_cpu_batchresize_x_split3D<142>(unsignedlong,unsignedlong,CUstream_st*)
+      7376 -> 7376 instructions; first difference at 1503: A: movabs $0x800000000000007a,%rax | B: movabs $0x8000000000000081,%rax
+      roots A (0): none
+      roots B (0): none
+  DIFFERENT (only __LINE__ / build path) booltest_NPP_cpu_batchresize_x_split3D<152>(unsignedlong,unsignedlong,CUstream_st*)
+      7376 -> 7376 instructions; first difference at 1503: A: movabs $0x800000000000007a,%rax | B: movabs $0x8000000000000081,%rax
+      roots A (0): none
+      roots B (0): none
+  DIFFERENT (only __LINE__ / build path) booltest_NPP_cpu_batchresize_x_split3D<22>(unsignedlong,unsignedlong,CUstream_st*)
+      7400 -> 7400 instructions; first difference at 1564: A: movabs $0x800000000000007a,%rax | B: movabs $0x8000000000000081,%rax
+      roots A (0): none
+      roots B (0): none
+  DIFFERENT (only __LINE__ / build path) booltest_NPP_cpu_batchresize_x_split3D<2>(unsignedlong,unsignedlong,CUstream_st*)
+      7492 -> 7492 instructions; first difference at 1296: A: movabs $0x800000000000005b,%rax | B: movabs $0x8000000000000062,%rax
+      roots A (0): none
+      roots B (0): none
+  DIFFERENT (only __LINE__ / build path) booltest_NPP_cpu_batchresize_x_split3D<32>(unsignedlong,unsignedlong,CUstream_st*)
+      7439 -> 7439 instructions; first difference at 1613: A: movabs $0x800000000000007a,%rax | B: movabs $0x8000000000000081,%rax
+      roots A (0): none
+      roots B (0): none
+  DIFFERENT (only __LINE__ / build path) booltest_NPP_cpu_batchresize_x_split3D<42>(unsignedlong,unsignedlong,CUstream_st*)
+      7340 -> 7340 instructions; first difference at 1503: A: movabs $0x800000000000007a,%rax | B: movabs $0x8000000000000081,%rax
+      roots A (0): none
+      roots B (0): none
+  DIFFERENT (only __LINE__ / build path) booltest_NPP_cpu_batchresize_x_split3D<52>(unsignedlong,unsignedlong,CUstream_st*)
+      7347 -> 7347 instructions; first difference at 1503: A: movabs $0x800000000000007a,%rax | B: movabs $0x8000000000000081,%rax
+      roots A (0): none
+      roots B (0): none
+  DIFFERENT (only __LINE__ / build path) booltest_NPP_cpu_batchresize_x_split3D<62>(unsignedlong,unsignedlong,CUstream_st*)
+      7343 -> 7343 instructions; first difference at 1501: A: movabs $0x800000000000007a,%rax | B: movabs $0x8000000000000081,%rax
+      roots A (0): none
+      roots B (0): none
+  DIFFERENT (only __LINE__ / build path) booltest_NPP_cpu_batchresize_x_split3D<72>(unsignedlong,unsignedlong,CUstream_st*)
+      7340 -> 7340 instructions; first difference at 1500: A: movabs $0x800000000000007a,%rax | B: movabs $0x8000000000000081,%rax
+      roots A (0): none
+      roots B (0): none
+  DIFFERENT (only __LINE__ / build path) booltest_NPP_cpu_batchresize_x_split3D<82>(unsignedlong,unsignedlong,CUstream_st*)
+      7340 -> 7340 instructions; first difference at 1499: A: movabs $0x800000000000007a,%rax | B: movabs $0x8000000000000081,%rax
+      roots A (0): none
+      roots B (0): none
+  DIFFERENT (only __LINE__ / build path) booltest_NPP_cpu_batchresize_x_split3D<92>(unsignedlong,unsignedlong,CUstream_st*)
+      7343 -> 7343 instructions; first difference at 1505: A: movabs $0x800000000000007a,%rax | B: movabs $0x8000000000000081,%rax
+      roots A (0): none
+      roots B (0): none
+  DIFFERENT (only __LINE__ / build path) fk::Stream_<(fk::ParArch)1>::sync()
+      171 -> 171 instructions; first difference at 50: A: movabs $0x8000000000000077,%rax | B: movabs $0x800000000000007e,%rax
+      roots A (0): none
+      roots B (0): none
+  DIFFERENT fklb::writeSystemInfoHeader(std::ostream&,std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>const&,std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>const&)
+      1251 -> 1251 instructions; first difference at 42: A: mov $0x28,%edx | B: mov $0x7,%edx
+      roots A (0): none
+      roots B (0): none
+
+timed intervals (the instructions between consecutive calls of cudaEventRecord or steady_clock::now in one function; a lambda body inlined into the timing function is inside its interval):
+  [clock] interval identical, its callees line/path ({'identical': 5, 'line/path': 1}), external calls same: 3 intervals, 512 -> 512 instructions: booltest_NPP_cpu_batchresize_x_split3D<102>(unsignedlong,unsignedlong,CUstream_st*)
+  [clock] interval identical, its callees line/path ({'line/path': 1, 'identical': 5}), external calls same: 3 intervals, 512 -> 512 instructions: booltest_NPP_cpu_batchresize_x_split3D<112>(unsignedlong,unsignedlong,CUstream_st*)
+  [clock] interval identical, its callees line/path ({'identical': 5, 'line/path': 1}), external calls same: 3 intervals, 510 -> 510 instructions: booltest_NPP_cpu_batchresize_x_split3D<122>(unsignedlong,unsignedlong,CUstream_st*)
+  [clock] interval identical, its callees line/path ({'identical': 5, 'line/path': 1}), external calls same: 3 intervals, 1097 -> 1097 instructions: booltest_NPP_cpu_batchresize_x_split3D<12>(unsignedlong,unsignedlong,CUstream_st*)
+  [clock] interval identical, its callees line/path ({'identical': 5, 'line/path': 1}), external calls same: 3 intervals, 510 -> 510 instructions: booltest_NPP_cpu_batchresize_x_split3D<132>(unsignedlong,unsignedlong,CUstream_st*)
+  [clock] interval identical, its callees line/path ({'identical': 5, 'line/path': 1}), external calls same: 3 intervals, 510 -> 510 instructions: booltest_NPP_cpu_batchresize_x_split3D<142>(unsignedlong,unsignedlong,CUstream_st*)
+  [clock] interval identical, its callees line/path ({'line/path': 1, 'identical': 5}), external calls same: 3 intervals, 510 -> 510 instructions: booltest_NPP_cpu_batchresize_x_split3D<152>(unsignedlong,unsignedlong,CUstream_st*)
+  [clock] interval identical, its callees identical ({'identical': 6}), external calls same: 3 intervals, 507 -> 507 instructions: booltest_NPP_cpu_batchresize_x_split3D<22>(unsignedlong,unsignedlong,CUstream_st*)
+  [clock] interval identical, its callees identical ({'identical': 3}), external calls same: 3 intervals, 625 -> 625 instructions: booltest_NPP_cpu_batchresize_x_split3D<2>(unsignedlong,unsignedlong,CUstream_st*)
+  [clock] interval identical, its callees identical ({'identical': 6}), external calls same: 3 intervals, 514 -> 514 instructions: booltest_NPP_cpu_batchresize_x_split3D<32>(unsignedlong,unsignedlong,CUstream_st*)
+  [clock] interval identical, its callees line/path ({'identical': 5, 'line/path': 1}), external calls same: 3 intervals, 514 -> 514 instructions: booltest_NPP_cpu_batchresize_x_split3D<42>(unsignedlong,unsignedlong,CUstream_st*)
+  [clock] interval identical, its callees line/path ({'identical': 5, 'line/path': 1}), external calls same: 3 intervals, 508 -> 508 instructions: booltest_NPP_cpu_batchresize_x_split3D<52>(unsignedlong,unsignedlong,CUstream_st*)
+  [clock] interval identical, its callees line/path ({'identical': 5, 'line/path': 1}), external calls same: 3 intervals, 508 -> 508 instructions: booltest_NPP_cpu_batchresize_x_split3D<62>(unsignedlong,unsignedlong,CUstream_st*)
+  [clock] interval identical, its callees line/path ({'identical': 5, 'line/path': 1}), external calls same: 3 intervals, 507 -> 507 instructions: booltest_NPP_cpu_batchresize_x_split3D<72>(unsignedlong,unsignedlong,CUstream_st*)
+  [clock] interval identical, its callees line/path ({'line/path': 1, 'identical': 5}), external calls same: 3 intervals, 507 -> 507 instructions: booltest_NPP_cpu_batchresize_x_split3D<82>(unsignedlong,unsignedlong,CUstream_st*)
+  [clock] interval identical, its callees line/path ({'identical': 5, 'line/path': 1}), external calls same: 3 intervals, 512 -> 512 instructions: booltest_NPP_cpu_batchresize_x_split3D<92>(unsignedlong,unsignedlong,CUstream_st*)
+  TOTAL: [clock] interval identical, callees identical: 3; [clock] interval identical, callees line/path: 13

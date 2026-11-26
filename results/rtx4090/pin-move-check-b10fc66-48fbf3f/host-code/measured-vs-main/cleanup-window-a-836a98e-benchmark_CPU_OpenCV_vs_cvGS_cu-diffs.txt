@@ -1,0 +1,17 @@
+A = /home/oscar/tfkl-bench/worktrees/fkl-benchmarks-window/build/local-rtx4090/bin/benchmark_CPU_OpenCV_vs_cvGS_cu
+B = /home/oscar/tfkl-bench/scratch/pin-435/base-b10fc66/bench-build/bin/benchmark_CPU_OpenCV_vs_cvGS_cu
+per function that differs: the unified diff of its normalised instructions
+
+== fklb::writeSystemInfoHeader(std::ostream&,std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>const&,std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>const&)
+   971 -> 971 instructions
+--- A
++++ B
+@@ -40,7 +40,7 @@
+ mov %rbx,%rdi
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ call <std::basic_ostream<char,std::char_traits<char>>&std::__ostream_insert<char,std::char_traits<char>>(std::basic_ostream<char,std::char_traits<char>>&,charconst*,long)@plt>
+-mov $0x28,%edx
++mov $0x7,%edx
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ mov %rbx,%rdi
+ call <std::basic_ostream<char,std::char_traits<char>>&std::__ostream_insert<char,std::char_traits<char>>(std::basic_ostream<char,std::char_traits<char>>&,charconst*,long)@plt>

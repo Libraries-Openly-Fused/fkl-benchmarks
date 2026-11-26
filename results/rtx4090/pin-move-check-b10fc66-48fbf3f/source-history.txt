@@ -1,0 +1,129 @@
+main = 976e42bfad0ba61c3bb22a555cf72f4da6896aeb; the include closure is taken at main
+
+== cleanup-window-b (VI-K, E4): e4_preprocessing_cu, measured at 836a98e (836a98e025bb4182528cbf47f082d548a943fbac)
+   gitlinks at 836a98e: fkl 64ad9195, cvGPUSpeedup 6d26c65f, FastNPP a1b5e245; at main: fkl b10fc660, cvGPUSpeedup 6d26c65f, FastNPP a1b5e245
+   files (8): opencv-cuda/batched-preprocessing/e4_preprocessing.cu, common/main.h, common/csv_writer.h, common/cuda_timing.h, common/nan_safe.h, common/resize_reference.h, common/status_check.h, common/system_info.h
+   git diff --stat 836a98e..main: 
+      common/cuda_timing.h                                  |  38 ++++++++-----
+      common/status_check.h                                 |   2 +-
+      opencv-cuda/batched-preprocessing/e4_preprocessing.cu | 409 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++------
+      3 files changed, 419 insertions(+), 30 deletions(-)
+   the commits that change them:
+     8dc722d E4a build-once variants: review fixes (own buffers for hand_roi_once, crop sizes in the condition, e4_speedups_once.csv)
+     68cc0cb E4a: the build-once variants (fkl_fused_once, fkl_fused_half_pixel_once, cvgs_fused_once, hand_roi_once, fkl_fused_once_after)
+     0f96c4f E4: hand_roi, the hand-written kernel for crops of any location and size, with its CPU function
+     52ae33a E4: the thread-fusion wording of cvgs_fused, the second control fkl_fused_after, no kept output for E4c
+     e7a85d4 E4: the control fkl_fused_late, the fkl_fused call timed immediately before hand_batch
+     fcfa12d E4: FKL against the hand-written kernel of E1c, and cvGPUSpeedup against OpenCV-CUDA, on the batches of crops
+     8dbb71f common/status_check.h: the RPP example names the RPP 3.2.0 function
+     b95e9fa E1 and E2: review of PR #25 (every version prepared, one FKL prep definition, kernel-only columns, readable calls, empty profile values)
+     d64b0be common/cuda_timing.h: timePreparedLaunch with a hook before the start event
+
+== e4-hand-roi (Figure 15, whole call): e4_preprocessing_cu, measured at 469aa6d (469aa6df965f4728101076121d33b9b04d0def6b)
+   gitlinks at 469aa6d: fkl 64ad9195, cvGPUSpeedup 6d26c65f, FastNPP a1b5e245; at main: fkl b10fc660, cvGPUSpeedup 6d26c65f, FastNPP a1b5e245
+   files (8): opencv-cuda/batched-preprocessing/e4_preprocessing.cu, common/main.h, common/csv_writer.h, common/cuda_timing.h, common/nan_safe.h, common/resize_reference.h, common/status_check.h, common/system_info.h
+   git diff --stat 469aa6d..main: 
+      common/cuda_timing.h                                  |   6 +++---
+      opencv-cuda/batched-preprocessing/e4_preprocessing.cu | 115 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-----------
+      2 files changed, 107 insertions(+), 14 deletions(-)
+   the commits that change them:
+     8dc722d E4a build-once variants: review fixes (own buffers for hand_roi_once, crop sizes in the condition, e4_speedups_once.csv)
+     68cc0cb E4a: the build-once variants (fkl_fused_once, fkl_fused_half_pixel_once, cvgs_fused_once, hand_roi_once, fkl_fused_once_after)
+
+== e4-build-once (Figure 15, build once): e4_preprocessing_cu, measured at f534a38 (f534a38ec6fa536658f8de91b1fae9afd08ec31a)
+   gitlinks at f534a38: fkl 64ad9195, cvGPUSpeedup 6d26c65f, FastNPP a1b5e245; at main: fkl b10fc660, cvGPUSpeedup 6d26c65f, FastNPP a1b5e245
+   files (8): opencv-cuda/batched-preprocessing/e4_preprocessing.cu, common/main.h, common/csv_writer.h, common/cuda_timing.h, common/nan_safe.h, common/resize_reference.h, common/status_check.h, common/system_info.h
+   git diff --stat f534a38..main: no change
+
+== cleanup-window-a (NPP): benchmark_npp_batchresize_x_split3D_cu, measured at 836a98e (836a98e025bb4182528cbf47f082d548a943fbac)
+   gitlinks at 836a98e: fkl 64ad9195, cvGPUSpeedup 6d26c65f, FastNPP a1b5e245; at main: fkl b10fc660, cvGPUSpeedup 6d26c65f, FastNPP a1b5e245
+   files (9): npp/batchresize/benchmark_npp_batchresize_x_split3D.cu, common/main.h, common/cuda_timing.h, common/sequence.h, common/status_check.h, npp/nppbenchmark.h, npp/resize_agreement.h, common/system_info.h, common/nan_safe.h
+   git diff --stat 836a98e..main: 
+      common/cuda_timing.h  | 38 ++++++++++++++++++++++++++------------
+      common/status_check.h |  2 +-
+      2 files changed, 27 insertions(+), 13 deletions(-)
+   the commits that change them:
+     8dc722d E4a build-once variants: review fixes (own buffers for hand_roi_once, crop sizes in the condition, e4_speedups_once.csv)
+     8dbb71f common/status_check.h: the RPP example names the RPP 3.2.0 function
+     b95e9fa E1 and E2: review of PR #25 (every version prepared, one FKL prep definition, kernel-only columns, readable calls, empty profile values)
+     d64b0be common/cuda_timing.h: timePreparedLaunch with a hook before the start event
+
+== cleanup-window-a (CPU time): benchmark_CPU_NPP_vs_FastNPP_cu, measured at 836a98e (836a98e025bb4182528cbf47f082d548a943fbac)
+   gitlinks at 836a98e: fkl 64ad9195, cvGPUSpeedup 6d26c65f, FastNPP a1b5e245; at main: fkl b10fc660, cvGPUSpeedup 6d26c65f, FastNPP a1b5e245
+   files (8): npp/CPU/benchmark_CPU_NPP_vs_FastNPP.cu, common/main.h, common/sequence.h, common/status_check.h, npp/nppbenchmark.h, npp/resize_agreement.h, common/system_info.h, common/nan_safe.h
+   git diff --stat 836a98e..main: 
+      common/status_check.h | 2 +-
+      1 file changed, 1 insertion(+), 1 deletion(-)
+   the commits that change them:
+     8dbb71f common/status_check.h: the RPP example names the RPP 3.2.0 function
+
+== cleanup-window-a (CPU time): benchmark_CPU_OpenCV_vs_cvGS_cu, measured at 836a98e (836a98e025bb4182528cbf47f082d548a943fbac)
+   gitlinks at 836a98e: fkl 64ad9195, cvGPUSpeedup 6d26c65f, FastNPP a1b5e245; at main: fkl b10fc660, cvGPUSpeedup 6d26c65f, FastNPP a1b5e245
+   files (5): opencv-cuda/benchmark_CPU_OpenCV_vs_cvGS.cu, opencv-cuda/testsCommon.cuh, common/main.h, common/sequence.h, common/system_info.h
+   git diff --stat 836a98e..main: no change
+
+== cleanup-window-d/cleaned/e1 (VI-A, E1): e1_vf_chain_cu, measured at 1a2535c (1a2535cf090893bebc82714a410be8c300dde916)
+   gitlinks at 1a2535c: fkl 64ad9195, cvGPUSpeedup 6d26c65f, FastNPP a1b5e245; at main: fkl b10fc660, cvGPUSpeedup 6d26c65f, FastNPP a1b5e245
+   files (7): handwritten-cuda/e1_vf_chain.cu, common/main.h, common/csv_writer.h, common/cuda_timing.h, common/status_check.h, handwritten-cuda/e1_common.h, common/system_info.h
+   git diff --stat 1a2535c..main: 
+      common/cuda_timing.h  | 6 +++---
+      common/status_check.h | 2 +-
+      2 files changed, 4 insertions(+), 4 deletions(-)
+   the commits that change them:
+     8dc722d E4a build-once variants: review fixes (own buffers for hand_roi_once, crop sizes in the condition, e4_speedups_once.csv)
+     8dbb71f common/status_check.h: the RPP example names the RPP 3.2.0 function
+
+== cleanup-window-d/cleaned/e1 (VI-A, E1): e1_hf_batch_cu, measured at 1a2535c (1a2535cf090893bebc82714a410be8c300dde916)
+   gitlinks at 1a2535c: fkl 64ad9195, cvGPUSpeedup 6d26c65f, FastNPP a1b5e245; at main: fkl b10fc660, cvGPUSpeedup 6d26c65f, FastNPP a1b5e245
+   files (7): handwritten-cuda/e1_hf_batch.cu, common/main.h, common/csv_writer.h, common/cuda_timing.h, common/status_check.h, handwritten-cuda/e1_common.h, common/system_info.h
+   git diff --stat 1a2535c..main: 
+      common/cuda_timing.h  | 6 +++---
+      common/status_check.h | 2 +-
+      2 files changed, 4 insertions(+), 4 deletions(-)
+   the commits that change them:
+     8dc722d E4a build-once variants: review fixes (own buffers for hand_roi_once, crop sizes in the condition, e4_speedups_once.csv)
+     8dbb71f common/status_check.h: the RPP example names the RPP 3.2.0 function
+
+== cleanup-window-d/cleaned/e1 (VI-A, E1): e1_preproc_cu, measured at 1a2535c (1a2535cf090893bebc82714a410be8c300dde916)
+   gitlinks at 1a2535c: fkl 64ad9195, cvGPUSpeedup 6d26c65f, FastNPP a1b5e245; at main: fkl b10fc660, cvGPUSpeedup 6d26c65f, FastNPP a1b5e245
+   files (8): handwritten-cuda/e1_preproc.cu, common/main.h, common/csv_writer.h, common/cuda_timing.h, common/nan_safe.h, common/status_check.h, handwritten-cuda/e1_common.h, common/system_info.h
+   git diff --stat 1a2535c..main: 
+      common/cuda_timing.h  | 6 +++---
+      common/status_check.h | 2 +-
+      2 files changed, 4 insertions(+), 4 deletions(-)
+   the commits that change them:
+     8dc722d E4a build-once variants: review fixes (own buffers for hand_roi_once, crop sizes in the condition, e4_speedups_once.csv)
+     8dbb71f common/status_check.h: the RPP example names the RPP 3.2.0 function
+
+== cleanup-window-e (E2): e2_fkl_chain_cu, measured at 9a6a88b (9a6a88b30d1d0fd9364ef971277be32dc2b4d933)
+   gitlinks at 9a6a88b: fkl 64ad9195, cvGPUSpeedup 6d26c65f, FastNPP a1b5e245; at main: fkl b10fc660, cvGPUSpeedup 6d26c65f, FastNPP a1b5e245
+   files (7): handwritten-cuda/e2_fkl_chain.cu, common/main.h, common/csv_writer.h, common/cuda_timing.h, common/status_check.h, handwritten-cuda/e1_common.h, common/system_info.h
+   git diff --stat 9a6a88b..main: 
+      common/cuda_timing.h             | 6 +++---
+      common/status_check.h            | 2 +-
+      handwritten-cuda/e2_fkl_chain.cu | 4 ++--
+      3 files changed, 6 insertions(+), 6 deletions(-)
+   the commits that change them:
+     8dc722d E4a build-once variants: review fixes (own buffers for hand_roi_once, crop sizes in the condition, e4_speedups_once.csv)
+     7cef26c E2: the L2-flush buffer and the L2 of the RTX 4090 in MiB
+     8dbb71f common/status_check.h: the RPP example names the RPP 3.2.0 function
+
+== cleanup-window-d/cleaned/e16-summary (E16): e16_attention_cu, measured at f27c605 (f27c6051c6d2a94e9f7f6e32307abcc1b3c43ec1)
+   gitlinks at f27c605: fkl 64ad9195, cvGPUSpeedup 6d26c65f, FastNPP a1b5e245; at main: fkl b10fc660, cvGPUSpeedup 6d26c65f, FastNPP a1b5e245
+   files (8): fkl-self/attention/e16_attention.cu, common/main.h, common/csv_writer.h, common/cuda_timing.h, common/nan_safe.h, common/sha256.h, common/status_check.h, common/system_info.h
+   git diff --stat f27c605..main: 
+      common/cuda_timing.h  | 6 +++---
+      common/status_check.h | 2 +-
+      2 files changed, 4 insertions(+), 4 deletions(-)
+   the commits that change them:
+     8dc722d E4a build-once variants: review fixes (own buffers for hand_roi_once, crop sizes in the condition, e4_speedups_once.csv)
+     8dbb71f common/status_check.h: the RPP example names the RPP 3.2.0 function
+
+== e19-crop-sweep (E19): e19_crop_sweep_cu, measured at 246b1c8 (246b1c8c9267b850bb3aa19c904172eb8f6ffad8)
+   gitlinks at 246b1c8: fkl 24478f0a, cvGPUSpeedup 6d26c65f, FastNPP a1b5e245; at main: fkl b10fc660, cvGPUSpeedup 6d26c65f, FastNPP a1b5e245
+   files (6): opencv-cuda/stencil/e19_crop_sweep.cu, common/main.h, common/csv_writer.h, common/cuda_timing.h, common/status_check.h, common/system_info.h
+   git diff --stat 246b1c8..main: 
+      opencv-cuda/stencil/e19_crop_sweep.cu | 2 +-
+      1 file changed, 1 insertion(+), 1 deletion(-)
+   the commits that change them:
+     2160c70 external/fkl at b10fc66, the merge of FKL #433 (batched filter DPPs); the details port of the CUDA and HIP programs

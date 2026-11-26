@@ -1,0 +1,158 @@
+A = /home/oscar/tfkl-bench/worktrees/fkl-benchmarks-window-d/build/local-rtx4090/bin/e16_attention_cu
+B = /home/oscar/tfkl-bench/scratch/pin-435/base-b10fc66/bench-build/bin/e16_attention_cu
+per function that differs: the unified diff of its normalised instructions
+
+== (anonymousnamespace)::Timing(anonymousnamespace)::timeCall<(anonymousnamespace)::Runner<64>::run((anonymousnamespace)::Pointconst&)::{lambda()#16},(anonymousnamespace)::Runner<64>::run((anonymousnamespace)::Pointconst&)::{lambda(auto:1const&)#17}>(fk::Stream_<(fk::ParArch)1>&,(anonymousnamespace)::Runner<64>::run((anonymousnamespace)::Pointconst&)::{lambda()#16}const&,(anonymousnamespace)::Runner<64>::run((anonymousnamespace)::Pointconst&)::{lambda(auto:1const&)#17}const&,int,int,double,double)
+   2262 -> 2262 instructions
+--- A
++++ B
+@@ -730,11 +730,11 @@
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ mov %rbx,%rdi
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::_M_append(charconst*,unsignedlong)@plt>
+-movabs $0x8000000000000082,%rax
++movabs $0x8000000000000087,%rax
+ add 0x3b8(%rsp),%rax
+-cmp $0x80,%rax
++cmp $0x85,%rax
+ jbe <SELF@2028>
+-mov $0x81,%edx
++mov $0x86,%edx
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ mov %rbx,%rdi
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::_M_append(charconst*,unsignedlong)@plt>
+@@ -827,11 +827,11 @@
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ mov %rbx,%rdi
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::_M_append(charconst*,unsignedlong)@plt>
+-movabs $0x8000000000000082,%rax
++movabs $0x8000000000000087,%rax
+ add 0x3b8(%rsp),%rax
+-cmp $0x80,%rax
++cmp $0x85,%rax
+ jbe <SELF@1840>
+-mov $0x81,%edx
++mov $0x86,%edx
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ mov %rbx,%rdi
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::_M_append(charconst*,unsignedlong)@plt>
+
+== (anonymousnamespace)::Timing(anonymousnamespace)::timeCall<(anonymousnamespace)::Runner<64>::run((anonymousnamespace)::Pointconst&)::{lambda()#4},(anonymousnamespace)::Runner<64>::run((anonymousnamespace)::Pointconst&)::{lambda(auto:1const&)#5}>(fk::Stream_<(fk::ParArch)1>&,(anonymousnamespace)::Runner<64>::run((anonymousnamespace)::Pointconst&)::{lambda()#4}const&,(anonymousnamespace)::Runner<64>::run((anonymousnamespace)::Pointconst&)::{lambda(auto:1const&)#5}const&,int,int,double,double)
+   2531 -> 2531 instructions
+--- A
++++ B
+@@ -1169,12 +1169,12 @@
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ mov %rbx,%rdi
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::_M_append(charconst*,unsignedlong)@plt>
+-movabs $0x8000000000000086,%rax
++movabs $0x800000000000008b,%rax
+ add -0x78(%rbp),%rax
+-cmp $0x84,%rax
++cmp $0x89,%rax
+ jbe <SELF@1770>
+ mov -0x380(%rbp),%rsi
+-mov $0x85,%edx
++mov $0x8a,%edx
+ mov %rbx,%rdi
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::_M_append(charconst*,unsignedlong)@plt>
+ movabs $0x8000000000000007,%rax
+@@ -1309,12 +1309,12 @@
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ mov %rbx,%rdi
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::_M_append(charconst*,unsignedlong)@plt>
+-movabs $0x8000000000000086,%rax
++movabs $0x800000000000008b,%rax
+ add -0x78(%rbp),%rax
+-cmp $0x84,%rax
++cmp $0x89,%rax
+ jbe <SELF@1780>
+ mov -0x380(%rbp),%rsi
+-mov $0x85,%edx
++mov $0x8a,%edx
+ mov %rbx,%rdi
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::_M_append(charconst*,unsignedlong)@plt>
+ movabs $0x8000000000000007,%rax
+@@ -1459,12 +1459,12 @@
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ mov %rbx,%rdi
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::_M_append(charconst*,unsignedlong)@plt>
+-movabs $0x8000000000000086,%rax
++movabs $0x800000000000008b,%rax
+ add -0x78(%rbp),%rax
+-cmp $0x84,%rax
++cmp $0x89,%rax
+ jbe <SELF@1830>
+ mov -0x380(%rbp),%rsi
+-mov $0x85,%edx
++mov $0x8a,%edx
+ mov %rbx,%rdi
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::_M_append(charconst*,unsignedlong)@plt>
+ movabs $0x8000000000000007,%rax
+
+== (anonymousnamespace)::Timing(anonymousnamespace)::timeCall<(anonymousnamespace)::Runner<64>::run((anonymousnamespace)::Pointconst&)::{lambda()#8},(anonymousnamespace)::Runner<64>::run((anonymousnamespace)::Pointconst&)::{lambda(auto:1const&)#9}>(fk::Stream_<(fk::ParArch)1>&,(anonymousnamespace)::Runner<64>::run((anonymousnamespace)::Pointconst&)::{lambda()#8}const&,(anonymousnamespace)::Runner<64>::run((anonymousnamespace)::Pointconst&)::{lambda(auto:1const&)#9}const&,int,int,double,double)
+   2531 -> 2531 instructions
+--- A
++++ B
+@@ -1169,12 +1169,12 @@
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ mov %rbx,%rdi
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::_M_append(charconst*,unsignedlong)@plt>
+-movabs $0x8000000000000086,%rax
++movabs $0x800000000000008b,%rax
+ add -0x78(%rbp),%rax
+-cmp $0x84,%rax
++cmp $0x89,%rax
+ jbe <SELF@1770>
+ mov -0x380(%rbp),%rsi
+-mov $0x85,%edx
++mov $0x8a,%edx
+ mov %rbx,%rdi
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::_M_append(charconst*,unsignedlong)@plt>
+ movabs $0x8000000000000007,%rax
+@@ -1309,12 +1309,12 @@
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ mov %rbx,%rdi
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::_M_append(charconst*,unsignedlong)@plt>
+-movabs $0x8000000000000086,%rax
++movabs $0x800000000000008b,%rax
+ add -0x78(%rbp),%rax
+-cmp $0x84,%rax
++cmp $0x89,%rax
+ jbe <SELF@1780>
+ mov -0x380(%rbp),%rsi
+-mov $0x85,%edx
++mov $0x8a,%edx
+ mov %rbx,%rdi
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::_M_append(charconst*,unsignedlong)@plt>
+ movabs $0x8000000000000007,%rax
+@@ -1459,12 +1459,12 @@
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ mov %rbx,%rdi
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::_M_append(charconst*,unsignedlong)@plt>
+-movabs $0x8000000000000086,%rax
++movabs $0x800000000000008b,%rax
+ add -0x78(%rbp),%rax
+-cmp $0x84,%rax
++cmp $0x89,%rax
+ jbe <SELF@1830>
+ mov -0x380(%rbp),%rsi
+-mov $0x85,%edx
++mov $0x8a,%edx
+ mov %rbx,%rdi
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::_M_append(charconst*,unsignedlong)@plt>
+ movabs $0x8000000000000007,%rax
+
+== fklb::writeSystemInfoHeader(std::ostream&,std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>const&,std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>const&)
+   721 -> 721 instructions
+--- A
++++ B
+@@ -40,7 +40,7 @@
+ mov %rbx,%rdi
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ call <std::basic_ostream<char,std::char_traits<char>>&std::__ostream_insert<char,std::char_traits<char>>(std::basic_ostream<char,std::char_traits<char>>&,charconst*,long)@plt>
+-mov $0x28,%edx
++mov $0x7,%edx
+ mov %rbx,%rdi
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ call <std::basic_ostream<char,std::char_traits<char>>&std::__ostream_insert<char,std::char_traits<char>>(std::basic_ostream<char,std::char_traits<char>>&,charconst*,long)@plt>
