@@ -1,0 +1,20 @@
+A = 48fbf3f: /home/oscar/tfkl-bench/scratch/pin-435/head-48fbf3f/bench-build/bin
+B = d1cff06: /home/oscar/tfkl-bench/scratch/pin-435/head-d1cff06/bench-build/bin
+arch sm_89; Build cuda_13.4.r13.4/compiler.38855100_0; files (e16_*_cu executables, libe16_*_cu.so): A 2, B 2, in both 2
+only in A: []
+only in B: []
+kernels: A 76, B 76; pairs 76 (renamed 0); identical 76, different 0, only in A 0, only in B 0
+names demangled by llvm-cxxfilt because GNU c++filt returned them unchanged: 0
+renamed pairs by rule: none
+by kernel family (B's name, or A's for a kernel only in A): identical / different / only in A / only in B
+  : 3 / 0 / 0 / 0
+  launchDPP_Kernel<fk::FlashAttentionDPP>: 2 / 0 / 0 / 0
+  launchDPP_Kernel<fk::FlashAttentionMmaDPP>: 37 / 0 / 0 / 0
+  launchDPP_Kernel<fk::FlashAttentionMmaSplitKVDPP>: 19 / 0 / 0 / 0
+  launchDPP_Kernel<fk::FlashAttentionSplitCombineDPP>: 6 / 0 / 0 / 0
+  void : 9 / 0 / 0 / 0
+per file:
+  e16_attention_cu: kernels A 43, B 43; renamed pairs 0; identical 43, different 0, only in A 0, only in B 0  (all identical)
+  e16_query_tile_cu: kernels A 33, B 33; renamed pairs 0; identical 33, different 0, only in A 0, only in B 0  (all identical)
+every kernel that is different or on one side only (A = base, B = head):
+  none

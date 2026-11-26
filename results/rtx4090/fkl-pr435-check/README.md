@@ -20,6 +20,8 @@
 
 Nothing is timed. This repository's pin does not change.
 
+**#435's next head, d1cff06**, is checked in the last section, "The new head d1cff06 (fix A)", with its files in `d1cff06/`.
+
 **State.** Everything is done:
 - the builds (steps 1 and 1b);
 - the device-code comparison;
@@ -260,3 +262,103 @@ Then, on the CPU, `compare_harness.py`.
 **Left out:**
 - the build trees and the binaries, in `scratch/pr435/` of the RTX 4090 machine;
 - the harness outputs (130 files, 56 MiB, in `scratch/pr435/harness-out/`). Their sha256 are in `window/harness-outputs-sha256.txt`.
+
+## The new head d1cff06 (fix A), 2026-11-26 (`d1cff06/`)
+
+**The change.** #435's head moved to `d1cff068dd2063ec9d4ff0206aef1836e98ba036`, one commit on 48fbf3f by Oscar Amoros Huguet. It changes only
+`include/fused_kernel/algorithms/attention/flash_attention_mma.h`, +2 −1. The call `attention_mma_detail::setDynamicSharedMemory<MmaDPP>()`
+of `flashAttentionMmaSplits` moves into the initializer of its `static const int wave`. The executors keep theirs before each launch.
+
+This is Oscar's fix of finding A of the pin-move check (`../pin-move-check-b10fc66-48fbf3f/`, #68). For the measured MMA kernels with more
+than 48,000 B of dynamic shared memory, E16's timed call at 48fbf3f set the attribute twice per call. Now it does so once, as at b10fc66.
+
+Decision: the coordinator's assignment C-NV-A of 2026-11-26 (Oscar's decision on finding A).
+
+### Steps 1 to 3 (compile only, no GPU visible; 2026-11-26 18:10:15 to 18:20)
+
+1. **FKL's tests at d1cff06** (`d1cff06/compile/`, `scripts-used/compile-d1cff06.sh`).
+   - The head worktree moved from 48fbf3f to d1cff06 as a clean detached checkout. The head build tree `scratch/pr435/fkl-head-build` was
+     configured again with the same command (FKL's version message: `0.1.14-undefined-d1cff06`) and rebuilt with the same 150 targets.
+   - **make rebuilt only `utest_flash_attention_mma_cu`**: one object and its link (`fkl-head-d1cff06-recompiled.txt`). All 150 targets
+     compiled and 12 of 12 expected rejections held (18:10:15 to 18:10:51).
+   - The 48fbf3f executables were first copied to `scratch/pr435/fkl-head48-bins/`. Their sha256 are the C-NV window's manifest's.
+     Of the 59 `*_cu` executables, only `utest_flash_attention_mma_cu` differs byte-wise at d1cff06.
+   - **The harness:** `pr435_attention` (source unchanged) was built against d1cff06 with the C-NV flags (`d1cff06/harness/build/`,
+     `harness/source/build_harness_d1cff06.sh`, 18:11:22 to 18:11:31).
+2. **Device code** (`d1cff06/sass-identity/`), 48fbf3f against d1cff06, with `scripts-used/sass_identity_norename.py`.
+   - That is `pr435_sass_identity.py` without the rename rule, since both sides already have the new names. With the rule, A's attention
+     names would get the leading `ParArch` twice, and they would not pair.
+
+   | binaries | kernels 48fbf3f / d1cff06 | identical | different | in one build only |
+   |---|---|---|---|---|
+   | FKL's 59 CUDA test executables | 279 / 279 | **279** | 0 | 0 |
+   | `pr435_attention` (the harness) | 28 / 28 | **28** | 0 | 0 |
+   | `e16_attention_cu`, `e16_query_tile_cu` (fkl-benchmarks) | 76 / 76 | **76** | 0 | 0 |
+
+   So the fix changes no device code: it is host only.
+3. **The pin of fkl-benchmarks #66** (`pin-fkl-435`) moved to d1cff06: ccfbba6, one gitlink commit on 339825b, not force-pushed. When #435
+   merges, the pin moves again, to the merge commit.
+
+   **E16** was then built at ccfbba6 (`d1cff06/e16-host-code/build-head-d1cff06/`, `scripts-used/check_fkl_tree_e16.sh`, 18:11:22 to 18:11:55).
+   - The build script is a copy of `scripts/check_fkl_tree.sh` with two changes: the checkout comes from `CHECK_ROOT`, and the bench
+     targets are only `e16_attention_cu` and `e16_query_tile_cu`.
+   - The configure options, the link farm and the folder-name length are those of the 48fbf3f build of #68's identity builds
+     (`scratch/pin-435/head-48fbf3f`).
+   - The host code was compared with `scripts-used/host_compare435.py` (sha256 79b8317c..., the version of #68), with no rename rule.
+     The lines moved by the commit (`moved-lines-flash_attention_mma-48fbf3f-d1cff06.txt`: 2114 → 2115, 2153 → 2154, 2179 → 2180) are
+     counted as `__LINE__`.
+
+   | program | functions 48fbf3f / d1cff06 | identical | only `__LINE__` | other |
+   |---|---|---|---|---|
+   | `e16_query_tile_cu` | 333 / 333 | 333 | 0 | 0 |
+   | `e16_attention_cu` | 346 / 346 | 319 | 14 | 13 |
+
+   **The 13 other functions of `e16_attention_cu`:**
+   - **the two out-of-line `flashAttentionMmaSplits`** (D = 128 and D = 64, 125 → 126 instructions), and the 8 timed lambdas into which
+     GCC inlined it (`Runner<128>::run` #1, #3, #5, #9, #11, #13, #15 and `Runner<64>::run` #13). These are the fix, below;
+   - **`parseAttentionKernel` and its `.cold` clone** (460 → 497 and 40 → 40 instructions). It reads the kernel facts after the timing, and
+     no timed interval reaches it. Its source does not change, and no cause is claimed;
+   - **`fklb::writeSystemInfoHeader`**: the build information names FKL d1cff06. It runs once, before any timing.
+
+   **Where `cudaFuncSetAttribute` runs** (`attr-calls-e16_attention_cu-{48fbf3f,d1cff06}.txt`, `scripts-used/attr_calls.py`):
+   - Both builds have 35 call sites in 16 functions.
+   - A site inside an innermost guarded block (a `__cxa_guard_acquire` followed by its `__cxa_guard_release`, nothing guarded between
+     them in address order) is in a static's one-time initializer. Any other site runs on every call.
+
+   | | in an initializer | on every call |
+   |---|---|---|
+   | 48fbf3f | 0 | 35 |
+   | d1cff06 | 11 | 24 |
+
+   - **The 11 sites that move** are the `flashAttentionMmaSplits` calls:
+     - one in each of the two out-of-line instances. Their calls `A G+ O D V G-` (the attribute, then the guarded occupancy query) become
+       `G+ A O D V G-` (the attribute inside the guarded block);
+     - nine inlined into the 8 lambdas above, two of them in `Runner<128>::run` #13, which inlines the call in two of its tile branches.
+   - **The executors' sites** (`executeOperations<FlashAttentionMmaDPP>` and `<FlashAttentionMmaSplitKVDPP>`, D = 128 and 64) stay on
+     every call, and so do the lambdas' other sites. The same holds for the reference computation `errorAgainst`, outside the timing.
+   - **E16's timed intervals:** all 38 event intervals (event a, the block of launches, event b) and the 38 clock intervals are identical.
+     The functions they call differ as above.
+   - **So, for the six measured kernels of 49,152 B,** a timed call now sets the attribute once, in the executor, as at b10fc66. The
+     initializer sets it once more, the first time only.
+
+### The GPU window (`d1cff06/window-script.sh`)
+
+(To be filled when the window has run.) The script runs:
+- FKL's 59 CUDA tests at d1cff06;
+- then `pr435_attention` at d1cff06;
+- then, on the CPU only, `harness/source/compare_attention_bitwise.py`, which compares its 32 outputs with the C-NV window's 48fbf3f
+  outputs bit for bit. Before starting, it checks that those outputs still have the sha256 that window recorded.
+
+The binaries it runs are listed in `d1cff06/window-binaries.sha256`: 60 of them, the 59 tests and `pr435_attention`.
+
+### Files (`d1cff06/`)
+
+| path | content |
+|---|---|
+| `compile/fkl-head-d1cff06-*` | step 1: console, commands, configure log, target lists, build log, what was rebuilt, rejection log, report |
+| `harness/build/` | the build console and log of `pr435_attention` at d1cff06 |
+| `harness/source/` | `compare_attention_bitwise.py` and `build_harness_d1cff06.sh` |
+| `sass-identity/` | the three reports and their CSVs (the tests' CSV gzipped) |
+| `e16-host-code/` | the reports, CSVs, interval CSVs and diffs of `e16_attention_cu` and `e16_query_tile_cu`; `attr-calls-*`; the moved lines; the E16 build (`build-head-d1cff06/`, `build-console.txt`) |
+| `scripts-used/` | `compile-d1cff06.sh`, `sass_identity_norename.py`, `check_fkl_tree_e16.sh`, `host_compare435.py`, `moved_lines.py`, `attr_calls.py` |
+| `window-script.sh`, `window-binaries.sha256` | the window's script and the sha256 of its 60 binaries |
