@@ -1,0 +1,22 @@
+A = 1df2738: /home/oscar/tfkl-bench/scratch/pr436/harness-build/head-1df2738
+B = 03789b3: /home/oscar/tfkl-bench/scratch/pr436/harness-build-03789b3/head-03789b3
+arch sm_89; Build cuda_13.4.r13.4/compiler.38855100_0; files (pr436_image executables, libpr436_image.so): A 1, B 1, in both 1
+only in A: []
+only in B: []
+kernels: A 22, B 22; pairs 22 (renamed 0); identical 22, different 0, only in A 0, only in B 0
+names demangled by llvm-cxxfilt because GNU c++filt returned them unchanged: 0
+renamed pairs by rule: none
+by kernel family (B's name, or A's for a kernel only in A): identical / different / only in A / only in B
+  launchDPP_Kernel<fk::BoxFilterQuadDPP>: 1 / 0 / 0 / 0
+  launchDPP_Kernel<fk::ConvQuadDPP>: 1 / 0 / 0 / 0
+  launchDPP_Kernel<fk::DivergentBatchTransformDPP>: 1 / 0 / 0 / 0
+  launchDPP_Kernel<fk::LinearFilterDPP>: 3 / 0 / 0 / 0
+  launchDPP_Kernel<fk::MedianFilterDPP>: 3 / 0 / 0 / 0
+  launchDPP_Kernel<fk::MedianQuadDPP>: 1 / 0 / 0 / 0
+  launchDPP_Kernel<fk::MorphQuadDPP>: 1 / 0 / 0 / 0
+  launchDPP_Kernel<fk::MorphologyDPP>: 7 / 0 / 0 / 0
+  launchDPP_Kernel<fk::TransformDPP>: 4 / 0 / 0 / 0
+per file:
+  pr436_image: kernels A 22, B 22; renamed pairs 0; identical 22, different 0, only in A 0, only in B 0  (all identical)
+every kernel that is different or on one side only (A = base, B = head):
+  none

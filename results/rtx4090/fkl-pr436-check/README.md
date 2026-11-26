@@ -12,10 +12,18 @@
 - **The HIP side:** AMD found the HIP device code identical (174/174) and the CPU tests passing 50/50 with g++-13 and clang++-23
   (`../../rx9060/fkl-pr436-check/`, #72).
 
+**The head moved to `03789b3a8d66df0f44c030703d8dda4d4c5c28d9`** (2026-11-26), one commit on 1df2738 by AMD. It is Oscar's decision on the
+FlashDecode finding of this check ("Yes, fix it and add a test"):
+- `flash_decode.h:73` calls `low_precision::attnToF32`;
+- the new CUDA utest `utest_flash_decode.h` runs FlashDecodeDPP's executor against a double oracle.
+
+Everything below is at 03789b3 unless it names 1df2738. The section "The new head 03789b3" says what was rebuilt and compared.
+
 Decision: the coordinator's assignment C-MAIN-NV of 2026-11-26, the CUDA check of #436. Another session (fkl-reduce) has priority on this machine
 (Oscar, 2026-11-26). So every build here ran at nice 19 with at most 8 jobs, and the window starts only in a slot agreed with it.
 
-**State.** The compile-only steps are done: the builds, the device code and the harness. The GPU window waits for the coordinator's GRANTED.
+**State.** The compile-only steps are done at 03789b3: the builds, the device code and the harness. The GPU window waits for the coordinator's
+GRANTED.
 
 ## Result (compile only)
 
@@ -25,7 +33,8 @@ Decision: the coordinator's assignment C-MAIN-NV of 2026-11-26, the CUDA check o
   - The jobs ran at nice 19, 4 per build, on separate cores.
   - Base: 142 of 142 targets compiled. Head: 143 of 143 (the new `utest_flash_attention_mma_cu`). Main has no expected-rejection tests.
   - The build times are not results.
-- **CUDA tests:** 56 `*_cu` ctest tests at the base and 57 at the head. The head's list is the base's plus `utest_flash_attention_mma_cu`.
+- **CUDA tests:** 56 `*_cu` ctest tests at the base and 58 at 03789b3 (57 at 1df2738). The head's list is the base's plus
+  `utest_flash_attention_mma_cu` and `utest_flash_decode_cu`.
 - **Device code** (`sass-identity/`), the 56 executables both builds have:
   - 145 kernels in each, **all paired**: 139 through a rename (137 by #435's rule, 2 by the main softmax rule below) and 6 with the same name.
   - **109 identical.**
@@ -33,13 +42,16 @@ Decision: the coordinator's assignment C-MAIN-NV of 2026-11-26, the CUDA check o
     of Q3), and the 2 softmax kernels (their NullType argument goes, M1).
   - Every other kernel is identical, the TransformDPP, attention, flash-attention MMA and Quad kernels among them.
   - Main's tests instantiate no split-KV combine kernel at the base, so none is compared.
-  - In the head only: `utest_flash_attention_mma_cu`, with 14 kernels.
+  - In the head only: `utest_flash_attention_mma_cu`, with 14 kernels, and at 03789b3 `utest_flash_decode_cu`, with 1. That one is
+    FlashDecodeDPP's `launchDPP_Kernel`: 39 registers, no stack. The split merge is fused into it, so there is no second kernel.
+  - The same result at 1df2738 and at 03789b3.
 - **The harness** (`harness/`): C-NV's before/after harness, adapted to FKL main. Both programs compile at both commits.
-- **A finding outside #436:** **FKL main's FlashDecodeDPP does not compile when it is instantiated, at either commit.**
-  - `flash_decode.h` (ebb3891:69, 1df2738:73) calls `attnToF32` unqualified.
+- **A finding outside #436, fixed in 03789b3:** **FKL main's FlashDecodeDPP did not compile when it was instantiated**, at ebb3891 and at 1df2738.
+  - `flash_decode.h` (ebb3891:69, 1df2738:73) called `attnToF32` unqualified.
   - Main defines it in `fk::low_precision` (`softmax.h:57` / `58`). LTS-C++17 defines it in `fk` (b10fc66 `softmax.h:81`), so it compiles there.
-  - No test of main instantiates FlashDecodeDPP, so the harness leaves its decode cases out.
-  - Nothing was changed in FKL; this is for Oscar.
+  - No test of main instantiated FlashDecodeDPP.
+  - Oscar decided to fix it in #436 and add a test (03789b3). The base still cannot compile FlashDecodeDPP, so the harness leaves its
+    decode cases out, and the new utest covers decode at the head.
 
 ## Device code (`sass-identity/`)
 
@@ -52,7 +64,8 @@ Decision: the coordinator's assignment C-MAIN-NV of 2026-11-26, the CUDA check o
 - The rule rewrites A's names of the first form into the second, and then #435's rule runs as before.
 
 The comparison covers the SASS text, with addresses and module ids masked, and the registers, stack, LDL / STL and constant bank 0
-(`sass-identity-ebb3891-vs-1df2738.txt`, `.csv.gz`; by DPP in `differences-ebb3891-vs-1df2738.txt`).
+(`sass-identity-ebb3891-vs-03789b3.txt`, `.csv.gz`; by DPP in `differences-ebb3891-vs-03789b3.txt`). The same against 1df2738 is in
+`*-vs-1df2738.*`, with the same differences.
 
 | DPP | kernels that differ | what changes |
 |---|---|---|
@@ -105,23 +118,45 @@ The comparison covers the SASS text, with addresses and module ids masked, and t
 
 **Build** (`harness/compile/`, 2026-11-26 21:15:42 to 21:15:54): `build_harness.sh` with main's CUDA test flags (`-std=c++20`, sm_89, `-O3`,
 `-lineinfo`), nice 19, the 4 compiles at once. All 4 compiled.
+- **The head side was compiled again at 03789b3** (`harness/compile/build-console-03789b3.txt`, `head-03789b3/`), from the same sources.
+  - They do not include `flash_decode.h`.
+  - Their device code is that of the 1df2738 build: 22 of 22 and 24 of 24 kernels identical (`sass-identity/sass-harness-*-1df2738-vs-03789b3.txt`,
+    without the rename rule).
+  - The binaries differ in 4 bytes each.
+  - The window runs this 03789b3 build, so that the whole head side is 03789b3.
+
+## The new head 03789b3 (compile only, 2026-11-26 21:27:30 to 21:27:47)
+
+**The rebuild.** `scripts-used/compile-newhead.sh` (`compile/fkl-head-03789b3-*`):
+- The head worktree moved to 03789b3 as a clean detached checkout; its path stays `worktrees/fkl-pr436-head-1df2738`.
+- The head build was configured again (version message `0.2.1-undefined-03789b3`) and rebuilt over the code model's targets, nice 19, 8 jobs.
+- The 57 executables of 1df2738 were copied aside first (`compile/fkl-head-1df2738-executables-sha256.txt`).
+
+**What changed:**
+- **Targets:** 144 of 144 compiled. The only new one is `utest_flash_decode_cu`, and none is gone.
+- **Compiled:** only `utest_flash_decode_cu`'s two objects (`fkl-head-03789b3-recompiled.txt`).
+- **Relinked:** make also relinked `utest_saturate_cu` and its 12 shared libraries, with no object compiled.
+- **Byte-wise:** all 57 executables of 1df2738 are byte-identical at 03789b3, `utest_saturate_cu` included.
+- **CUDA tests:** 58.
+
+**The device code against ebb3891:** the same as at 1df2738 (above), with `utest_flash_decode_cu` new in the head only.
 
 ## The GPU window (`window-script.sh`)
 
 (To be run on the coordinator's GRANTED, after RT-1's window.)
 
 **The protocol is task C-NV's**, with RT-1's idle checks. In this order, stopping at the first failure:
-1. FKL's 57 CUDA tests at 1df2738 (`ctest -R '_cu$' -j1 --stop-on-failure --timeout 300`);
+1. FKL's 58 CUDA tests at 03789b3 (`ctest -R '_cu$' -j1 --stop-on-failure --timeout 300`);
 2. the 56 at ebb3891;
 3. the harness at the base, `pr436_image` then `pr436_attention`;
-4. the harness at the head, the same.
+4. the harness at the head (its 03789b3 build), the same.
 
 **Around every step:** `wait_idle` waits for an idle machine before it, and `still_quiet` checks afterwards that no build, compile job or
 other GPU program appeared during it; if one did, the window stops there and that step is the one affected.
 
 **Afterwards, on the CPU only:** `compare_harness.py` compares base and head bit for bit, and runs the split checks.
 
-The 117 binaries it runs are in `window-binaries.sha256`: 56 + 57 test executables and the 4 harness programs. Nothing is timed.
+The 118 binaries it runs are in `window-binaries.sha256`: 56 + 58 test executables and the 4 harness programs. Nothing is timed.
 
 ## Files
 
@@ -130,6 +165,6 @@ The 117 binaries it runs are in `window-binaries.sha256`: 56 + 57 test executabl
 | `compile/` | the builds: console, commands, configure logs, target lists, build logs, reports, times |
 | `sass-identity/` | the test kernels and the harness kernels, base against head, and the differences by DPP |
 | `harness/source/` | the harness, its build script, the comparison, and `changes-from-c-nv.diff` |
-| `harness/compile/` | the harness build's console and compiler logs |
-| `scripts-used/` | `compile.sh`, `check_fkl_tree_report.py`, `pr435_sass_identity.py`, `sass_identity_main.py`, `diff_summary.py` |
-| `window-script.sh`, `window-binaries.sha256` | the window's script and the sha256 of its 117 binaries |
+| `harness/compile/` | the harness build's console and compiler logs, and the head side's 03789b3 build |
+| `scripts-used/` | `compile.sh`, `compile-newhead.sh`, `check_fkl_tree_report.py`, `pr435_sass_identity.py`, `sass_identity_main.py`, `sass_identity_norename.py`, `diff_summary.py` |
+| `window-script.sh`, `window-binaries.sha256` | the window's script and the sha256 of its 118 binaries |

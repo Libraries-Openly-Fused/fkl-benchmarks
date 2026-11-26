@@ -1,16 +1,19 @@
 #!/bin/bash
 # GPU window "fkl-pr436-check" (FKL's tests and the output harness only; nothing is timed; a few minutes; the desktop session keeps running):
-# FKL PR #436 (task C on FKL main, head 1df2738) against its base, FKL main ebb3891, on the RTX 4090 (sm_89). Built in C-MAIN-NV's steps
-# 1 and 3 (compile only); every binary is listed with its sha256 in window-binaries.sha256, whose own sha256 is MANIFEST_SHA256 below. The
+# FKL PR #436 (task C on FKL main, head 03789b3: 1df2738 and the FlashDecode fix with its utest) against its base, FKL main ebb3891, on the
+# RTX 4090 (sm_89). Built in C-MAIN-NV's steps 1, 1b and 3 (compile only); every binary is listed with its sha256 in window-binaries.sha256,
+# whose own sha256 is MANIFEST_SHA256 below. The
 # protocol of task C-NV's window (results/rtx4090/fkl-pr435-check/window-script.sh), with RT-1's idle checks. Steps, in this order; the
 # window stops at the first failure:
-#   1. FKL's CUDA tests at 1df2738: the 57 ctest tests named *_cu (every CUDA target of tests/ and utests/), ctest -j1 --stop-on-failure
-#      --timeout 300 in scratch/pr436/fkl-head-build. They include utest_flash_attention_mma_cu, which #436 adds to main (Oscar's M2), with
-#      its split-KV + combine test. Every test must pass.
-#   2. The 56 tests at ebb3891 (scratch/pr436/fkl-base-build): the baseline, the head's list without utest_flash_attention_mma_cu. Every
-#      test must pass.
+#   1. FKL's CUDA tests at 03789b3: the 58 ctest tests named *_cu (every CUDA target of tests/ and utests/), ctest -j1 --stop-on-failure
+#      --timeout 300 in scratch/pr436/fkl-head-build. They include the two utests that #436 adds to main: utest_flash_attention_mma_cu
+#      (Oscar's M2, with its split-KV + combine test) and utest_flash_decode_cu (FlashDecodeDPP against a double oracle, Oscar's decision on
+#      the FlashDecode finding). Every test must pass.
+#   2. The 56 tests at ebb3891 (scratch/pr436/fkl-base-build): the baseline, the head's list without the two new utests. Every test must
+#      pass.
 #   3. The harness of the base build (ebb3891): pr436_image, then pr436_attention, into scratch/pr436/harness-out/base-ebb3891.
-#   4. The harness of the head build (1df2738), the same, into scratch/pr436/harness-out/head-1df2738.
+#   4. The harness of the head build (03789b3; scratch/pr436/harness-build-03789b3, the unchanged sources built at 03789b3, whose device code
+#      is that of their 1df2738 build), the same, into scratch/pr436/harness-out/head-03789b3.
 #      Each harness run must exit 0 with an empty standard error and print its PASS line.
 #   Before EVERY step (each ctest run and each harness run), wait_idle: no measurement, build or compile job, a 1-minute load below
 #   IDLE_LOAD and no other program on the RTX 4090, up to IDLE_MAX seconds; if the machine is not idle by then, the window stops there.
@@ -19,8 +22,9 @@
 #   No nsys, no ncu, no clock warm-up. SAMPLER: nvidia-smi every 100 ms through the window (gpu_clocks.csv), on core 14. The tests and the
 #   harness are pinned to cores 0-3,16-19. CUDA_DEVICE_ORDER=PCI_BUS_ID CUDA_VISIBLE_DEVICES=1 (the RTX 4090).
 # Guards before anything starts: no blocked program (the binaries and the two ctest lists); every binary's sha256 is the manifest's; the
-# head's ctest list has exactly 57 tests, the base's 56, and the head's is the base's plus utest_flash_attention_mma_cu; every test is an
-# executable of the manifest; the two FKL worktrees are clean at ebb3891 and 1df2738 (thread-pool 27e733f) and the two FKL builds are
+# head's ctest list has exactly 58 tests, the base's 56, and the head's is the base's plus utest_flash_attention_mma_cu and
+# utest_flash_decode_cu; every test is an executable of the manifest; the two FKL worktrees are clean at ebb3891 and 03789b3 (the head
+# worktree keeps its path worktrees/fkl-pr436-head-1df2738; thread-pool 27e733f) and the two FKL builds are
 # configured from them; the record's worktree is at main 226a011 or a descendant that differs from it only under
 # results/rtx4090/fkl-pr436-check/, with no local change outside results/; this script and compare_harness.py are the versions committed at
 # HEAD and the script runs from its place there; the output folder is the requested one and new, and so is the harness output folder; no
@@ -37,14 +41,14 @@ OUT=$REC/window; HOUT=$S/harness-out; LOG=$FB/results/rtx4090/e0-run.log
 REQUESTED_OUT=results/rtx4090/fkl-pr436-check/window
 [ "$OUT" = "$W/$REQUESTED_OUT" ] || { echo "the output folder $OUT is not the requested $W/$REQUESTED_OUT: not starting"; exit 1; }
 MAIN=226a011c7034d9226f3851c5d087a5e6b4edbe74
-FKL_A=ebb3891bea18a152d92dfd5092e117160490e34b; FKL_B=1df2738e7bd8eba1bfb1a0baf9ad215062d014ca; TP=27e733f50f7f40f171fd84655e05d5acf1fdfbee
-FKLT_A=$T/worktrees/fkl-pr436-base-ebb3891; FKLT_B=$T/worktrees/fkl-pr436-head-1df2738
+FKL_A=ebb3891bea18a152d92dfd5092e117160490e34b; FKL_B=03789b3a8d66df0f44c030703d8dda4d4c5c28d9; TP=27e733f50f7f40f171fd84655e05d5acf1fdfbee
+FKLT_A=$T/worktrees/fkl-pr436-base-ebb3891; FKLT_B=$T/worktrees/fkl-pr436-head-1df2738   # the head worktree keeps its path; it is at 03789b3
 BUILD_A=$S/fkl-base-build; BUILD_B=$S/fkl-head-build
-HB_A=$S/harness-build/base-ebb3891; HB_B=$S/harness-build/head-1df2738
-RE='_cu$'; NTESTS_A=56; NTESTS_B=57; NEWTEST=utest_flash_attention_mma_cu
+HB_A=$S/harness-build/base-ebb3891; HB_B=$S/harness-build-03789b3/head-03789b3
+RE='_cu$'; NTESTS_A=56; NTESTS_B=58; NEWTESTS='utest_flash_attention_mma_cu utest_flash_decode_cu'
 IDLE_LOAD=${IDLE_LOAD:-0.5}; IDLE_MAX=${IDLE_MAX:-300}
 MANIFEST=$REC/window-binaries.sha256
-MANIFEST_SHA256=6e708534a4e1c313650b49ab2d6821af7cc3bcf4b81e37f1bad9c727f222702b
+MANIFEST_SHA256=4c1dbfe238e9ebe2795c981be23a4c0ad95c3c4aa649d6388f043cda425d5b39
 source $T/scratch/blocked_programs.sh   # no frozen 2025 program runs: refuses before anything starts
 # the binaries: the manifest is the committed one, every binary in it has its sha256, and none of them is blocked
 echo "$MANIFEST_SHA256  $MANIFEST" | sha256sum -c --quiet || { echo "the binaries' manifest differs from the committed one: not starting"; exit 1; }
@@ -56,8 +60,8 @@ LIST_A=$(ctest --test-dir $BUILD_A -N -R "$RE" 2>/dev/null | sed -n 's/^ *Test *
 LIST_B=$(ctest --test-dir $BUILD_B -N -R "$RE" 2>/dev/null | sed -n 's/^ *Test *#[0-9]*: //p')
 [ "$(echo "$LIST_A" | grep -c .)" = $NTESTS_A ] && [ "$(echo "$LIST_B" | grep -c .)" = $NTESTS_B ] \
   || { echo "the builds do not list $NTESTS_A and $NTESTS_B tests: not starting"; exit 1; }
-[ "$(printf '%s\n%s\n' "$LIST_A" "$NEWTEST" | sort)" = "$(echo "$LIST_B" | sort)" ] \
-  || { echo "the head's test list is not the base's plus $NEWTEST: not starting"; exit 1; }
+[ "$( { echo "$LIST_A"; for t in $NEWTESTS; do echo $t; done; } | sort)" = "$(echo "$LIST_B" | sort)" ] \
+  || { echo "the head's test list is not the base's plus $NEWTESTS: not starting"; exit 1; }
 # every test the window runs is an executable of the manifest
 for t in $LIST_A; do grep -q " $BUILD_A/bin/Release/$t\$" $MANIFEST || { echo "base $t is not in the manifest: not starting"; exit 1; }; done
 for t in $LIST_B; do grep -q " $BUILD_B/bin/Release/$t\$" $MANIFEST || { echo "head $t is not in the manifest: not starting"; exit 1; }; done
@@ -89,7 +93,7 @@ gpuapps=$(foreign_gpu)
 [ -n "${GUARD_ONLY:-}" ] && { echo "guard ok at $(date +%H:%M:%S): nothing else is running; load $(cut -d' ' -f1-3 /proc/loadavg)"; exit 0; }
 [ -e $OUT ] && { echo "$OUT exists: not starting (nothing is overwritten)"; exit 1; }
 [ -e $HOUT ] && { echo "$HOUT exists: not starting (nothing is overwritten)"; exit 1; }
-mkdir -p $OUT/harness $HOUT/base-ebb3891 $HOUT/head-1df2738
+mkdir -p $OUT/harness $HOUT/base-ebb3891 $HOUT/head-03789b3
 exec > >(tee -a $OUT/window-console.txt) 2>&1
 cp "$0" $OUT/window-script.sh
 echo "# $(date -Iseconds) GPU window fkl-pr436-check starts (IDLE_LOAD=$IDLE_LOAD IDLE_MAX=$IDLE_MAX); load before: $(cut -d' ' -f1-3 /proc/loadavg); no compile job, transfer or measurement running (checked); the desktop session runs"
@@ -175,15 +179,15 @@ harness() {
     still_quiet "harness $side $p" || { finish "STOPPED after harness $side $p (another job appeared during it; it is affected)"; exit 1; }
   done
 }
-# 1-2. FKL's CUDA tests at 1df2738, then at ebb3891
-fkl_tests head-1df2738 $BUILD_B $NTESTS_B
+# 1-2. FKL's CUDA tests at 03789b3, then at ebb3891
+fkl_tests head-03789b3 $BUILD_B $NTESTS_B
 fkl_tests base-ebb3891 $BUILD_A $NTESTS_A
 # 3-4. the harness, base, then head
 harness base-ebb3891 $HB_A
-harness head-1df2738 $HB_B
+harness head-03789b3 $HB_B
 finish "ended (GPU steps)"
 # CPU only, after the GPU steps: the harness outputs base against head, and their sha256
-python3 -I $COMPARE $HOUT/base-ebb3891 $HOUT/head-1df2738 --out $OUT/harness-comparison.txt --csv $OUT/harness-comparison.csv > /dev/null
+python3 -I $COMPARE $HOUT/base-ebb3891 $HOUT/head-03789b3 --out $OUT/harness-comparison.txt --csv $OUT/harness-comparison.csv > /dev/null
 echo "compare_harness exit $? ($(tail -1 $OUT/harness-comparison.txt))"
 ( cd $HOUT && find . -type f | sort | xargs sha256sum ) > $OUT/harness-outputs-sha256.txt
 echo "harness outputs: $(wc -l < $OUT/harness-outputs-sha256.txt) files, $(du -sm $HOUT | cut -f1) MiB (not committed)"
