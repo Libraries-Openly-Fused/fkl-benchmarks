@@ -46,6 +46,8 @@ in the coordinator session (Q1 to Q17 and QA1 to QA3, 2026-11-25 and 2026-11-26)
 - **E3 (VI-L):** the same limits at 48fbf3f as in `../e3-compile-limits/` at c8fcbe8. The 8 MiB stack of the compiler first fails at N = 1,368,
   and with 16 MiB the fold nesting limit stops N = 2,047; `-fbracket-depth=2049` (N + 2) lifts it.
 - **VI-N:** 52 HIP tests at 48fbf3f and at b10fc66.
+- **g++ 13.4.0 and clang++ 23.1.6 (section 4):** E11 has the records' counts with and without the checks. The clang++ stack threshold
+  is unchanged (1,516 / 1,517), as are its nesting limit at N = 2,047 and `-fbracket-depth` N + 2, and g++ has no such limit.
 
 ## 1. Device code: 832 of 832 functions identical
 
@@ -237,6 +239,68 @@ Counted in the ROCm CI configuration builds of #64 (`../fkl-pr435-check/`), at b
 The 68 targets are the 52 test executables, the 4 `utest_chain_check_wrong<k>_hip` that the rejection tests compile, and 12
 `utest_saturate_<type>_hip` shared libraries of `utest_saturate_hip`. #64's GPU window ran the 52 tests at 48fbf3f: 52 of 52 passed.
 
+## 4. The g++ 13 and clang++ 23 columns of VI-P and VI-L
+
+These are the two CPU back-end compilers of this machine, in the paper's E11 and E3 tables. They were checked at FKL 48fbf3f, compile only,
+with `step0/gcc_clang_checks.sh` and `step0/clang_repeats.sh` (the scripts of fkl-benchmarks a4b493c). The runs were added on 2026-11-26,
+after the rest of this record.
+
+- **g++-13 is 13.4.0** (Ubuntu 13.4.0-10ubuntu1), the version of `../e11-diagnostics/` and `../e3-compile-limits/`.
+- **clang++-23 is now 23.1.6** (Ubuntu package built 2026-11-08). The records used 23.1.5, which is no longer installed, and nothing was
+  installed for this check.
+- **To separate the compiler change from the FKL change**, E11 and the clang++ repeats at the 8 MiB stack limit were also run at c8fcbe8
+  on 23.1.6.
+- **FKL #435's head is now d1cff06** (fix A). It changes only `fused_kernel/algorithms/attention/flash_attention_mma.h`. None of the headers
+  that E11's and E3's TransformDPP chains include pulls it in, so these results hold for d1cff06 too. (Its only includers are `flash_decode.h`, which
+  nothing includes, and the attention utest.)
+
+### VI-P: E11 with g++-13 and clang++-23 (`gcc-clang/e11/`, 5 repeats)
+
+| FKL | compiler | `e11_type_mismatch` | `e11_read_in_middle` | `e11_batch_mismatch` |
+|---|---|---|---|---|
+| c8fcbe8 (without the checks) | g++ 13.4.0 | error: 44 lines, 1 error | error: 88 lines, 3 errors | **compiles, no diagnostic** |
+| c8fcbe8 (without the checks) | clang++ 23.1.6 | error: 58 lines, 1 error | error: 52 lines, 1 error | **compiles, no diagnostic** |
+| b10fc66 | g++ 13.4.0 | static_assert: 18 lines, 1 error | static_assert: 16 lines, 1 error | static_assert: 16 lines, 1 error |
+| b10fc66 | clang++ 23.1.6 | static_assert: 40 lines, 1 error | static_assert: 34 lines, 1 error | static_assert: 34 lines, 1 error |
+| **48fbf3f** | **g++ 13.4.0** | **static_assert: 18 lines, 1 error** | **static_assert: 16 lines, 1 error** | **static_assert: 16 lines, 1 error** |
+| **48fbf3f** | **clang++ 23.1.6** | **static_assert: 40 lines, 1 error** | **static_assert: 34 lines, 1 error** | **static_assert: 34 lines, 1 error** |
+
+- **Without the checks**, the counts on clang++ 23.1.6 are those of `../e11-diagnostics/` on 23.1.5 (58 / 52 / compiles); g++'s are the same
+  too (44 / 88 with 3 errors / compiles).
+- **With the checks**, the counts at b10fc66 and at 48fbf3f are those that `../e11-diagnostics/` gives for the chain checks with g++ (18 / 16 /
+  16) and clang++ (40 / 34 / 34).
+- **The messages** are the three static_asserts of `chain_check.h` (lines 115, 143 and 195), with the rules quoted in section 3.
+- **The logs of b10fc66 and 48fbf3f differ only in line numbers of `executors.h`**, the instantiation trace: for example 246 → 263 and
+  275 → 292. That is 10 lines per log with g++ and 24 with clang++, whose trace also quotes the source line.
+
+### VI-L: E3 with clang++-23 and g++-13 (`gcc-clang/e3/`, `gcc-clang/clang-repeats/`)
+
+| clang++ 23 (CPU back-end) | 48fbf3f, 23.1.6 | c8fcbe8, 23.1.6 (this machine, now) | c8fcbe8, 23.1.5 (`../e3-compile-limits/`) |
+|---|---|---|---|
+| bisection, 8 MiB, randomisation off | largest N that compiles **1,516**, first that does not **1,517** (9 compiles, 1,450 to 1,600) | 1,516 compiles, 1,517 crashes | 1,516 / 1,517 |
+| randomisation on: N = 1,515 | 4 of 5 compile | 3 of 5 | 5 of 5 |
+| randomisation on: N = 1,516 | 0 of 10 (two series of 5) | 1 of 5 | 3 of 5 |
+| randomisation on: N = 1,517 / 1,518 | 0 of 5 / 0 of 5 | | 0 of 5 / 0 of 5 |
+| the failure at 8 MiB | signal 11 after about 16 s, at 3.9 GiB | the same | crash, 3.2 to 3.9 GiB used |
+| N = 2,046, stack 16 MiB | compiles: 31.8 s, 6.88 GiB | | compiles: 33.3 s, 6.9 GiB |
+| N = 2,047, stack 16 MiB | `iop_fuser.h:150:17: fatal error: instantiating fold expression with 2049 arguments exceeded expression nesting limit of 2048`, after 0.5 s | | the same, after 0.5 s |
+| N = 2,047, stack 16 MiB, `-fbracket-depth=2049` (N + 2) | compiles: 31.5 s, 6.88 GiB | | N + 2 lifts it (at N = 2,100) |
+
+| g++ 13.4.0 (CPU back-end), default flags | 48fbf3f | c8fcbe8 (`../e3-compile-limits/`) |
+|---|---|---|
+| N = 2,047 | compiles: 28.5 s, 2.15 GiB | compiles (no nesting limit) |
+| N = 2,100 | compiles: 30.0 s, 2.22 GiB | compiles: 30.0 s, 2.2 GiB |
+| N = 4,000 | compiles: 114.9 s, 6.51 GiB | compiles: 114.6 s, 6.5 GiB |
+
+- **The clang++ threshold is unchanged by FKL.** With randomisation off, c8fcbe8 and 48fbf3f on 23.1.6 both compile 1,516 and crash at
+  1,517, as the record did on 23.1.5.
+- **With randomisation on, clang++ 23.1.6 fails about one operation earlier than the record**, at both FKL commits: 1,515 compiles 3 or 4
+  times of 5 (c8fcbe8 3, 48fbf3f 4), and 1,516 once in 15 (c8fcbe8 1 of 5, 48fbf3f 0 of 10). The cause is the compiler or the environment
+  of this run, not FKL. The record's clang++ threshold without randomisation, 1,516 / 1,517, stands.
+- **g++ has no nesting limit at 48fbf3f either.** N = 2,047, 2,100 and 4,000 compile with the default flags, in the record's times and memory.
+- **Registers:** none for these two compilers. They build the CPU back-end, so the E3 kernel registers exist only in the amdclang++ column
+  (section 3).
+
 ## Builds
 
 | build | sources | executables | failed | warnings | time |
@@ -271,5 +335,7 @@ this folder except `e3/`, which `step0/e3_series.sh` writes.
 - `e11/`: E11 at c8fcbe8, b10fc66 and 48fbf3f (CSV, logs).
 - `e3/`: E3 at 48fbf3f (`e3_limits.csv`, `bisect.txt`, `series.log`, the logs of the compiles that failed; `registers/e3_limits.csv`).
 - `vi-n.txt`: the test counts.
+- `gcc-clang/`: section 4: `e11/` (c8fcbe8, b10fc66 and 48fbf3f, g++-13 and clang++-23), `e3/` and `clang-repeats/` (CSV, logs), `series.log`.
 - `binaries-sha256.txt`: the 30 executables of the two builds. `builds.txt`: the builds.
-- `step0/`: `pin_build.sh`, `run_checks.sh`, `e3_series.sh`, `devcode_compare_taskc.py`, `host_compare_taskc.py` and `row_sources.py`.
+- `step0/`: `pin_build.sh`, `run_checks.sh`, `e3_series.sh`, `gcc_clang_checks.sh`, `clang_repeats.sh`, `devcode_compare_taskc.py`,
+  `host_compare_taskc.py` and `row_sources.py`.
