@@ -1,0 +1,13 @@
+# experiment: E3 compile-time sweep
+# notes: one core (9), nvcc --threads 1, -O3 -DNDEBUG -std=c++17 sm_89 +PTX -ftemplate-depth=1000 -lineinfo; GNU time for the peak RSS; timeout 3600 s per compile; the programs are not executed; fkl include /home/oscar/tfkl-bench/worktrees/fkl-benchmarks-pin-435/external/fkl/include
+# repo: 2518c75219a4af8039f9a8d062323bcbb4181487
+# fkl: 48fbf3f08e7551c3eb70ac2302d8ebc15ecad645
+# cvGPUSpeedup: 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c
+# FastNPP: a1b5e245d7dd70fba23dcb51a0aea80495dbc61d
+# python: 3.14.4 (torch not imported)
+# os: Ubuntu 26.04.1 LTS
+# kernel: Linux 7.0.0-43-generic
+# gpu: not queried (compile only; CUDA_VISIBLE_DEVICES=''; scratch/pin-435/e3_sweep_nogpu.py in place of fklb_csv.system_info_lines)
+tree,variant,n,rep,status,why,cuda_wall_s,cuda_user_s,cuda_sys_s,cuda_peak_rss_mb,phase_cudafe_s,phase_cicc_s,phase_ptxas_s,phase_gcc_s,phase_other_s,registers,spill_stores,spill_loads,stack_bytes,cmem0_bytes,sass_instructions,text_bytes,cubin_bytes,host_status,host_wall_s,host_peak_rss_mb
+current,B,3847,0,ok,,584.648,568.040,16.530,12671,1.018,430.691,9.701,141.649,1.410,19,0,0,0,39536,30880,494080,156120480,,,
+current,B,3848,0,failed (exit 255),"ptxas /home/oscar/tfkl-bench/scratch/pin-435/e3/tmp/tmpxft_000b7ef4_00000000-6_current_B_3848.ptx, line 43891; error   : Entry function '_ZN2fk16launchDPP_KernelINS_12TransformDPPILNS_7ParArchE1ELNS_2TFE0ENS_20TransformDPPDetails_IvLb0EJNS_25ReadInstantiableOperationINS_13PerThreadReadILNS_2NDE2E6fl",431.237,418.370,12.840,12677,,,,,,,,,,,,,,,,

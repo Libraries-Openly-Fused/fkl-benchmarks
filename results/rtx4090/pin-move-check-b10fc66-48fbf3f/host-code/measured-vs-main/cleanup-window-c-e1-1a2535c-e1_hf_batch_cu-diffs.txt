@@ -1,0 +1,814 @@
+A = /home/oscar/tfkl-bench/worktrees/fkl-benchmarks-window-c/build/rtx4090-e1/bin/e1_hf_batch_cu
+B = /home/oscar/tfkl-bench/scratch/pin-435/base-b10fc66/bench-build/bin/e1_hf_batch_cu
+per function that differs: the unified diff of its normalised instructions
+
+== fk::gpuAssert(cudaError,charconst*,int,bool)[clone.constprop.0]
+   143 -> 143 instructions
+--- A
++++ B
+@@ -41,11 +41,11 @@
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ lea 0x10(%rsp),%rdi
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::_M_append(charconst*,unsignedlong)@plt>
+-movabs $0x800000000000006e,%rax
++movabs $0x8000000000000073,%rax
+ add 0x18(%rsp),%rax
+-cmp $0x6c,%rax
++cmp $0x71,%rax
+ jbe <F:fk::gpuAssert(cudaError,charconst*,int,bool)[clone.constprop.0][clone.cold]@5>
+-mov $0x6d,%edx
++mov $0x72,%edx
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ lea 0x10(%rsp),%rdi
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::_M_append(charconst*,unsignedlong)@plt>
+
+== fklb::writeSystemInfoHeader(std::ostream&,std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>const&,std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>const&)
+   721 -> 721 instructions
+--- A
++++ B
+@@ -40,6 +40,18 @@
+ mov %rbx,%rdi
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ call <std::basic_ostream<char,std::char_traits<char>>&std::__ostream_insert<char,std::char_traits<char>>(std::basic_ostream<char,std::char_traits<char>>&,charconst*,long)@plt>
++mov $0x7,%edx
++mov %rbx,%rdi
++lea D(%rip),%rsi # <_IO_stdin_used+OFF>
++call <std::basic_ostream<char,std::char_traits<char>>&std::__ostream_insert<char,std::char_traits<char>>(std::basic_ostream<char,std::char_traits<char>>&,charconst*,long)@plt>
++mov $0x1,%edx
++mov %rbx,%rdi
++lea D(%rip),%rsi # <_IO_stdin_used+OFF>
++call <std::basic_ostream<char,std::char_traits<char>>&std::__ostream_insert<char,std::char_traits<char>>(std::basic_ostream<char,std::char_traits<char>>&,charconst*,long)@plt>
++mov $0x7,%edx
++mov %rbx,%rdi
++lea D(%rip),%rsi # <_IO_stdin_used+OFF>
++call <std::basic_ostream<char,std::char_traits<char>>&std::__ostream_insert<char,std::char_traits<char>>(std::basic_ostream<char,std::char_traits<char>>&,charconst*,long)@plt>
+ mov $0x28,%edx
+ mov %rbx,%rdi
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+@@ -48,39 +60,51 @@
+ mov %rbx,%rdi
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ call <std::basic_ostream<char,std::char_traits<char>>&std::__ostream_insert<char,std::char_traits<char>>(std::basic_ostream<char,std::char_traits<char>>&,charconst*,long)@plt>
++mov $0x10,%edx
++mov %rbx,%rdi
++lea D(%rip),%rsi # <_IO_stdin_used+OFF>
++call <std::basic_ostream<char,std::char_traits<char>>&std::__ostream_insert<char,std::char_traits<char>>(std::basic_ostream<char,std::char_traits<char>>&,charconst*,long)@plt>
++mov $0x28,%edx
++mov %rbx,%rdi
++lea D(%rip),%rsi # <_IO_stdin_used+OFF>
++call <std::basic_ostream<char,std::char_traits<char>>&std::__ostream_insert<char,std::char_traits<char>>(std::basic_ostream<char,std::char_traits<char>>&,charconst*,long)@plt>
++mov $0x1,%edx
++mov %rbx,%rdi
++lea D(%rip),%rsi # <_IO_stdin_used+OFF>
++call <std::basic_ostream<char,std::char_traits<char>>&std::__ostream_insert<char,std::char_traits<char>>(std::basic_ostream<char,std::char_traits<char>>&,charconst*,long)@plt>
++mov $0xb,%edx
++mov %rbx,%rdi
++lea D(%rip),%rsi # <_IO_stdin_used+OFF>
++call <std::basic_ostream<char,std::char_traits<char>>&std::__ostream_insert<char,std::char_traits<char>>(std::basic_ostream<char,std::char_traits<char>>&,charconst*,long)@plt>
++mov $0x28,%edx
++mov %rbx,%rdi
++lea D(%rip),%rsi # <_IO_stdin_used+OFF>
++call <std::basic_ostream<char,std::char_traits<char>>&std::__ostream_insert<char,std::char_traits<char>>(std::basic_ostream<char,std::char_traits<char>>&,charconst*,long)@plt>
++mov $0x1,%edx
++mov %rbx,%rdi
++lea D(%rip),%rsi # <_IO_stdin_used+OFF>
++call <std::basic_ostream<char,std::char_traits<char>>&std::__ostream_insert<char,std::char_traits<char>>(std::basic_ostream<char,std::char_traits<char>>&,charconst*,long)@plt>
++mov $0x8,%edx
++mov %rbx,%rdi
++lea D(%rip),%rsi # <_IO_stdin_used+OFF>
++call <std::basic_ostream<char,std::char_traits<char>>&std::__ostream_insert<char,std::char_traits<char>>(std::basic_ostream<char,std::char_traits<char>>&,charconst*,long)@plt>
+ mov $0x7,%edx
+ mov %rbx,%rdi
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ call <std::basic_ostream<char,std::char_traits<char>>&std::__ostream_insert<char,std::char_traits<char>>(std::basic_ostream<char,std::char_traits<char>>&,charconst*,long)@plt>
+-mov $0x28,%edx
+-mov %rbx,%rdi
+-lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+-call <std::basic_ostream<char,std::char_traits<char>>&std::__ostream_insert<char,std::char_traits<char>>(std::basic_ostream<char,std::char_traits<char>>&,charconst*,long)@plt>
+-mov $0x1,%edx
+-mov %rbx,%rdi
+-lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+-call <std::basic_ostream<char,std::char_traits<char>>&std::__ostream_insert<char,std::char_traits<char>>(std::basic_ostream<char,std::char_traits<char>>&,charconst*,long)@plt>
+-mov $0x10,%edx
+-mov %rbx,%rdi
+-lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+-call <std::basic_ostream<char,std::char_traits<char>>&std::__ostream_insert<char,std::char_traits<char>>(std::basic_ostream<char,std::char_traits<char>>&,charconst*,long)@plt>
+-mov $0x28,%edx
+-mov %rbx,%rdi
+-lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+-call <std::basic_ostream<char,std::char_traits<char>>&std::__ostream_insert<char,std::char_traits<char>>(std::basic_ostream<char,std::char_traits<char>>&,charconst*,long)@plt>
+-mov $0x1,%edx
+-mov %rbx,%rdi
+-lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+-call <std::basic_ostream<char,std::char_traits<char>>&std::__ostream_insert<char,std::char_traits<char>>(std::basic_ostream<char,std::char_traits<char>>&,charconst*,long)@plt>
+-mov $0xb,%edx
+-mov %rbx,%rdi
+-lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+-call <std::basic_ostream<char,std::char_traits<char>>&std::__ostream_insert<char,std::char_traits<char>>(std::basic_ostream<char,std::char_traits<char>>&,charconst*,long)@plt>
+-mov $0x28,%edx
+-mov %rbx,%rdi
+-lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+-call <std::basic_ostream<char,std::char_traits<char>>&std::__ostream_insert<char,std::char_traits<char>>(std::basic_ostream<char,std::char_traits<char>>&,charconst*,long)@plt>
+-mov $0x1,%edx
++mov $0x2,%edx
++mov %rbx,%rdi
++lea D(%rip),%rsi # <_IO_stdin_used+OFF>
++call <std::basic_ostream<char,std::char_traits<char>>&std::__ostream_insert<char,std::char_traits<char>>(std::basic_ostream<char,std::char_traits<char>>&,charconst*,long)@plt>
++mov $0x36,%edx
++mov %rbx,%rdi
++lea D(%rip),%rsi # <_IO_stdin_used+OFF>
++call <std::basic_ostream<char,std::char_traits<char>>&std::__ostream_insert<char,std::char_traits<char>>(std::basic_ostream<char,std::char_traits<char>>&,charconst*,long)@plt>
++mov $0x11,%edx
++mov %rbx,%rdi
++lea D(%rip),%rsi # <_IO_stdin_used+OFF>
++call <std::basic_ostream<char,std::char_traits<char>>&std::__ostream_insert<char,std::char_traits<char>>(std::basic_ostream<char,std::char_traits<char>>&,charconst*,long)@plt>
++mov $0x2,%edx
+ mov %rbx,%rdi
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ call <std::basic_ostream<char,std::char_traits<char>>&std::__ostream_insert<char,std::char_traits<char>>(std::basic_ostream<char,std::char_traits<char>>&,charconst*,long)@plt>
+@@ -88,15 +112,35 @@
+ mov %rbx,%rdi
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ call <std::basic_ostream<char,std::char_traits<char>>&std::__ostream_insert<char,std::char_traits<char>>(std::basic_ostream<char,std::char_traits<char>>&,charconst*,long)@plt>
++mov $0x2,%edx
++mov %rbx,%rdi
++lea D(%rip),%rsi # <_IO_stdin_used+OFF>
++call <std::basic_ostream<char,std::char_traits<char>>&std::__ostream_insert<char,std::char_traits<char>>(std::basic_ostream<char,std::char_traits<char>>&,charconst*,long)@plt>
++mov $0xc,%edx
++mov %rbx,%rdi
++lea D(%rip),%rsi # <_IO_stdin_used+OFF>
++call <std::basic_ostream<char,std::char_traits<char>>&std::__ostream_insert<char,std::char_traits<char>>(std::basic_ostream<char,std::char_traits<char>>&,charconst*,long)@plt>
++mov $0x2,%edx
++mov %rbx,%rdi
++lea D(%rip),%rsi # <_IO_stdin_used+OFF>
++call <std::basic_ostream<char,std::char_traits<char>>&std::__ostream_insert<char,std::char_traits<char>>(std::basic_ostream<char,std::char_traits<char>>&,charconst*,long)@plt>
++mov $0x1,%edx
++mov %rbx,%rdi
++lea D(%rip),%rsi # <_IO_stdin_used+OFF>
++call <std::basic_ostream<char,std::char_traits<char>>&std::__ostream_insert<char,std::char_traits<char>>(std::basic_ostream<char,std::char_traits<char>>&,charconst*,long)@plt>
+ mov $0x7,%edx
+ mov %rbx,%rdi
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ call <std::basic_ostream<char,std::char_traits<char>>&std::__ostream_insert<char,std::char_traits<char>>(std::basic_ostream<char,std::char_traits<char>>&,charconst*,long)@plt>
++mov $0x4,%edx
++mov %rbx,%rdi
++lea D(%rip),%rsi # <_IO_stdin_used+OFF>
++call <std::basic_ostream<char,std::char_traits<char>>&std::__ostream_insert<char,std::char_traits<char>>(std::basic_ostream<char,std::char_traits<char>>&,charconst*,long)@plt>
+ mov $0x2,%edx
+ mov %rbx,%rdi
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ call <std::basic_ostream<char,std::char_traits<char>>&std::__ostream_insert<char,std::char_traits<char>>(std::basic_ostream<char,std::char_traits<char>>&,charconst*,long)@plt>
+-mov $0x36,%edx
++mov $0x4,%edx
+ mov %rbx,%rdi
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ call <std::basic_ostream<char,std::char_traits<char>>&std::__ostream_insert<char,std::char_traits<char>>(std::basic_ostream<char,std::char_traits<char>>&,charconst*,long)@plt>
+@@ -104,59 +148,47 @@
+ mov %rbx,%rdi
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ call <std::basic_ostream<char,std::char_traits<char>>&std::__ostream_insert<char,std::char_traits<char>>(std::basic_ostream<char,std::char_traits<char>>&,charconst*,long)@plt>
++mov $0x4,%edx
++mov %rbx,%rdi
++lea D(%rip),%rsi # <_IO_stdin_used+OFF>
++call <std::basic_ostream<char,std::char_traits<char>>&std::__ostream_insert<char,std::char_traits<char>>(std::basic_ostream<char,std::char_traits<char>>&,charconst*,long)@plt>
++mov $0x1,%edx
++mov %rbx,%rdi
++lea D(%rip),%rsi # <_IO_stdin_used+OFF>
++call <std::basic_ostream<char,std::char_traits<char>>&std::__ostream_insert<char,std::char_traits<char>>(std::basic_ostream<char,std::char_traits<char>>&,charconst*,long)@plt>
++mov $0x11,%edx
++mov %rbx,%rdi
++lea D(%rip),%rsi # <_IO_stdin_used+OFF>
++call <std::basic_ostream<char,std::char_traits<char>>&std::__ostream_insert<char,std::char_traits<char>>(std::basic_ostream<char,std::char_traits<char>>&,charconst*,long)@plt>
++mov $0xa,%edx
++mov %rbx,%rdi
++lea D(%rip),%rsi # <_IO_stdin_used+OFF>
++call <std::basic_ostream<char,std::char_traits<char>>&std::__ostream_insert<char,std::char_traits<char>>(std::basic_ostream<char,std::char_traits<char>>&,charconst*,long)@plt>
+ mov $0x2,%edx
+ mov %rbx,%rdi
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ call <std::basic_ostream<char,std::char_traits<char>>&std::__ostream_insert<char,std::char_traits<char>>(std::basic_ostream<char,std::char_traits<char>>&,charconst*,long)@plt>
+-mov $0x8,%edx
+-mov %rbx,%rdi
+-lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+-call <std::basic_ostream<char,std::char_traits<char>>&std::__ostream_insert<char,std::char_traits<char>>(std::basic_ostream<char,std::char_traits<char>>&,charconst*,long)@plt>
+-mov $0x2,%edx
+-mov %rbx,%rdi
+-lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+-call <std::basic_ostream<char,std::char_traits<char>>&std::__ostream_insert<char,std::char_traits<char>>(std::basic_ostream<char,std::char_traits<char>>&,charconst*,long)@plt>
+-mov $0xc,%edx
+-mov %rbx,%rdi
+-lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+-call <std::basic_ostream<char,std::char_traits<char>>&std::__ostream_insert<char,std::char_traits<char>>(std::basic_ostream<char,std::char_traits<char>>&,charconst*,long)@plt>
+-mov $0x3,%edx
+-mov %rbx,%rdi
+-lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+-call <std::basic_ostream<char,std::char_traits<char>>&std::__ostream_insert<char,std::char_traits<char>>(std::basic_ostream<char,std::char_traits<char>>&,charconst*,long)@plt>
+-mov $0x1,%edx
+-mov %rbx,%rdi
+-lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+-call <std::basic_ostream<char,std::char_traits<char>>&std::__ostream_insert<char,std::char_traits<char>>(std::basic_ostream<char,std::char_traits<char>>&,charconst*,long)@plt>
+ mov $0x7,%edx
+ mov %rbx,%rdi
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ call <std::basic_ostream<char,std::char_traits<char>>&std::__ostream_insert<char,std::char_traits<char>>(std::basic_ostream<char,std::char_traits<char>>&,charconst*,long)@plt>
++mov $0x9,%edx
++mov %rbx,%rdi
++lea D(%rip),%rsi # <_IO_stdin_used+OFF>
++call <std::basic_ostream<char,std::char_traits<char>>&std::__ostream_insert<char,std::char_traits<char>>(std::basic_ostream<char,std::char_traits<char>>&,charconst*,long)@plt>
++mov $0x6,%edx
++mov %rbx,%rdi
++lea D(%rip),%rsi # <_IO_stdin_used+OFF>
++call <std::basic_ostream<char,std::char_traits<char>>&std::__ostream_insert<char,std::char_traits<char>>(std::basic_ostream<char,std::char_traits<char>>&,charconst*,long)@plt>
++mov $0x13,%edx
++mov %rbx,%rdi
++lea D(%rip),%rsi # <_IO_stdin_used+OFF>
++call <std::basic_ostream<char,std::char_traits<char>>&std::__ostream_insert<char,std::char_traits<char>>(std::basic_ostream<char,std::char_traits<char>>&,charconst*,long)@plt>
+ mov $0x4,%edx
+ mov %rbx,%rdi
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ call <std::basic_ostream<char,std::char_traits<char>>&std::__ostream_insert<char,std::char_traits<char>>(std::basic_ostream<char,std::char_traits<char>>&,charconst*,long)@plt>
+-mov $0x2,%edx
+-mov %rbx,%rdi
+-lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+-call <std::basic_ostream<char,std::char_traits<char>>&std::__ostream_insert<char,std::char_traits<char>>(std::basic_ostream<char,std::char_traits<char>>&,charconst*,long)@plt>
+-mov $0x4,%edx
+-mov %rbx,%rdi
+-lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+-call <std::basic_ostream<char,std::char_traits<char>>&std::__ostream_insert<char,std::char_traits<char>>(std::basic_ostream<char,std::char_traits<char>>&,charconst*,long)@plt>
+-mov $0x11,%edx
+-mov %rbx,%rdi
+-lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+-call <std::basic_ostream<char,std::char_traits<char>>&std::__ostream_insert<char,std::char_traits<char>>(std::basic_ostream<char,std::char_traits<char>>&,charconst*,long)@plt>
+-mov $0x4,%edx
+-mov %rbx,%rdi
+-lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+-call <std::basic_ostream<char,std::char_traits<char>>&std::__ostream_insert<char,std::char_traits<char>>(std::basic_ostream<char,std::char_traits<char>>&,charconst*,long)@plt>
+-mov $0x1,%edx
+-mov %rbx,%rdi
+-lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+-call <std::basic_ostream<char,std::char_traits<char>>&std::__ostream_insert<char,std::char_traits<char>>(std::basic_ostream<char,std::char_traits<char>>&,charconst*,long)@plt>
+-mov $0x11,%edx
++mov $0x1,%edx
+ mov %rbx,%rdi
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ call <std::basic_ostream<char,std::char_traits<char>>&std::__ostream_insert<char,std::char_traits<char>>(std::basic_ostream<char,std::char_traits<char>>&,charconst*,long)@plt>
+@@ -164,39 +196,7 @@
+ mov %rbx,%rdi
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ call <std::basic_ostream<char,std::char_traits<char>>&std::__ostream_insert<char,std::char_traits<char>>(std::basic_ostream<char,std::char_traits<char>>&,charconst*,long)@plt>
+-mov $0x2,%edx
+-mov %rbx,%rdi
+-lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+-call <std::basic_ostream<char,std::char_traits<char>>&std::__ostream_insert<char,std::char_traits<char>>(std::basic_ostream<char,std::char_traits<char>>&,charconst*,long)@plt>
+-mov $0x7,%edx
+-mov %rbx,%rdi
+-lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+-call <std::basic_ostream<char,std::char_traits<char>>&std::__ostream_insert<char,std::char_traits<char>>(std::basic_ostream<char,std::char_traits<char>>&,charconst*,long)@plt>
+-mov $0x9,%edx
+-mov %rbx,%rdi
+-lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+-call <std::basic_ostream<char,std::char_traits<char>>&std::__ostream_insert<char,std::char_traits<char>>(std::basic_ostream<char,std::char_traits<char>>&,charconst*,long)@plt>
+ mov $0x6,%edx
+-mov %rbx,%rdi
+-lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+-call <std::basic_ostream<char,std::char_traits<char>>&std::__ostream_insert<char,std::char_traits<char>>(std::basic_ostream<char,std::char_traits<char>>&,charconst*,long)@plt>
+-mov $0x13,%edx
+-mov %rbx,%rdi
+-lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+-call <std::basic_ostream<char,std::char_traits<char>>&std::__ostream_insert<char,std::char_traits<char>>(std::basic_ostream<char,std::char_traits<char>>&,charconst*,long)@plt>
+-mov $0x4,%edx
+-mov %rbx,%rdi
+-lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+-call <std::basic_ostream<char,std::char_traits<char>>&std::__ostream_insert<char,std::char_traits<char>>(std::basic_ostream<char,std::char_traits<char>>&,charconst*,long)@plt>
+-mov $0x1,%edx
+-mov %rbx,%rdi
+-lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+-call <std::basic_ostream<char,std::char_traits<char>>&std::__ostream_insert<char,std::char_traits<char>>(std::basic_ostream<char,std::char_traits<char>>&,charconst*,long)@plt>
+-mov $0xa,%edx
+-mov %rbx,%rdi
+-lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+-call <std::basic_ostream<char,std::char_traits<char>>&std::__ostream_insert<char,std::char_traits<char>>(std::basic_ostream<char,std::char_traits<char>>&,charconst*,long)@plt>
+-mov $0x4,%edx
+ mov %rbx,%rdi
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ call <std::basic_ostream<char,std::char_traits<char>>&std::__ostream_insert<char,std::char_traits<char>>(std::basic_ostream<char,std::char_traits<char>>&,charconst*,long)@plt>
+
+== voidfklb::timePreparedLaunch<(anonymousnamespace)::runPoint<1191>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#3},(anonymousnamespace)::runPoint<1191>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#9},(anonymousnamespace)::runPoint<1191>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#7}>(CUstream_st*,(anonymousnamespace)::runPoint<1191>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#3}const&,(anonymousnamespace)::runPoint<1191>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#9}const&,(anonymousnamespace)::runPoint<1191>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#7}const&,fklb::Timing&,fklb::Timing&)
+   1354 -> 1354 instructions
+--- A
++++ B
+@@ -386,11 +386,11 @@
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ mov %rbx,%rdi
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::_M_append(charconst*,unsignedlong)@plt>
+-movabs $0x800000000000007c,%rax
++movabs $0x8000000000000081,%rax
+ add 0x118(%rsp),%rax
+-cmp $0x7a,%rax
++cmp $0x7f,%rax
+ jbe <SELF@1337>
+-mov $0x7b,%edx
++mov $0x80,%edx
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ mov %rbx,%rdi
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::_M_append(charconst*,unsignedlong)@plt>
+
+== voidfklb::timePreparedLaunch<(anonymousnamespace)::runPoint<1191>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#3},fklb::timePreparedLaunch<(anonymousnamespace)::runPoint<1191>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#3},(anonymousnamespace)::runPoint<1191>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#7}>(CUstream_st*,(anonymousnamespace)::runPoint<1191>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#3}const&,(anonymousnamespace)::runPoint<1191>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#7}const&,fklb::Timing&,fklb::Timing&)::{lambda()#1},(anonymousnamespace)::runPoint<1191>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#7}>(CUstream_st*,(anonymousnamespace)::runPoint<1191>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#3}const&,fklb::timePreparedLaunch<(anonymousnamespace)::runPoint<1191>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#3},(anonymousnamespace)::runPoint<1191>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#7}>(CUstream_st*,(anonymousnamespace)::runPoint<1191>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#3}const&,(anonymousnamespace)::runPoint<1191>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#7}const&,fklb::Timing&,fklb::Timing&)::{lambda()#1}const&,(anonymousnamespace)::runPoint<1191>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#7}const&,fklb::Timing&,fklb::Timing&)
+   1309 -> 1309 instructions
+--- A
++++ B
+@@ -361,11 +361,11 @@
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ mov %rbx,%rdi
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::_M_append(charconst*,unsignedlong)@plt>
+-movabs $0x800000000000007c,%rax
++movabs $0x8000000000000081,%rax
+ add 0x118(%rsp),%rax
+-cmp $0x7a,%rax
++cmp $0x7f,%rax
+ jbe <SELF@775>
+-mov $0x7b,%edx
++mov $0x80,%edx
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ mov %rbx,%rdi
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::_M_append(charconst*,unsignedlong)@plt>
+
+== voidfklb::timePreparedLaunch<(anonymousnamespace)::runPoint<1191>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#4},(anonymousnamespace)::runPoint<1191>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#9},(anonymousnamespace)::runPoint<1191>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#8}>(CUstream_st*,(anonymousnamespace)::runPoint<1191>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#4}const&,(anonymousnamespace)::runPoint<1191>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#9}const&,(anonymousnamespace)::runPoint<1191>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#8}const&,fklb::Timing&,fklb::Timing&)
+   1755 -> 1755 instructions
+--- A
++++ B
+@@ -469,11 +469,11 @@
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ mov %rbx,%rdi
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::_M_append(charconst*,unsignedlong)@plt>
+-movabs $0x800000000000007c,%rax
++movabs $0x8000000000000081,%rax
+ add 0x178(%rsp),%rax
+-cmp $0x7a,%rax
++cmp $0x7f,%rax
+ jbe <SELF@1724>
+-mov $0x7b,%edx
++mov $0x80,%edx
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ mov %rbx,%rdi
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::_M_append(charconst*,unsignedlong)@plt>
+@@ -783,11 +783,11 @@
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ mov %rbx,%rdi
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::_M_append(charconst*,unsignedlong)@plt>
+-movabs $0x800000000000007c,%rax
++movabs $0x8000000000000081,%rax
+ add 0x178(%rsp),%rax
+-cmp $0x7a,%rax
++cmp $0x7f,%rax
+ jbe <SELF@1387>
+-mov $0x7b,%edx
++mov $0x80,%edx
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ mov %rbx,%rdi
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::_M_append(charconst*,unsignedlong)@plt>
+
+== voidfklb::timePreparedLaunch<(anonymousnamespace)::runPoint<1191>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#4},fklb::timePreparedLaunch<(anonymousnamespace)::runPoint<1191>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#4},(anonymousnamespace)::runPoint<1191>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#8}>(CUstream_st*,(anonymousnamespace)::runPoint<1191>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#4}const&,(anonymousnamespace)::runPoint<1191>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#8}const&,fklb::Timing&,fklb::Timing&)::{lambda()#1},(anonymousnamespace)::runPoint<1191>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#8}>(CUstream_st*,(anonymousnamespace)::runPoint<1191>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#4}const&,fklb::timePreparedLaunch<(anonymousnamespace)::runPoint<1191>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#4},(anonymousnamespace)::runPoint<1191>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#8}>(CUstream_st*,(anonymousnamespace)::runPoint<1191>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#4}const&,(anonymousnamespace)::runPoint<1191>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#8}const&,fklb::Timing&,fklb::Timing&)::{lambda()#1}const&,(anonymousnamespace)::runPoint<1191>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#8}const&,fklb::Timing&,fklb::Timing&)
+   1701 -> 1701 instructions
+--- A
++++ B
+@@ -451,11 +451,11 @@
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ mov %rbx,%rdi
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::_M_append(charconst*,unsignedlong)@plt>
+-movabs $0x800000000000007c,%rax
++movabs $0x8000000000000081,%rax
+ add 0x168(%rsp),%rax
+-cmp $0x7a,%rax
++cmp $0x7f,%rax
+ jbe <SELF@1240>
+-mov $0x7b,%edx
++mov $0x80,%edx
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ mov %rbx,%rdi
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::_M_append(charconst*,unsignedlong)@plt>
+@@ -765,11 +765,11 @@
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ mov %rbx,%rdi
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::_M_append(charconst*,unsignedlong)@plt>
+-movabs $0x800000000000007c,%rax
++movabs $0x8000000000000081,%rax
+ add 0x168(%rsp),%rax
+-cmp $0x7a,%rax
++cmp $0x7f,%rax
+ jbe <SELF@1174>
+-mov $0x7b,%edx
++mov $0x80,%edx
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ mov %rbx,%rdi
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::_M_append(charconst*,unsignedlong)@plt>
+
+== voidfklb::timePreparedLaunch<(anonymousnamespace)::runPoint<1>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#3},(anonymousnamespace)::runPoint<1>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#9},(anonymousnamespace)::runPoint<1>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#7}>(CUstream_st*,(anonymousnamespace)::runPoint<1>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#3}const&,(anonymousnamespace)::runPoint<1>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#9}const&,(anonymousnamespace)::runPoint<1>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#7}const&,fklb::Timing&,fklb::Timing&)
+   1440 -> 1440 instructions
+--- A
++++ B
+@@ -460,11 +460,11 @@
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ mov %rbx,%rdi
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::_M_append(charconst*,unsignedlong)@plt>
+-movabs $0x800000000000007c,%rax
++movabs $0x8000000000000081,%rax
+ add 0x138(%rsp),%rax
+-cmp $0x7a,%rax
++cmp $0x7f,%rax
+ jbe <SELF@1009>
+-mov $0x7b,%edx
++mov $0x80,%edx
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ mov %rbx,%rdi
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::_M_append(charconst*,unsignedlong)@plt>
+
+== voidfklb::timePreparedLaunch<(anonymousnamespace)::runPoint<1>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#3},fklb::timePreparedLaunch<(anonymousnamespace)::runPoint<1>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#3},(anonymousnamespace)::runPoint<1>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#7}>(CUstream_st*,(anonymousnamespace)::runPoint<1>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#3}const&,(anonymousnamespace)::runPoint<1>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#7}const&,fklb::Timing&,fklb::Timing&)::{lambda()#1},(anonymousnamespace)::runPoint<1>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#7}>(CUstream_st*,(anonymousnamespace)::runPoint<1>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#3}const&,fklb::timePreparedLaunch<(anonymousnamespace)::runPoint<1>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#3},(anonymousnamespace)::runPoint<1>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#7}>(CUstream_st*,(anonymousnamespace)::runPoint<1>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#3}const&,(anonymousnamespace)::runPoint<1>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#7}const&,fklb::Timing&,fklb::Timing&)::{lambda()#1}const&,(anonymousnamespace)::runPoint<1>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#7}const&,fklb::Timing&,fklb::Timing&)
+   1392 -> 1392 instructions
+--- A
++++ B
+@@ -432,11 +432,11 @@
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ mov %rbx,%rdi
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::_M_append(charconst*,unsignedlong)@plt>
+-movabs $0x800000000000007c,%rax
++movabs $0x8000000000000081,%rax
+ add 0x128(%rsp),%rax
+-cmp $0x7a,%rax
++cmp $0x7f,%rax
+ jbe <SELF@1195>
+-mov $0x7b,%edx
++mov $0x80,%edx
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ mov %rbx,%rdi
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::_M_append(charconst*,unsignedlong)@plt>
+
+== voidfklb::timePreparedLaunch<(anonymousnamespace)::runPoint<1>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#4},(anonymousnamespace)::runPoint<1>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#9},(anonymousnamespace)::runPoint<1>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#8}>(CUstream_st*,(anonymousnamespace)::runPoint<1>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#4}const&,(anonymousnamespace)::runPoint<1>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#9}const&,(anonymousnamespace)::runPoint<1>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#8}const&,fklb::Timing&,fklb::Timing&)
+   1414 -> 1414 instructions
+--- A
++++ B
+@@ -443,11 +443,11 @@
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ mov %rbx,%rdi
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::_M_append(charconst*,unsignedlong)@plt>
+-movabs $0x800000000000007c,%rax
++movabs $0x8000000000000081,%rax
+ add 0x198(%rsp),%rax
+-cmp $0x7a,%rax
++cmp $0x7f,%rax
+ jbe <SELF@1011>
+-mov $0x7b,%edx
++mov $0x80,%edx
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ mov %rbx,%rdi
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::_M_append(charconst*,unsignedlong)@plt>
+
+== voidfklb::timePreparedLaunch<(anonymousnamespace)::runPoint<1>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#4},fklb::timePreparedLaunch<(anonymousnamespace)::runPoint<1>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#4},(anonymousnamespace)::runPoint<1>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#8}>(CUstream_st*,(anonymousnamespace)::runPoint<1>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#4}const&,(anonymousnamespace)::runPoint<1>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#8}const&,fklb::Timing&,fklb::Timing&)::{lambda()#1},(anonymousnamespace)::runPoint<1>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#8}>(CUstream_st*,(anonymousnamespace)::runPoint<1>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#4}const&,fklb::timePreparedLaunch<(anonymousnamespace)::runPoint<1>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#4},(anonymousnamespace)::runPoint<1>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#8}>(CUstream_st*,(anonymousnamespace)::runPoint<1>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#4}const&,(anonymousnamespace)::runPoint<1>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#8}const&,fklb::Timing&,fklb::Timing&)::{lambda()#1}const&,(anonymousnamespace)::runPoint<1>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#8}const&,fklb::Timing&,fklb::Timing&)
+   1362 -> 1362 instructions
+--- A
++++ B
+@@ -417,11 +417,11 @@
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ mov %rbx,%rdi
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::_M_append(charconst*,unsignedlong)@plt>
+-movabs $0x800000000000007c,%rax
++movabs $0x8000000000000081,%rax
+ add 0x188(%rsp),%rax
+-cmp $0x7a,%rax
++cmp $0x7f,%rax
+ jbe <SELF@1134>
+-mov $0x7b,%edx
++mov $0x80,%edx
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ mov %rbx,%rdi
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::_M_append(charconst*,unsignedlong)@plt>
+
+== voidfklb::timePreparedLaunch<(anonymousnamespace)::runPoint<201>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#3},(anonymousnamespace)::runPoint<201>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#9},(anonymousnamespace)::runPoint<201>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#7}>(CUstream_st*,(anonymousnamespace)::runPoint<201>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#3}const&,(anonymousnamespace)::runPoint<201>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#9}const&,(anonymousnamespace)::runPoint<201>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#7}const&,fklb::Timing&,fklb::Timing&)
+   1353 -> 1353 instructions
+--- A
++++ B
+@@ -385,11 +385,11 @@
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ mov %rbx,%rdi
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::_M_append(charconst*,unsignedlong)@plt>
+-movabs $0x800000000000007c,%rax
++movabs $0x8000000000000081,%rax
+ add 0x118(%rsp),%rax
+-cmp $0x7a,%rax
++cmp $0x7f,%rax
+ jbe <SELF@1336>
+-mov $0x7b,%edx
++mov $0x80,%edx
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ mov %rbx,%rdi
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::_M_append(charconst*,unsignedlong)@plt>
+
+== voidfklb::timePreparedLaunch<(anonymousnamespace)::runPoint<201>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#3},fklb::timePreparedLaunch<(anonymousnamespace)::runPoint<201>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#3},(anonymousnamespace)::runPoint<201>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#7}>(CUstream_st*,(anonymousnamespace)::runPoint<201>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#3}const&,(anonymousnamespace)::runPoint<201>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#7}const&,fklb::Timing&,fklb::Timing&)::{lambda()#1},(anonymousnamespace)::runPoint<201>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#7}>(CUstream_st*,(anonymousnamespace)::runPoint<201>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#3}const&,fklb::timePreparedLaunch<(anonymousnamespace)::runPoint<201>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#3},(anonymousnamespace)::runPoint<201>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#7}>(CUstream_st*,(anonymousnamespace)::runPoint<201>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#3}const&,(anonymousnamespace)::runPoint<201>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#7}const&,fklb::Timing&,fklb::Timing&)::{lambda()#1}const&,(anonymousnamespace)::runPoint<201>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#7}const&,fklb::Timing&,fklb::Timing&)
+   1308 -> 1308 instructions
+--- A
++++ B
+@@ -360,11 +360,11 @@
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ mov %rbx,%rdi
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::_M_append(charconst*,unsignedlong)@plt>
+-movabs $0x800000000000007c,%rax
++movabs $0x8000000000000081,%rax
+ add 0x118(%rsp),%rax
+-cmp $0x7a,%rax
++cmp $0x7f,%rax
+ jbe <SELF@774>
+-mov $0x7b,%edx
++mov $0x80,%edx
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ mov %rbx,%rdi
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::_M_append(charconst*,unsignedlong)@plt>
+
+== voidfklb::timePreparedLaunch<(anonymousnamespace)::runPoint<201>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#4},(anonymousnamespace)::runPoint<201>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#9},(anonymousnamespace)::runPoint<201>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#8}>(CUstream_st*,(anonymousnamespace)::runPoint<201>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#4}const&,(anonymousnamespace)::runPoint<201>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#9}const&,(anonymousnamespace)::runPoint<201>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#8}const&,fklb::Timing&,fklb::Timing&)
+   1754 -> 1754 instructions
+--- A
++++ B
+@@ -468,11 +468,11 @@
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ mov %rbx,%rdi
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::_M_append(charconst*,unsignedlong)@plt>
+-movabs $0x800000000000007c,%rax
++movabs $0x8000000000000081,%rax
+ add 0x178(%rsp),%rax
+-cmp $0x7a,%rax
++cmp $0x7f,%rax
+ jbe <SELF@1723>
+-mov $0x7b,%edx
++mov $0x80,%edx
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ mov %rbx,%rdi
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::_M_append(charconst*,unsignedlong)@plt>
+@@ -782,11 +782,11 @@
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ mov %rbx,%rdi
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::_M_append(charconst*,unsignedlong)@plt>
+-movabs $0x800000000000007c,%rax
++movabs $0x8000000000000081,%rax
+ add 0x178(%rsp),%rax
+-cmp $0x7a,%rax
++cmp $0x7f,%rax
+ jbe <SELF@1386>
+-mov $0x7b,%edx
++mov $0x80,%edx
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ mov %rbx,%rdi
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::_M_append(charconst*,unsignedlong)@plt>
+
+== voidfklb::timePreparedLaunch<(anonymousnamespace)::runPoint<201>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#4},fklb::timePreparedLaunch<(anonymousnamespace)::runPoint<201>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#4},(anonymousnamespace)::runPoint<201>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#8}>(CUstream_st*,(anonymousnamespace)::runPoint<201>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#4}const&,(anonymousnamespace)::runPoint<201>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#8}const&,fklb::Timing&,fklb::Timing&)::{lambda()#1},(anonymousnamespace)::runPoint<201>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#8}>(CUstream_st*,(anonymousnamespace)::runPoint<201>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#4}const&,fklb::timePreparedLaunch<(anonymousnamespace)::runPoint<201>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#4},(anonymousnamespace)::runPoint<201>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#8}>(CUstream_st*,(anonymousnamespace)::runPoint<201>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#4}const&,(anonymousnamespace)::runPoint<201>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#8}const&,fklb::Timing&,fklb::Timing&)::{lambda()#1}const&,(anonymousnamespace)::runPoint<201>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#8}const&,fklb::Timing&,fklb::Timing&)
+   1700 -> 1700 instructions
+--- A
++++ B
+@@ -450,11 +450,11 @@
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ mov %rbx,%rdi
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::_M_append(charconst*,unsignedlong)@plt>
+-movabs $0x800000000000007c,%rax
++movabs $0x8000000000000081,%rax
+ add 0x168(%rsp),%rax
+-cmp $0x7a,%rax
++cmp $0x7f,%rax
+ jbe <SELF@1239>
+-mov $0x7b,%edx
++mov $0x80,%edx
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ mov %rbx,%rdi
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::_M_append(charconst*,unsignedlong)@plt>
+@@ -764,11 +764,11 @@
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ mov %rbx,%rdi
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::_M_append(charconst*,unsignedlong)@plt>
+-movabs $0x800000000000007c,%rax
++movabs $0x8000000000000081,%rax
+ add 0x168(%rsp),%rax
+-cmp $0x7a,%rax
++cmp $0x7f,%rax
+ jbe <SELF@1173>
+-mov $0x7b,%edx
++mov $0x80,%edx
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ mov %rbx,%rdi
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::_M_append(charconst*,unsignedlong)@plt>
+
+== voidfklb::timePreparedLaunch<(anonymousnamespace)::runPoint<51>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#3},(anonymousnamespace)::runPoint<51>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#9},(anonymousnamespace)::runPoint<51>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#7}>(CUstream_st*,(anonymousnamespace)::runPoint<51>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#3}const&,(anonymousnamespace)::runPoint<51>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#9}const&,(anonymousnamespace)::runPoint<51>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#7}const&,fklb::Timing&,fklb::Timing&)
+   1349 -> 1349 instructions
+--- A
++++ B
+@@ -381,11 +381,11 @@
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ mov %rbx,%rdi
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::_M_append(charconst*,unsignedlong)@plt>
+-movabs $0x800000000000007c,%rax
++movabs $0x8000000000000081,%rax
+ add 0x118(%rsp),%rax
+-cmp $0x7a,%rax
++cmp $0x7f,%rax
+ jbe <SELF@1332>
+-mov $0x7b,%edx
++mov $0x80,%edx
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ mov %rbx,%rdi
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::_M_append(charconst*,unsignedlong)@plt>
+
+== voidfklb::timePreparedLaunch<(anonymousnamespace)::runPoint<51>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#3},fklb::timePreparedLaunch<(anonymousnamespace)::runPoint<51>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#3},(anonymousnamespace)::runPoint<51>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#7}>(CUstream_st*,(anonymousnamespace)::runPoint<51>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#3}const&,(anonymousnamespace)::runPoint<51>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#7}const&,fklb::Timing&,fklb::Timing&)::{lambda()#1},(anonymousnamespace)::runPoint<51>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#7}>(CUstream_st*,(anonymousnamespace)::runPoint<51>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#3}const&,fklb::timePreparedLaunch<(anonymousnamespace)::runPoint<51>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#3},(anonymousnamespace)::runPoint<51>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#7}>(CUstream_st*,(anonymousnamespace)::runPoint<51>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#3}const&,(anonymousnamespace)::runPoint<51>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#7}const&,fklb::Timing&,fklb::Timing&)::{lambda()#1}const&,(anonymousnamespace)::runPoint<51>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#7}const&,fklb::Timing&,fklb::Timing&)
+   1304 -> 1304 instructions
+--- A
++++ B
+@@ -356,11 +356,11 @@
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ mov %rbx,%rdi
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::_M_append(charconst*,unsignedlong)@plt>
+-movabs $0x800000000000007c,%rax
++movabs $0x8000000000000081,%rax
+ add 0x118(%rsp),%rax
+-cmp $0x7a,%rax
++cmp $0x7f,%rax
+ jbe <SELF@770>
+-mov $0x7b,%edx
++mov $0x80,%edx
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ mov %rbx,%rdi
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::_M_append(charconst*,unsignedlong)@plt>
+
+== voidfklb::timePreparedLaunch<(anonymousnamespace)::runPoint<51>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#4},(anonymousnamespace)::runPoint<51>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#9},(anonymousnamespace)::runPoint<51>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#8}>(CUstream_st*,(anonymousnamespace)::runPoint<51>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#4}const&,(anonymousnamespace)::runPoint<51>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#9}const&,(anonymousnamespace)::runPoint<51>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#8}const&,fklb::Timing&,fklb::Timing&)
+   1747 -> 1747 instructions
+--- A
++++ B
+@@ -340,11 +340,11 @@
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ mov %rbx,%rdi
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::_M_append(charconst*,unsignedlong)@plt>
+-movabs $0x800000000000007c,%rax
++movabs $0x8000000000000081,%rax
+ add 0x178(%rsp),%rax
+-cmp $0x7a,%rax
++cmp $0x7f,%rax
+ jbe <SELF@1716>
+-mov $0x7b,%edx
++mov $0x80,%edx
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ mov %rbx,%rdi
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::_M_append(charconst*,unsignedlong)@plt>
+@@ -794,11 +794,11 @@
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ mov %rbx,%rdi
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::_M_append(charconst*,unsignedlong)@plt>
+-movabs $0x800000000000007c,%rax
++movabs $0x8000000000000081,%rax
+ add 0x178(%rsp),%rax
+-cmp $0x7a,%rax
++cmp $0x7f,%rax
+ jbe <SELF@1443>
+-mov $0x7b,%edx
++mov $0x80,%edx
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ mov %rbx,%rdi
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::_M_append(charconst*,unsignedlong)@plt>
+
+== voidfklb::timePreparedLaunch<(anonymousnamespace)::runPoint<51>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#4},fklb::timePreparedLaunch<(anonymousnamespace)::runPoint<51>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#4},(anonymousnamespace)::runPoint<51>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#8}>(CUstream_st*,(anonymousnamespace)::runPoint<51>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#4}const&,(anonymousnamespace)::runPoint<51>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#8}const&,fklb::Timing&,fklb::Timing&)::{lambda()#1},(anonymousnamespace)::runPoint<51>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#8}>(CUstream_st*,(anonymousnamespace)::runPoint<51>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#4}const&,fklb::timePreparedLaunch<(anonymousnamespace)::runPoint<51>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#4},(anonymousnamespace)::runPoint<51>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#8}>(CUstream_st*,(anonymousnamespace)::runPoint<51>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#4}const&,(anonymousnamespace)::runPoint<51>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#8}const&,fklb::Timing&,fklb::Timing&)::{lambda()#1}const&,(anonymousnamespace)::runPoint<51>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#8}const&,fklb::Timing&,fklb::Timing&)
+   1693 -> 1693 instructions
+--- A
++++ B
+@@ -321,11 +321,11 @@
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ mov %rbx,%rdi
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::_M_append(charconst*,unsignedlong)@plt>
+-movabs $0x800000000000007c,%rax
++movabs $0x8000000000000081,%rax
+ add 0x168(%rsp),%rax
+-cmp $0x7a,%rax
++cmp $0x7f,%rax
+ jbe <SELF@1665>
+-mov $0x7b,%edx
++mov $0x80,%edx
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ mov %rbx,%rdi
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::_M_append(charconst*,unsignedlong)@plt>
+@@ -770,11 +770,11 @@
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ mov %rbx,%rdi
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::_M_append(charconst*,unsignedlong)@plt>
+-movabs $0x800000000000007c,%rax
++movabs $0x8000000000000081,%rax
+ add 0x168(%rsp),%rax
+-cmp $0x7a,%rax
++cmp $0x7f,%rax
+ jbe <SELF@1041>
+-mov $0x7b,%edx
++mov $0x80,%edx
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ mov %rbx,%rdi
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::_M_append(charconst*,unsignedlong)@plt>
+
+== voidfklb::timePreparedLaunch<(anonymousnamespace)::runPoint<601>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#3},(anonymousnamespace)::runPoint<601>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#9},(anonymousnamespace)::runPoint<601>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#7}>(CUstream_st*,(anonymousnamespace)::runPoint<601>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#3}const&,(anonymousnamespace)::runPoint<601>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#9}const&,(anonymousnamespace)::runPoint<601>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#7}const&,fklb::Timing&,fklb::Timing&)
+   1354 -> 1354 instructions
+--- A
++++ B
+@@ -386,11 +386,11 @@
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ mov %rbx,%rdi
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::_M_append(charconst*,unsignedlong)@plt>
+-movabs $0x800000000000007c,%rax
++movabs $0x8000000000000081,%rax
+ add 0x118(%rsp),%rax
+-cmp $0x7a,%rax
++cmp $0x7f,%rax
+ jbe <SELF@1337>
+-mov $0x7b,%edx
++mov $0x80,%edx
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ mov %rbx,%rdi
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::_M_append(charconst*,unsignedlong)@plt>
+
+== voidfklb::timePreparedLaunch<(anonymousnamespace)::runPoint<601>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#3},fklb::timePreparedLaunch<(anonymousnamespace)::runPoint<601>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#3},(anonymousnamespace)::runPoint<601>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#7}>(CUstream_st*,(anonymousnamespace)::runPoint<601>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#3}const&,(anonymousnamespace)::runPoint<601>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#7}const&,fklb::Timing&,fklb::Timing&)::{lambda()#1},(anonymousnamespace)::runPoint<601>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#7}>(CUstream_st*,(anonymousnamespace)::runPoint<601>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#3}const&,fklb::timePreparedLaunch<(anonymousnamespace)::runPoint<601>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#3},(anonymousnamespace)::runPoint<601>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#7}>(CUstream_st*,(anonymousnamespace)::runPoint<601>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#3}const&,(anonymousnamespace)::runPoint<601>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#7}const&,fklb::Timing&,fklb::Timing&)::{lambda()#1}const&,(anonymousnamespace)::runPoint<601>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#7}const&,fklb::Timing&,fklb::Timing&)
+   1309 -> 1309 instructions
+--- A
++++ B
+@@ -361,11 +361,11 @@
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ mov %rbx,%rdi
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::_M_append(charconst*,unsignedlong)@plt>
+-movabs $0x800000000000007c,%rax
++movabs $0x8000000000000081,%rax
+ add 0x118(%rsp),%rax
+-cmp $0x7a,%rax
++cmp $0x7f,%rax
+ jbe <SELF@775>
+-mov $0x7b,%edx
++mov $0x80,%edx
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ mov %rbx,%rdi
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::_M_append(charconst*,unsignedlong)@plt>
+
+== voidfklb::timePreparedLaunch<(anonymousnamespace)::runPoint<601>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#4},(anonymousnamespace)::runPoint<601>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#9},(anonymousnamespace)::runPoint<601>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#8}>(CUstream_st*,(anonymousnamespace)::runPoint<601>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#4}const&,(anonymousnamespace)::runPoint<601>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#9}const&,(anonymousnamespace)::runPoint<601>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#8}const&,fklb::Timing&,fklb::Timing&)
+   1755 -> 1755 instructions
+--- A
++++ B
+@@ -469,11 +469,11 @@
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ mov %rbx,%rdi
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::_M_append(charconst*,unsignedlong)@plt>
+-movabs $0x800000000000007c,%rax
++movabs $0x8000000000000081,%rax
+ add 0x178(%rsp),%rax
+-cmp $0x7a,%rax
++cmp $0x7f,%rax
+ jbe <SELF@1724>
+-mov $0x7b,%edx
++mov $0x80,%edx
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ mov %rbx,%rdi
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::_M_append(charconst*,unsignedlong)@plt>
+@@ -783,11 +783,11 @@
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ mov %rbx,%rdi
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::_M_append(charconst*,unsignedlong)@plt>
+-movabs $0x800000000000007c,%rax
++movabs $0x8000000000000081,%rax
+ add 0x178(%rsp),%rax
+-cmp $0x7a,%rax
++cmp $0x7f,%rax
+ jbe <SELF@1387>
+-mov $0x7b,%edx
++mov $0x80,%edx
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ mov %rbx,%rdi
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::_M_append(charconst*,unsignedlong)@plt>
+
+== voidfklb::timePreparedLaunch<(anonymousnamespace)::runPoint<601>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#4},fklb::timePreparedLaunch<(anonymousnamespace)::runPoint<601>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#4},(anonymousnamespace)::runPoint<601>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#8}>(CUstream_st*,(anonymousnamespace)::runPoint<601>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#4}const&,(anonymousnamespace)::runPoint<601>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#8}const&,fklb::Timing&,fklb::Timing&)::{lambda()#1},(anonymousnamespace)::runPoint<601>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#8}>(CUstream_st*,(anonymousnamespace)::runPoint<601>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#4}const&,fklb::timePreparedLaunch<(anonymousnamespace)::runPoint<601>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#4},(anonymousnamespace)::runPoint<601>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#8}>(CUstream_st*,(anonymousnamespace)::runPoint<601>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#4}const&,(anonymousnamespace)::runPoint<601>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#8}const&,fklb::Timing&,fklb::Timing&)::{lambda()#1}const&,(anonymousnamespace)::runPoint<601>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#8}const&,fklb::Timing&,fklb::Timing&)
+   1701 -> 1701 instructions
+--- A
++++ B
+@@ -451,11 +451,11 @@
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ mov %rbx,%rdi
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::_M_append(charconst*,unsignedlong)@plt>
+-movabs $0x800000000000007c,%rax
++movabs $0x8000000000000081,%rax
+ add 0x168(%rsp),%rax
+-cmp $0x7a,%rax
++cmp $0x7f,%rax
+ jbe <SELF@1240>
+-mov $0x7b,%edx
++mov $0x80,%edx
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ mov %rbx,%rdi
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::_M_append(charconst*,unsignedlong)@plt>
+@@ -765,11 +765,11 @@
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ mov %rbx,%rdi
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::_M_append(charconst*,unsignedlong)@plt>
+-movabs $0x800000000000007c,%rax
++movabs $0x8000000000000081,%rax
+ add 0x168(%rsp),%rax
+-cmp $0x7a,%rax
++cmp $0x7f,%rax
+ jbe <SELF@1174>
+-mov $0x7b,%edx
++mov $0x80,%edx
+ lea D(%rip),%rsi # <_IO_stdin_used+OFF>
+ mov %rbx,%rdi
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::_M_append(charconst*,unsignedlong)@plt>

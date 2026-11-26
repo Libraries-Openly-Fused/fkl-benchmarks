@@ -1,0 +1,60 @@
+# 2026-11-26T15:35:00+01:00 pin-435 identity builds start (compile only, CUDA_VISIBLE_DEVICES=''); script sha256 dce157199d074dcdb9ec9b6ae7700bfbc57c978918d1cb923f43295719847f6f
+# 2026-11-26T15:35:01+01:00 base: fkl-benchmarks 976e42b, FKL b10fc66; head: fkl-benchmarks 2518c75, FKL 48fbf3f; cvGS 6d26c65, FastNPP a1b5e24; nvcc Cuda compilation tools, release 13.4, V13.4.92; load 3.69 3.74 2.64
+# 2026-11-26T16:32:26+01:00 base build ended, exit 0
+# 2026-11-26T16:32:57+01:00 head build ended, exit 0
+== base-b10fc66
+bench: 44 targets: batch_build_compilation_time_cpp batch_build_compilation_time_cu benchmark_CPU_NPP_vs_FastNPP_cu benchmark_CPU_OpenCV_vs_cvGS_cu benchmark_CPUandGPU_cvGS_vs_fk_cu benchmark_batched_
+bench: build finished after 3442 s (3442.21 s wall, largest resident set of one process 2510332 KiB)
+bench: 44 targets, 44 compiled, 0 failed, 0 not built
+  OK 44
+== head-48fbf3f
+bench: 44 targets: batch_build_compilation_time_cpp batch_build_compilation_time_cu benchmark_CPU_NPP_vs_FastNPP_cu benchmark_CPU_OpenCV_vs_cvGS_cu benchmark_CPUandGPU_cvGS_vs_fk_cu benchmark_batched_
+bench: build finished after 3473 s (3472.84 s wall, largest resident set of one process 2519800 KiB)
+bench: 44 targets, 44 compiled, 0 failed, 0 not built
+  OK 44
+# 2026-11-26T16:32:57+01:00 1. pr435_sass_identity base vs head
+# 2026-11-26T16:41:23+01:00 pr435_sass_identity exit 1
+arch sm_89; Build cuda_13.4.r13.4/compiler.38855100_0; files (*_cu executables, lib*_cu.so): A 39, B 39, in both 39
+only in A: []
+only in B: []
+kernels: A 1834, B 1818; pairs 1816 (renamed 1812); identical 1776, different 40, only in A 18, only in B 2
+names demangled by llvm-cxxfilt because GNU c++filt returned them unchanged: 0
+renamed pairs by rule: (none: mangled names differ otherwise) 147, flashFwdSplitCombineKernel 4, launchFlashAttentionDPP_Kernel 2, launchFlashAttentionMmaDPP_Kernel 56, launchTransformDPP_Kernel 1567, linearFilterDPPKernel 19, morphologyDPPKernel 17
+by kernel family (B's name, or A's for a kernel only in A): identical / different / only in A / only in B
+/home/oscar/tfkl-bench/scratch/pin-435/out/sass-identity-b10fc66-vs-48fbf3f.csv: 40 kernels differ
+FlashAttentionSplitCombineDPP: 4 kernels
+  2 x  instructions 416 -> 416 (+0); registers 36; stack 0 B; LDL 0; STL 0; cbank0 376 -> 384 B; shared 0 B
+  2 x  instructions 448 -> 440 (-8); registers 40; stack 0 B; LDL 0; STL 0; cbank0 376 -> 384 B; shared 0 B
+LinearFilterDPP: 19 kernels
+  2 x  instructions 696 -> 704 (+8); registers 39; stack 0 B; LDL 0; STL 0; cbank0 456 B; shared 1428 B
+  2 x  instructions 816 -> 816 (+0); registers 40; stack 0 B; LDL 0; STL 0; cbank0 464 B; shared 4284 B
+  2 x  instructions 880 -> 888 (+8); registers 40; stack 0 B; LDL 0; STL 0; cbank0 480 B; shared 4284 B
+  2 x  instructions 928 -> 928 (+0); registers 39; stack 0 B; LDL 0; STL 0; cbank0 456 B; shared 4284 B
+  2 x  instructions 952 -> 952 (+0); registers 40; stack 0 B; LDL 0; STL 0; cbank0 472 B; shared 4284 B
+  2 x  instructions 960 -> 960 (+0); registers 40; stack 0 B; LDL 0; STL 0; cbank0 472 B; shared 4284 B
+  1 x  instructions 760 -> 760 (+0); registers 40; stack 0 B; LDL 0; STL 0; cbank0 472 B; shared 4284 B
+  1 x  instructions 768 -> 768 (+0); registers 40; stack 0 B; LDL 0; STL 0; cbank0 472 B; shared 4284 B
+  1 x  instructions 816 -> 824 (+8); registers 40; stack 0 B; LDL 0; STL 0; cbank0 464 B; shared 4284 B
+  1 x  instructions 856 -> 856 (+0); registers 40; stack 0 B; LDL 0; STL 0; cbank0 472 B; shared 4284 B
+  1 x  instructions 864 -> 864 (+0); registers 39; stack 0 B; LDL 0; STL 0; cbank0 440 B; shared 4284 B
+  1 x  instructions 864 -> 864 (+0); registers 40; stack 0 B; LDL 0; STL 0; cbank0 472 B; shared 4284 B
+  1 x  instructions 872 -> 880 (+8); registers 40; stack 0 B; LDL 0; STL 0; cbank0 480 B; shared 4284 B
+MorphologyDPP: 17 kernels
+  2 x  instructions 544 -> 544 (+0); registers 40; stack 0 B; LDL 0; STL 0; cbank0 1168 B; shared 1232 B
+  1 x  instructions 544 -> 544 (+0); registers 40; stack 0 B; LDL 0; STL 0; cbank0 1408 B; shared 1232 B
+  1 x  instructions 544 -> 544 (+0); registers 40; stack 0 B; LDL 0; STL 0; cbank0 1648 B; shared 1232 B
+  1 x  instructions 544 -> 544 (+0); registers 40; stack 0 B; LDL 0; STL 0; cbank0 1888 B; shared 1232 B
+  1 x  instructions 544 -> 544 (+0); registers 40; stack 0 B; LDL 0; STL 0; cbank0 2128 B; shared 1232 B
+  1 x  instructions 544 -> 544 (+0); registers 40; stack 0 B; LDL 0; STL 0; cbank0 2368 B; shared 1232 B
+  1 x  instructions 544 -> 544 (+0); registers 40; stack 0 B; LDL 0; STL 0; cbank0 2608 B; shared 1232 B
+  1 x  instructions 544 -> 544 (+0); registers 40; stack 0 B; LDL 0; STL 0; cbank0 2848 B; shared 1232 B
+  1 x  instructions 544 -> 544 (+0); registers 40; stack 0 B; LDL 0; STL 0; cbank0 3088 B; shared 1232 B
+  1 x  instructions 544 -> 544 (+0); registers 40; stack 0 B; LDL 0; STL 0; cbank0 3328 B; shared 1232 B
+  1 x  instructions 544 -> 544 (+0); registers 40; stack 0 B; LDL 0; STL 0; cbank0 3568 B; shared 1232 B
+  1 x  instructions 544 -> 544 (+0); registers 40; stack 0 B; LDL 0; STL 0; cbank0 3808 B; shared 1232 B
+  1 x  instructions 544 -> 544 (+0); registers 40; stack 0 B; LDL 0; STL 0; cbank0 4048 B; shared 1232 B
+  1 x  instructions 544 -> 544 (+0); registers 40; stack 0 B; LDL 0; STL 0; cbank0 688 B; shared 1232 B
+  1 x  instructions 544 -> 544 (+0); registers 40; stack 0 B; LDL 0; STL 0; cbank0 928 B; shared 1232 B
+  1 x  instructions 568 -> 544 (-24); registers 35 -> 40; stack 40 -> 0 B; LDL 2 -> 0; STL 5 -> 0; cbank0 472 B; shared 1232 B
+# 2026-11-26T16:41:23+01:00 binaries: base 44, head 44; byte-identical pairs 1
+# 2026-11-26T16:41:23+01:00 pin-435 identity builds ended (identity exit 1); load 5.11 8.02 14.60

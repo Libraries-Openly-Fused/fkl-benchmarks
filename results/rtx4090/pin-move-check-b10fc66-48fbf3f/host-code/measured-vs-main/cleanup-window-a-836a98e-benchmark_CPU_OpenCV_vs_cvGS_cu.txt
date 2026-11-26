@@ -1,0 +1,31 @@
+A = /home/oscar/tfkl-bench/worktrees/fkl-benchmarks-window/build/local-rtx4090/bin/benchmark_CPU_OpenCV_vs_cvGS_cu (sha256 90aa59d9e94257d9027df3366f8fd439cdca36fcf11b38c7de79af1313f85e00)
+B = /home/oscar/tfkl-bench/scratch/pin-435/base-b10fc66/bench-build/bin/benchmark_CPU_OpenCV_vs_cvGS_cu (sha256 0748bb31bf8b52eee043a150be6c9eb69a8d2f0467e4876b15217a2e2c2efc3f)
+GNU objdump (GNU Binutils for Ubuntu) 2.46
+normalised as described in host_compare435.py (host_compare.py's normalisation, no rename rule, fklb::statusMessage's __LINE__ masked)
+TOTAL: functions A 129, B 129; pairs 129; identical 128, different 1; only in A 0, only in B 0; name collisions A 4, B 4
+roots (timed calls; regular expressions ['\\{lambda', '_Function_handler<', '^void fklb::time', 'fklb::time\\w*<', 'timeCall<']): A 5, B 5
+of the different: 0 differ only in the __LINE__ of the moved lines 178:181,55:62,56:63,58:65,61:68,63:70,64:71,66:73,71:78,72:79,73:80,86:94,87:95,91:99,102:111,104:113,105:114,112:121,121:130,122:131,123:132 or by the build path's length (immediates larger by 7 in B), 1 otherwise
+every function that differs (first differing instruction; the roots that reach it in A | in B):
+  DIFFERENT fklb::writeSystemInfoHeader(std::ostream&,std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>const&,std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>const&)
+      971 -> 971 instructions; first difference at 42: A: mov $0x28,%edx | B: mov $0x7,%edx
+      roots A (0): none
+      roots B (0): none
+
+timed intervals (the instructions between consecutive calls of cudaEventRecord or steady_clock::now in one function; a lambda body inlined into the timing function is inside its interval):
+  [clock] interval identical, its callees identical ({'identical': 1}), external calls same: 3 intervals, 622 -> 622 instructions: booltest_cpu_batchresize_x_split3D<16,21,102>(unsignedlong,unsignedlong,cv::Matconst&,cv::cuda::Stream&)[clone.isra.0]
+  [clock] interval identical, its callees identical ({'identical': 1}), external calls same: 3 intervals, 621 -> 621 instructions: booltest_cpu_batchresize_x_split3D<16,21,112>(unsignedlong,unsignedlong,cv::Matconst&,cv::cuda::Stream&)[clone.isra.0]
+  [clock] interval identical, its callees identical ({'identical': 1}), external calls same: 3 intervals, 623 -> 623 instructions: booltest_cpu_batchresize_x_split3D<16,21,122>(unsignedlong,unsignedlong,cv::Matconst&,cv::cuda::Stream&)[clone.isra.0]
+  [clock] interval identical, its callees identical ({'identical': 1}), external calls same: 3 intervals, 843 -> 843 instructions: booltest_cpu_batchresize_x_split3D<16,21,12>(unsignedlong,unsignedlong,cv::Matconst&,cv::cuda::Stream&)[clone.isra.0]
+  [clock] interval identical, its callees identical ({'identical': 1}), external calls same: 3 intervals, 621 -> 621 instructions: booltest_cpu_batchresize_x_split3D<16,21,132>(unsignedlong,unsignedlong,cv::Matconst&,cv::cuda::Stream&)[clone.isra.0]
+  [clock] interval identical, its callees identical ({'identical': 1}), external calls same: 3 intervals, 623 -> 623 instructions: booltest_cpu_batchresize_x_split3D<16,21,142>(unsignedlong,unsignedlong,cv::Matconst&,cv::cuda::Stream&)[clone.isra.0]
+  [clock] interval identical, its callees identical ({'identical': 1}), external calls same: 3 intervals, 622 -> 622 instructions: booltest_cpu_batchresize_x_split3D<16,21,152>(unsignedlong,unsignedlong,cv::Matconst&,cv::cuda::Stream&)[clone.isra.0]
+  [clock] interval identical, its callees identical ({'identical': 1}), external calls same: 3 intervals, 621 -> 621 instructions: booltest_cpu_batchresize_x_split3D<16,21,22>(unsignedlong,unsignedlong,cv::Matconst&,cv::cuda::Stream&)[clone.isra.0]
+  [clock] interval identical, its callees identical ({}), external calls same: 3 intervals, 190 -> 190 instructions: booltest_cpu_batchresize_x_split3D<16,21,2>(unsignedlong,unsignedlong,cv::Matconst&,cv::cuda::Stream&)[clone.isra.0]
+  [clock] interval identical, its callees identical ({'identical': 1}), external calls same: 3 intervals, 624 -> 624 instructions: booltest_cpu_batchresize_x_split3D<16,21,32>(unsignedlong,unsignedlong,cv::Matconst&,cv::cuda::Stream&)[clone.isra.0]
+  [clock] interval identical, its callees identical ({'identical': 1}), external calls same: 3 intervals, 623 -> 623 instructions: booltest_cpu_batchresize_x_split3D<16,21,42>(unsignedlong,unsignedlong,cv::Matconst&,cv::cuda::Stream&)[clone.isra.0]
+  [clock] interval identical, its callees identical ({'identical': 1}), external calls same: 3 intervals, 621 -> 621 instructions: booltest_cpu_batchresize_x_split3D<16,21,52>(unsignedlong,unsignedlong,cv::Matconst&,cv::cuda::Stream&)[clone.isra.0]
+  [clock] interval identical, its callees identical ({'identical': 1}), external calls same: 3 intervals, 623 -> 623 instructions: booltest_cpu_batchresize_x_split3D<16,21,62>(unsignedlong,unsignedlong,cv::Matconst&,cv::cuda::Stream&)[clone.isra.0]
+  [clock] interval identical, its callees identical ({'identical': 1}), external calls same: 3 intervals, 621 -> 621 instructions: booltest_cpu_batchresize_x_split3D<16,21,72>(unsignedlong,unsignedlong,cv::Matconst&,cv::cuda::Stream&)[clone.isra.0]
+  [clock] interval identical, its callees identical ({'identical': 1}), external calls same: 3 intervals, 624 -> 624 instructions: booltest_cpu_batchresize_x_split3D<16,21,82>(unsignedlong,unsignedlong,cv::Matconst&,cv::cuda::Stream&)[clone.isra.0]
+  [clock] interval identical, its callees identical ({'identical': 1}), external calls same: 3 intervals, 622 -> 622 instructions: booltest_cpu_batchresize_x_split3D<16,21,92>(unsignedlong,unsignedlong,cv::Matconst&,cv::cuda::Stream&)[clone.isra.0]
+  TOTAL: [clock] interval identical, callees identical: 16

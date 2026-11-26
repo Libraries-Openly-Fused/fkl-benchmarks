@@ -1,0 +1,309 @@
+A = /home/oscar/tfkl-bench/scratch/pin-435/base-b10fc66/bench-build/bin/e1_vf_chain_cu
+B = /home/oscar/tfkl-bench/scratch/pin-435/head-48fbf3f/bench-build/bin/e1_vf_chain_cu
+per function that differs: the unified diff of its normalised instructions
+
+== voidfk::executeOperations<fk::TransformDPP<(fk::ParArch)1,(fk::TF)0,void,true,void>,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,unsignedchar>>,fk::UnaryInstantiableOperation<fk::SaturateCast<unsignedchar,float>>,fk::BinaryInstantiableOperation<fk::Mul<float,float,float,fk::BinaryType>>,fk::BinaryInstantiableOperation<fk::StaticLoop<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Mul<float,float,float,fk::BinaryType>>,fk::BinaryInstantiableOperation<fk::Add<float,float,float,fk::BinaryType>>>,1>>,fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)2,float>>>(fk::Stream_<fk::TransformDPP<(fk::ParArch)1,(fk::TF)0,void,true,void>::PAR_ARCH>&,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,unsignedchar>>const&,fk::UnaryInstantiableOperation<fk::SaturateCast<unsignedchar,float>>const&,fk::BinaryInstantiableOperation<fk::Mul<float,float,float,fk::BinaryType>>const&,fk::BinaryInstantiableOperation<fk::StaticLoop<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Mul<float,float,float,fk::BinaryType>>,fk::BinaryInstantiableOperation<fk::Add<float,float,float,fk::BinaryType>>>,1>>const&,fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)2,float>>const&)[clone.isra.0]
+   420 -> 420 instructions
+--- A
++++ B
+@@ -266,9 +266,9 @@
+ movb $0x0,0xe0(%rsp)
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::reserve(unsignedlong)@plt>
+ mov 0xd0(%rsp),%rax
+-mov $0x3634,%edx
++mov $0x3834,%edx
+ mov %dx,(%rax)
+-movb $0x39,0x2(%rax)
++movb $0x36,0x2(%rax)
+ mov 0xd0(%rsp),%rax
+ movq $0x3,0xd8(%rsp)
+ movb $0x0,0x3(%rax)
+
+== voidfk::executeOperations<fk::TransformDPP<(fk::ParArch)1,(fk::TF)0,void,true,void>,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,unsignedchar>>,fk::UnaryInstantiableOperation<fk::SaturateCast<unsignedchar,float>>,fk::BinaryInstantiableOperation<fk::Mul<float,float,float,fk::BinaryType>>,fk::BinaryInstantiableOperation<fk::StaticLoop<fk::StaticLoop<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Mul<float,float,float,fk::BinaryType>>,fk::BinaryInstantiableOperation<fk::Add<float,float,float,fk::BinaryType>>>,50>,100>>,fk::BinaryInstantiableOperation<fk::StaticLoop<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Mul<float,float,float,fk::BinaryType>>,fk::BinaryInstantiableOperation<fk::Add<float,float,float,fk::BinaryType>>>,1>>,fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)2,float>>>(fk::Stream_<fk::TransformDPP<(fk::ParArch)1,(fk::TF)0,void,true,void>::PAR_ARCH>&,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,unsignedchar>>const&,fk::UnaryInstantiableOperation<fk::SaturateCast<unsignedchar,float>>const&,fk::BinaryInstantiableOperation<fk::Mul<float,float,float,fk::BinaryType>>const&,fk::BinaryInstantiableOperation<fk::StaticLoop<fk::StaticLoop<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Mul<float,float,float,fk::BinaryType>>,fk::BinaryInstantiableOperation<fk::Add<float,float,float,fk::BinaryType>>>,50>,100>>const&,fk::BinaryInstantiableOperation<fk::StaticLoop<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Mul<float,float,float,fk::BinaryType>>,fk::BinaryInstantiableOperation<fk::Add<float,float,float,fk::BinaryType>>>,1>>const&,fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)2,float>>const&)[clone.isra.0]
+   431 -> 431 instructions
+--- A
++++ B
+@@ -277,9 +277,9 @@
+ movb $0x0,0xf0(%rsp)
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::reserve(unsignedlong)@plt>
+ mov 0xe0(%rsp),%rax
+-mov $0x3634,%edx
++mov $0x3834,%edx
+ mov %dx,(%rax)
+-movb $0x39,0x2(%rax)
++movb $0x36,0x2(%rax)
+ mov 0xe0(%rsp),%rax
+ movq $0x3,0xe8(%rsp)
+ movb $0x0,0x3(%rax)
+
+== voidfk::executeOperations<fk::TransformDPP<(fk::ParArch)1,(fk::TF)0,void,true,void>,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,unsignedchar>>,fk::UnaryInstantiableOperation<fk::SaturateCast<unsignedchar,float>>,fk::BinaryInstantiableOperation<fk::Mul<float,float,float,fk::BinaryType>>,fk::BinaryInstantiableOperation<fk::StaticLoop<fk::StaticLoop<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Mul<float,float,float,fk::BinaryType>>,fk::BinaryInstantiableOperation<fk::Add<float,float,float,fk::BinaryType>>>,50>,10>>,fk::BinaryInstantiableOperation<fk::StaticLoop<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Mul<float,float,float,fk::BinaryType>>,fk::BinaryInstantiableOperation<fk::Add<float,float,float,fk::BinaryType>>>,1>>,fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)2,float>>>(fk::Stream_<fk::TransformDPP<(fk::ParArch)1,(fk::TF)0,void,true,void>::PAR_ARCH>&,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,unsignedchar>>const&,fk::UnaryInstantiableOperation<fk::SaturateCast<unsignedchar,float>>const&,fk::BinaryInstantiableOperation<fk::Mul<float,float,float,fk::BinaryType>>const&,fk::BinaryInstantiableOperation<fk::StaticLoop<fk::StaticLoop<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Mul<float,float,float,fk::BinaryType>>,fk::BinaryInstantiableOperation<fk::Add<float,float,float,fk::BinaryType>>>,50>,10>>const&,fk::BinaryInstantiableOperation<fk::StaticLoop<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Mul<float,float,float,fk::BinaryType>>,fk::BinaryInstantiableOperation<fk::Add<float,float,float,fk::BinaryType>>>,1>>const&,fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)2,float>>const&)[clone.isra.0]
+   431 -> 431 instructions
+--- A
++++ B
+@@ -277,9 +277,9 @@
+ movb $0x0,0xf0(%rsp)
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::reserve(unsignedlong)@plt>
+ mov 0xe0(%rsp),%rax
+-mov $0x3634,%edx
++mov $0x3834,%edx
+ mov %dx,(%rax)
+-movb $0x39,0x2(%rax)
++movb $0x36,0x2(%rax)
+ mov 0xe0(%rsp),%rax
+ movq $0x3,0xe8(%rsp)
+ movb $0x0,0x3(%rax)
+
+== voidfk::executeOperations<fk::TransformDPP<(fk::ParArch)1,(fk::TF)0,void,true,void>,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,unsignedchar>>,fk::UnaryInstantiableOperation<fk::SaturateCast<unsignedchar,float>>,fk::BinaryInstantiableOperation<fk::Mul<float,float,float,fk::BinaryType>>,fk::BinaryInstantiableOperation<fk::StaticLoop<fk::StaticLoop<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Mul<float,float,float,fk::BinaryType>>,fk::BinaryInstantiableOperation<fk::Add<float,float,float,fk::BinaryType>>>,50>,199>>,fk::BinaryInstantiableOperation<fk::StaticLoop<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Mul<float,float,float,fk::BinaryType>>,fk::BinaryInstantiableOperation<fk::Add<float,float,float,fk::BinaryType>>>,1>>,fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)2,float>>>(fk::Stream_<fk::TransformDPP<(fk::ParArch)1,(fk::TF)0,void,true,void>::PAR_ARCH>&,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,unsignedchar>>const&,fk::UnaryInstantiableOperation<fk::SaturateCast<unsignedchar,float>>const&,fk::BinaryInstantiableOperation<fk::Mul<float,float,float,fk::BinaryType>>const&,fk::BinaryInstantiableOperation<fk::StaticLoop<fk::StaticLoop<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Mul<float,float,float,fk::BinaryType>>,fk::BinaryInstantiableOperation<fk::Add<float,float,float,fk::BinaryType>>>,50>,199>>const&,fk::BinaryInstantiableOperation<fk::StaticLoop<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Mul<float,float,float,fk::BinaryType>>,fk::BinaryInstantiableOperation<fk::Add<float,float,float,fk::BinaryType>>>,1>>const&,fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)2,float>>const&)[clone.isra.0]
+   431 -> 431 instructions
+--- A
++++ B
+@@ -277,9 +277,9 @@
+ movb $0x0,0xf0(%rsp)
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::reserve(unsignedlong)@plt>
+ mov 0xe0(%rsp),%rax
+-mov $0x3634,%edx
++mov $0x3834,%edx
+ mov %dx,(%rax)
+-movb $0x39,0x2(%rax)
++movb $0x36,0x2(%rax)
+ mov 0xe0(%rsp),%rax
+ movq $0x3,0xe8(%rsp)
+ movb $0x0,0x3(%rax)
+
+== voidfk::executeOperations<fk::TransformDPP<(fk::ParArch)1,(fk::TF)0,void,true,void>,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,unsignedchar>>,fk::UnaryInstantiableOperation<fk::SaturateCast<unsignedchar,float>>,fk::BinaryInstantiableOperation<fk::Mul<float,float,float,fk::BinaryType>>,fk::BinaryInstantiableOperation<fk::StaticLoop<fk::StaticLoop<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Mul<float,float,float,fk::BinaryType>>,fk::BinaryInstantiableOperation<fk::Add<float,float,float,fk::BinaryType>>>,50>,1>>,fk::BinaryInstantiableOperation<fk::StaticLoop<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Mul<float,float,float,fk::BinaryType>>,fk::BinaryInstantiableOperation<fk::Add<float,float,float,fk::BinaryType>>>,1>>,fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)2,float>>>(fk::Stream_<fk::TransformDPP<(fk::ParArch)1,(fk::TF)0,void,true,void>::PAR_ARCH>&,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,unsignedchar>>const&,fk::UnaryInstantiableOperation<fk::SaturateCast<unsignedchar,float>>const&,fk::BinaryInstantiableOperation<fk::Mul<float,float,float,fk::BinaryType>>const&,fk::BinaryInstantiableOperation<fk::StaticLoop<fk::StaticLoop<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Mul<float,float,float,fk::BinaryType>>,fk::BinaryInstantiableOperation<fk::Add<float,float,float,fk::BinaryType>>>,50>,1>>const&,fk::BinaryInstantiableOperation<fk::StaticLoop<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Mul<float,float,float,fk::BinaryType>>,fk::BinaryInstantiableOperation<fk::Add<float,float,float,fk::BinaryType>>>,1>>const&,fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)2,float>>const&)[clone.isra.0]
+   431 -> 431 instructions
+--- A
++++ B
+@@ -277,9 +277,9 @@
+ movb $0x0,0xf0(%rsp)
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::reserve(unsignedlong)@plt>
+ mov 0xe0(%rsp),%rax
+-mov $0x3634,%edx
++mov $0x3834,%edx
+ mov %dx,(%rax)
+-movb $0x39,0x2(%rax)
++movb $0x36,0x2(%rax)
+ mov 0xe0(%rsp),%rax
+ movq $0x3,0xe8(%rsp)
+ movb $0x0,0x3(%rax)
+
+== voidfk::executeOperations<fk::TransformDPP<(fk::ParArch)1,(fk::TF)0,void,true,void>,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,unsignedchar>>,fk::UnaryInstantiableOperation<fk::SaturateCast<unsignedchar,float>>,fk::BinaryInstantiableOperation<fk::Mul<float,float,float,fk::BinaryType>>,fk::BinaryInstantiableOperation<fk::StaticLoop<fk::StaticLoop<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Mul<float,float,float,fk::BinaryType>>,fk::BinaryInstantiableOperation<fk::Add<float,float,float,fk::BinaryType>>>,50>,50>>,fk::BinaryInstantiableOperation<fk::StaticLoop<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Mul<float,float,float,fk::BinaryType>>,fk::BinaryInstantiableOperation<fk::Add<float,float,float,fk::BinaryType>>>,1>>,fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)2,float>>>(fk::Stream_<fk::TransformDPP<(fk::ParArch)1,(fk::TF)0,void,true,void>::PAR_ARCH>&,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,unsignedchar>>const&,fk::UnaryInstantiableOperation<fk::SaturateCast<unsignedchar,float>>const&,fk::BinaryInstantiableOperation<fk::Mul<float,float,float,fk::BinaryType>>const&,fk::BinaryInstantiableOperation<fk::StaticLoop<fk::StaticLoop<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Mul<float,float,float,fk::BinaryType>>,fk::BinaryInstantiableOperation<fk::Add<float,float,float,fk::BinaryType>>>,50>,50>>const&,fk::BinaryInstantiableOperation<fk::StaticLoop<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Mul<float,float,float,fk::BinaryType>>,fk::BinaryInstantiableOperation<fk::Add<float,float,float,fk::BinaryType>>>,1>>const&,fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)2,float>>const&)[clone.isra.0]
+   431 -> 431 instructions
+--- A
++++ B
+@@ -277,9 +277,9 @@
+ movb $0x0,0xf0(%rsp)
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::reserve(unsignedlong)@plt>
+ mov 0xe0(%rsp),%rax
+-mov $0x3634,%edx
++mov $0x3834,%edx
+ mov %dx,(%rax)
+-movb $0x39,0x2(%rax)
++movb $0x36,0x2(%rax)
+ mov 0xe0(%rsp),%rax
+ movq $0x3,0xe8(%rsp)
+ movb $0x0,0x3(%rax)
+
+== voidfklb::timePreparedLaunch<(anonymousnamespace)::runPoint<10002>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#5},(anonymousnamespace)::runPoint<10002>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#7},(anonymousnamespace)::runPoint<10002>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#6}>(CUstream_st*,(anonymousnamespace)::runPoint<10002>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#5}const&,(anonymousnamespace)::runPoint<10002>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#7}const&,(anonymousnamespace)::runPoint<10002>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#6}const&,fklb::Timing&,fklb::Timing&)
+   1294 -> 1294 instructions
+--- A
++++ B
+@@ -431,9 +431,9 @@
+ movb $0x0,0x1f0(%rsp)
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::reserve(unsignedlong)@plt>
+ mov 0x1e0(%rsp),%rax
+-mov $0x3634,%edx
++mov $0x3834,%edx
+ mov %dx,(%rax)
+-movb $0x39,0x2(%rax)
++movb $0x36,0x2(%rax)
+ mov 0x1e0(%rsp),%rax
+ movq $0x3,0x1e8(%rsp)
+ movb $0x0,0x3(%rax)
+
+== voidfklb::timePreparedLaunch<(anonymousnamespace)::runPoint<10002>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#5},fklb::timePreparedLaunch<(anonymousnamespace)::runPoint<10002>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#5},(anonymousnamespace)::runPoint<10002>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#6}>(CUstream_st*,(anonymousnamespace)::runPoint<10002>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#5}const&,(anonymousnamespace)::runPoint<10002>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#6}const&,fklb::Timing&,fklb::Timing&)::{lambda()#1},(anonymousnamespace)::runPoint<10002>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#6}>(CUstream_st*,(anonymousnamespace)::runPoint<10002>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#5}const&,fklb::timePreparedLaunch<(anonymousnamespace)::runPoint<10002>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#5},(anonymousnamespace)::runPoint<10002>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#6}>(CUstream_st*,(anonymousnamespace)::runPoint<10002>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#5}const&,(anonymousnamespace)::runPoint<10002>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#6}const&,fklb::Timing&,fklb::Timing&)::{lambda()#1}const&,(anonymousnamespace)::runPoint<10002>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#6}const&,fklb::Timing&,fklb::Timing&)
+   1243 -> 1243 instructions
+--- A
++++ B
+@@ -400,9 +400,9 @@
+ movb $0x0,0x1e0(%rsp)
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::reserve(unsignedlong)@plt>
+ mov 0x1d0(%rsp),%rax
+-mov $0x3634,%edx
++mov $0x3834,%edx
+ mov %dx,(%rax)
+-movb $0x39,0x2(%rax)
++movb $0x36,0x2(%rax)
+ mov 0x1d0(%rsp),%rax
+ movq $0x3,0x1d8(%rsp)
+ movb $0x0,0x3(%rax)
+
+== voidfklb::timePreparedLaunch<(anonymousnamespace)::runPoint<1002>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#5},(anonymousnamespace)::runPoint<1002>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#7},(anonymousnamespace)::runPoint<1002>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#6}>(CUstream_st*,(anonymousnamespace)::runPoint<1002>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#5}const&,(anonymousnamespace)::runPoint<1002>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#7}const&,(anonymousnamespace)::runPoint<1002>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#6}const&,fklb::Timing&,fklb::Timing&)
+   1294 -> 1294 instructions
+--- A
++++ B
+@@ -431,9 +431,9 @@
+ movb $0x0,0x1f0(%rsp)
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::reserve(unsignedlong)@plt>
+ mov 0x1e0(%rsp),%rax
+-mov $0x3634,%edx
++mov $0x3834,%edx
+ mov %dx,(%rax)
+-movb $0x39,0x2(%rax)
++movb $0x36,0x2(%rax)
+ mov 0x1e0(%rsp),%rax
+ movq $0x3,0x1e8(%rsp)
+ movb $0x0,0x3(%rax)
+
+== voidfklb::timePreparedLaunch<(anonymousnamespace)::runPoint<1002>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#5},fklb::timePreparedLaunch<(anonymousnamespace)::runPoint<1002>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#5},(anonymousnamespace)::runPoint<1002>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#6}>(CUstream_st*,(anonymousnamespace)::runPoint<1002>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#5}const&,(anonymousnamespace)::runPoint<1002>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#6}const&,fklb::Timing&,fklb::Timing&)::{lambda()#1},(anonymousnamespace)::runPoint<1002>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#6}>(CUstream_st*,(anonymousnamespace)::runPoint<1002>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#5}const&,fklb::timePreparedLaunch<(anonymousnamespace)::runPoint<1002>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#5},(anonymousnamespace)::runPoint<1002>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#6}>(CUstream_st*,(anonymousnamespace)::runPoint<1002>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#5}const&,(anonymousnamespace)::runPoint<1002>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#6}const&,fklb::Timing&,fklb::Timing&)::{lambda()#1}const&,(anonymousnamespace)::runPoint<1002>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#6}const&,fklb::Timing&,fklb::Timing&)
+   1243 -> 1243 instructions
+--- A
++++ B
+@@ -400,9 +400,9 @@
+ movb $0x0,0x1e0(%rsp)
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::reserve(unsignedlong)@plt>
+ mov 0x1d0(%rsp),%rax
+-mov $0x3634,%edx
++mov $0x3834,%edx
+ mov %dx,(%rax)
+-movb $0x39,0x2(%rax)
++movb $0x36,0x2(%rax)
+ mov 0x1d0(%rsp),%rax
+ movq $0x3,0x1d8(%rsp)
+ movb $0x0,0x3(%rax)
+
+== voidfklb::timePreparedLaunch<(anonymousnamespace)::runPoint<102>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#5},(anonymousnamespace)::runPoint<102>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#7},(anonymousnamespace)::runPoint<102>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#6}>(CUstream_st*,(anonymousnamespace)::runPoint<102>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#5}const&,(anonymousnamespace)::runPoint<102>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#7}const&,(anonymousnamespace)::runPoint<102>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#6}const&,fklb::Timing&,fklb::Timing&)
+   1294 -> 1294 instructions
+--- A
++++ B
+@@ -431,9 +431,9 @@
+ movb $0x0,0x1f0(%rsp)
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::reserve(unsignedlong)@plt>
+ mov 0x1e0(%rsp),%rax
+-mov $0x3634,%edx
++mov $0x3834,%edx
+ mov %dx,(%rax)
+-movb $0x39,0x2(%rax)
++movb $0x36,0x2(%rax)
+ mov 0x1e0(%rsp),%rax
+ movq $0x3,0x1e8(%rsp)
+ movb $0x0,0x3(%rax)
+
+== voidfklb::timePreparedLaunch<(anonymousnamespace)::runPoint<102>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#5},fklb::timePreparedLaunch<(anonymousnamespace)::runPoint<102>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#5},(anonymousnamespace)::runPoint<102>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#6}>(CUstream_st*,(anonymousnamespace)::runPoint<102>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#5}const&,(anonymousnamespace)::runPoint<102>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#6}const&,fklb::Timing&,fklb::Timing&)::{lambda()#1},(anonymousnamespace)::runPoint<102>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#6}>(CUstream_st*,(anonymousnamespace)::runPoint<102>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#5}const&,fklb::timePreparedLaunch<(anonymousnamespace)::runPoint<102>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#5},(anonymousnamespace)::runPoint<102>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#6}>(CUstream_st*,(anonymousnamespace)::runPoint<102>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#5}const&,(anonymousnamespace)::runPoint<102>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#6}const&,fklb::Timing&,fklb::Timing&)::{lambda()#1}const&,(anonymousnamespace)::runPoint<102>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#6}const&,fklb::Timing&,fklb::Timing&)
+   1243 -> 1243 instructions
+--- A
++++ B
+@@ -400,9 +400,9 @@
+ movb $0x0,0x1e0(%rsp)
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::reserve(unsignedlong)@plt>
+ mov 0x1d0(%rsp),%rax
+-mov $0x3634,%edx
++mov $0x3834,%edx
+ mov %dx,(%rax)
+-movb $0x39,0x2(%rax)
++movb $0x36,0x2(%rax)
+ mov 0x1d0(%rsp),%rax
+ movq $0x3,0x1d8(%rsp)
+ movb $0x0,0x3(%rax)
+
+== voidfklb::timePreparedLaunch<(anonymousnamespace)::runPoint<19902>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#5},(anonymousnamespace)::runPoint<19902>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#7},(anonymousnamespace)::runPoint<19902>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#6}>(CUstream_st*,(anonymousnamespace)::runPoint<19902>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#5}const&,(anonymousnamespace)::runPoint<19902>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#7}const&,(anonymousnamespace)::runPoint<19902>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#6}const&,fklb::Timing&,fklb::Timing&)
+   1294 -> 1294 instructions
+--- A
++++ B
+@@ -431,9 +431,9 @@
+ movb $0x0,0x1f0(%rsp)
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::reserve(unsignedlong)@plt>
+ mov 0x1e0(%rsp),%rax
+-mov $0x3634,%edx
++mov $0x3834,%edx
+ mov %dx,(%rax)
+-movb $0x39,0x2(%rax)
++movb $0x36,0x2(%rax)
+ mov 0x1e0(%rsp),%rax
+ movq $0x3,0x1e8(%rsp)
+ movb $0x0,0x3(%rax)
+
+== voidfklb::timePreparedLaunch<(anonymousnamespace)::runPoint<19902>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#5},fklb::timePreparedLaunch<(anonymousnamespace)::runPoint<19902>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#5},(anonymousnamespace)::runPoint<19902>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#6}>(CUstream_st*,(anonymousnamespace)::runPoint<19902>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#5}const&,(anonymousnamespace)::runPoint<19902>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#6}const&,fklb::Timing&,fklb::Timing&)::{lambda()#1},(anonymousnamespace)::runPoint<19902>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#6}>(CUstream_st*,(anonymousnamespace)::runPoint<19902>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#5}const&,fklb::timePreparedLaunch<(anonymousnamespace)::runPoint<19902>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#5},(anonymousnamespace)::runPoint<19902>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#6}>(CUstream_st*,(anonymousnamespace)::runPoint<19902>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#5}const&,(anonymousnamespace)::runPoint<19902>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#6}const&,fklb::Timing&,fklb::Timing&)::{lambda()#1}const&,(anonymousnamespace)::runPoint<19902>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#6}const&,fklb::Timing&,fklb::Timing&)
+   1243 -> 1243 instructions
+--- A
++++ B
+@@ -400,9 +400,9 @@
+ movb $0x0,0x1e0(%rsp)
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::reserve(unsignedlong)@plt>
+ mov 0x1d0(%rsp),%rax
+-mov $0x3634,%edx
++mov $0x3834,%edx
+ mov %dx,(%rax)
+-movb $0x39,0x2(%rax)
++movb $0x36,0x2(%rax)
+ mov 0x1d0(%rsp),%rax
+ movq $0x3,0x1d8(%rsp)
+ movb $0x0,0x3(%rax)
+
+== voidfklb::timePreparedLaunch<(anonymousnamespace)::runPoint<2>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#5},(anonymousnamespace)::runPoint<2>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#7},(anonymousnamespace)::runPoint<2>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#6}>(CUstream_st*,(anonymousnamespace)::runPoint<2>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#5}const&,(anonymousnamespace)::runPoint<2>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#7}const&,(anonymousnamespace)::runPoint<2>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#6}const&,fklb::Timing&,fklb::Timing&)
+   1246 -> 1246 instructions
+--- A
++++ B
+@@ -423,9 +423,9 @@
+ movb $0x0,0x1d0(%rsp)
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::reserve(unsignedlong)@plt>
+ mov 0x1c0(%rsp),%rax
+-mov $0x3634,%edx
++mov $0x3834,%edx
+ mov %dx,(%rax)
+-movb $0x39,0x2(%rax)
++movb $0x36,0x2(%rax)
+ mov 0x1c0(%rsp),%rax
+ movq $0x3,0x1c8(%rsp)
+ movb $0x0,0x3(%rax)
+
+== voidfklb::timePreparedLaunch<(anonymousnamespace)::runPoint<2>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#5},fklb::timePreparedLaunch<(anonymousnamespace)::runPoint<2>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#5},(anonymousnamespace)::runPoint<2>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#6}>(CUstream_st*,(anonymousnamespace)::runPoint<2>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#5}const&,(anonymousnamespace)::runPoint<2>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#6}const&,fklb::Timing&,fklb::Timing&)::{lambda()#1},(anonymousnamespace)::runPoint<2>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#6}>(CUstream_st*,(anonymousnamespace)::runPoint<2>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#5}const&,fklb::timePreparedLaunch<(anonymousnamespace)::runPoint<2>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#5},(anonymousnamespace)::runPoint<2>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#6}>(CUstream_st*,(anonymousnamespace)::runPoint<2>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#5}const&,(anonymousnamespace)::runPoint<2>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#6}const&,fklb::Timing&,fklb::Timing&)::{lambda()#1}const&,(anonymousnamespace)::runPoint<2>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#6}const&,fklb::Timing&,fklb::Timing&)
+   1195 -> 1195 instructions
+--- A
++++ B
+@@ -392,9 +392,9 @@
+ movb $0x0,0x1c0(%rsp)
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::reserve(unsignedlong)@plt>
+ mov 0x1b0(%rsp),%rax
+-mov $0x3634,%edx
++mov $0x3834,%edx
+ mov %dx,(%rax)
+-movb $0x39,0x2(%rax)
++movb $0x36,0x2(%rax)
+ mov 0x1b0(%rsp),%rax
+ movq $0x3,0x1b8(%rsp)
+ movb $0x0,0x3(%rax)
+
+== voidfklb::timePreparedLaunch<(anonymousnamespace)::runPoint<5002>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#5},(anonymousnamespace)::runPoint<5002>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#7},(anonymousnamespace)::runPoint<5002>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#6}>(CUstream_st*,(anonymousnamespace)::runPoint<5002>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#5}const&,(anonymousnamespace)::runPoint<5002>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#7}const&,(anonymousnamespace)::runPoint<5002>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#6}const&,fklb::Timing&,fklb::Timing&)
+   1294 -> 1294 instructions
+--- A
++++ B
+@@ -431,9 +431,9 @@
+ movb $0x0,0x1f0(%rsp)
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::reserve(unsignedlong)@plt>
+ mov 0x1e0(%rsp),%rax
+-mov $0x3634,%edx
++mov $0x3834,%edx
+ mov %dx,(%rax)
+-movb $0x39,0x2(%rax)
++movb $0x36,0x2(%rax)
+ mov 0x1e0(%rsp),%rax
+ movq $0x3,0x1e8(%rsp)
+ movb $0x0,0x3(%rax)
+
+== voidfklb::timePreparedLaunch<(anonymousnamespace)::runPoint<5002>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#5},fklb::timePreparedLaunch<(anonymousnamespace)::runPoint<5002>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#5},(anonymousnamespace)::runPoint<5002>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#6}>(CUstream_st*,(anonymousnamespace)::runPoint<5002>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#5}const&,(anonymousnamespace)::runPoint<5002>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#6}const&,fklb::Timing&,fklb::Timing&)::{lambda()#1},(anonymousnamespace)::runPoint<5002>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#6}>(CUstream_st*,(anonymousnamespace)::runPoint<5002>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#5}const&,fklb::timePreparedLaunch<(anonymousnamespace)::runPoint<5002>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#5},(anonymousnamespace)::runPoint<5002>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#6}>(CUstream_st*,(anonymousnamespace)::runPoint<5002>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda()#5}const&,(anonymousnamespace)::runPoint<5002>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#6}const&,fklb::Timing&,fklb::Timing&)::{lambda()#1}const&,(anonymousnamespace)::runPoint<5002>(CUstream_st*,fk::Stream_<(fk::ParArch)1>&,fklb::CsvWriter&,std::vector<unsignedchar,std::allocator<unsignedchar>>const&)::{lambda(auto:1const&)#6}const&,fklb::Timing&,fklb::Timing&)
+   1243 -> 1243 instructions
+--- A
++++ B
+@@ -400,9 +400,9 @@
+ movb $0x0,0x1e0(%rsp)
+ call <std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>::reserve(unsignedlong)@plt>
+ mov 0x1d0(%rsp),%rax
+-mov $0x3634,%edx
++mov $0x3834,%edx
+ mov %dx,(%rax)
+-movb $0x39,0x2(%rax)
++movb $0x36,0x2(%rax)
+ mov 0x1d0(%rsp),%rax
+ movq $0x3,0x1d8(%rsp)
+ movb $0x0,0x3(%rax)
