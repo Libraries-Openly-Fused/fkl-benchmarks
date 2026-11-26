@@ -135,12 +135,10 @@ folder names), runs the record's report on each, then `analysis/retime_report.py
 
 ## For the paper (`paper-data/`)
 
-`paper-data/A/` and `paper-data/B/` (B is the new pin) hold two of the coordinator's three package files, in its headers, with gpu `rx9060`:
+`paper-data/A/` and `paper-data/B/` (B is the new pin) hold the coordinator's three package files, in its headers, with gpu `rx9060`:
 - `e19_crop_sweep_times.csv`: per N, row (fkl_batch, rpp) and interval, the median, min and max of the three quiet runs' means (µs) and their
   spread; for rpp, its ratio to fkl_batch (the median, min and max over the three runs);
-- `e19_crop_sweep_kernels.csv`: the kernels of one call, from the rocprofv3 sweep: 1 for fkl_batch, N + 3 for rpp.
-
-**`e19_crop_sweep_differences.csv` is not written.** It compares fkl_batch's tensor with rpp's, and it needs the output dumps of the check runs
-(`E19_DUMP`, phase 1: `../e19-crop-sweep-phase1/analysis/between.py`). The timing protocol leaves `E19_DUMP` unset, so this window wrote no
-dumps. The record's numbers come from the phase-1 dumps of the record's binary. A's and B's fkl_batch kernels are the record's (section on
-the code), and every run's check rows equal the record's. That supports the same numbers, but it is not a measurement of A's or B's tensors.
+- `e19_crop_sweep_kernels.csv`: the kernels of one call, from the rocprofv3 sweep: 1 for fkl_batch, N + 3 for rpp;
+- `e19_crop_sweep_differences.csv`: fkl_batch's tensor against rpp's at every N, from the dump check (`dump-check/`, 19:04:48-19:06:03Z).
+  The check runs' dumps of A and B are the record's byte for byte (80 of 80 files each), so these hold the record's values:
+  0.00774652 output units, 0.444 grey levels, at every N.
