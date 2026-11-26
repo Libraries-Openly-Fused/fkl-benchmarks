@@ -27,7 +27,7 @@ The CUDA side (tests, SASS, outputs on the RTX 4090) is the NVIDIA session's che
   - Result: **48 of 48 outputs identical** (24 cases × CPU and CPU_MULTITHREAD), each written (`compare.txt`).
   - The batched cases leave exactly the 439 values outside their three images untouched (23 × 19 × 3 − (21 × 13 + 23 × 12 + 17 × 19)).
 - `window.sh`: the GPU window, with its guards. It runs FKL's HIP tests at the head (`ctest -R "_hip$" -E "^benchmark_" --stop-on-failure --timeout 300`), then the harness's HIP builds A and B. `manifests/` holds the sha256 of every binary it runs.
-- `window/`: the window's outputs (after it ran).
+- `window/`: the window's outputs (see below).
 
 ## Builds
 
@@ -54,3 +54,15 @@ BEFORE_COMMIT=b10fc6609426bd18020b9213c7196b528fc677a8 AFTER_COMMIT=48fbf3f08e75
 
 - `manifests/harness-manifest.sha256` is a copy of the harness manifest.
 - `cpu-run/binaries.sha256` holds the sha256 of the CPU-only harness binaries.
+
+## The window's result (granted by the coordinator; ran 2026-11-26 14:51-14:53 +01:00, RX 9060 gfx1200, ROCm 10.1)
+
+The console is `window/window-console.txt`.
+- **Start:** 14:51:25. It waited 90 s for an idle runner (no Runner.Worker, load below 0.8), then ran without waiting.
+- **FKL's HIP tests at 48fbf3f:** `ctest -R "_hip$" -E "^benchmark_" --stop-on-failure --timeout 300 -j1`, exit 0, **100% tests passed, 0 tests failed out of 52** (`window/tests/ctest.txt`, 9.0 s).
+- **The harness on the GPU:** A (b10fc66) and B (48fbf3f), each exit 0 with 73 outputs written. That is 24 cases × CPU, CPU_MULTITHREAD and GPU_AMD, plus DivergentBatchTransformDPP on GPU_AMD.
+- **compare.sh:** exit 0. **73 outputs, 73 identical, 0 different** (`window/harness/compare.txt`): every GPU_AMD output of the after build is byte for byte the before build's.
+- **Not part of the check, both builds alike:**
+  - CPU_MULTITHREAD gives the same bytes as CPU in all 24 cases.
+  - GPU_AMD gives the same bytes as CPU in 22. The two exceptions are float cases, linear-uchar3-box3 and morph-batch-crop-resize-boxblur1, in A and B alike: the GPU and the CPU compilers round float arithmetic differently.
+- **No timing:** nothing was timed, and nothing else used the GPU.
