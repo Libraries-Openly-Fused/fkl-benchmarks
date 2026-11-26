@@ -1,0 +1,93 @@
+A = 48fbf3f: /home/oscar/tfkl-bench/scratch/pr435/fkl-head48-bins
+B = d1cff06: /home/oscar/tfkl-bench/scratch/pr435/fkl-head-build/bin/Release
+arch sm_89; Build cuda_13.4.r13.4/compiler.38855100_0; files (*_cu executables, lib*_cu.so): A 59, B 59, in both 59
+only in A: []
+only in B: []
+kernels: A 279, B 279; pairs 279 (renamed 0); identical 279, different 0, only in A 0, only in B 0
+names demangled by llvm-cxxfilt because GNU c++filt returned them unchanged: 2
+  _ZN2fk16launchDPP_KernelINS_12TransformDPPILNS_7ParArchE1ELNS_2TFE0ENS_20TransformDPPDetails_IvLb0EJNS_25ReadInstantiableOperationINS_13PerThreadReadILNS_2NDE2E...
+  _ZN2fk16launchDPP_KernelINS_12TransformDPPILNS_7ParArchE1ELNS_2TFE0ENS_20TransformDPPDetails_IvLb0EJNS_25ReadInstantiableOperationINS_13PerThreadReadILNS_2NDE2E...
+renamed pairs by rule: none
+by kernel family (B's name, or A's for a kernel only in A): identical / different / only in A / only in B
+  epilogueWriteKernel: 2 / 0 / 0 / 0
+  launchDPP_Kernel<fk::BoxFilterQuadDPP>: 11 / 0 / 0 / 0
+  launchDPP_Kernel<fk::ConvQuadDPP>: 11 / 0 / 0 / 0
+  launchDPP_Kernel<fk::DivergentBatchTransformDPP>: 8 / 0 / 0 / 0
+  launchDPP_Kernel<fk::FlashAttentionDPP>: 9 / 0 / 0 / 0
+  launchDPP_Kernel<fk::FlashAttentionMmaDPP>: 4 / 0 / 0 / 0
+  launchDPP_Kernel<fk::FlashAttentionMmaSplitKVDPP>: 4 / 0 / 0 / 0
+  launchDPP_Kernel<fk::FlashAttentionSplitCombineDPP>: 4 / 0 / 0 / 0
+  launchDPP_Kernel<fk::LinearFilterDPP>: 29 / 0 / 0 / 0
+  launchDPP_Kernel<fk::MedianFilterDPP>: 15 / 0 / 0 / 0
+  launchDPP_Kernel<fk::MedianQuadDPP>: 12 / 0 / 0 / 0
+  launchDPP_Kernel<fk::MorphQuadDPP>: 11 / 0 / 0 / 0
+  launchDPP_Kernel<fk::MorphologyDPP>: 20 / 0 / 0 / 0
+  launchDPP_Kernel<fk::SoftmaxDPP>: 2 / 0 / 0 / 0
+  launchDPP_Kernel<fk::TransformDPP>: 132 / 0 / 0 / 0
+  spinKernel: 1 / 0 / 0 / 0
+  void launchInstantiableDPP_Kernel<InstantiableDPP<SimpleTran: 1 / 0 / 0 / 0
+  void launchSimpleTransformDPPReferenceFoldExpr_Kernel<fk::Re: 1 / 0 / 0 / 0
+  void launchSimpleTransformDPPReference_Kernel<fk::ReadInstan: 1 / 0 / 0 / 0
+  void launchSimpleTransformDPPValue_Kernel<fk::ReadInstantiab: 1 / 0 / 0 / 0
+per file:
+  basic_test_cu: kernels A 5, B 5; renamed pairs 0; identical 5, different 0, only in A 0, only in B 0  (all identical)
+  batch_build_compilation_time_cu: kernels A 0, B 0; renamed pairs 0; identical 0, different 0, only in A 0, only in B 0  (all identical)
+  compiler_explorer_example_cu: kernels A 1, B 1; renamed pairs 0; identical 1, different 0, only in A 0, only in B 0  (all identical)
+  inlining_and_LDL_STL_cu: kernels A 5, B 5; renamed pairs 0; identical 5, different 0, only in A 0, only in B 0  (all identical)
+  readme_test_code_cu: kernels A 1, B 1; renamed pairs 0; identical 1, different 0, only in A 0, only in B 0  (all identical)
+  test_IOps_to_string_cu: kernels A 0, B 0; renamed pairs 0; identical 0, different 0, only in A 0, only in B 0  (all identical)
+  test_batchresize_build_cu: kernels A 0, B 0; renamed pairs 0; identical 0, different 0, only in A 0, only in B 0  (all identical)
+  test_border_reader_cu: kernels A 0, B 0; renamed pairs 0; identical 0, different 0, only in A 0, only in B 0  (all identical)
+  test_box_filter_quad_dpp_cu: kernels A 6, B 6; renamed pairs 0; identical 6, different 0, only in A 0, only in B 0  (all identical)
+  test_circular_tensor_cu: kernels A 9, B 9; renamed pairs 0; identical 9, different 0, only in A 0, only in B 0  (all identical)
+  test_convolution_fast_dpp_cu: kernels A 5, B 5; renamed pairs 0; identical 5, different 0, only in A 0, only in B 0  (all identical)
+  test_crop_cu: kernels A 0, B 0; renamed pairs 0; identical 0, different 0, only in A 0, only in B 0  (all identical)
+  test_deinterlace_cu: kernels A 0, B 0; renamed pairs 0; identical 0, different 0, only in A 0, only in B 0  (all identical)
+  test_divergent_hf_executor_cu: kernels A 2, B 2; renamed pairs 0; identical 2, different 0, only in A 0, only in B 0  (all identical)
+  test_filtered_index_sequence_cu: kernels A 0, B 0; renamed pairs 0; identical 0, different 0, only in A 0, only in B 0  (all identical)
+  test_fk_string_cu: kernels A 0, B 0; renamed pairs 0; identical 0, different 0, only in A 0, only in B 0  (all identical)
+  test_fused_operation_cu: kernels A 0, B 0; renamed pairs 0; identical 0, different 0, only in A 0, only in B 0  (all identical)
+  test_fused_write_epilogue_repro_cu: kernels A 2, B 2; renamed pairs 0; identical 2, different 0, only in A 0, only in B 0  (all identical)
+  test_instantiable_operations_cu: kernels A 1, B 1; renamed pairs 0; identical 1, different 0, only in A 0, only in B 0  (all identical)
+  test_large_grids_cu: kernels A 4, B 4; renamed pairs 0; identical 4, different 0, only in A 0, only in B 0  (all identical)
+  test_linear_filter_batch_cu: kernels A 18, B 18; renamed pairs 0; identical 18, different 0, only in A 0, only in B 0  (all identical)
+  test_linear_filter_dpp_cu: kernels A 11, B 11; renamed pairs 0; identical 11, different 0, only in A 0, only in B 0  (all identical)
+  test_literal_to_string_cu: kernels A 0, B 0; renamed pairs 0; identical 0, different 0, only in A 0, only in B 0  (all identical)
+  test_median_fast_dpp_cu: kernels A 5, B 5; renamed pairs 0; identical 5, different 0, only in A 0, only in B 0  (all identical)
+  test_median_filter_batch_cu: kernels A 10, B 10; renamed pairs 0; identical 10, different 0, only in A 0, only in B 0  (all identical)
+  test_median_filter_dpp_cu: kernels A 5, B 5; renamed pairs 0; identical 5, different 0, only in A 0, only in B 0  (all identical)
+  test_morphology_dpp_cu: kernels A 20, B 20; renamed pairs 0; identical 20, different 0, only in A 0, only in B 0  (all identical)
+  test_morphology_fast_dpp_cu: kernels A 5, B 5; renamed pairs 0; identical 5, different 0, only in A 0, only in B 0  (all identical)
+  test_nvcc124_126_BugReproducer_cu: kernels A 0, B 0; renamed pairs 0; identical 0, different 0, only in A 0, only in B 0  (all identical)
+  test_nvcc1281_129_BugReproducer_cu: kernels A 0, B 0; renamed pairs 0; identical 0, different 0, only in A 0, only in B 0  (all identical)
+  test_nvcc131_BugReproducer_cu: kernels A 0, B 0; renamed pairs 0; identical 0, different 0, only in A 0, only in B 0  (all identical)
+  test_operation_fuser_cu: kernels A 0, B 0; renamed pairs 0; identical 0, different 0, only in A 0, only in B 0  (all identical)
+  test_operation_tuple_cu: kernels A 0, B 0; renamed pairs 0; identical 0, different 0, only in A 0, only in B 0  (all identical)
+  test_operation_types_cu: kernels A 0, B 0; renamed pairs 0; identical 0, different 0, only in A 0, only in B 0  (all identical)
+  test_ptr_nd_cu: kernels A 2, B 2; renamed pairs 0; identical 2, different 0, only in A 0, only in B 0  (all identical)
+  test_quad_dpps_batch_cu: kernels A 24, B 24; renamed pairs 0; identical 24, different 0, only in A 0, only in B 0  (all identical)
+  test_raw_image_types_cu: kernels A 0, B 0; renamed pairs 0; identical 0, different 0, only in A 0, only in B 0  (all identical)
+  test_rect_cu: kernels A 0, B 0; renamed pairs 0; identical 0, different 0, only in A 0, only in B 0  (all identical)
+  test_struct_to_string_cu: kernels A 0, B 0; renamed pairs 0; identical 0, different 0, only in A 0, only in B 0  (all identical)
+  test_thread_fusion_alignment_cu: kernels A 84, B 84; renamed pairs 0; identical 84, different 0, only in A 0, only in B 0  (all identical)
+  test_thread_fusion_cu: kernels A 0, B 0; renamed pairs 0; identical 0, different 0, only in A 0, only in B 0  (all identical)
+  test_tuple_cu: kernels A 0, B 0; renamed pairs 0; identical 0, different 0, only in A 0, only in B 0  (all identical)
+  test_typelist_cu: kernels A 0, B 0; renamed pairs 0; identical 0, different 0, only in A 0, only in B 0  (all identical)
+  test_warp_cu: kernels A 0, B 0; renamed pairs 0; identical 0, different 0, only in A 0, only in B 0  (all identical)
+  utest_VBase_cu: kernels A 0, B 0; renamed pairs 0; identical 0, different 0, only in A 0, only in B 0  (all identical)
+  utest_chain_check_cu: kernels A 5, B 5; renamed pairs 0; identical 5, different 0, only in A 0, only in B 0  (all identical)
+  utest_color_conversion_cu: kernels A 14, B 14; renamed pairs 0; identical 14, different 0, only in A 0, only in B 0  (all identical)
+  utest_constexpr_cmath_cu: kernels A 0, B 0; renamed pairs 0; identical 0, different 0, only in A 0, only in B 0  (all identical)
+  utest_deinterlace_cu: kernels A 2, B 2; renamed pairs 0; identical 2, different 0, only in A 0, only in B 0  (all identical)
+  utest_executors_cu: kernels A 1, B 1; renamed pairs 0; identical 1, different 0, only in A 0, only in B 0  (all identical)
+  utest_flash_attention_cu: kernels A 7, B 7; renamed pairs 0; identical 7, different 0, only in A 0, only in B 0  (all identical)
+  utest_flash_attention_mma_cu: kernels A 14, B 14; renamed pairs 0; identical 14, different 0, only in A 0, only in B 0  (all identical)
+  utest_get_arg_large_pack_cu: kernels A 1, B 1; renamed pairs 0; identical 1, different 0, only in A 0, only in B 0  (all identical)
+  utest_resize_sampling_cu: kernels A 4, B 4; renamed pairs 0; identical 4, different 0, only in A 0, only in B 0  (all identical)
+  utest_saturate_cu: kernels A 0, B 0; renamed pairs 0; identical 0, different 0, only in A 0, only in B 0  (all identical)
+  utest_softmax_cu: kernels A 2, B 2; renamed pairs 0; identical 2, different 0, only in A 0, only in B 0  (all identical)
+  utest_stream_ownership_cu: kernels A 0, B 0; renamed pairs 0; identical 0, different 0, only in A 0, only in B 0  (all identical)
+  utest_stream_ref_counts_cu: kernels A 0, B 0; renamed pairs 0; identical 0, different 0, only in A 0, only in B 0  (all identical)
+  utest_yuv_to_rgb_matrices_cu: kernels A 4, B 4; renamed pairs 0; identical 4, different 0, only in A 0, only in B 0  (all identical)
+every kernel that is different or on one side only (A = base, B = head):
+  none

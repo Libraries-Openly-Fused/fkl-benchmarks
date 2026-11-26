@@ -1,0 +1,3 @@
+cmake -S /home/oscar/tfkl-bench/worktrees/fkl-pr435-e322cad -B /home/oscar/tfkl-bench/scratch/pr435/fkl-head-build -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release -DCMAKE_CUDA_COMPILER=/home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/nvcc -DCUDA_ARCH=89
+make -C /home/oscar/tfkl-bench/scratch/pr435/fkl-head-build -k -j12 --output-sync=target <the targets of fkl-head-d1cff06-targets-built.txt>  (taskset -c 0-7,16-23, nice -n 10)
+ctest --test-dir /home/oscar/tfkl-bench/scratch/pr435/fkl-head-build -V -R '_rejected$' -j1 --timeout 900  (taskset -c 0-7,16-23, nice -n 10)
