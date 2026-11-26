@@ -3,7 +3,7 @@
 FKL #435 (branch `LTS-C++17-executeoperations-dpps`, head 48fbf3f08e7551c3eb70ac2302d8ebc15ecad645, on LTS-C++17 b10fc66) makes every
 DPP run through `fk::executeOperations<DPP>`, with one kernel, `launchDPP_Kernel<DPP, Details, IOps...>`. Invalid arguments throw
 `std::invalid_argument` instead of returning `false`. Its HIP and CUDA checks are `../fkl-pr435-check/` (#64) and
-`../../rtx4090/fkl-pr435-check/` (#65). On 2026-11-26 it was open and ready for review, not merged.
+`../../rtx4090/fkl-pr435-check/` (#65). It was merged on 2026-11-26 with fix A on top (d1cff06): see **As merged** below.
 
 fkl-benchmarks #66 (branch `pin-fkl-435`) moves `external/fkl` to it. This record covers its first two commits, on main 976e42b:
 - ede9e5e: `external/fkl` from b10fc66 to 48fbf3f;
@@ -16,6 +16,32 @@ fkl-benchmarks #66 (branch `pin-fkl-435`) moves `external/fkl` to it. This recor
 The NVIDIA session then added the CUDA ports to the same branch (f3d66da to 2518c75). They change `.cu` files, `scripts/` and one header of the E16 CUDA
 variant `fkl-self/attention/nodq/`. B's ninja dependency log lists no file of `fkl-self/attention/`, so the sources of every HIP program are
 the same at 2518c75 as at a4b493c. The CUDA side is not part of this record.
+
+## As merged
+
+- **FKL #435** was merged into LTS-C++17 by Oscar as `304492af4d777165bd556fdd6113439635724d02` (2026-11-26 18:34:17 +01:00), with
+  parents b10fc66 and d1cff06. Its tree is d1cff06's: `git rev-parse 304492a^{tree}` and `d1cff06^{tree}` are both
+  `82c51c23266900e802b371f7d00d3f95a8533545`, and no file differs.
+- **d1cff06 is 48fbf3f plus fix A.** It changes one file, `fused_kernel/algorithms/attention/flash_attention_mma.h` (+2 −1):
+  `flashAttentionMmaSplits` sets the kernel's dynamic shared memory attribute once, in the initializer of its static `wave`.
+  - That header is nvcc-only. No HIP program of this repository includes it: B's ninja dependency log has no `flash_attention_mma.h` or
+    `flash_decode.h` (its only includer), and neither has the dependency log of FKL's own HIP tests at d1cff06.
+  - The sources of every HIP program built here are therefore the same at 304492a as at 48fbf3f.
+- **fkl-benchmarks #66** was merged into main as `af96aefb9f82aa9fa563b7967b8ee147ad21df7d` (2026-11-26 18:37:04 +01:00), with parents
+  7c1c8a2 and 6a23721.
+  - `external/fkl` = 304492a.
+  - The merge's change is #66's (`git diff 976e42b 6a23721`), byte for byte: 24 files.
+- **Between a4b493c, the commit checked here, and #66's final head 6a23721** there are 7 commits (f3d66da to 6a23721): the NVIDIA session's
+  CUDA ports, `scripts/`, comments and prose (339825b: `fkl-self/compiletime/README.md` and two `.cu` files), and the gitlink to d1cff06,
+  then 304492a.
+  - 20 files changed besides `external/fkl`. None of them is in B's dependency log or in its `build.ninja`, which do list the files of the
+    programs (`rpp/e19_crop_sweep.h`, for example).
+  - `rpp/`, `fkl-self/vfhf/`, `fkl-self/latencyhiding/`, the `fkl-self/` headers, `common/` and the CMake files are unchanged.
+
+So this record holds for the pin as merged:
+- the HIP device code and the host code of the timed calls, compared at a4b493c / 48fbf3f;
+- E11, E3 and the test count at 48fbf3f;
+- section 4, the g++ and clang++ columns.
 
 **The check.** Every HIP program of this repository was built twice, with the same tools and flags:
 - A: 976e42b with FKL b10fc66, the pin on main;
@@ -321,8 +347,8 @@ this folder except `e3/`, which `step0/e3_series.sh` writes.
 ## Not covered here
 
 - **The CUDA programs.** Their ports and checks are the NVIDIA session's, on the same branch.
-- **Run times.** Nothing was run. Whether the E19 fkl_batch number is measured again, now that its timed host code differs, is Oscar's
-  decision.
+- **Run times.** Nothing was run. The timed host code of E19's fkl_batch row differs (section 2). On 2026-11-26 Oscar decided to re-time
+  the RX 9060 half of the E19 crop sweep and E18 on the RX 9060 after this pin move. Those runs are separate records.
 - **The CPU code** of the `_cpp` programs was not compared.
 
 ## Files
