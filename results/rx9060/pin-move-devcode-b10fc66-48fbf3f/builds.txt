@@ -1,0 +1,22 @@
+# The two HIP builds of this record (step0/pin_build.sh, the script of #45 and #61, byte for byte), 2026-11-26
+
+## pin435-base (tmp/vsrc/pin435-base, tmp/vbuild/pin435-base-hip)
+benchmarks 976e42b, FKL b10fc6609426bd18020b9213c7196b528fc677a8 dirty=0, FastRPP efbf00912e0a0c35cc3b0bd633948696b07385ce
+configure exit 0
+build exit 0
+15 binaries; FAILED 0; warnings 0
+ninja -j2 wall time 2:54
+executables: batch_build_compilation_time_cpp batch_build_compilation_time_hip benchmark_horizontal_fusion_cpp benchmark_horizontal_fusion_hip benchmark_latency_hiding_cpp benchmark_latency_hiding_hip benchmark_numinstructions_x_operation_cpp benchmark_numinstructions_x_operation_hip benchmark_rpp_preprocessing_hip benchmark_thread_fusion_cpp benchmark_thread_fusion_hip benchmark_vfhf_max_speedup_hip e18_box_hip e19_batched_box_hip e19_crop_sweep_hip 
+
+## pin435-head (tmp/vsrc/pin435-head, tmp/vbuild/pin435-head-hip)
+benchmarks a4b493c, FKL 48fbf3f08e7551c3eb70ac2302d8ebc15ecad645 dirty=0, FastRPP efbf00912e0a0c35cc3b0bd633948696b07385ce
+configure exit 0
+build exit 0
+15 binaries; FAILED 0; warnings 0
+ninja -j2 wall time 2:56
+executables: batch_build_compilation_time_cpp batch_build_compilation_time_hip benchmark_horizontal_fusion_cpp benchmark_horizontal_fusion_hip benchmark_latency_hiding_cpp benchmark_latency_hiding_hip benchmark_numinstructions_x_operation_cpp benchmark_numinstructions_x_operation_hip benchmark_rpp_preprocessing_hip benchmark_thread_fusion_cpp benchmark_thread_fusion_hip benchmark_vfhf_max_speedup_hip e18_box_hip e19_batched_box_hip e19_crop_sweep_hip 
+
+## tools
+AMD clang version 24.0.0git (https://github.com/ROCm/llvm-project.git d6f6cb691863e9258034ab48c1dfce21689d5606)
+GNU objdump (GNU Binutils for Ubuntu) 2.46
+ROCm 10.1.0

@@ -1,0 +1,14 @@
+benchmark_latency_hiding_hip: host functions in .text A 293, B 293; identical 291, different 2, only A 0, only B 0
+  different: __hip_module_ctor  (instructions A 634, B 634)
+  different: fklb::writeSystemInfoHeader(std::ostream&,std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>const&,std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>const&)  (instructions A 726, B 726)
+  harness [A]: roots 0, functions reached 0, shared with another row or the harness 0, PLT targets 0, indirect calls/jumps 0; changed functions reached: 0
+  harness [B]: roots 0, functions reached 0, shared with another row or the harness 0, PLT targets 0, indirect calls/jumps 0; changed functions reached: 0
+  referred to in A by 0 functions and 1 data relocations: __hip_module_ctor
+      data: .init_array+0x10 (__init+0x10)
+  referred to in B by 0 functions and 1 data relocations: __hip_module_ctor
+      data: .init_array+0x10 (__init+0x10)
+  referred to in A by 1 functions and 0 data relocations: fklb::writeSystemInfoHeader(std::ostream&,std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>const&,std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>const&)
+      inttestLatencyHiding<1>(fk::Stream_<(fk::ParArch)3>&)
+  referred to in B by 1 functions and 0 data relocations: fklb::writeSystemInfoHeader(std::ostream&,std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>const&,std::__cxx11::basic_string<char,std::char_traits<char>,std::allocator<char>>const&)
+      inttestLatencyHiding<1>(fk::Stream_<(fk::ParArch)3>&)
+benchmark_latency_hiding_hip: 2 FUNCTIONS DIFFER

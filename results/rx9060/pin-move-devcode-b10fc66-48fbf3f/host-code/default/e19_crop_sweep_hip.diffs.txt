@@ -1,0 +1,1644 @@
+=== e19amd::runCrops<100>()::{lambda()#1}::operator()()const
+--- A
++++ B
+@@ -70,4 +70,5 @@
+ movups %xmm1,0x10(%rcx)
+ movups %xmm0,(%rcx)
++mov 0x18(%rbx),%rdi
+ mov 0x80(%rsp),%rax
+ mov %rax,0x20(%rsp)
+@@ -75,13 +76,10 @@
+ movaps %xmm0,0x10(%rsp)
+ movl $0x3de38e39,0x28(%rsp)
+-mov 0x18(%rbx),%r9
+-lea 0x90(%rsp),%rdi
+-lea 0x10(%rsp),%rsi
+-lea 0xf(%rsp),%rdx
+-lea 0xe(%rsp),%rcx
+-mov %r12,%r8
+-call <boolfk::executeLinearFilter<fk::LinearFilterDPPDetails<float,16,8,7,7>,fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>,fk::ReadInstantiableOperation<fk::ConstantFilterRead<float>>>,fk::UnaryInstantiableOperation<fk::Mul<float,float,float,fk::UnaryType>>,fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)3,float>>>>>(fk::LinearFilterDPPDetails<float,16,8,7,7>const&,fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>,fk::ReadInstantiableOperation<fk::ConstantFilterRead<float>>>const&,fk::UnaryInstantiableOperation<fk::Mul<float,float,float,fk::UnaryType>>const&,fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>const&,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)3,float>>>>const&,fk::Stream_<(fk::ParArch)3>&)>
+-test %al,%al
+-je L2
++lea 0x90(%rsp),%rsi
++lea 0x10(%rsp),%rdx
++lea 0xf(%rsp),%rcx
++lea 0xe(%rsp),%r8
++mov %r12,%r9
++call <voidfk::executeOperations<fk::LinearFilterDPP<(fk::ParArch)3,fk::LinearFilterDPPDetails<float,16,8,7,7>>,fk::LinearFilterDPPDetails<float,16,8,7,7>,fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>,fk::ReadInstantiableOperation<fk::ConstantFilterRead<float>>>,fk::UnaryInstantiableOperation<fk::Mul<float,float,float,fk::UnaryType>>,fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)3,float>>>>>(fk::Stream_<fk::LinearFilterDPP<(fk::ParArch)3,fk::LinearFilterDPPDetails<float,16,8,7,7>>::PAR_ARCH>&,fk::LinearFilterDPPDetails<float,16,8,7,7>const&,fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>,fk::ReadInstantiableOperation<fk::ConstantFilterRead<float>>>const&,fk::UnaryInstantiableOperation<fk::Mul<float,float,float,fk::UnaryType>>const&,fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>const&,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)3,float>>>>const&)>
+ mov %r15,%rdi
+ call <fk::Ptr<(fk::ND)3,float>::freePtr()>
+@@ -99,23 +97,8 @@
+ pop %rbp
+ ret
+-mov $0x10,%edi
+-call <__cxa_allocate_exception@plt>
+-mov %rax,%r14
+-lea X(%rip),%rsi # <_IO_stdin_used+OFF>
+-mov %rax,%rdi
+-call <std::runtime_error::runtime_error(char const*)@plt>
+-mov X(%rip),%rsi # <typeinfo for std::runtime_error@GLIBCXX_3.4>
+-mov X(%rip),%rdx # <std::runtime_error::~runtime_error()@GLIBCXX_3.4>
+-mov %r14,%rdi
+-call <__cxa_throw@plt>
+-jmp L3
+-mov %rax,%rbx
+-mov %r14,%rdi
+-call <__cxa_free_exception@plt>
+-jmp L4
+ mov %rax,%rdi
+ call <__clang_call_terminate>
+ mov %rax,%rbx
+-jmp L5
++jmp L2
+ mov %rax,%rbx
+ lea 0xe8(%rsp),%rdi
+=== e19amd::runCrops<100>()::{lambda()#3}::operator()()const
+--- A
++++ B
+@@ -168,14 +168,12 @@
+ mov 0x28(%rsp),%eax
+ mov %eax,0x5c(%rsp)
+-mov 0x18(%rcx),%r8
++mov 0x18(%rcx),%rdi
+ movabs $0x3de38e3900000000,%rax
+ mov %rax,0x8(%rsp)
+-lea 0x80(%rsp),%rdi
+-lea 0x30(%rsp),%rdx
+-lea 0x8(%rsp),%rcx
+-mov %r14,%rsi
+-call <boolfk::executeMorphology<fk::MorphologyDPPDetails<float,16,8,7,7>,fk::ReadInstantiableOperation<fk::BatchRead<(fk::PlanePolicy)0,100ul,fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>>,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::TensorWrite<float>>>>,fk::Tuple<fk::MorphologyPass<fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::BinaryInstantiableOperation<fk::Mul<float,float,float>>>>>(fk::MorphologyDPPDetails<float,16,8,7,7>const&,fk::ReadInstantiableOperation<fk::BatchRead<(fk::PlanePolicy)0,100ul,fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>>const&,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::TensorWrite<float>>>>const&,fk::Tuple<fk::MorphologyPass<fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::BinaryInstantiableOperation<fk::Mul<float,float,float>>>>const&,fk::Stream_<(fk::ParArch)3>&)>
+-test %al,%al
+-je L6
++lea 0x80(%rsp),%rsi
++lea 0x30(%rsp),%rcx
++lea 0x8(%rsp),%r8
++mov %r14,%rdx
++call <voidfk::executeOperations<fk::MorphologyDPP<(fk::ParArch)3,fk::MorphologyDPPDetails<float,16,8,7,7>>,fk::MorphologyDPPDetails<float,16,8,7,7>,fk::ReadInstantiableOperation<fk::BatchRead<(fk::PlanePolicy)0,100ul,fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>>,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::TensorWrite<float>>>>,fk::Tuple<fk::MorphologyPass<fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::BinaryInstantiableOperation<fk::Mul<float,float,float>>>>>(fk::Stream_<fk::MorphologyDPP<(fk::ParArch)3,fk::MorphologyDPPDetails<float,16,8,7,7>>::PAR_ARCH>&,fk::MorphologyDPPDetails<float,16,8,7,7>const&,fk::ReadInstantiableOperation<fk::BatchRead<(fk::PlanePolicy)0,100ul,fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>>const&,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::TensorWrite<float>>>>const&,fk::Tuple<fk::MorphologyPass<fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::BinaryInstantiableOperation<fk::Mul<float,float,float>>>>const&)>
+ lea 0x98(%rsp),%rdi
+ call <std::array<fk::Ptr2D<fk::Uchar3>,100ul>::~array()>
+@@ -188,22 +186,5 @@
+ pop %rbp
+ ret
+-mov $0x10,%edi
+-call <__cxa_allocate_exception@plt>
+-mov %rax,%r14
+-lea X(%rip),%rsi # <_IO_stdin_used+OFF>
+-mov %rax,%rdi
+-call <std::runtime_error::runtime_error(char const*)@plt>
+-mov X(%rip),%rsi # <typeinfo for std::runtime_error@GLIBCXX_3.4>
+-mov X(%rip),%rdx # <std::runtime_error::~runtime_error()@GLIBCXX_3.4>
+-mov %r14,%rdi
+-call <__cxa_throw@plt>
+-mov %rax,%rbx
+-mov %r14,%rdi
+-call <__cxa_free_exception@plt>
+-lea 0x98(%rsp),%rdi
+-call <std::array<fk::Ptr2D<fk::Uchar3>,100ul>::~array()>
+-mov %rbx,%rdi
+-call <_Unwind_Resume@plt>
+-jmp L7
++jmp L6
+ mov %rax,%rdi
+ call <__clang_call_terminate>
+=== e19amd::runCrops<10>()::{lambda()#1}::operator()()const
+--- A
++++ B
+@@ -70,4 +70,5 @@
+ movups %xmm1,0x10(%rcx)
+ movups %xmm0,(%rcx)
++mov 0x18(%rbx),%rdi
+ mov 0x80(%rsp),%rax
+ mov %rax,0x20(%rsp)
+@@ -75,13 +76,10 @@
+ movaps %xmm0,0x10(%rsp)
+ movl $0x3de38e39,0x28(%rsp)
+-mov 0x18(%rbx),%r9
+-lea 0x90(%rsp),%rdi
+-lea 0x10(%rsp),%rsi
+-lea 0xf(%rsp),%rdx
+-lea 0xe(%rsp),%rcx
+-mov %r12,%r8
+-call <boolfk::executeLinearFilter<fk::LinearFilterDPPDetails<float,16,8,7,7>,fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>,fk::ReadInstantiableOperation<fk::ConstantFilterRead<float>>>,fk::UnaryInstantiableOperation<fk::Mul<float,float,float,fk::UnaryType>>,fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)3,float>>>>>(fk::LinearFilterDPPDetails<float,16,8,7,7>const&,fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>,fk::ReadInstantiableOperation<fk::ConstantFilterRead<float>>>const&,fk::UnaryInstantiableOperation<fk::Mul<float,float,float,fk::UnaryType>>const&,fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>const&,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)3,float>>>>const&,fk::Stream_<(fk::ParArch)3>&)>
+-test %al,%al
+-je L2
++lea 0x90(%rsp),%rsi
++lea 0x10(%rsp),%rdx
++lea 0xf(%rsp),%rcx
++lea 0xe(%rsp),%r8
++mov %r12,%r9
++call <voidfk::executeOperations<fk::LinearFilterDPP<(fk::ParArch)3,fk::LinearFilterDPPDetails<float,16,8,7,7>>,fk::LinearFilterDPPDetails<float,16,8,7,7>,fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>,fk::ReadInstantiableOperation<fk::ConstantFilterRead<float>>>,fk::UnaryInstantiableOperation<fk::Mul<float,float,float,fk::UnaryType>>,fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)3,float>>>>>(fk::Stream_<fk::LinearFilterDPP<(fk::ParArch)3,fk::LinearFilterDPPDetails<float,16,8,7,7>>::PAR_ARCH>&,fk::LinearFilterDPPDetails<float,16,8,7,7>const&,fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>,fk::ReadInstantiableOperation<fk::ConstantFilterRead<float>>>const&,fk::UnaryInstantiableOperation<fk::Mul<float,float,float,fk::UnaryType>>const&,fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>const&,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)3,float>>>>const&)>
+ mov %r15,%rdi
+ call <fk::Ptr<(fk::ND)3,float>::freePtr()>
+@@ -99,23 +97,8 @@
+ pop %rbp
+ ret
+-mov $0x10,%edi
+-call <__cxa_allocate_exception@plt>
+-mov %rax,%r14
+-lea X(%rip),%rsi # <_IO_stdin_used+OFF>
+-mov %rax,%rdi
+-call <std::runtime_error::runtime_error(char const*)@plt>
+-mov X(%rip),%rsi # <typeinfo for std::runtime_error@GLIBCXX_3.4>
+-mov X(%rip),%rdx # <std::runtime_error::~runtime_error()@GLIBCXX_3.4>
+-mov %r14,%rdi
+-call <__cxa_throw@plt>
+-jmp L3
+-mov %rax,%rbx
+-mov %r14,%rdi
+-call <__cxa_free_exception@plt>
+-jmp L4
+ mov %rax,%rdi
+ call <__clang_call_terminate>
+ mov %rax,%rbx
+-jmp L5
++jmp L2
+ mov %rax,%rbx
+ lea 0xe8(%rsp),%rdi
+=== e19amd::runCrops<10>()::{lambda()#3}::operator()()const
+--- A
++++ B
+@@ -255,14 +255,12 @@
+ mov 0x28(%rsp),%eax
+ mov %eax,0x5c(%rsp)
+-mov 0x18(%rcx),%r8
++mov 0x18(%rcx),%rdi
+ movabs $0x3de38e3900000000,%rax
+ mov %rax,0x8(%rsp)
+-lea 0x3f0(%rsp),%rdi
+-lea 0x70(%rsp),%rsi
+-lea 0x30(%rsp),%rdx
+-lea 0x8(%rsp),%rcx
+-call <boolfk::executeMorphology<fk::MorphologyDPPDetails<float,16,8,7,7>,fk::ReadInstantiableOperation<fk::BatchRead<(fk::PlanePolicy)0,10ul,fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>>,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::TensorWrite<float>>>>,fk::Tuple<fk::MorphologyPass<fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::BinaryInstantiableOperation<fk::Mul<float,float,float>>>>>(fk::MorphologyDPPDetails<float,16,8,7,7>const&,fk::ReadInstantiableOperation<fk::BatchRead<(fk::PlanePolicy)0,10ul,fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>>const&,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::TensorWrite<float>>>>const&,fk::Tuple<fk::MorphologyPass<fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::BinaryInstantiableOperation<fk::Mul<float,float,float>>>>const&,fk::Stream_<(fk::ParArch)3>&)>
+-test %al,%al
+-je L3
++lea 0x3f0(%rsp),%rsi
++lea 0x70(%rsp),%rdx
++lea 0x30(%rsp),%rcx
++lea 0x8(%rsp),%r8
++call <voidfk::executeOperations<fk::MorphologyDPP<(fk::ParArch)3,fk::MorphologyDPPDetails<float,16,8,7,7>>,fk::MorphologyDPPDetails<float,16,8,7,7>,fk::ReadInstantiableOperation<fk::BatchRead<(fk::PlanePolicy)0,10ul,fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>>,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::TensorWrite<float>>>>,fk::Tuple<fk::MorphologyPass<fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::BinaryInstantiableOperation<fk::Mul<float,float,float>>>>>(fk::Stream_<fk::MorphologyDPP<(fk::ParArch)3,fk::MorphologyDPPDetails<float,16,8,7,7>>::PAR_ARCH>&,fk::MorphologyDPPDetails<float,16,8,7,7>const&,fk::ReadInstantiableOperation<fk::BatchRead<(fk::PlanePolicy)0,10ul,fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>>const&,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::TensorWrite<float>>>>const&,fk::Tuple<fk::MorphologyPass<fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::BinaryInstantiableOperation<fk::Mul<float,float,float>>>>const&)>
+ lea 0x170(%rsp),%rdi
+ call <std::array<fk::Ptr2D<fk::Uchar3>,10ul>::~array()>
+@@ -275,22 +273,5 @@
+ pop %rbp
+ ret
+-mov $0x10,%edi
+-call <__cxa_allocate_exception@plt>
+-mov %rax,%r14
+-lea X(%rip),%rsi # <_IO_stdin_used+OFF>
+-mov %rax,%rdi
+-call <std::runtime_error::runtime_error(char const*)@plt>
+-mov X(%rip),%rsi # <typeinfo for std::runtime_error@GLIBCXX_3.4>
+-mov X(%rip),%rdx # <std::runtime_error::~runtime_error()@GLIBCXX_3.4>
+-mov %r14,%rdi
+-call <__cxa_throw@plt>
+-mov %rax,%rbx
+-mov %r14,%rdi
+-call <__cxa_free_exception@plt>
+-lea 0x170(%rsp),%rdi
+-call <std::array<fk::Ptr2D<fk::Uchar3>,10ul>::~array()>
+-mov %rbx,%rdi
+-call <_Unwind_Resume@plt>
+-jmp L4
++jmp L3
+ mov %rax,%rdi
+ call <__clang_call_terminate>
+=== e19amd::runCrops<110>()::{lambda()#1}::operator()()const
+--- A
++++ B
+@@ -70,4 +70,5 @@
+ movups %xmm1,0x10(%rcx)
+ movups %xmm0,(%rcx)
++mov 0x18(%rbx),%rdi
+ mov 0x80(%rsp),%rax
+ mov %rax,0x20(%rsp)
+@@ -75,13 +76,10 @@
+ movaps %xmm0,0x10(%rsp)
+ movl $0x3de38e39,0x28(%rsp)
+-mov 0x18(%rbx),%r9
+-lea 0x90(%rsp),%rdi
+-lea 0x10(%rsp),%rsi
+-lea 0xf(%rsp),%rdx
+-lea 0xe(%rsp),%rcx
+-mov %r12,%r8
+-call <boolfk::executeLinearFilter<fk::LinearFilterDPPDetails<float,16,8,7,7>,fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>,fk::ReadInstantiableOperation<fk::ConstantFilterRead<float>>>,fk::UnaryInstantiableOperation<fk::Mul<float,float,float,fk::UnaryType>>,fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)3,float>>>>>(fk::LinearFilterDPPDetails<float,16,8,7,7>const&,fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>,fk::ReadInstantiableOperation<fk::ConstantFilterRead<float>>>const&,fk::UnaryInstantiableOperation<fk::Mul<float,float,float,fk::UnaryType>>const&,fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>const&,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)3,float>>>>const&,fk::Stream_<(fk::ParArch)3>&)>
+-test %al,%al
+-je L2
++lea 0x90(%rsp),%rsi
++lea 0x10(%rsp),%rdx
++lea 0xf(%rsp),%rcx
++lea 0xe(%rsp),%r8
++mov %r12,%r9
++call <voidfk::executeOperations<fk::LinearFilterDPP<(fk::ParArch)3,fk::LinearFilterDPPDetails<float,16,8,7,7>>,fk::LinearFilterDPPDetails<float,16,8,7,7>,fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>,fk::ReadInstantiableOperation<fk::ConstantFilterRead<float>>>,fk::UnaryInstantiableOperation<fk::Mul<float,float,float,fk::UnaryType>>,fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)3,float>>>>>(fk::Stream_<fk::LinearFilterDPP<(fk::ParArch)3,fk::LinearFilterDPPDetails<float,16,8,7,7>>::PAR_ARCH>&,fk::LinearFilterDPPDetails<float,16,8,7,7>const&,fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>,fk::ReadInstantiableOperation<fk::ConstantFilterRead<float>>>const&,fk::UnaryInstantiableOperation<fk::Mul<float,float,float,fk::UnaryType>>const&,fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>const&,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)3,float>>>>const&)>
+ mov %r15,%rdi
+ call <fk::Ptr<(fk::ND)3,float>::freePtr()>
+@@ -99,23 +97,8 @@
+ pop %rbp
+ ret
+-mov $0x10,%edi
+-call <__cxa_allocate_exception@plt>
+-mov %rax,%r14
+-lea X(%rip),%rsi # <_IO_stdin_used+OFF>
+-mov %rax,%rdi
+-call <std::runtime_error::runtime_error(char const*)@plt>
+-mov X(%rip),%rsi # <typeinfo for std::runtime_error@GLIBCXX_3.4>
+-mov X(%rip),%rdx # <std::runtime_error::~runtime_error()@GLIBCXX_3.4>
+-mov %r14,%rdi
+-call <__cxa_throw@plt>
+-jmp L3
+-mov %rax,%rbx
+-mov %r14,%rdi
+-call <__cxa_free_exception@plt>
+-jmp L4
+ mov %rax,%rdi
+ call <__clang_call_terminate>
+ mov %rax,%rbx
+-jmp L5
++jmp L2
+ mov %rax,%rbx
+ lea 0xe8(%rsp),%rdi
+=== e19amd::runCrops<110>()::{lambda()#3}::operator()()const
+--- A
++++ B
+@@ -168,14 +168,12 @@
+ mov 0x28(%rsp),%eax
+ mov %eax,0x5c(%rsp)
+-mov 0x18(%rcx),%r8
++mov 0x18(%rcx),%rdi
+ movabs $0x3de38e3900000000,%rax
+ mov %rax,0x8(%rsp)
+-lea 0x80(%rsp),%rdi
+-lea 0x30(%rsp),%rdx
+-lea 0x8(%rsp),%rcx
+-mov %r14,%rsi
+-call <boolfk::executeMorphology<fk::MorphologyDPPDetails<float,16,8,7,7>,fk::ReadInstantiableOperation<fk::BatchRead<(fk::PlanePolicy)0,110ul,fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>>,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::TensorWrite<float>>>>,fk::Tuple<fk::MorphologyPass<fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::BinaryInstantiableOperation<fk::Mul<float,float,float>>>>>(fk::MorphologyDPPDetails<float,16,8,7,7>const&,fk::ReadInstantiableOperation<fk::BatchRead<(fk::PlanePolicy)0,110ul,fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>>const&,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::TensorWrite<float>>>>const&,fk::Tuple<fk::MorphologyPass<fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::BinaryInstantiableOperation<fk::Mul<float,float,float>>>>const&,fk::Stream_<(fk::ParArch)3>&)>
+-test %al,%al
+-je L6
++lea 0x80(%rsp),%rsi
++lea 0x30(%rsp),%rcx
++lea 0x8(%rsp),%r8
++mov %r14,%rdx
++call <voidfk::executeOperations<fk::MorphologyDPP<(fk::ParArch)3,fk::MorphologyDPPDetails<float,16,8,7,7>>,fk::MorphologyDPPDetails<float,16,8,7,7>,fk::ReadInstantiableOperation<fk::BatchRead<(fk::PlanePolicy)0,110ul,fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>>,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::TensorWrite<float>>>>,fk::Tuple<fk::MorphologyPass<fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::BinaryInstantiableOperation<fk::Mul<float,float,float>>>>>(fk::Stream_<fk::MorphologyDPP<(fk::ParArch)3,fk::MorphologyDPPDetails<float,16,8,7,7>>::PAR_ARCH>&,fk::MorphologyDPPDetails<float,16,8,7,7>const&,fk::ReadInstantiableOperation<fk::BatchRead<(fk::PlanePolicy)0,110ul,fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>>const&,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::TensorWrite<float>>>>const&,fk::Tuple<fk::MorphologyPass<fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::BinaryInstantiableOperation<fk::Mul<float,float,float>>>>const&)>
+ lea 0x98(%rsp),%rdi
+ call <std::array<fk::Ptr2D<fk::Uchar3>,110ul>::~array()>
+@@ -188,22 +186,5 @@
+ pop %rbp
+ ret
+-mov $0x10,%edi
+-call <__cxa_allocate_exception@plt>
+-mov %rax,%r14
+-lea X(%rip),%rsi # <_IO_stdin_used+OFF>
+-mov %rax,%rdi
+-call <std::runtime_error::runtime_error(char const*)@plt>
+-mov X(%rip),%rsi # <typeinfo for std::runtime_error@GLIBCXX_3.4>
+-mov X(%rip),%rdx # <std::runtime_error::~runtime_error()@GLIBCXX_3.4>
+-mov %r14,%rdi
+-call <__cxa_throw@plt>
+-mov %rax,%rbx
+-mov %r14,%rdi
+-call <__cxa_free_exception@plt>
+-lea 0x98(%rsp),%rdi
+-call <std::array<fk::Ptr2D<fk::Uchar3>,110ul>::~array()>
+-mov %rbx,%rdi
+-call <_Unwind_Resume@plt>
+-jmp L7
++jmp L6
+ mov %rax,%rdi
+ call <__clang_call_terminate>
+=== e19amd::runCrops<120>()::{lambda()#1}::operator()()const
+--- A
++++ B
+@@ -70,4 +70,5 @@
+ movups %xmm1,0x10(%rcx)
+ movups %xmm0,(%rcx)
++mov 0x18(%rbx),%rdi
+ mov 0x80(%rsp),%rax
+ mov %rax,0x20(%rsp)
+@@ -75,13 +76,10 @@
+ movaps %xmm0,0x10(%rsp)
+ movl $0x3de38e39,0x28(%rsp)
+-mov 0x18(%rbx),%r9
+-lea 0x90(%rsp),%rdi
+-lea 0x10(%rsp),%rsi
+-lea 0xf(%rsp),%rdx
+-lea 0xe(%rsp),%rcx
+-mov %r12,%r8
+-call <boolfk::executeLinearFilter<fk::LinearFilterDPPDetails<float,16,8,7,7>,fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>,fk::ReadInstantiableOperation<fk::ConstantFilterRead<float>>>,fk::UnaryInstantiableOperation<fk::Mul<float,float,float,fk::UnaryType>>,fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)3,float>>>>>(fk::LinearFilterDPPDetails<float,16,8,7,7>const&,fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>,fk::ReadInstantiableOperation<fk::ConstantFilterRead<float>>>const&,fk::UnaryInstantiableOperation<fk::Mul<float,float,float,fk::UnaryType>>const&,fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>const&,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)3,float>>>>const&,fk::Stream_<(fk::ParArch)3>&)>
+-test %al,%al
+-je L2
++lea 0x90(%rsp),%rsi
++lea 0x10(%rsp),%rdx
++lea 0xf(%rsp),%rcx
++lea 0xe(%rsp),%r8
++mov %r12,%r9
++call <voidfk::executeOperations<fk::LinearFilterDPP<(fk::ParArch)3,fk::LinearFilterDPPDetails<float,16,8,7,7>>,fk::LinearFilterDPPDetails<float,16,8,7,7>,fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>,fk::ReadInstantiableOperation<fk::ConstantFilterRead<float>>>,fk::UnaryInstantiableOperation<fk::Mul<float,float,float,fk::UnaryType>>,fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)3,float>>>>>(fk::Stream_<fk::LinearFilterDPP<(fk::ParArch)3,fk::LinearFilterDPPDetails<float,16,8,7,7>>::PAR_ARCH>&,fk::LinearFilterDPPDetails<float,16,8,7,7>const&,fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>,fk::ReadInstantiableOperation<fk::ConstantFilterRead<float>>>const&,fk::UnaryInstantiableOperation<fk::Mul<float,float,float,fk::UnaryType>>const&,fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>const&,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)3,float>>>>const&)>
+ mov %r15,%rdi
+ call <fk::Ptr<(fk::ND)3,float>::freePtr()>
+@@ -99,23 +97,8 @@
+ pop %rbp
+ ret
+-mov $0x10,%edi
+-call <__cxa_allocate_exception@plt>
+-mov %rax,%r14
+-lea X(%rip),%rsi # <_IO_stdin_used+OFF>
+-mov %rax,%rdi
+-call <std::runtime_error::runtime_error(char const*)@plt>
+-mov X(%rip),%rsi # <typeinfo for std::runtime_error@GLIBCXX_3.4>
+-mov X(%rip),%rdx # <std::runtime_error::~runtime_error()@GLIBCXX_3.4>
+-mov %r14,%rdi
+-call <__cxa_throw@plt>
+-jmp L3
+-mov %rax,%rbx
+-mov %r14,%rdi
+-call <__cxa_free_exception@plt>
+-jmp L4
+ mov %rax,%rdi
+ call <__clang_call_terminate>
+ mov %rax,%rbx
+-jmp L5
++jmp L2
+ mov %rax,%rbx
+ lea 0xe8(%rsp),%rdi
+=== e19amd::runCrops<120>()::{lambda()#3}::operator()()const
+--- A
++++ B
+@@ -172,14 +172,12 @@
+ mov 0x28(%rsp),%eax
+ mov %eax,0x5c(%rsp)
+-mov 0x18(%rcx),%r8
++mov 0x18(%rcx),%rdi
+ movabs $0x3de38e3900000000,%rax
+ mov %rax,0x8(%rsp)
+-lea 0x80(%rsp),%rdi
+-lea 0x30(%rsp),%rdx
+-lea 0x8(%rsp),%rcx
+-mov %r14,%rsi
+-call <boolfk::executeMorphology<fk::MorphologyDPPDetails<float,16,8,7,7>,fk::ReadInstantiableOperation<fk::BatchRead<(fk::PlanePolicy)0,120ul,fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>>,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::TensorWrite<float>>>>,fk::Tuple<fk::MorphologyPass<fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::BinaryInstantiableOperation<fk::Mul<float,float,float>>>>>(fk::MorphologyDPPDetails<float,16,8,7,7>const&,fk::ReadInstantiableOperation<fk::BatchRead<(fk::PlanePolicy)0,120ul,fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>>const&,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::TensorWrite<float>>>>const&,fk::Tuple<fk::MorphologyPass<fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::BinaryInstantiableOperation<fk::Mul<float,float,float>>>>const&,fk::Stream_<(fk::ParArch)3>&)>
+-test %al,%al
+-je L6
++lea 0x80(%rsp),%rsi
++lea 0x30(%rsp),%rcx
++lea 0x8(%rsp),%r8
++mov %r14,%rdx
++call <voidfk::executeOperations<fk::MorphologyDPP<(fk::ParArch)3,fk::MorphologyDPPDetails<float,16,8,7,7>>,fk::MorphologyDPPDetails<float,16,8,7,7>,fk::ReadInstantiableOperation<fk::BatchRead<(fk::PlanePolicy)0,120ul,fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>>,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::TensorWrite<float>>>>,fk::Tuple<fk::MorphologyPass<fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::BinaryInstantiableOperation<fk::Mul<float,float,float>>>>>(fk::Stream_<fk::MorphologyDPP<(fk::ParArch)3,fk::MorphologyDPPDetails<float,16,8,7,7>>::PAR_ARCH>&,fk::MorphologyDPPDetails<float,16,8,7,7>const&,fk::ReadInstantiableOperation<fk::BatchRead<(fk::PlanePolicy)0,120ul,fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>>const&,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::TensorWrite<float>>>>const&,fk::Tuple<fk::MorphologyPass<fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::BinaryInstantiableOperation<fk::Mul<float,float,float>>>>const&)>
+ lea 0x98(%rsp),%rdi
+ call <std::array<fk::Ptr2D<fk::Uchar3>,120ul>::~array()>
+@@ -192,22 +190,5 @@
+ pop %rbp
+ ret
+-mov $0x10,%edi
+-call <__cxa_allocate_exception@plt>
+-mov %rax,%r14
+-lea X(%rip),%rsi # <_IO_stdin_used+OFF>
+-mov %rax,%rdi
+-call <std::runtime_error::runtime_error(char const*)@plt>
+-mov X(%rip),%rsi # <typeinfo for std::runtime_error@GLIBCXX_3.4>
+-mov X(%rip),%rdx # <std::runtime_error::~runtime_error()@GLIBCXX_3.4>
+-mov %r14,%rdi
+-call <__cxa_throw@plt>
+-mov %rax,%rbx
+-mov %r14,%rdi
+-call <__cxa_free_exception@plt>
+-lea 0x98(%rsp),%rdi
+-call <std::array<fk::Ptr2D<fk::Uchar3>,120ul>::~array()>
+-mov %rbx,%rdi
+-call <_Unwind_Resume@plt>
+-jmp L7
++jmp L6
+ mov %rax,%rdi
+ call <__clang_call_terminate>
+=== e19amd::runCrops<130>()::{lambda()#1}::operator()()const
+--- A
++++ B
+@@ -70,4 +70,5 @@
+ movups %xmm1,0x10(%rcx)
+ movups %xmm0,(%rcx)
++mov 0x18(%rbx),%rdi
+ mov 0x80(%rsp),%rax
+ mov %rax,0x20(%rsp)
+@@ -75,13 +76,10 @@
+ movaps %xmm0,0x10(%rsp)
+ movl $0x3de38e39,0x28(%rsp)
+-mov 0x18(%rbx),%r9
+-lea 0x90(%rsp),%rdi
+-lea 0x10(%rsp),%rsi
+-lea 0xf(%rsp),%rdx
+-lea 0xe(%rsp),%rcx
+-mov %r12,%r8
+-call <boolfk::executeLinearFilter<fk::LinearFilterDPPDetails<float,16,8,7,7>,fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>,fk::ReadInstantiableOperation<fk::ConstantFilterRead<float>>>,fk::UnaryInstantiableOperation<fk::Mul<float,float,float,fk::UnaryType>>,fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)3,float>>>>>(fk::LinearFilterDPPDetails<float,16,8,7,7>const&,fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>,fk::ReadInstantiableOperation<fk::ConstantFilterRead<float>>>const&,fk::UnaryInstantiableOperation<fk::Mul<float,float,float,fk::UnaryType>>const&,fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>const&,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)3,float>>>>const&,fk::Stream_<(fk::ParArch)3>&)>
+-test %al,%al
+-je L2
++lea 0x90(%rsp),%rsi
++lea 0x10(%rsp),%rdx
++lea 0xf(%rsp),%rcx
++lea 0xe(%rsp),%r8
++mov %r12,%r9
++call <voidfk::executeOperations<fk::LinearFilterDPP<(fk::ParArch)3,fk::LinearFilterDPPDetails<float,16,8,7,7>>,fk::LinearFilterDPPDetails<float,16,8,7,7>,fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>,fk::ReadInstantiableOperation<fk::ConstantFilterRead<float>>>,fk::UnaryInstantiableOperation<fk::Mul<float,float,float,fk::UnaryType>>,fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)3,float>>>>>(fk::Stream_<fk::LinearFilterDPP<(fk::ParArch)3,fk::LinearFilterDPPDetails<float,16,8,7,7>>::PAR_ARCH>&,fk::LinearFilterDPPDetails<float,16,8,7,7>const&,fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>,fk::ReadInstantiableOperation<fk::ConstantFilterRead<float>>>const&,fk::UnaryInstantiableOperation<fk::Mul<float,float,float,fk::UnaryType>>const&,fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>const&,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)3,float>>>>const&)>
+ mov %r15,%rdi
+ call <fk::Ptr<(fk::ND)3,float>::freePtr()>
+@@ -99,23 +97,8 @@
+ pop %rbp
+ ret
+-mov $0x10,%edi
+-call <__cxa_allocate_exception@plt>
+-mov %rax,%r14
+-lea X(%rip),%rsi # <_IO_stdin_used+OFF>
+-mov %rax,%rdi
+-call <std::runtime_error::runtime_error(char const*)@plt>
+-mov X(%rip),%rsi # <typeinfo for std::runtime_error@GLIBCXX_3.4>
+-mov X(%rip),%rdx # <std::runtime_error::~runtime_error()@GLIBCXX_3.4>
+-mov %r14,%rdi
+-call <__cxa_throw@plt>
+-jmp L3
+-mov %rax,%rbx
+-mov %r14,%rdi
+-call <__cxa_free_exception@plt>
+-jmp L4
+ mov %rax,%rdi
+ call <__clang_call_terminate>
+ mov %rax,%rbx
+-jmp L5
++jmp L2
+ mov %rax,%rbx
+ lea 0xe8(%rsp),%rdi
+=== e19amd::runCrops<130>()::{lambda()#3}::operator()()const
+--- A
++++ B
+@@ -168,14 +168,12 @@
+ mov 0x28(%rsp),%eax
+ mov %eax,0x5c(%rsp)
+-mov 0x18(%rcx),%r8
++mov 0x18(%rcx),%rdi
+ movabs $0x3de38e3900000000,%rax
+ mov %rax,0x8(%rsp)
+-lea 0x80(%rsp),%rdi
+-lea 0x30(%rsp),%rdx
+-lea 0x8(%rsp),%rcx
+-mov %r14,%rsi
+-call <boolfk::executeMorphology<fk::MorphologyDPPDetails<float,16,8,7,7>,fk::ReadInstantiableOperation<fk::BatchRead<(fk::PlanePolicy)0,130ul,fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>>,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::TensorWrite<float>>>>,fk::Tuple<fk::MorphologyPass<fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::BinaryInstantiableOperation<fk::Mul<float,float,float>>>>>(fk::MorphologyDPPDetails<float,16,8,7,7>const&,fk::ReadInstantiableOperation<fk::BatchRead<(fk::PlanePolicy)0,130ul,fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>>const&,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::TensorWrite<float>>>>const&,fk::Tuple<fk::MorphologyPass<fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::BinaryInstantiableOperation<fk::Mul<float,float,float>>>>const&,fk::Stream_<(fk::ParArch)3>&)>
+-test %al,%al
+-je L6
++lea 0x80(%rsp),%rsi
++lea 0x30(%rsp),%rcx
++lea 0x8(%rsp),%r8
++mov %r14,%rdx
++call <voidfk::executeOperations<fk::MorphologyDPP<(fk::ParArch)3,fk::MorphologyDPPDetails<float,16,8,7,7>>,fk::MorphologyDPPDetails<float,16,8,7,7>,fk::ReadInstantiableOperation<fk::BatchRead<(fk::PlanePolicy)0,130ul,fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>>,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::TensorWrite<float>>>>,fk::Tuple<fk::MorphologyPass<fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::BinaryInstantiableOperation<fk::Mul<float,float,float>>>>>(fk::Stream_<fk::MorphologyDPP<(fk::ParArch)3,fk::MorphologyDPPDetails<float,16,8,7,7>>::PAR_ARCH>&,fk::MorphologyDPPDetails<float,16,8,7,7>const&,fk::ReadInstantiableOperation<fk::BatchRead<(fk::PlanePolicy)0,130ul,fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>>const&,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::TensorWrite<float>>>>const&,fk::Tuple<fk::MorphologyPass<fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::BinaryInstantiableOperation<fk::Mul<float,float,float>>>>const&)>
+ lea 0x98(%rsp),%rdi
+ call <std::array<fk::Ptr2D<fk::Uchar3>,130ul>::~array()>
+@@ -188,22 +186,5 @@
+ pop %rbp
+ ret
+-mov $0x10,%edi
+-call <__cxa_allocate_exception@plt>
+-mov %rax,%r14
+-lea X(%rip),%rsi # <_IO_stdin_used+OFF>
+-mov %rax,%rdi
+-call <std::runtime_error::runtime_error(char const*)@plt>
+-mov X(%rip),%rsi # <typeinfo for std::runtime_error@GLIBCXX_3.4>
+-mov X(%rip),%rdx # <std::runtime_error::~runtime_error()@GLIBCXX_3.4>
+-mov %r14,%rdi
+-call <__cxa_throw@plt>
+-mov %rax,%rbx
+-mov %r14,%rdi
+-call <__cxa_free_exception@plt>
+-lea 0x98(%rsp),%rdi
+-call <std::array<fk::Ptr2D<fk::Uchar3>,130ul>::~array()>
+-mov %rbx,%rdi
+-call <_Unwind_Resume@plt>
+-jmp L7
++jmp L6
+ mov %rax,%rdi
+ call <__clang_call_terminate>
+=== e19amd::runCrops<140>()::{lambda()#1}::operator()()const
+--- A
++++ B
+@@ -70,4 +70,5 @@
+ movups %xmm1,0x10(%rcx)
+ movups %xmm0,(%rcx)
++mov 0x18(%rbx),%rdi
+ mov 0x80(%rsp),%rax
+ mov %rax,0x20(%rsp)
+@@ -75,13 +76,10 @@
+ movaps %xmm0,0x10(%rsp)
+ movl $0x3de38e39,0x28(%rsp)
+-mov 0x18(%rbx),%r9
+-lea 0x90(%rsp),%rdi
+-lea 0x10(%rsp),%rsi
+-lea 0xf(%rsp),%rdx
+-lea 0xe(%rsp),%rcx
+-mov %r12,%r8
+-call <boolfk::executeLinearFilter<fk::LinearFilterDPPDetails<float,16,8,7,7>,fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>,fk::ReadInstantiableOperation<fk::ConstantFilterRead<float>>>,fk::UnaryInstantiableOperation<fk::Mul<float,float,float,fk::UnaryType>>,fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)3,float>>>>>(fk::LinearFilterDPPDetails<float,16,8,7,7>const&,fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>,fk::ReadInstantiableOperation<fk::ConstantFilterRead<float>>>const&,fk::UnaryInstantiableOperation<fk::Mul<float,float,float,fk::UnaryType>>const&,fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>const&,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)3,float>>>>const&,fk::Stream_<(fk::ParArch)3>&)>
+-test %al,%al
+-je L2
++lea 0x90(%rsp),%rsi
++lea 0x10(%rsp),%rdx
++lea 0xf(%rsp),%rcx
++lea 0xe(%rsp),%r8
++mov %r12,%r9
++call <voidfk::executeOperations<fk::LinearFilterDPP<(fk::ParArch)3,fk::LinearFilterDPPDetails<float,16,8,7,7>>,fk::LinearFilterDPPDetails<float,16,8,7,7>,fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>,fk::ReadInstantiableOperation<fk::ConstantFilterRead<float>>>,fk::UnaryInstantiableOperation<fk::Mul<float,float,float,fk::UnaryType>>,fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)3,float>>>>>(fk::Stream_<fk::LinearFilterDPP<(fk::ParArch)3,fk::LinearFilterDPPDetails<float,16,8,7,7>>::PAR_ARCH>&,fk::LinearFilterDPPDetails<float,16,8,7,7>const&,fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>,fk::ReadInstantiableOperation<fk::ConstantFilterRead<float>>>const&,fk::UnaryInstantiableOperation<fk::Mul<float,float,float,fk::UnaryType>>const&,fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>const&,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)3,float>>>>const&)>
+ mov %r15,%rdi
+ call <fk::Ptr<(fk::ND)3,float>::freePtr()>
+@@ -99,23 +97,8 @@
+ pop %rbp
+ ret
+-mov $0x10,%edi
+-call <__cxa_allocate_exception@plt>
+-mov %rax,%r14
+-lea X(%rip),%rsi # <_IO_stdin_used+OFF>
+-mov %rax,%rdi
+-call <std::runtime_error::runtime_error(char const*)@plt>
+-mov X(%rip),%rsi # <typeinfo for std::runtime_error@GLIBCXX_3.4>
+-mov X(%rip),%rdx # <std::runtime_error::~runtime_error()@GLIBCXX_3.4>
+-mov %r14,%rdi
+-call <__cxa_throw@plt>
+-jmp L3
+-mov %rax,%rbx
+-mov %r14,%rdi
+-call <__cxa_free_exception@plt>
+-jmp L4
+ mov %rax,%rdi
+ call <__clang_call_terminate>
+ mov %rax,%rbx
+-jmp L5
++jmp L2
+ mov %rax,%rbx
+ lea 0xe8(%rsp),%rdi
+=== e19amd::runCrops<140>()::{lambda()#3}::operator()()const
+--- A
++++ B
+@@ -168,14 +168,12 @@
+ mov 0x28(%rsp),%eax
+ mov %eax,0x5c(%rsp)
+-mov 0x18(%rcx),%r8
++mov 0x18(%rcx),%rdi
+ movabs $0x3de38e3900000000,%rax
+ mov %rax,0x8(%rsp)
+-lea 0x80(%rsp),%rdi
+-lea 0x30(%rsp),%rdx
+-lea 0x8(%rsp),%rcx
+-mov %r14,%rsi
+-call <boolfk::executeMorphology<fk::MorphologyDPPDetails<float,16,8,7,7>,fk::ReadInstantiableOperation<fk::BatchRead<(fk::PlanePolicy)0,140ul,fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>>,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::TensorWrite<float>>>>,fk::Tuple<fk::MorphologyPass<fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::BinaryInstantiableOperation<fk::Mul<float,float,float>>>>>(fk::MorphologyDPPDetails<float,16,8,7,7>const&,fk::ReadInstantiableOperation<fk::BatchRead<(fk::PlanePolicy)0,140ul,fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>>const&,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::TensorWrite<float>>>>const&,fk::Tuple<fk::MorphologyPass<fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::BinaryInstantiableOperation<fk::Mul<float,float,float>>>>const&,fk::Stream_<(fk::ParArch)3>&)>
+-test %al,%al
+-je L6
++lea 0x80(%rsp),%rsi
++lea 0x30(%rsp),%rcx
++lea 0x8(%rsp),%r8
++mov %r14,%rdx
++call <voidfk::executeOperations<fk::MorphologyDPP<(fk::ParArch)3,fk::MorphologyDPPDetails<float,16,8,7,7>>,fk::MorphologyDPPDetails<float,16,8,7,7>,fk::ReadInstantiableOperation<fk::BatchRead<(fk::PlanePolicy)0,140ul,fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>>,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::TensorWrite<float>>>>,fk::Tuple<fk::MorphologyPass<fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::BinaryInstantiableOperation<fk::Mul<float,float,float>>>>>(fk::Stream_<fk::MorphologyDPP<(fk::ParArch)3,fk::MorphologyDPPDetails<float,16,8,7,7>>::PAR_ARCH>&,fk::MorphologyDPPDetails<float,16,8,7,7>const&,fk::ReadInstantiableOperation<fk::BatchRead<(fk::PlanePolicy)0,140ul,fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>>const&,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::TensorWrite<float>>>>const&,fk::Tuple<fk::MorphologyPass<fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::BinaryInstantiableOperation<fk::Mul<float,float,float>>>>const&)>
+ lea 0x98(%rsp),%rdi
+ call <std::array<fk::Ptr2D<fk::Uchar3>,140ul>::~array()>
+@@ -188,22 +186,5 @@
+ pop %rbp
+ ret
+-mov $0x10,%edi
+-call <__cxa_allocate_exception@plt>
+-mov %rax,%r14
+-lea X(%rip),%rsi # <_IO_stdin_used+OFF>
+-mov %rax,%rdi
+-call <std::runtime_error::runtime_error(char const*)@plt>
+-mov X(%rip),%rsi # <typeinfo for std::runtime_error@GLIBCXX_3.4>
+-mov X(%rip),%rdx # <std::runtime_error::~runtime_error()@GLIBCXX_3.4>
+-mov %r14,%rdi
+-call <__cxa_throw@plt>
+-mov %rax,%rbx
+-mov %r14,%rdi
+-call <__cxa_free_exception@plt>
+-lea 0x98(%rsp),%rdi
+-call <std::array<fk::Ptr2D<fk::Uchar3>,140ul>::~array()>
+-mov %rbx,%rdi
+-call <_Unwind_Resume@plt>
+-jmp L7
++jmp L6
+ mov %rax,%rdi
+ call <__clang_call_terminate>
+=== e19amd::runCrops<150>()::{lambda()#1}::operator()()const
+--- A
++++ B
+@@ -70,4 +70,5 @@
+ movups %xmm1,0x10(%rcx)
+ movups %xmm0,(%rcx)
++mov 0x18(%rbx),%rdi
+ mov 0x80(%rsp),%rax
+ mov %rax,0x20(%rsp)
+@@ -75,13 +76,10 @@
+ movaps %xmm0,0x10(%rsp)
+ movl $0x3de38e39,0x28(%rsp)
+-mov 0x18(%rbx),%r9
+-lea 0x90(%rsp),%rdi
+-lea 0x10(%rsp),%rsi
+-lea 0xf(%rsp),%rdx
+-lea 0xe(%rsp),%rcx
+-mov %r12,%r8
+-call <boolfk::executeLinearFilter<fk::LinearFilterDPPDetails<float,16,8,7,7>,fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>,fk::ReadInstantiableOperation<fk::ConstantFilterRead<float>>>,fk::UnaryInstantiableOperation<fk::Mul<float,float,float,fk::UnaryType>>,fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)3,float>>>>>(fk::LinearFilterDPPDetails<float,16,8,7,7>const&,fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>,fk::ReadInstantiableOperation<fk::ConstantFilterRead<float>>>const&,fk::UnaryInstantiableOperation<fk::Mul<float,float,float,fk::UnaryType>>const&,fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>const&,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)3,float>>>>const&,fk::Stream_<(fk::ParArch)3>&)>
+-test %al,%al
+-je L2
++lea 0x90(%rsp),%rsi
++lea 0x10(%rsp),%rdx
++lea 0xf(%rsp),%rcx
++lea 0xe(%rsp),%r8
++mov %r12,%r9
++call <voidfk::executeOperations<fk::LinearFilterDPP<(fk::ParArch)3,fk::LinearFilterDPPDetails<float,16,8,7,7>>,fk::LinearFilterDPPDetails<float,16,8,7,7>,fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>,fk::ReadInstantiableOperation<fk::ConstantFilterRead<float>>>,fk::UnaryInstantiableOperation<fk::Mul<float,float,float,fk::UnaryType>>,fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)3,float>>>>>(fk::Stream_<fk::LinearFilterDPP<(fk::ParArch)3,fk::LinearFilterDPPDetails<float,16,8,7,7>>::PAR_ARCH>&,fk::LinearFilterDPPDetails<float,16,8,7,7>const&,fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>,fk::ReadInstantiableOperation<fk::ConstantFilterRead<float>>>const&,fk::UnaryInstantiableOperation<fk::Mul<float,float,float,fk::UnaryType>>const&,fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>const&,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)3,float>>>>const&)>
+ mov %r15,%rdi
+ call <fk::Ptr<(fk::ND)3,float>::freePtr()>
+@@ -99,23 +97,8 @@
+ pop %rbp
+ ret
+-mov $0x10,%edi
+-call <__cxa_allocate_exception@plt>
+-mov %rax,%r14
+-lea X(%rip),%rsi # <_IO_stdin_used+OFF>
+-mov %rax,%rdi
+-call <std::runtime_error::runtime_error(char const*)@plt>
+-mov X(%rip),%rsi # <typeinfo for std::runtime_error@GLIBCXX_3.4>
+-mov X(%rip),%rdx # <std::runtime_error::~runtime_error()@GLIBCXX_3.4>
+-mov %r14,%rdi
+-call <__cxa_throw@plt>
+-jmp L3
+-mov %rax,%rbx
+-mov %r14,%rdi
+-call <__cxa_free_exception@plt>
+-jmp L4
+ mov %rax,%rdi
+ call <__clang_call_terminate>
+ mov %rax,%rbx
+-jmp L5
++jmp L2
+ mov %rax,%rbx
+ lea 0xe8(%rsp),%rdi
+=== e19amd::runCrops<150>()::{lambda()#3}::operator()()const
+--- A
++++ B
+@@ -257,16 +257,14 @@
+ mov 0x28(%rsp),%eax
+ mov %eax,0x74(%rsp)
+-mov 0x18(%rcx),%r8
++mov 0x18(%rcx),%rdi
+ movabs $0x3de38e3900000000,%rax
+ mov %rax,0x8(%rsp)
+-lea 0x30(%rsp),%rdi
+-lea 0x48(%rsp),%rdx
+-lea 0x8(%rsp),%rcx
+-mov %r14,%rsi
+-call <boolfk::executeMorphology<fk::MorphologyDPPDetails<float,16,8,7,7>,fk::ReadInstantiableOperation<fk::BatchRead<(fk::PlanePolicy)0,150ul,fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>>,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::TensorWrite<float>>>>,fk::Tuple<fk::MorphologyPass<fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::BinaryInstantiableOperation<fk::Mul<float,float,float>>>>>(fk::MorphologyDPPDetails<float,16,8,7,7>const&,fk::ReadInstantiableOperation<fk::BatchRead<(fk::PlanePolicy)0,150ul,fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>>const&,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::TensorWrite<float>>>>const&,fk::Tuple<fk::MorphologyPass<fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::BinaryInstantiableOperation<fk::Mul<float,float,float>>>>const&,fk::Stream_<(fk::ParArch)3>&)>
+-test %al,%al
+-je L10
++lea 0x30(%rsp),%rsi
++lea 0x48(%rsp),%rcx
++lea 0x8(%rsp),%r8
++mov %r14,%rdx
++call <voidfk::executeOperations<fk::MorphologyDPP<(fk::ParArch)3,fk::MorphologyDPPDetails<float,16,8,7,7>>,fk::MorphologyDPPDetails<float,16,8,7,7>,fk::ReadInstantiableOperation<fk::BatchRead<(fk::PlanePolicy)0,150ul,fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>>,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::TensorWrite<float>>>>,fk::Tuple<fk::MorphologyPass<fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::BinaryInstantiableOperation<fk::Mul<float,float,float>>>>>(fk::Stream_<fk::MorphologyDPP<(fk::ParArch)3,fk::MorphologyDPPDetails<float,16,8,7,7>>::PAR_ARCH>&,fk::MorphologyDPPDetails<float,16,8,7,7>const&,fk::ReadInstantiableOperation<fk::BatchRead<(fk::PlanePolicy)0,150ul,fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>>const&,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::TensorWrite<float>>>>const&,fk::Tuple<fk::MorphologyPass<fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::BinaryInstantiableOperation<fk::Mul<float,float,float>>>>const&)>
+ mov $0x2540,%ebx
+-xchg %ax,%ax
++nopw 0x0(%rax,%rax,1)
+ lea (%rsp,%rbx,1),%rdi
+ add $0x1c88,%rdi
+@@ -283,22 +281,5 @@
+ pop %rbp
+ ret
+-mov $0x10,%edi
+-call <__cxa_allocate_exception@plt>
+-mov %rax,%r14
+-lea X(%rip),%rsi # <_IO_stdin_used+OFF>
+-mov %rax,%rdi
+-call <std::runtime_error::runtime_error(char const*)@plt>
+-mov X(%rip),%rsi # <typeinfo for std::runtime_error@GLIBCXX_3.4>
+-mov X(%rip),%rdx # <std::runtime_error::~runtime_error()@GLIBCXX_3.4>
+-mov %r14,%rdi
+-call <__cxa_throw@plt>
+-mov %rax,%rbx
+-mov %r14,%rdi
+-call <__cxa_free_exception@plt>
+-lea 0x1c88(%rsp),%rdi
+-call <std::array<fk::Ptr2D<fk::Uchar3>,150ul>::~array()>
+-mov %rbx,%rdi
+-call <_Unwind_Resume@plt>
+-jmp L11
++jmp L10
+ mov %rax,%rdi
+ call <__clang_call_terminate>
+=== e19amd::runCrops<1>()::{lambda()#1}::operator()()const
+--- A
++++ B
+@@ -143,4 +143,6 @@
+ movups %xmm1,0x10(%rdx)
+ movups %xmm0,(%rdx)
++mov 0xa8(%rsp),%rax
++mov 0x18(%rax),%rdi
+ mov 0xf0(%rsp),%rax
+ mov %rax,0xc0(%rsp)
+@@ -148,14 +150,10 @@
+ movaps %xmm0,0xb0(%rsp)
+ movl $0x3de38e39,0xc8(%rsp)
+-mov 0xa8(%rsp),%rax
+-mov 0x18(%rax),%r9
+-lea 0x150(%rsp),%rdi
+-lea 0xb0(%rsp),%rsi
+-lea 0xf(%rsp),%rdx
+-lea 0xe(%rsp),%rcx
+-lea 0x70(%rsp),%r8
+-call <boolfk::executeLinearFilter<fk::LinearFilterDPPDetails<float,16,8,7,7>,fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>,fk::ReadInstantiableOperation<fk::ConstantFilterRead<float>>>,fk::UnaryInstantiableOperation<fk::Mul<float,float,float,fk::UnaryType>>,fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)3,float>>>>>(fk::LinearFilterDPPDetails<float,16,8,7,7>const&,fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>,fk::ReadInstantiableOperation<fk::ConstantFilterRead<float>>>const&,fk::UnaryInstantiableOperation<fk::Mul<float,float,float,fk::UnaryType>>const&,fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>const&,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)3,float>>>>const&,fk::Stream_<(fk::ParArch)3>&)>
+-test %al,%al
+-je L4
++lea 0x150(%rsp),%rsi
++lea 0xb0(%rsp),%rdx
++lea 0xf(%rsp),%rcx
++lea 0xe(%rsp),%r8
++lea 0x70(%rsp),%r9
++call <voidfk::executeOperations<fk::LinearFilterDPP<(fk::ParArch)3,fk::LinearFilterDPPDetails<float,16,8,7,7>>,fk::LinearFilterDPPDetails<float,16,8,7,7>,fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>,fk::ReadInstantiableOperation<fk::ConstantFilterRead<float>>>,fk::UnaryInstantiableOperation<fk::Mul<float,float,float,fk::UnaryType>>,fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)3,float>>>>>(fk::Stream_<fk::LinearFilterDPP<(fk::ParArch)3,fk::LinearFilterDPPDetails<float,16,8,7,7>>::PAR_ARCH>&,fk::LinearFilterDPPDetails<float,16,8,7,7>const&,fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>,fk::ReadInstantiableOperation<fk::ConstantFilterRead<float>>>const&,fk::UnaryInstantiableOperation<fk::Mul<float,float,float,fk::UnaryType>>const&,fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>const&,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)3,float>>>>const&)>
+ lea 0x18(%rsp),%rdi
+ call <fk::Ptr<(fk::ND)3,float>::freePtr()>
+@@ -170,19 +168,4 @@
+ pop %rbp
+ ret
+-mov $0x10,%edi
+-call <__cxa_allocate_exception@plt>
+-mov %rax,%r14
+-lea X(%rip),%rsi # <_IO_stdin_used+OFF>
+-mov %rax,%rdi
+-call <std::runtime_error::runtime_error(char const*)@plt>
+-mov X(%rip),%rsi # <typeinfo for std::runtime_error@GLIBCXX_3.4>
+-mov X(%rip),%rdx # <std::runtime_error::~runtime_error()@GLIBCXX_3.4>
+-mov %r14,%rdi
+-call <__cxa_throw@plt>
+-jmp L5
+-mov %rax,%rbx
+-mov %r14,%rdi
+-call <__cxa_free_exception@plt>
+-jmp L6
+ mov %rax,%rdi
+ call <__clang_call_terminate>
+@@ -192,5 +175,5 @@
+ lea 0x18(%rsp),%rdi
+ call <fk::Ptr<(fk::ND)3,float>::freePtr()>
+-jmp L7
++jmp L4
+ mov %rax,%rdi
+ call <__clang_call_terminate>
+=== e19amd::runCrops<1>()::{lambda()#3}::operator()()const
+--- A
++++ B
+@@ -84,14 +84,12 @@
+ mov 0x28(%rsp),%eax
+ mov %eax,0xdc(%rsp)
+-mov 0x18(%rbx),%r8
++mov 0x18(%rbx),%rdi
+ movabs $0x3de38e3900000000,%rax
+ mov %rax,0x8(%rsp)
+-lea 0xf0(%rsp),%rdi
+-lea 0x70(%rsp),%rsi
+-lea 0xb0(%rsp),%rdx
+-lea 0x8(%rsp),%rcx
+-call <boolfk::executeMorphology<fk::MorphologyDPPDetails<float,16,8,7,7>,fk::ReadInstantiableOperation<fk::BatchRead<(fk::PlanePolicy)0,1ul,fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>>,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::TensorWrite<float>>>>,fk::Tuple<fk::MorphologyPass<fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::BinaryInstantiableOperation<fk::Mul<float,float,float>>>>>(fk::MorphologyDPPDetails<float,16,8,7,7>const&,fk::ReadInstantiableOperation<fk::BatchRead<(fk::PlanePolicy)0,1ul,fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>>const&,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::TensorWrite<float>>>>const&,fk::Tuple<fk::MorphologyPass<fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::BinaryInstantiableOperation<fk::Mul<float,float,float>>>>const&,fk::Stream_<(fk::ParArch)3>&)>
+-test %al,%al
+-je L1
++lea 0xf0(%rsp),%rsi
++lea 0x70(%rsp),%rdx
++lea 0xb0(%rsp),%rcx
++lea 0x8(%rsp),%r8
++call <voidfk::executeOperations<fk::MorphologyDPP<(fk::ParArch)3,fk::MorphologyDPPDetails<float,16,8,7,7>>,fk::MorphologyDPPDetails<float,16,8,7,7>,fk::ReadInstantiableOperation<fk::BatchRead<(fk::PlanePolicy)0,1ul,fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>>,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::TensorWrite<float>>>>,fk::Tuple<fk::MorphologyPass<fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::BinaryInstantiableOperation<fk::Mul<float,float,float>>>>>(fk::Stream_<fk::MorphologyDPP<(fk::ParArch)3,fk::MorphologyDPPDetails<float,16,8,7,7>>::PAR_ARCH>&,fk::MorphologyDPPDetails<float,16,8,7,7>const&,fk::ReadInstantiableOperation<fk::BatchRead<(fk::PlanePolicy)0,1ul,fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>>const&,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::TensorWrite<float>>>>const&,fk::Tuple<fk::MorphologyPass<fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::BinaryInstantiableOperation<fk::Mul<float,float,float>>>>const&)>
+ lea 0x30(%rsp),%rdi
+ call <fk::Ptr<(fk::ND)2,fk::Uchar3>::freePtr()>
+@@ -100,18 +98,7 @@
+ pop %r14
+ ret
+-mov $0x10,%edi
+-call <__cxa_allocate_exception@plt>
+-mov %rax,%r14
+-lea X(%rip),%rsi # <_IO_stdin_used+OFF>
+ mov %rax,%rdi
+-call <std::runtime_error::runtime_error(char const*)@plt>
+-mov X(%rip),%rsi # <typeinfo for std::runtime_error@GLIBCXX_3.4>
+-mov X(%rip),%rdx # <std::runtime_error::~runtime_error()@GLIBCXX_3.4>
+-mov %r14,%rdi
+-call <__cxa_throw@plt>
+-mov %rax,%rbx
+-mov %r14,%rdi
+-call <__cxa_free_exception@plt>
+-jmp L3
++call <__clang_call_terminate>
++jmp L1
+ mov %rax,%rdi
+ call <__clang_call_terminate>
+@@ -120,7 +107,4 @@
+ mov %rax,%rdi
+ call <__clang_call_terminate>
+-mov %rax,%rdi
+-call <__clang_call_terminate>
+-jmp L2
+ mov %rax,%rbx
+ lea 0x30(%rsp),%rdi
+=== e19amd::runCrops<20>()::{lambda()#1}::operator()()const
+--- A
++++ B
+@@ -70,4 +70,5 @@
+ movups %xmm1,0x10(%rcx)
+ movups %xmm0,(%rcx)
++mov 0x18(%rbx),%rdi
+ mov 0x80(%rsp),%rax
+ mov %rax,0x20(%rsp)
+@@ -75,13 +76,10 @@
+ movaps %xmm0,0x10(%rsp)
+ movl $0x3de38e39,0x28(%rsp)
+-mov 0x18(%rbx),%r9
+-lea 0x90(%rsp),%rdi
+-lea 0x10(%rsp),%rsi
+-lea 0xf(%rsp),%rdx
+-lea 0xe(%rsp),%rcx
+-mov %r12,%r8
+-call <boolfk::executeLinearFilter<fk::LinearFilterDPPDetails<float,16,8,7,7>,fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>,fk::ReadInstantiableOperation<fk::ConstantFilterRead<float>>>,fk::UnaryInstantiableOperation<fk::Mul<float,float,float,fk::UnaryType>>,fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)3,float>>>>>(fk::LinearFilterDPPDetails<float,16,8,7,7>const&,fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>,fk::ReadInstantiableOperation<fk::ConstantFilterRead<float>>>const&,fk::UnaryInstantiableOperation<fk::Mul<float,float,float,fk::UnaryType>>const&,fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>const&,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)3,float>>>>const&,fk::Stream_<(fk::ParArch)3>&)>
+-test %al,%al
+-je L2
++lea 0x90(%rsp),%rsi
++lea 0x10(%rsp),%rdx
++lea 0xf(%rsp),%rcx
++lea 0xe(%rsp),%r8
++mov %r12,%r9
++call <voidfk::executeOperations<fk::LinearFilterDPP<(fk::ParArch)3,fk::LinearFilterDPPDetails<float,16,8,7,7>>,fk::LinearFilterDPPDetails<float,16,8,7,7>,fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>,fk::ReadInstantiableOperation<fk::ConstantFilterRead<float>>>,fk::UnaryInstantiableOperation<fk::Mul<float,float,float,fk::UnaryType>>,fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)3,float>>>>>(fk::Stream_<fk::LinearFilterDPP<(fk::ParArch)3,fk::LinearFilterDPPDetails<float,16,8,7,7>>::PAR_ARCH>&,fk::LinearFilterDPPDetails<float,16,8,7,7>const&,fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>,fk::ReadInstantiableOperation<fk::ConstantFilterRead<float>>>const&,fk::UnaryInstantiableOperation<fk::Mul<float,float,float,fk::UnaryType>>const&,fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>const&,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)3,float>>>>const&)>
+ mov %r15,%rdi
+ call <fk::Ptr<(fk::ND)3,float>::freePtr()>
+@@ -99,23 +97,8 @@
+ pop %rbp
+ ret
+-mov $0x10,%edi
+-call <__cxa_allocate_exception@plt>
+-mov %rax,%r14
+-lea X(%rip),%rsi # <_IO_stdin_used+OFF>
+-mov %rax,%rdi
+-call <std::runtime_error::runtime_error(char const*)@plt>
+-mov X(%rip),%rsi # <typeinfo for std::runtime_error@GLIBCXX_3.4>
+-mov X(%rip),%rdx # <std::runtime_error::~runtime_error()@GLIBCXX_3.4>
+-mov %r14,%rdi
+-call <__cxa_throw@plt>
+-jmp L3
+-mov %rax,%rbx
+-mov %r14,%rdi
+-call <__cxa_free_exception@plt>
+-jmp L4
+ mov %rax,%rdi
+ call <__clang_call_terminate>
+ mov %rax,%rbx
+-jmp L5
++jmp L2
+ mov %rax,%rbx
+ lea 0xe8(%rsp),%rdi
+=== e19amd::runCrops<20>()::{lambda()#3}::operator()()const
+--- A
++++ B
+@@ -424,14 +424,12 @@
+ mov 0x28(%rsp),%eax
+ mov %eax,0x5c(%rsp)
+-mov 0x18(%rcx),%r8
++mov 0x18(%rcx),%rdi
+ movabs $0x3de38e3900000000,%rax
+ mov %rax,0x8(%rsp)
+-lea 0x760(%rsp),%rdi
+-lea 0x70(%rsp),%rsi
+-lea 0x30(%rsp),%rdx
+-lea 0x8(%rsp),%rcx
+-call <boolfk::executeMorphology<fk::MorphologyDPPDetails<float,16,8,7,7>,fk::ReadInstantiableOperation<fk::BatchRead<(fk::PlanePolicy)0,20ul,fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>>,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::TensorWrite<float>>>>,fk::Tuple<fk::MorphologyPass<fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::BinaryInstantiableOperation<fk::Mul<float,float,float>>>>>(fk::MorphologyDPPDetails<float,16,8,7,7>const&,fk::ReadInstantiableOperation<fk::BatchRead<(fk::PlanePolicy)0,20ul,fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>>const&,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::TensorWrite<float>>>>const&,fk::Tuple<fk::MorphologyPass<fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::BinaryInstantiableOperation<fk::Mul<float,float,float>>>>const&,fk::Stream_<(fk::ParArch)3>&)>
+-test %al,%al
+-je L3
++lea 0x760(%rsp),%rsi
++lea 0x70(%rsp),%rdx
++lea 0x30(%rsp),%rcx
++lea 0x8(%rsp),%r8
++call <voidfk::executeOperations<fk::MorphologyDPP<(fk::ParArch)3,fk::MorphologyDPPDetails<float,16,8,7,7>>,fk::MorphologyDPPDetails<float,16,8,7,7>,fk::ReadInstantiableOperation<fk::BatchRead<(fk::PlanePolicy)0,20ul,fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>>,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::TensorWrite<float>>>>,fk::Tuple<fk::MorphologyPass<fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::BinaryInstantiableOperation<fk::Mul<float,float,float>>>>>(fk::Stream_<fk::MorphologyDPP<(fk::ParArch)3,fk::MorphologyDPPDetails<float,16,8,7,7>>::PAR_ARCH>&,fk::MorphologyDPPDetails<float,16,8,7,7>const&,fk::ReadInstantiableOperation<fk::BatchRead<(fk::PlanePolicy)0,20ul,fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>>const&,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::TensorWrite<float>>>>const&,fk::Tuple<fk::MorphologyPass<fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::BinaryInstantiableOperation<fk::Mul<float,float,float>>>>const&)>
+ lea 0x260(%rsp),%rdi
+ call <std::array<fk::Ptr2D<fk::Uchar3>,20ul>::~array()>
+@@ -444,22 +442,5 @@
+ pop %rbp
+ ret
+-mov $0x10,%edi
+-call <__cxa_allocate_exception@plt>
+-mov %rax,%r14
+-lea X(%rip),%rsi # <_IO_stdin_used+OFF>
+-mov %rax,%rdi
+-call <std::runtime_error::runtime_error(char const*)@plt>
+-mov X(%rip),%rsi # <typeinfo for std::runtime_error@GLIBCXX_3.4>
+-mov X(%rip),%rdx # <std::runtime_error::~runtime_error()@GLIBCXX_3.4>
+-mov %r14,%rdi
+-call <__cxa_throw@plt>
+-mov %rax,%rbx
+-mov %r14,%rdi
+-call <__cxa_free_exception@plt>
+-lea 0x260(%rsp),%rdi
+-call <std::array<fk::Ptr2D<fk::Uchar3>,20ul>::~array()>
+-mov %rbx,%rdi
+-call <_Unwind_Resume@plt>
+-jmp L4
++jmp L3
+ mov %rax,%rdi
+ call <__clang_call_terminate>
+=== e19amd::runCrops<30>()::{lambda()#1}::operator()()const
+--- A
++++ B
+@@ -70,4 +70,5 @@
+ movups %xmm1,0x10(%rcx)
+ movups %xmm0,(%rcx)
++mov 0x18(%rbx),%rdi
+ mov 0x80(%rsp),%rax
+ mov %rax,0x20(%rsp)
+@@ -75,13 +76,10 @@
+ movaps %xmm0,0x10(%rsp)
+ movl $0x3de38e39,0x28(%rsp)
+-mov 0x18(%rbx),%r9
+-lea 0x90(%rsp),%rdi
+-lea 0x10(%rsp),%rsi
+-lea 0xf(%rsp),%rdx
+-lea 0xe(%rsp),%rcx
+-mov %r12,%r8
+-call <boolfk::executeLinearFilter<fk::LinearFilterDPPDetails<float,16,8,7,7>,fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>,fk::ReadInstantiableOperation<fk::ConstantFilterRead<float>>>,fk::UnaryInstantiableOperation<fk::Mul<float,float,float,fk::UnaryType>>,fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)3,float>>>>>(fk::LinearFilterDPPDetails<float,16,8,7,7>const&,fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>,fk::ReadInstantiableOperation<fk::ConstantFilterRead<float>>>const&,fk::UnaryInstantiableOperation<fk::Mul<float,float,float,fk::UnaryType>>const&,fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>const&,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)3,float>>>>const&,fk::Stream_<(fk::ParArch)3>&)>
+-test %al,%al
+-je L2
++lea 0x90(%rsp),%rsi
++lea 0x10(%rsp),%rdx
++lea 0xf(%rsp),%rcx
++lea 0xe(%rsp),%r8
++mov %r12,%r9
++call <voidfk::executeOperations<fk::LinearFilterDPP<(fk::ParArch)3,fk::LinearFilterDPPDetails<float,16,8,7,7>>,fk::LinearFilterDPPDetails<float,16,8,7,7>,fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>,fk::ReadInstantiableOperation<fk::ConstantFilterRead<float>>>,fk::UnaryInstantiableOperation<fk::Mul<float,float,float,fk::UnaryType>>,fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)3,float>>>>>(fk::Stream_<fk::LinearFilterDPP<(fk::ParArch)3,fk::LinearFilterDPPDetails<float,16,8,7,7>>::PAR_ARCH>&,fk::LinearFilterDPPDetails<float,16,8,7,7>const&,fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>,fk::ReadInstantiableOperation<fk::ConstantFilterRead<float>>>const&,fk::UnaryInstantiableOperation<fk::Mul<float,float,float,fk::UnaryType>>const&,fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>const&,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)3,float>>>>const&)>
+ mov %r15,%rdi
+ call <fk::Ptr<(fk::ND)3,float>::freePtr()>
+@@ -99,23 +97,8 @@
+ pop %rbp
+ ret
+-mov $0x10,%edi
+-call <__cxa_allocate_exception@plt>
+-mov %rax,%r14
+-lea X(%rip),%rsi # <_IO_stdin_used+OFF>
+-mov %rax,%rdi
+-call <std::runtime_error::runtime_error(char const*)@plt>
+-mov X(%rip),%rsi # <typeinfo for std::runtime_error@GLIBCXX_3.4>
+-mov X(%rip),%rdx # <std::runtime_error::~runtime_error()@GLIBCXX_3.4>
+-mov %r14,%rdi
+-call <__cxa_throw@plt>
+-jmp L3
+-mov %rax,%rbx
+-mov %r14,%rdi
+-call <__cxa_free_exception@plt>
+-jmp L4
+ mov %rax,%rdi
+ call <__clang_call_terminate>
+ mov %rax,%rbx
+-jmp L5
++jmp L2
+ mov %rax,%rbx
+ lea 0xe8(%rsp),%rdi
+=== e19amd::runCrops<30>()::{lambda()#3}::operator()()const
+--- A
++++ B
+@@ -596,14 +596,12 @@
+ mov 0x28(%rsp),%eax
+ mov %eax,0x5c(%rsp)
+-mov 0x18(%rcx),%r8
++mov 0x18(%rcx),%rdi
+ movabs $0x3de38e3900000000,%rax
+ mov %rax,0x8(%rsp)
+-lea 0xad0(%rsp),%rdi
+-lea 0x70(%rsp),%rsi
+-lea 0x30(%rsp),%rdx
+-lea 0x8(%rsp),%rcx
+-call <boolfk::executeMorphology<fk::MorphologyDPPDetails<float,16,8,7,7>,fk::ReadInstantiableOperation<fk::BatchRead<(fk::PlanePolicy)0,30ul,fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>>,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::TensorWrite<float>>>>,fk::Tuple<fk::MorphologyPass<fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::BinaryInstantiableOperation<fk::Mul<float,float,float>>>>>(fk::MorphologyDPPDetails<float,16,8,7,7>const&,fk::ReadInstantiableOperation<fk::BatchRead<(fk::PlanePolicy)0,30ul,fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>>const&,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::TensorWrite<float>>>>const&,fk::Tuple<fk::MorphologyPass<fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::BinaryInstantiableOperation<fk::Mul<float,float,float>>>>const&,fk::Stream_<(fk::ParArch)3>&)>
+-test %al,%al
+-je L3
++lea 0xad0(%rsp),%rsi
++lea 0x70(%rsp),%rdx
++lea 0x30(%rsp),%rcx
++lea 0x8(%rsp),%r8
++call <voidfk::executeOperations<fk::MorphologyDPP<(fk::ParArch)3,fk::MorphologyDPPDetails<float,16,8,7,7>>,fk::MorphologyDPPDetails<float,16,8,7,7>,fk::ReadInstantiableOperation<fk::BatchRead<(fk::PlanePolicy)0,30ul,fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>>,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::TensorWrite<float>>>>,fk::Tuple<fk::MorphologyPass<fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::BinaryInstantiableOperation<fk::Mul<float,float,float>>>>>(fk::Stream_<fk::MorphologyDPP<(fk::ParArch)3,fk::MorphologyDPPDetails<float,16,8,7,7>>::PAR_ARCH>&,fk::MorphologyDPPDetails<float,16,8,7,7>const&,fk::ReadInstantiableOperation<fk::BatchRead<(fk::PlanePolicy)0,30ul,fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>>const&,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::TensorWrite<float>>>>const&,fk::Tuple<fk::MorphologyPass<fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::BinaryInstantiableOperation<fk::Mul<float,float,float>>>>const&)>
+ lea 0x350(%rsp),%rdi
+ call <std::array<fk::Ptr2D<fk::Uchar3>,30ul>::~array()>
+@@ -616,22 +614,5 @@
+ pop %rbp
+ ret
+-mov $0x10,%edi
+-call <__cxa_allocate_exception@plt>
+-mov %rax,%r14
+-lea X(%rip),%rsi # <_IO_stdin_used+OFF>
+-mov %rax,%rdi
+-call <std::runtime_error::runtime_error(char const*)@plt>
+-mov X(%rip),%rsi # <typeinfo for std::runtime_error@GLIBCXX_3.4>
+-mov X(%rip),%rdx # <std::runtime_error::~runtime_error()@GLIBCXX_3.4>
+-mov %r14,%rdi
+-call <__cxa_throw@plt>
+-mov %rax,%rbx
+-mov %r14,%rdi
+-call <__cxa_free_exception@plt>
+-lea 0x350(%rsp),%rdi
+-call <std::array<fk::Ptr2D<fk::Uchar3>,30ul>::~array()>
+-mov %rbx,%rdi
+-call <_Unwind_Resume@plt>
+-jmp L4
++jmp L3
+ mov %rax,%rdi
+ call <__clang_call_terminate>
+=== e19amd::runCrops<40>()::{lambda()#1}::operator()()const
+--- A
++++ B
+@@ -70,4 +70,5 @@
+ movups %xmm1,0x10(%rcx)
+ movups %xmm0,(%rcx)
++mov 0x18(%rbx),%rdi
+ mov 0x80(%rsp),%rax
+ mov %rax,0x20(%rsp)
+@@ -75,13 +76,10 @@
+ movaps %xmm0,0x10(%rsp)
+ movl $0x3de38e39,0x28(%rsp)
+-mov 0x18(%rbx),%r9
+-lea 0x90(%rsp),%rdi
+-lea 0x10(%rsp),%rsi
+-lea 0xf(%rsp),%rdx
+-lea 0xe(%rsp),%rcx
+-mov %r12,%r8
+-call <boolfk::executeLinearFilter<fk::LinearFilterDPPDetails<float,16,8,7,7>,fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>,fk::ReadInstantiableOperation<fk::ConstantFilterRead<float>>>,fk::UnaryInstantiableOperation<fk::Mul<float,float,float,fk::UnaryType>>,fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)3,float>>>>>(fk::LinearFilterDPPDetails<float,16,8,7,7>const&,fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>,fk::ReadInstantiableOperation<fk::ConstantFilterRead<float>>>const&,fk::UnaryInstantiableOperation<fk::Mul<float,float,float,fk::UnaryType>>const&,fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>const&,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)3,float>>>>const&,fk::Stream_<(fk::ParArch)3>&)>
+-test %al,%al
+-je L2
++lea 0x90(%rsp),%rsi
++lea 0x10(%rsp),%rdx
++lea 0xf(%rsp),%rcx
++lea 0xe(%rsp),%r8
++mov %r12,%r9
++call <voidfk::executeOperations<fk::LinearFilterDPP<(fk::ParArch)3,fk::LinearFilterDPPDetails<float,16,8,7,7>>,fk::LinearFilterDPPDetails<float,16,8,7,7>,fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>,fk::ReadInstantiableOperation<fk::ConstantFilterRead<float>>>,fk::UnaryInstantiableOperation<fk::Mul<float,float,float,fk::UnaryType>>,fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)3,float>>>>>(fk::Stream_<fk::LinearFilterDPP<(fk::ParArch)3,fk::LinearFilterDPPDetails<float,16,8,7,7>>::PAR_ARCH>&,fk::LinearFilterDPPDetails<float,16,8,7,7>const&,fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>,fk::ReadInstantiableOperation<fk::ConstantFilterRead<float>>>const&,fk::UnaryInstantiableOperation<fk::Mul<float,float,float,fk::UnaryType>>const&,fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>const&,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)3,float>>>>const&)>
+ mov %r15,%rdi
+ call <fk::Ptr<(fk::ND)3,float>::freePtr()>
+@@ -99,23 +97,8 @@
+ pop %rbp
+ ret
+-mov $0x10,%edi
+-call <__cxa_allocate_exception@plt>
+-mov %rax,%r14
+-lea X(%rip),%rsi # <_IO_stdin_used+OFF>
+-mov %rax,%rdi
+-call <std::runtime_error::runtime_error(char const*)@plt>
+-mov X(%rip),%rsi # <typeinfo for std::runtime_error@GLIBCXX_3.4>
+-mov X(%rip),%rdx # <std::runtime_error::~runtime_error()@GLIBCXX_3.4>
+-mov %r14,%rdi
+-call <__cxa_throw@plt>
+-jmp L3
+-mov %rax,%rbx
+-mov %r14,%rdi
+-call <__cxa_free_exception@plt>
+-jmp L4
+ mov %rax,%rdi
+ call <__clang_call_terminate>
+ mov %rax,%rbx
+-jmp L5
++jmp L2
+ mov %rax,%rbx
+ lea 0xe8(%rsp),%rdi
+=== e19amd::runCrops<40>()::{lambda()#3}::operator()()const
+--- A
++++ B
+@@ -479,14 +479,12 @@
+ mov 0x28(%rsp),%eax
+ mov %eax,0x5c(%rsp)
+-mov 0x18(%rcx),%r8
++mov 0x18(%rcx),%rdi
+ movabs $0x3de38e3900000000,%rax
+ mov %rax,0x8(%rsp)
+-lea 0x80(%rsp),%rdi
+-lea 0x30(%rsp),%rdx
+-lea 0x8(%rsp),%rcx
+-mov %r14,%rsi
+-call <boolfk::executeMorphology<fk::MorphologyDPPDetails<float,16,8,7,7>,fk::ReadInstantiableOperation<fk::BatchRead<(fk::PlanePolicy)0,40ul,fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>>,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::TensorWrite<float>>>>,fk::Tuple<fk::MorphologyPass<fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::BinaryInstantiableOperation<fk::Mul<float,float,float>>>>>(fk::MorphologyDPPDetails<float,16,8,7,7>const&,fk::ReadInstantiableOperation<fk::BatchRead<(fk::PlanePolicy)0,40ul,fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>>const&,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::TensorWrite<float>>>>const&,fk::Tuple<fk::MorphologyPass<fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::BinaryInstantiableOperation<fk::Mul<float,float,float>>>>const&,fk::Stream_<(fk::ParArch)3>&)>
+-test %al,%al
+-je L4
++lea 0x80(%rsp),%rsi
++lea 0x30(%rsp),%rcx
++lea 0x8(%rsp),%r8
++mov %r14,%rdx
++call <voidfk::executeOperations<fk::MorphologyDPP<(fk::ParArch)3,fk::MorphologyDPPDetails<float,16,8,7,7>>,fk::MorphologyDPPDetails<float,16,8,7,7>,fk::ReadInstantiableOperation<fk::BatchRead<(fk::PlanePolicy)0,40ul,fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>>,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::TensorWrite<float>>>>,fk::Tuple<fk::MorphologyPass<fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::BinaryInstantiableOperation<fk::Mul<float,float,float>>>>>(fk::Stream_<fk::MorphologyDPP<(fk::ParArch)3,fk::MorphologyDPPDetails<float,16,8,7,7>>::PAR_ARCH>&,fk::MorphologyDPPDetails<float,16,8,7,7>const&,fk::ReadInstantiableOperation<fk::BatchRead<(fk::PlanePolicy)0,40ul,fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>>const&,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::TensorWrite<float>>>>const&,fk::Tuple<fk::MorphologyPass<fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::BinaryInstantiableOperation<fk::Mul<float,float,float>>>>const&)>
+ lea 0xa0(%rsp),%rdi
+ call <std::array<fk::Ptr2D<fk::Uchar3>,40ul>::~array()>
+@@ -499,22 +497,5 @@
+ pop %rbp
+ ret
+-mov $0x10,%edi
+-call <__cxa_allocate_exception@plt>
+-mov %rax,%r14
+-lea X(%rip),%rsi # <_IO_stdin_used+OFF>
+-mov %rax,%rdi
+-call <std::runtime_error::runtime_error(char const*)@plt>
+-mov X(%rip),%rsi # <typeinfo for std::runtime_error@GLIBCXX_3.4>
+-mov X(%rip),%rdx # <std::runtime_error::~runtime_error()@GLIBCXX_3.4>
+-mov %r14,%rdi
+-call <__cxa_throw@plt>
+-mov %rax,%rbx
+-mov %r14,%rdi
+-call <__cxa_free_exception@plt>
+-lea 0xa0(%rsp),%rdi
+-call <std::array<fk::Ptr2D<fk::Uchar3>,40ul>::~array()>
+-mov %rbx,%rdi
+-call <_Unwind_Resume@plt>
+-jmp L5
++jmp L4
+ mov %rax,%rdi
+ call <__clang_call_terminate>
+=== e19amd::runCrops<50>()::{lambda()#1}::operator()()const
+--- A
++++ B
+@@ -70,4 +70,5 @@
+ movups %xmm1,0x10(%rcx)
+ movups %xmm0,(%rcx)
++mov 0x18(%rbx),%rdi
+ mov 0x80(%rsp),%rax
+ mov %rax,0x20(%rsp)
+@@ -75,13 +76,10 @@
+ movaps %xmm0,0x10(%rsp)
+ movl $0x3de38e39,0x28(%rsp)
+-mov 0x18(%rbx),%r9
+-lea 0x90(%rsp),%rdi
+-lea 0x10(%rsp),%rsi
+-lea 0xf(%rsp),%rdx
+-lea 0xe(%rsp),%rcx
+-mov %r12,%r8
+-call <boolfk::executeLinearFilter<fk::LinearFilterDPPDetails<float,16,8,7,7>,fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>,fk::ReadInstantiableOperation<fk::ConstantFilterRead<float>>>,fk::UnaryInstantiableOperation<fk::Mul<float,float,float,fk::UnaryType>>,fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)3,float>>>>>(fk::LinearFilterDPPDetails<float,16,8,7,7>const&,fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>,fk::ReadInstantiableOperation<fk::ConstantFilterRead<float>>>const&,fk::UnaryInstantiableOperation<fk::Mul<float,float,float,fk::UnaryType>>const&,fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>const&,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)3,float>>>>const&,fk::Stream_<(fk::ParArch)3>&)>
+-test %al,%al
+-je L2
++lea 0x90(%rsp),%rsi
++lea 0x10(%rsp),%rdx
++lea 0xf(%rsp),%rcx
++lea 0xe(%rsp),%r8
++mov %r12,%r9
++call <voidfk::executeOperations<fk::LinearFilterDPP<(fk::ParArch)3,fk::LinearFilterDPPDetails<float,16,8,7,7>>,fk::LinearFilterDPPDetails<float,16,8,7,7>,fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>,fk::ReadInstantiableOperation<fk::ConstantFilterRead<float>>>,fk::UnaryInstantiableOperation<fk::Mul<float,float,float,fk::UnaryType>>,fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)3,float>>>>>(fk::Stream_<fk::LinearFilterDPP<(fk::ParArch)3,fk::LinearFilterDPPDetails<float,16,8,7,7>>::PAR_ARCH>&,fk::LinearFilterDPPDetails<float,16,8,7,7>const&,fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>,fk::ReadInstantiableOperation<fk::ConstantFilterRead<float>>>const&,fk::UnaryInstantiableOperation<fk::Mul<float,float,float,fk::UnaryType>>const&,fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>const&,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)3,float>>>>const&)>
+ mov %r15,%rdi
+ call <fk::Ptr<(fk::ND)3,float>::freePtr()>
+@@ -99,23 +97,8 @@
+ pop %rbp
+ ret
+-mov $0x10,%edi
+-call <__cxa_allocate_exception@plt>
+-mov %rax,%r14
+-lea X(%rip),%rsi # <_IO_stdin_used+OFF>
+-mov %rax,%rdi
+-call <std::runtime_error::runtime_error(char const*)@plt>
+-mov X(%rip),%rsi # <typeinfo for std::runtime_error@GLIBCXX_3.4>
+-mov X(%rip),%rdx # <std::runtime_error::~runtime_error()@GLIBCXX_3.4>
+-mov %r14,%rdi
+-call <__cxa_throw@plt>
+-jmp L3
+-mov %rax,%rbx
+-mov %r14,%rdi
+-call <__cxa_free_exception@plt>
+-jmp L4
+ mov %rax,%rdi
+ call <__clang_call_terminate>
+ mov %rax,%rbx
+-jmp L5
++jmp L2
+ mov %rax,%rbx
+ lea 0xe8(%rsp),%rdi
+=== e19amd::runCrops<50>()::{lambda()#3}::operator()()const
+--- A
++++ B
+@@ -388,14 +388,12 @@
+ mov 0x28(%rsp),%eax
+ mov %eax,0x5c(%rsp)
+-mov 0x18(%rcx),%r8
++mov 0x18(%rcx),%rdi
+ movabs $0x3de38e3900000000,%rax
+ mov %rax,0x8(%rsp)
+-lea 0x80(%rsp),%rdi
+-lea 0x30(%rsp),%rdx
+-lea 0x8(%rsp),%rcx
+-mov %r14,%rsi
+-call <boolfk::executeMorphology<fk::MorphologyDPPDetails<float,16,8,7,7>,fk::ReadInstantiableOperation<fk::BatchRead<(fk::PlanePolicy)0,50ul,fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>>,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::TensorWrite<float>>>>,fk::Tuple<fk::MorphologyPass<fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::BinaryInstantiableOperation<fk::Mul<float,float,float>>>>>(fk::MorphologyDPPDetails<float,16,8,7,7>const&,fk::ReadInstantiableOperation<fk::BatchRead<(fk::PlanePolicy)0,50ul,fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>>const&,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::TensorWrite<float>>>>const&,fk::Tuple<fk::MorphologyPass<fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::BinaryInstantiableOperation<fk::Mul<float,float,float>>>>const&,fk::Stream_<(fk::ParArch)3>&)>
+-test %al,%al
+-je L5
++lea 0x80(%rsp),%rsi
++lea 0x30(%rsp),%rcx
++lea 0x8(%rsp),%r8
++mov %r14,%rdx
++call <voidfk::executeOperations<fk::MorphologyDPP<(fk::ParArch)3,fk::MorphologyDPPDetails<float,16,8,7,7>>,fk::MorphologyDPPDetails<float,16,8,7,7>,fk::ReadInstantiableOperation<fk::BatchRead<(fk::PlanePolicy)0,50ul,fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>>,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::TensorWrite<float>>>>,fk::Tuple<fk::MorphologyPass<fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::BinaryInstantiableOperation<fk::Mul<float,float,float>>>>>(fk::Stream_<fk::MorphologyDPP<(fk::ParArch)3,fk::MorphologyDPPDetails<float,16,8,7,7>>::PAR_ARCH>&,fk::MorphologyDPPDetails<float,16,8,7,7>const&,fk::ReadInstantiableOperation<fk::BatchRead<(fk::PlanePolicy)0,50ul,fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>>const&,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::TensorWrite<float>>>>const&,fk::Tuple<fk::MorphologyPass<fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::BinaryInstantiableOperation<fk::Mul<float,float,float>>>>const&)>
+ lea 0xa0(%rsp),%rdi
+ call <std::array<fk::Ptr2D<fk::Uchar3>,50ul>::~array()>
+@@ -408,22 +406,5 @@
+ pop %rbp
+ ret
+-mov $0x10,%edi
+-call <__cxa_allocate_exception@plt>
+-mov %rax,%r14
+-lea X(%rip),%rsi # <_IO_stdin_used+OFF>
+-mov %rax,%rdi
+-call <std::runtime_error::runtime_error(char const*)@plt>
+-mov X(%rip),%rsi # <typeinfo for std::runtime_error@GLIBCXX_3.4>
+-mov X(%rip),%rdx # <std::runtime_error::~runtime_error()@GLIBCXX_3.4>
+-mov %r14,%rdi
+-call <__cxa_throw@plt>
+-mov %rax,%rbx
+-mov %r14,%rdi
+-call <__cxa_free_exception@plt>
+-lea 0xa0(%rsp),%rdi
+-call <std::array<fk::Ptr2D<fk::Uchar3>,50ul>::~array()>
+-mov %rbx,%rdi
+-call <_Unwind_Resume@plt>
+-jmp L6
++jmp L5
+ mov %rax,%rdi
+ call <__clang_call_terminate>
+=== e19amd::runCrops<60>()::{lambda()#1}::operator()()const
+--- A
++++ B
+@@ -70,4 +70,5 @@
+ movups %xmm1,0x10(%rcx)
+ movups %xmm0,(%rcx)
++mov 0x18(%rbx),%rdi
+ mov 0x80(%rsp),%rax
+ mov %rax,0x20(%rsp)
+@@ -75,13 +76,10 @@
+ movaps %xmm0,0x10(%rsp)
+ movl $0x3de38e39,0x28(%rsp)
+-mov 0x18(%rbx),%r9
+-lea 0x90(%rsp),%rdi
+-lea 0x10(%rsp),%rsi
+-lea 0xf(%rsp),%rdx
+-lea 0xe(%rsp),%rcx
+-mov %r12,%r8
+-call <boolfk::executeLinearFilter<fk::LinearFilterDPPDetails<float,16,8,7,7>,fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>,fk::ReadInstantiableOperation<fk::ConstantFilterRead<float>>>,fk::UnaryInstantiableOperation<fk::Mul<float,float,float,fk::UnaryType>>,fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)3,float>>>>>(fk::LinearFilterDPPDetails<float,16,8,7,7>const&,fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>,fk::ReadInstantiableOperation<fk::ConstantFilterRead<float>>>const&,fk::UnaryInstantiableOperation<fk::Mul<float,float,float,fk::UnaryType>>const&,fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>const&,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)3,float>>>>const&,fk::Stream_<(fk::ParArch)3>&)>
+-test %al,%al
+-je L2
++lea 0x90(%rsp),%rsi
++lea 0x10(%rsp),%rdx
++lea 0xf(%rsp),%rcx
++lea 0xe(%rsp),%r8
++mov %r12,%r9
++call <voidfk::executeOperations<fk::LinearFilterDPP<(fk::ParArch)3,fk::LinearFilterDPPDetails<float,16,8,7,7>>,fk::LinearFilterDPPDetails<float,16,8,7,7>,fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>,fk::ReadInstantiableOperation<fk::ConstantFilterRead<float>>>,fk::UnaryInstantiableOperation<fk::Mul<float,float,float,fk::UnaryType>>,fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)3,float>>>>>(fk::Stream_<fk::LinearFilterDPP<(fk::ParArch)3,fk::LinearFilterDPPDetails<float,16,8,7,7>>::PAR_ARCH>&,fk::LinearFilterDPPDetails<float,16,8,7,7>const&,fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>,fk::ReadInstantiableOperation<fk::ConstantFilterRead<float>>>const&,fk::UnaryInstantiableOperation<fk::Mul<float,float,float,fk::UnaryType>>const&,fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>const&,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)3,float>>>>const&)>
+ mov %r15,%rdi
+ call <fk::Ptr<(fk::ND)3,float>::freePtr()>
+@@ -99,23 +97,8 @@
+ pop %rbp
+ ret
+-mov $0x10,%edi
+-call <__cxa_allocate_exception@plt>
+-mov %rax,%r14
+-lea X(%rip),%rsi # <_IO_stdin_used+OFF>
+-mov %rax,%rdi
+-call <std::runtime_error::runtime_error(char const*)@plt>
+-mov X(%rip),%rsi # <typeinfo for std::runtime_error@GLIBCXX_3.4>
+-mov X(%rip),%rdx # <std::runtime_error::~runtime_error()@GLIBCXX_3.4>
+-mov %r14,%rdi
+-call <__cxa_throw@plt>
+-jmp L3
+-mov %rax,%rbx
+-mov %r14,%rdi
+-call <__cxa_free_exception@plt>
+-jmp L4
+ mov %rax,%rdi
+ call <__clang_call_terminate>
+ mov %rax,%rbx
+-jmp L5
++jmp L2
+ mov %rax,%rbx
+ lea 0xe8(%rsp),%rdi
+=== e19amd::runCrops<60>()::{lambda()#3}::operator()()const
+--- A
++++ B
+@@ -172,14 +172,12 @@
+ mov 0x28(%rsp),%eax
+ mov %eax,0x5c(%rsp)
+-mov 0x18(%rcx),%r8
++mov 0x18(%rcx),%rdi
+ movabs $0x3de38e3900000000,%rax
+ mov %rax,0x8(%rsp)
+-lea 0x80(%rsp),%rdi
+-lea 0x30(%rsp),%rdx
+-lea 0x8(%rsp),%rcx
+-mov %r14,%rsi
+-call <boolfk::executeMorphology<fk::MorphologyDPPDetails<float,16,8,7,7>,fk::ReadInstantiableOperation<fk::BatchRead<(fk::PlanePolicy)0,60ul,fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>>,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::TensorWrite<float>>>>,fk::Tuple<fk::MorphologyPass<fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::BinaryInstantiableOperation<fk::Mul<float,float,float>>>>>(fk::MorphologyDPPDetails<float,16,8,7,7>const&,fk::ReadInstantiableOperation<fk::BatchRead<(fk::PlanePolicy)0,60ul,fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>>const&,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::TensorWrite<float>>>>const&,fk::Tuple<fk::MorphologyPass<fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::BinaryInstantiableOperation<fk::Mul<float,float,float>>>>const&,fk::Stream_<(fk::ParArch)3>&)>
+-test %al,%al
+-je L6
++lea 0x80(%rsp),%rsi
++lea 0x30(%rsp),%rcx
++lea 0x8(%rsp),%r8
++mov %r14,%rdx
++call <voidfk::executeOperations<fk::MorphologyDPP<(fk::ParArch)3,fk::MorphologyDPPDetails<float,16,8,7,7>>,fk::MorphologyDPPDetails<float,16,8,7,7>,fk::ReadInstantiableOperation<fk::BatchRead<(fk::PlanePolicy)0,60ul,fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>>,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::TensorWrite<float>>>>,fk::Tuple<fk::MorphologyPass<fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::BinaryInstantiableOperation<fk::Mul<float,float,float>>>>>(fk::Stream_<fk::MorphologyDPP<(fk::ParArch)3,fk::MorphologyDPPDetails<float,16,8,7,7>>::PAR_ARCH>&,fk::MorphologyDPPDetails<float,16,8,7,7>const&,fk::ReadInstantiableOperation<fk::BatchRead<(fk::PlanePolicy)0,60ul,fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>>const&,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::TensorWrite<float>>>>const&,fk::Tuple<fk::MorphologyPass<fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::BinaryInstantiableOperation<fk::Mul<float,float,float>>>>const&)>
+ lea 0x98(%rsp),%rdi
+ call <std::array<fk::Ptr2D<fk::Uchar3>,60ul>::~array()>
+@@ -192,22 +190,5 @@
+ pop %rbp
+ ret
+-mov $0x10,%edi
+-call <__cxa_allocate_exception@plt>
+-mov %rax,%r14
+-lea X(%rip),%rsi # <_IO_stdin_used+OFF>
+-mov %rax,%rdi
+-call <std::runtime_error::runtime_error(char const*)@plt>
+-mov X(%rip),%rsi # <typeinfo for std::runtime_error@GLIBCXX_3.4>
+-mov X(%rip),%rdx # <std::runtime_error::~runtime_error()@GLIBCXX_3.4>
+-mov %r14,%rdi
+-call <__cxa_throw@plt>
+-mov %rax,%rbx
+-mov %r14,%rdi
+-call <__cxa_free_exception@plt>
+-lea 0x98(%rsp),%rdi
+-call <std::array<fk::Ptr2D<fk::Uchar3>,60ul>::~array()>
+-mov %rbx,%rdi
+-call <_Unwind_Resume@plt>
+-jmp L7
++jmp L6
+ mov %rax,%rdi
+ call <__clang_call_terminate>
+=== e19amd::runCrops<70>()::{lambda()#1}::operator()()const
+--- A
++++ B
+@@ -70,4 +70,5 @@
+ movups %xmm1,0x10(%rcx)
+ movups %xmm0,(%rcx)
++mov 0x18(%rbx),%rdi
+ mov 0x80(%rsp),%rax
+ mov %rax,0x20(%rsp)
+@@ -75,13 +76,10 @@
+ movaps %xmm0,0x10(%rsp)
+ movl $0x3de38e39,0x28(%rsp)
+-mov 0x18(%rbx),%r9
+-lea 0x90(%rsp),%rdi
+-lea 0x10(%rsp),%rsi
+-lea 0xf(%rsp),%rdx
+-lea 0xe(%rsp),%rcx
+-mov %r12,%r8
+-call <boolfk::executeLinearFilter<fk::LinearFilterDPPDetails<float,16,8,7,7>,fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>,fk::ReadInstantiableOperation<fk::ConstantFilterRead<float>>>,fk::UnaryInstantiableOperation<fk::Mul<float,float,float,fk::UnaryType>>,fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)3,float>>>>>(fk::LinearFilterDPPDetails<float,16,8,7,7>const&,fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>,fk::ReadInstantiableOperation<fk::ConstantFilterRead<float>>>const&,fk::UnaryInstantiableOperation<fk::Mul<float,float,float,fk::UnaryType>>const&,fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>const&,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)3,float>>>>const&,fk::Stream_<(fk::ParArch)3>&)>
+-test %al,%al
+-je L2
++lea 0x90(%rsp),%rsi
++lea 0x10(%rsp),%rdx
++lea 0xf(%rsp),%rcx
++lea 0xe(%rsp),%r8
++mov %r12,%r9
++call <voidfk::executeOperations<fk::LinearFilterDPP<(fk::ParArch)3,fk::LinearFilterDPPDetails<float,16,8,7,7>>,fk::LinearFilterDPPDetails<float,16,8,7,7>,fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>,fk::ReadInstantiableOperation<fk::ConstantFilterRead<float>>>,fk::UnaryInstantiableOperation<fk::Mul<float,float,float,fk::UnaryType>>,fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)3,float>>>>>(fk::Stream_<fk::LinearFilterDPP<(fk::ParArch)3,fk::LinearFilterDPPDetails<float,16,8,7,7>>::PAR_ARCH>&,fk::LinearFilterDPPDetails<float,16,8,7,7>const&,fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>,fk::ReadInstantiableOperation<fk::ConstantFilterRead<float>>>const&,fk::UnaryInstantiableOperation<fk::Mul<float,float,float,fk::UnaryType>>const&,fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>const&,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)3,float>>>>const&)>
+ mov %r15,%rdi
+ call <fk::Ptr<(fk::ND)3,float>::freePtr()>
+@@ -99,23 +97,8 @@
+ pop %rbp
+ ret
+-mov $0x10,%edi
+-call <__cxa_allocate_exception@plt>
+-mov %rax,%r14
+-lea X(%rip),%rsi # <_IO_stdin_used+OFF>
+-mov %rax,%rdi
+-call <std::runtime_error::runtime_error(char const*)@plt>
+-mov X(%rip),%rsi # <typeinfo for std::runtime_error@GLIBCXX_3.4>
+-mov X(%rip),%rdx # <std::runtime_error::~runtime_error()@GLIBCXX_3.4>
+-mov %r14,%rdi
+-call <__cxa_throw@plt>
+-jmp L3
+-mov %rax,%rbx
+-mov %r14,%rdi
+-call <__cxa_free_exception@plt>
+-jmp L4
+ mov %rax,%rdi
+ call <__clang_call_terminate>
+ mov %rax,%rbx
+-jmp L5
++jmp L2
+ mov %rax,%rbx
+ lea 0xe8(%rsp),%rdi
+=== e19amd::runCrops<70>()::{lambda()#3}::operator()()const
+--- A
++++ B
+@@ -168,14 +168,12 @@
+ mov 0x28(%rsp),%eax
+ mov %eax,0x5c(%rsp)
+-mov 0x18(%rcx),%r8
++mov 0x18(%rcx),%rdi
+ movabs $0x3de38e3900000000,%rax
+ mov %rax,0x8(%rsp)
+-lea 0x80(%rsp),%rdi
+-lea 0x30(%rsp),%rdx
+-lea 0x8(%rsp),%rcx
+-mov %r14,%rsi
+-call <boolfk::executeMorphology<fk::MorphologyDPPDetails<float,16,8,7,7>,fk::ReadInstantiableOperation<fk::BatchRead<(fk::PlanePolicy)0,70ul,fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>>,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::TensorWrite<float>>>>,fk::Tuple<fk::MorphologyPass<fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::BinaryInstantiableOperation<fk::Mul<float,float,float>>>>>(fk::MorphologyDPPDetails<float,16,8,7,7>const&,fk::ReadInstantiableOperation<fk::BatchRead<(fk::PlanePolicy)0,70ul,fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>>const&,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::TensorWrite<float>>>>const&,fk::Tuple<fk::MorphologyPass<fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::BinaryInstantiableOperation<fk::Mul<float,float,float>>>>const&,fk::Stream_<(fk::ParArch)3>&)>
+-test %al,%al
+-je L6
++lea 0x80(%rsp),%rsi
++lea 0x30(%rsp),%rcx
++lea 0x8(%rsp),%r8
++mov %r14,%rdx
++call <voidfk::executeOperations<fk::MorphologyDPP<(fk::ParArch)3,fk::MorphologyDPPDetails<float,16,8,7,7>>,fk::MorphologyDPPDetails<float,16,8,7,7>,fk::ReadInstantiableOperation<fk::BatchRead<(fk::PlanePolicy)0,70ul,fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>>,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::TensorWrite<float>>>>,fk::Tuple<fk::MorphologyPass<fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::BinaryInstantiableOperation<fk::Mul<float,float,float>>>>>(fk::Stream_<fk::MorphologyDPP<(fk::ParArch)3,fk::MorphologyDPPDetails<float,16,8,7,7>>::PAR_ARCH>&,fk::MorphologyDPPDetails<float,16,8,7,7>const&,fk::ReadInstantiableOperation<fk::BatchRead<(fk::PlanePolicy)0,70ul,fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>>const&,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::TensorWrite<float>>>>const&,fk::Tuple<fk::MorphologyPass<fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::BinaryInstantiableOperation<fk::Mul<float,float,float>>>>const&)>
+ lea 0x98(%rsp),%rdi
+ call <std::array<fk::Ptr2D<fk::Uchar3>,70ul>::~array()>
+@@ -188,22 +186,5 @@
+ pop %rbp
+ ret
+-mov $0x10,%edi
+-call <__cxa_allocate_exception@plt>
+-mov %rax,%r14
+-lea X(%rip),%rsi # <_IO_stdin_used+OFF>
+-mov %rax,%rdi
+-call <std::runtime_error::runtime_error(char const*)@plt>
+-mov X(%rip),%rsi # <typeinfo for std::runtime_error@GLIBCXX_3.4>
+-mov X(%rip),%rdx # <std::runtime_error::~runtime_error()@GLIBCXX_3.4>
+-mov %r14,%rdi
+-call <__cxa_throw@plt>
+-mov %rax,%rbx
+-mov %r14,%rdi
+-call <__cxa_free_exception@plt>
+-lea 0x98(%rsp),%rdi
+-call <std::array<fk::Ptr2D<fk::Uchar3>,70ul>::~array()>
+-mov %rbx,%rdi
+-call <_Unwind_Resume@plt>
+-jmp L7
++jmp L6
+ mov %rax,%rdi
+ call <__clang_call_terminate>
+=== e19amd::runCrops<80>()::{lambda()#1}::operator()()const
+--- A
++++ B
+@@ -70,4 +70,5 @@
+ movups %xmm1,0x10(%rcx)
+ movups %xmm0,(%rcx)
++mov 0x18(%rbx),%rdi
+ mov 0x80(%rsp),%rax
+ mov %rax,0x20(%rsp)
+@@ -75,13 +76,10 @@
+ movaps %xmm0,0x10(%rsp)
+ movl $0x3de38e39,0x28(%rsp)
+-mov 0x18(%rbx),%r9
+-lea 0x90(%rsp),%rdi
+-lea 0x10(%rsp),%rsi
+-lea 0xf(%rsp),%rdx
+-lea 0xe(%rsp),%rcx
+-mov %r12,%r8
+-call <boolfk::executeLinearFilter<fk::LinearFilterDPPDetails<float,16,8,7,7>,fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>,fk::ReadInstantiableOperation<fk::ConstantFilterRead<float>>>,fk::UnaryInstantiableOperation<fk::Mul<float,float,float,fk::UnaryType>>,fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)3,float>>>>>(fk::LinearFilterDPPDetails<float,16,8,7,7>const&,fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>,fk::ReadInstantiableOperation<fk::ConstantFilterRead<float>>>const&,fk::UnaryInstantiableOperation<fk::Mul<float,float,float,fk::UnaryType>>const&,fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>const&,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)3,float>>>>const&,fk::Stream_<(fk::ParArch)3>&)>
+-test %al,%al
+-je L2
++lea 0x90(%rsp),%rsi
++lea 0x10(%rsp),%rdx
++lea 0xf(%rsp),%rcx
++lea 0xe(%rsp),%r8
++mov %r12,%r9
++call <voidfk::executeOperations<fk::LinearFilterDPP<(fk::ParArch)3,fk::LinearFilterDPPDetails<float,16,8,7,7>>,fk::LinearFilterDPPDetails<float,16,8,7,7>,fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>,fk::ReadInstantiableOperation<fk::ConstantFilterRead<float>>>,fk::UnaryInstantiableOperation<fk::Mul<float,float,float,fk::UnaryType>>,fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)3,float>>>>>(fk::Stream_<fk::LinearFilterDPP<(fk::ParArch)3,fk::LinearFilterDPPDetails<float,16,8,7,7>>::PAR_ARCH>&,fk::LinearFilterDPPDetails<float,16,8,7,7>const&,fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>,fk::ReadInstantiableOperation<fk::ConstantFilterRead<float>>>const&,fk::UnaryInstantiableOperation<fk::Mul<float,float,float,fk::UnaryType>>const&,fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>const&,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)3,float>>>>const&)>
+ mov %r15,%rdi
+ call <fk::Ptr<(fk::ND)3,float>::freePtr()>
+@@ -99,23 +97,8 @@
+ pop %rbp
+ ret
+-mov $0x10,%edi
+-call <__cxa_allocate_exception@plt>
+-mov %rax,%r14
+-lea X(%rip),%rsi # <_IO_stdin_used+OFF>
+-mov %rax,%rdi
+-call <std::runtime_error::runtime_error(char const*)@plt>
+-mov X(%rip),%rsi # <typeinfo for std::runtime_error@GLIBCXX_3.4>
+-mov X(%rip),%rdx # <std::runtime_error::~runtime_error()@GLIBCXX_3.4>
+-mov %r14,%rdi
+-call <__cxa_throw@plt>
+-jmp L3
+-mov %rax,%rbx
+-mov %r14,%rdi
+-call <__cxa_free_exception@plt>
+-jmp L4
+ mov %rax,%rdi
+ call <__clang_call_terminate>
+ mov %rax,%rbx
+-jmp L5
++jmp L2
+ mov %rax,%rbx
+ lea 0xe8(%rsp),%rdi
+=== e19amd::runCrops<80>()::{lambda()#3}::operator()()const
+--- A
++++ B
+@@ -168,14 +168,12 @@
+ mov 0x28(%rsp),%eax
+ mov %eax,0x5c(%rsp)
+-mov 0x18(%rcx),%r8
++mov 0x18(%rcx),%rdi
+ movabs $0x3de38e3900000000,%rax
+ mov %rax,0x8(%rsp)
+-lea 0x80(%rsp),%rdi
+-lea 0x30(%rsp),%rdx
+-lea 0x8(%rsp),%rcx
+-mov %r14,%rsi
+-call <boolfk::executeMorphology<fk::MorphologyDPPDetails<float,16,8,7,7>,fk::ReadInstantiableOperation<fk::BatchRead<(fk::PlanePolicy)0,80ul,fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>>,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::TensorWrite<float>>>>,fk::Tuple<fk::MorphologyPass<fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::BinaryInstantiableOperation<fk::Mul<float,float,float>>>>>(fk::MorphologyDPPDetails<float,16,8,7,7>const&,fk::ReadInstantiableOperation<fk::BatchRead<(fk::PlanePolicy)0,80ul,fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>>const&,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::TensorWrite<float>>>>const&,fk::Tuple<fk::MorphologyPass<fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::BinaryInstantiableOperation<fk::Mul<float,float,float>>>>const&,fk::Stream_<(fk::ParArch)3>&)>
+-test %al,%al
+-je L6
++lea 0x80(%rsp),%rsi
++lea 0x30(%rsp),%rcx
++lea 0x8(%rsp),%r8
++mov %r14,%rdx
++call <voidfk::executeOperations<fk::MorphologyDPP<(fk::ParArch)3,fk::MorphologyDPPDetails<float,16,8,7,7>>,fk::MorphologyDPPDetails<float,16,8,7,7>,fk::ReadInstantiableOperation<fk::BatchRead<(fk::PlanePolicy)0,80ul,fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>>,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::TensorWrite<float>>>>,fk::Tuple<fk::MorphologyPass<fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::BinaryInstantiableOperation<fk::Mul<float,float,float>>>>>(fk::Stream_<fk::MorphologyDPP<(fk::ParArch)3,fk::MorphologyDPPDetails<float,16,8,7,7>>::PAR_ARCH>&,fk::MorphologyDPPDetails<float,16,8,7,7>const&,fk::ReadInstantiableOperation<fk::BatchRead<(fk::PlanePolicy)0,80ul,fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>>const&,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::TensorWrite<float>>>>const&,fk::Tuple<fk::MorphologyPass<fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::BinaryInstantiableOperation<fk::Mul<float,float,float>>>>const&)>
+ lea 0x98(%rsp),%rdi
+ call <std::array<fk::Ptr2D<fk::Uchar3>,80ul>::~array()>
+@@ -188,22 +186,5 @@
+ pop %rbp
+ ret
+-mov $0x10,%edi
+-call <__cxa_allocate_exception@plt>
+-mov %rax,%r14
+-lea X(%rip),%rsi # <_IO_stdin_used+OFF>
+-mov %rax,%rdi
+-call <std::runtime_error::runtime_error(char const*)@plt>
+-mov X(%rip),%rsi # <typeinfo for std::runtime_error@GLIBCXX_3.4>
+-mov X(%rip),%rdx # <std::runtime_error::~runtime_error()@GLIBCXX_3.4>
+-mov %r14,%rdi
+-call <__cxa_throw@plt>
+-mov %rax,%rbx
+-mov %r14,%rdi
+-call <__cxa_free_exception@plt>
+-lea 0x98(%rsp),%rdi
+-call <std::array<fk::Ptr2D<fk::Uchar3>,80ul>::~array()>
+-mov %rbx,%rdi
+-call <_Unwind_Resume@plt>
+-jmp L7
++jmp L6
+ mov %rax,%rdi
+ call <__clang_call_terminate>
+=== e19amd::runCrops<90>()::{lambda()#1}::operator()()const
+--- A
++++ B
+@@ -70,4 +70,5 @@
+ movups %xmm1,0x10(%rcx)
+ movups %xmm0,(%rcx)
++mov 0x18(%rbx),%rdi
+ mov 0x80(%rsp),%rax
+ mov %rax,0x20(%rsp)
+@@ -75,13 +76,10 @@
+ movaps %xmm0,0x10(%rsp)
+ movl $0x3de38e39,0x28(%rsp)
+-mov 0x18(%rbx),%r9
+-lea 0x90(%rsp),%rdi
+-lea 0x10(%rsp),%rsi
+-lea 0xf(%rsp),%rdx
+-lea 0xe(%rsp),%rcx
+-mov %r12,%r8
+-call <boolfk::executeLinearFilter<fk::LinearFilterDPPDetails<float,16,8,7,7>,fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>,fk::ReadInstantiableOperation<fk::ConstantFilterRead<float>>>,fk::UnaryInstantiableOperation<fk::Mul<float,float,float,fk::UnaryType>>,fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)3,float>>>>>(fk::LinearFilterDPPDetails<float,16,8,7,7>const&,fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>,fk::ReadInstantiableOperation<fk::ConstantFilterRead<float>>>const&,fk::UnaryInstantiableOperation<fk::Mul<float,float,float,fk::UnaryType>>const&,fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>const&,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)3,float>>>>const&,fk::Stream_<(fk::ParArch)3>&)>
+-test %al,%al
+-je L2
++lea 0x90(%rsp),%rsi
++lea 0x10(%rsp),%rdx
++lea 0xf(%rsp),%rcx
++lea 0xe(%rsp),%r8
++mov %r12,%r9
++call <voidfk::executeOperations<fk::LinearFilterDPP<(fk::ParArch)3,fk::LinearFilterDPPDetails<float,16,8,7,7>>,fk::LinearFilterDPPDetails<float,16,8,7,7>,fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>,fk::ReadInstantiableOperation<fk::ConstantFilterRead<float>>>,fk::UnaryInstantiableOperation<fk::Mul<float,float,float,fk::UnaryType>>,fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)3,float>>>>>(fk::Stream_<fk::LinearFilterDPP<(fk::ParArch)3,fk::LinearFilterDPPDetails<float,16,8,7,7>>::PAR_ARCH>&,fk::LinearFilterDPPDetails<float,16,8,7,7>const&,fk::Tuple<fk::ReadInstantiableOperation<fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>,fk::ReadInstantiableOperation<fk::ConstantFilterRead<float>>>const&,fk::UnaryInstantiableOperation<fk::Mul<float,float,float,fk::UnaryType>>const&,fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>const&,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)3,float>>>>const&)>
+ mov %r15,%rdi
+ call <fk::Ptr<(fk::ND)3,float>::freePtr()>
+@@ -99,23 +97,8 @@
+ pop %rbp
+ ret
+-mov $0x10,%edi
+-call <__cxa_allocate_exception@plt>
+-mov %rax,%r14
+-lea X(%rip),%rsi # <_IO_stdin_used+OFF>
+-mov %rax,%rdi
+-call <std::runtime_error::runtime_error(char const*)@plt>
+-mov X(%rip),%rsi # <typeinfo for std::runtime_error@GLIBCXX_3.4>
+-mov X(%rip),%rdx # <std::runtime_error::~runtime_error()@GLIBCXX_3.4>
+-mov %r14,%rdi
+-call <__cxa_throw@plt>
+-jmp L3
+-mov %rax,%rbx
+-mov %r14,%rdi
+-call <__cxa_free_exception@plt>
+-jmp L4
+ mov %rax,%rdi
+ call <__clang_call_terminate>
+ mov %rax,%rbx
+-jmp L5
++jmp L2
+ mov %rax,%rbx
+ lea 0xe8(%rsp),%rdi
+=== e19amd::runCrops<90>()::{lambda()#3}::operator()()const
+--- A
++++ B
+@@ -172,14 +172,12 @@
+ mov 0x28(%rsp),%eax
+ mov %eax,0x5c(%rsp)
+-mov 0x18(%rcx),%r8
++mov 0x18(%rcx),%rdi
+ movabs $0x3de38e3900000000,%rax
+ mov %rax,0x8(%rsp)
+-lea 0x80(%rsp),%rdi
+-lea 0x30(%rsp),%rdx
+-lea 0x8(%rsp),%rcx
+-mov %r14,%rsi
+-call <boolfk::executeMorphology<fk::MorphologyDPPDetails<float,16,8,7,7>,fk::ReadInstantiableOperation<fk::BatchRead<(fk::PlanePolicy)0,90ul,fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>>,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::TensorWrite<float>>>>,fk::Tuple<fk::MorphologyPass<fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::BinaryInstantiableOperation<fk::Mul<float,float,float>>>>>(fk::MorphologyDPPDetails<float,16,8,7,7>const&,fk::ReadInstantiableOperation<fk::BatchRead<(fk::PlanePolicy)0,90ul,fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>>const&,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::TensorWrite<float>>>>const&,fk::Tuple<fk::MorphologyPass<fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::BinaryInstantiableOperation<fk::Mul<float,float,float>>>>const&,fk::Stream_<(fk::ParArch)3>&)>
+-test %al,%al
+-je L6
++lea 0x80(%rsp),%rsi
++lea 0x30(%rsp),%rcx
++lea 0x8(%rsp),%r8
++mov %r14,%rdx
++call <voidfk::executeOperations<fk::MorphologyDPP<(fk::ParArch)3,fk::MorphologyDPPDetails<float,16,8,7,7>>,fk::MorphologyDPPDetails<float,16,8,7,7>,fk::ReadInstantiableOperation<fk::BatchRead<(fk::PlanePolicy)0,90ul,fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>>,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::TensorWrite<float>>>>,fk::Tuple<fk::MorphologyPass<fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::BinaryInstantiableOperation<fk::Mul<float,float,float>>>>>(fk::Stream_<fk::MorphologyDPP<(fk::ParArch)3,fk::MorphologyDPPDetails<float,16,8,7,7>>::PAR_ARCH>&,fk::MorphologyDPPDetails<float,16,8,7,7>const&,fk::ReadInstantiableOperation<fk::BatchRead<(fk::PlanePolicy)0,90ul,fk::FusedOperation_<void,fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2,fk::Uchar3>>,fk::UnaryInstantiableOperation<fk::RGB2Gray<fk::Uchar3,float,(fk::GrayFormula)0>>>>>const&,fk::WriteInstantiableOperation<fk::FusedOperation_<void,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::BinaryInstantiableOperation<fk::Sub<float,float,float>>,fk::BinaryInstantiableOperation<fk::Div<float,float,float>>,fk::WriteInstantiableOperation<fk::TensorWrite<float>>>>const&,fk::Tuple<fk::MorphologyPass<fk::UnaryInstantiableOperation<fk::Add<float,float,float,fk::UnaryType>>,fk::BinaryInstantiableOperation<fk::Mul<float,float,float>>>>const&)>
+ lea 0x98(%rsp),%rdi
+ call <std::array<fk::Ptr2D<fk::Uchar3>,90ul>::~array()>
+@@ -192,22 +190,5 @@
+ pop %rbp
+ ret
+-mov $0x10,%edi
+-call <__cxa_allocate_exception@plt>
+-mov %rax,%r14
+-lea X(%rip),%rsi # <_IO_stdin_used+OFF>
+-mov %rax,%rdi
+-call <std::runtime_error::runtime_error(char const*)@plt>
+-mov X(%rip),%rsi # <typeinfo for std::runtime_error@GLIBCXX_3.4>
+-mov X(%rip),%rdx # <std::runtime_error::~runtime_error()@GLIBCXX_3.4>
+-mov %r14,%rdi
+-call <__cxa_throw@plt>
+-mov %rax,%rbx
+-mov %r14,%rdi
+-call <__cxa_free_exception@plt>
+-lea 0x98(%rsp),%rdi
+-call <std::array<fk::Ptr2D<fk::Uchar3>,90ul>::~array()>
+-mov %rbx,%rdi
+-call <_Unwind_Resume@plt>
+-jmp L7
++jmp L6
+ mov %rax,%rdi
+ call <__clang_call_terminate>
