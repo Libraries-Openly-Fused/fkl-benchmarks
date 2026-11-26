@@ -1,4 +1,4 @@
-# FKL #436 (task C on main) on the RX 9060: FKL's HIP tests and the outputs of every DPP, before and after (prepared, window not run yet)
+# FKL #436 (task C on main) on the RX 9060: FKL's HIP tests and the outputs of every DPP, before and after
 
 FKL #436 (draft, https://github.com/Libraries-Openly-Fused/FusedKernelLibrary/pull/436) ports task C to FKL main: every DPP runs through
 `fk::executeOperations<DPP>`, with one kernel, `launchDPP_Kernel`. It implements Oscar's task C decisions (LTS-C++17 #435) and his order of
@@ -69,3 +69,18 @@ Decision: the coordinator's brief of 2026-11-26 for #436's HIP window, after Osc
   The first failure ends the window. Nothing is timed.
 - **After the window,** without the GPU: `harness/compare.sh` of the two harness runs.
 - `GUARD_ONLY=1 launch.sh` passed on 2026-11-26 at 20:58:30+01:00 (`manifests/guard-only.txt`): no `Runner.Worker`, 0 GPU processes.
+
+## The window's result (granted by the coordinator on #72 at e332fbe; ran 2026-11-26 21:01:22-21:02:15 +01:00, RX 9060 gfx1200, ROCm 10.1)
+
+`launch.sh` ran as one detached call. The console is `window/window-console.txt`.
+- **The guards passed.** Idle before every step: 0, 0, 15 and 0 s of wait, no `Runner.Worker` and 0 GPU processes.
+- **FKL's HIP tests at the #436 head: 100% tests passed, 0 tests failed out of 48** (`window/tests/ctest.txt`, 36.6 s).
+- **The harness:** A (ebb3891, the entry functions) and B (1df2738, `executeOperations<DPP>`) each exited 0 with "72 outputs written": 24 cases
+  on CPU, CPU_MULTITHREAD and GPU_AMD.
+- **`compare.sh`: 72 outputs, 72 identical, 0 different** (`window/harness/compare.txt`). Every output of the after build is byte for byte
+  the before build's, on all three back-ends, and each was written.
+- **GPU_AMD against CPU** (informational, the same in A and B): GPU_AMD gives the same bytes as CPU in 22 of the 24 cases.
+  - The two exceptions are float cases, linear-float3-box3 and morph-batch-crop-resize-boxblur1, where the GPU and CPU compilers round float
+    arithmetic differently.
+  - These are the same two kinds of case as on LTS-C++17 (`../fkl-pr435-check/`).
+- The sentinel values left are the uchar sentinel 7 where it is also a computed value, as in the CPU run: 5 and 44 on every back-end.
