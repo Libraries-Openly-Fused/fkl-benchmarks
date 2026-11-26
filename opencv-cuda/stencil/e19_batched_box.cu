@@ -76,7 +76,7 @@
 //                               (rectangle of detection i), then .then() the grey op of fkl_loop (fk::ColorConversion<COLOR_RGB2GRAY, uchar3,
 //                               float>, the same rounding to an integer). FKL's Fuser makes it a BatchRead of the 30 fused (read, grey) IOps
 //                               (iop_fuser.h); its active threads are 256 x 256 x 30
-//                  box          the box blur's one pass (boxBlurReducers, morphology.h:179-208): an fk::Add reducer sums the 9 values of the
+//                  box          the box blur's one pass (boxBlurReducers, morphology.h:182-216): an fk::Add reducer sums the 9 values of the
 //                               3 x 3 window in float, and its finalizer, fk::Mul, multiplies the sum by 1 / 9 in float
 //                               (static_cast<float>(1. / (maskW * maskH)), the same float as fkl_loop's SCALE / 9.f). fkl_loop instead multiplies
 //                               each of the 9 values by 1 / 9 and sums the products
@@ -419,7 +419,7 @@ std::vector<double> fklReference(const std::vector<unsigned char>& frame, const 
 //   grey   FKL's grey rule, the lines of fklReference: std::nearbyint of t = 0.587f G, t = fma(0.299f, R, t), t = fma(0.114f, B, t)
 //   box    the box blur's one pass: its Add reducer sums the 9 grey values of the 3 x 3 window (border REPLICATE at the crop's edges: the kernel
 //          clamps every sample to the plane) in float, which is exact (integers up to 9 * 255 = 2,295); its finalizer, fk::Mul, multiplies the
-//          sum by 1 / 9 in float, static_cast<float>(1. / (maskW * maskH)) (boxBlurReducers, morphology.h:189-208), and rounds once to
+//          sum by 1 / 9 in float, static_cast<float>(1. / (maskW * maskH)) (boxBlurReducers, morphology.h:196-204), and rounds once to
 //          float. The reference rounds the same product once: the product of the two floats is exact in double, then it is cast to float
 //   output (box / 255 - 0.45) / 0.225 in double
 // Crop by crop, row by row, as the tensor.

@@ -22,9 +22,9 @@ executed later, inside a paused window, only for the kernel-time rows.
 ## The cliff at 1,024 operations (nvcc 13.4.92, sm_89)
 
 A kernel generated for N distinct operations (variant A) compiles to 17 registers and no spills up to **N = 1,023**, and to 255 registers with
-thousands of local-memory instructions from **N = 1,024**, with the kernel parameter block of the same size on both sides (4,504 B). The kernel is
-`launchTransformDPP_Kernel(const __grid_constant__ TDPPDetails, const __grid_constant__ IOps... operations)`: every operation is its own
-`__grid_constant__` kernel parameter.
+thousands of local-memory instructions from **N = 1,024**, with the kernel parameter block of the same size on both sides (4,504 B). The kernel was
+`launchTransformDPP_Kernel(const __grid_constant__ TDPPDetails, const __grid_constant__ IOps... operations)`; since FKL #435 it is
+`launchDPP_Kernel<TransformDPP<...>, TDPPDetails, IOps...>`, with the same parameters (`executor_kernels.h`): every operation is its own `__grid_constant__` kernel parameter.
 
 PTX of the chain kernel: N = 1,020: `ld.param` only. N = 1,023: the generic address of every parameter is taken (`cvta.param`, 1,025 of them) and kept in
 registers. N = 1,024: those addresses are stored into `.local .align 8 .b8 __local_depot0[8200]` (`st.local.u64` x 1,025) and reloaded; N = 1,030: depot
