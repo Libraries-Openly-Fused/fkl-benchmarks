@@ -1,0 +1,7 @@
+1. exit 0; runs 32; binaries in order: 16A 16B 
+   N of A: 1 10 20 30 40 50 60 70 80 90 100 110 120 130 140 150 
+   runs with E19_NO_TIMING=1, E19_DUMP set and 3 E19_ variables: 32
+   dump folders: A 16, B 16; files 160
+2. MOCK_SHORT=B-40: exit 1; runs 21; last line: check-B/n040 FAILED: the window stops here
+3. existing dump folder: M/d1 exists: not starting (nothing is overwritten); created: 0
+4. a GPU process listed: exit 1; runs 0; last line: not idle after 15 s (GPU processes 4242 ; loadavg ...): the window stops here
