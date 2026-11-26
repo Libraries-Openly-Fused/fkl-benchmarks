@@ -1,0 +1,24 @@
+# experiment: E19 batched box (AMD): whole-call and kernel-only times
+# notes: clock warm-up: one gpuSpin of 2000 ms after this file's header and right before the timing (the sclk before and after it is in the console)
+# repo: fkl-benchmarks unknown
+# fkl: b10fc6609426bd18020b9213c7196b528fc677a8
+# cvGPUSpeedup: not checked out
+# FastNPP: not checked out
+# nvcc: none (none), architectures native, -fmad on, -lineinfo on
+# hip: 24.0.0 (/opt/rocm/core-10.1/bin/amdclang++), architectures gfx1200
+# host compiler: Clang 24.0.0, Release, -march=native, -ftemplate-depth=1000
+# opencv: none
+# cpu: AMD Ryzen 7 5800X3D 8-Core Processor
+# os: Ubuntu 26.04.1 LTS
+# kernel: Linux 7.0.0-43-generic
+# gpu: AMD Radeon RX 9060, gfx1200, 14 WGPs (28 CUs), wave32, 8144 MiB, PCI 0000:0d:00.0
+# hip driver: 7.16.26385, hip runtime: 7.16.26385
+# clocks (gfx, mem, max gfx, max mem, MHz): 79, 96, 2400, 1124
+# amd-smi: AMDSMI Tool: 27.1.0+7da43026 | AMDSMI Library version: 27.1.0 | ROCm version: 10.1.0 | amdgpu version: 7.1.9.31600000 | ionic version: N/A
+crops,version,interval,mean_ms,min_ms,host_prepare_mean_ms,host_prepare_min_ms,iterations,spin_us,sclk_before_mhz,sclk_after_mhz
+140,fkl_loop,whole_call,0.948123335,0.908128977,,,100,,3476,3103
+140,fkl_loop,kernel_only,0.948377338,0.94164902,5.25e-05,4e-05,100,5000,3103,3401
+140,fkl_batch,whole_call,0.486713328,0.450764,,,100,,3401,3054
+140,fkl_batch,kernel_only,0.449476278,0.445883989,5.22e-05,4e-05,100,5000,3054,3453
+140,rpp,whole_call,1.08683556,1.07961094,,,100,,3453,3438
+140,rpp,kernel_only,1.08143666,1.07556999,5.42e-05,4e-05,100,5000,3438,3467

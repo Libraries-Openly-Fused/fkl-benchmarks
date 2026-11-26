@@ -1,0 +1,40 @@
+# experiment: E19 batched box (AMD): checks
+# repo: fkl-benchmarks 73a9650ea1a65daa92af97641d3bf0719682101e
+# fkl: 304492af4d777165bd556fdd6113439635724d02
+# cvGPUSpeedup: not checked out (pinned 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c)
+# FastNPP: not checked out (pinned a1b5e245d7dd70fba23dcb51a0aea80495dbc61d)
+# nvcc: none (none), architectures native, -fmad on, -lineinfo on
+# hip: 24.0.0 (/opt/rocm/core-10.1/bin/amdclang++), architectures gfx1200
+# host compiler: Clang 24.0.0, Release, -march=native, -ftemplate-depth=1000
+# opencv: none
+# cpu: AMD Ryzen 7 5800X3D 8-Core Processor
+# os: Ubuntu 26.04.1 LTS
+# kernel: Linux 7.0.0-43-generic
+# gpu: AMD Radeon RX 9060, gfx1200, 14 WGPs (28 CUs), wave32, 8144 MiB, PCI 0000:0d:00.0
+# hip driver: 7.16.26385, hip runtime: 7.16.26385
+# clocks (gfx, mem, max gfx, max mem, MHz): 54, 1124, 2400, 1124
+# amd-smi: AMDSMI Tool: 27.1.0+7da43026 | AMDSMI Library version: 27.1.0 | ROCm version: 10.1.0 | amdgpu version: 7.1.9.31600000 | ionic version: N/A
+crops,row,stage,against,values,values_differing_or_beyond,max_abs_diff,non_finite,criterion,ok
+50,rpp,grey,"(0.299f R + 0.587f G) + 0.114f B in float, no FMA, ties to even",3276800,230,1,0,RPP's source rule,-1
+50,rpp,grey,"t = 0.587f G; t = fma(0.299f, R, t); t = fma(0.114f, B, t), ties to even",3276800,0,0,0,candidate,-1
+50,rpp,grey,"t = 0.299f R; t = fma(0.587f, G, t); t = fma(0.114f, B, t), ties to even",3276800,278,1,0,candidate,-1
+50,rpp,grey,"t = 0.299f R + 0.587f G (rounded); t = fma(0.114f, B, t), ties to even",3276800,209,1,0,candidate,-1
+50,rpp,grey,"0.299f R + 0.587f G + 0.114f B exactly, ties to even",3276800,1528,1,0,candidate,-1
+50,rpp,grey,"the rule with the fewest: t = 0.587f G; t = fma(0.299f, R, t); t = fma(0.114f, B, t)",3276800,0,0,0,one rule with 0 differing values,1
+50,rpp,box,"round(sum / 9) of its own grey, REPLICATE",3276800,0,0,0,0 differing values,1
+50,rpp,box,floor(sum / 9) of its own grey (informational),3276800,1455848,1,0,informational,-1
+50,rpp,float,"(v / 255 - 0.45) / 0.225 in double, v its own box",3276800,0,1.34532488e-07,0,"within 1e-5, all finite",1
+50,fkl_loop,float,"fklReference, grey (0.299f R + 0.587f G) + 0.114f B in float, no FMA",3276800,2055,0.00387332252,0,candidate,-1
+50,fkl_loop,float,"fklReference, grey t = 0.587f G; t = fma(0.299f, R, t); t = fma(0.114f, B, t)",3276800,0,7.01231115e-07,0,candidate,-1
+50,fkl_loop,float,"fklReference, grey t = 0.299f R; t = fma(0.587f, G, t); t = fma(0.114f, B, t)",3276800,2490,0.00387335525,0,candidate,-1
+50,fkl_loop,float,"fklReference, grey t = 0.299f R + 0.587f G (rounded); t = fma(0.114f, B, t)",3276800,1866,0.00387332252,0,candidate,-1
+50,fkl_loop,float,"fklReference, grey 0.299f R + 0.587f G + 0.114f B exactly",3276800,13655,0.00387342187,0,candidate,-1
+50,fkl_loop,float,"fklReference, the grey order with the fewest: t = 0.587f G; t = fma(0.299f, R, t); t = fma(0.114f, B, t)",3276800,0,7.01231115e-07,0,"one order within 1e-5, all finite",1
+50,fkl_batch,float,"fklReference, grey (0.299f R + 0.587f G) + 0.114f B in float, no FMA",3276800,2055,0.00387332252,0,candidate,-1
+50,fkl_batch,float,"fklReference, grey t = 0.587f G; t = fma(0.299f, R, t); t = fma(0.114f, B, t)",3276800,0,3.5645915e-07,0,candidate,-1
+50,fkl_batch,float,"fklReference, grey t = 0.299f R; t = fma(0.587f, G, t); t = fma(0.114f, B, t)",3276800,2490,0.00387325941,0,candidate,-1
+50,fkl_batch,float,"fklReference, grey t = 0.299f R + 0.587f G (rounded); t = fma(0.114f, B, t)",3276800,1866,0.00387332252,0,candidate,-1
+50,fkl_batch,float,"fklReference, grey 0.299f R + 0.587f G + 0.114f B exactly",3276800,13655,0.00387332252,0,candidate,-1
+50,fkl_batch,float,"fklReference, the grey order with the fewest: t = 0.587f G; t = fma(0.299f, R, t); t = fma(0.114f, B, t)",3276800,0,3.5645915e-07,0,"one order within 1e-5, all finite",1
+50,rpp,float,fkl_loop,3276800,0,0.0077469945,0,reported,-1
+50,fkl_batch,float,fkl_loop,3276800,0,7.74860382e-07,0,reported,-1

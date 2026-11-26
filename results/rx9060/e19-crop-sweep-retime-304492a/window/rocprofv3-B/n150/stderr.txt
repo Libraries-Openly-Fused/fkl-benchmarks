@@ -1,0 +1,83 @@
+W1126 19:50:30.836523 2667181 simple_timer.cpp:55] [rocprofv3] tool initialization ::     0.004004 sec
+W1126 19:50:30.837519 2667181 simple_timer.cpp:55] [rocprofv3] '/home/cudeiro/rocm-fkl-benchmarks/tmp/vbuild/rt-73a9650-hip/bin/e19_crop_sweep_hip' ::     0.000000 sec
+W1126 19:50:30.852758 2667181 tool.cpp:3671] HIP (runtime) version 7.16.0 initialized (instance=0)
+W1126 19:50:30.862779 2667181 tool.cpp:3671] HSA version 1.21.0 initialized (instance=0)
+W1126 19:50:31.528106 2667181 queue_controller.cpp:213] [queue-intercept] device-memory ring-buffer requested but profiling requires system-memory InterceptQueue; falling back to system-memory ring for agent 98146167876736 (priority and CU-mask from the descriptor are not preserved)
+W1126 19:50:31.573580 2667181 queue_controller.cpp:213] [queue-intercept] device-memory ring-buffer requested but profiling requires system-memory InterceptQueue; falling back to system-memory ring for agent 98146167876736 (priority and CU-mask from the descriptor are not preserved)
+W1126 19:50:31.629435 2667181 queue_controller.cpp:213] [queue-intercept] device-memory ring-buffer requested but profiling requires system-memory InterceptQueue; falling back to system-memory ring for agent 98146167876736 (priority and CU-mask from the descriptor are not preserved)
+W1126 19:50:31.783899 2667291 simple_timer.cpp:55] [rocprofv3] tool initialization ::     0.004017 sec
+W1126 19:50:31.784136 2667291 simple_timer.cpp:55] [rocprofv3] 'sh -c -- grep -m1 'model name' /proc/cpuinfo | cut -d: -f2- | sed 's/^ *//' 2>/dev/null' ::     0.000000 sec
+W1126 19:50:31.833195 2667313 simple_timer.cpp:55] [rocprofv3] tool initialization ::     0.003935 sec
+W1126 19:50:31.833414 2667313 simple_timer.cpp:55] [rocprofv3] 'grep -m1 model name /proc/cpuinfo' ::     0.000000 sec
+W1126 19:50:31.833942 2667313 simple_timer.cpp:55] [rocprofv3] 'grep -m1 model name /proc/cpuinfo' ::     0.000528 sec
+W1126 19:50:31.835373 2667321 simple_timer.cpp:55] [rocprofv3] tool initialization ::     0.003953 sec
+W1126 19:50:31.835569 2667321 simple_timer.cpp:55] [rocprofv3] 'cut -d: -f2-' ::     0.000000 sec
+W1126 19:50:31.845297 2667313 simple_timer.cpp:55] [rocprofv3] output generation ::     0.011185 sec
+W1126 19:50:31.845318 2667313 simple_timer.cpp:55] [rocprofv3] tool finalization ::     0.011353 sec
+W1126 19:50:31.845512 2667358 tool.cpp:4559] [PPID=2667291][PID=2667313][TID=2667358][signal_finalization_worker] rocprofv3 finalizing after signal 0...
+W1126 19:50:31.845574 2667358 tool.cpp:4484] [PPID=2667291][PID=2667313][TID=2667358][signal_finalization_worker] rocprofv3 waiting for 0 children to exit
+W1126 19:50:31.859633 2667321 simple_timer.cpp:55] [rocprofv3] output generation ::     0.013815 sec
+W1126 19:50:31.859656 2667321 simple_timer.cpp:55] [rocprofv3] tool finalization ::     0.013998 sec
+W1126 19:50:31.859864 2667363 tool.cpp:4559] [PPID=2667291][PID=2667321][TID=2667363][signal_finalization_worker] rocprofv3 finalizing after signal 0...
+W1126 19:50:31.859915 2667363 tool.cpp:4484] [PPID=2667291][PID=2667321][TID=2667363][signal_finalization_worker] rocprofv3 waiting for 0 children to exit
+W1126 19:50:31.928499 2667364 simple_timer.cpp:55] [rocprofv3] tool initialization ::     0.004101 sec
+W1126 19:50:31.928683 2667364 simple_timer.cpp:55] [rocprofv3] 'sh -c -- (. /etc/os-release && echo "$PRETTY_NAME") 2>/dev/null' ::     0.000000 sec
+W1126 19:50:31.976742 2667395 simple_timer.cpp:55] [rocprofv3] tool initialization ::     0.004131 sec
+W1126 19:50:31.976935 2667395 simple_timer.cpp:55] [rocprofv3] 'sh -c -- uname -sr 2>/dev/null' ::     0.000000 sec
+W1126 19:50:32.088046 2667431 simple_timer.cpp:55] [rocprofv3] tool initialization ::     0.003938 sec
+W1126 19:50:32.088236 2667431 simple_timer.cpp:55] [rocprofv3] 'sh -c -- (amd-smi metric -g 0000:0d:00.0 --clock | awk '/^ +[A-Z]+_[0-9]+:$/ {s = ($1 == "GFX_0:") ? 1 : (($1 == "MEM_0:") ? 2 : 0)} $1 == "CLK:" {if (s == 1) gc = $2; if (s == 2) mc = $2} $1 == "MAX_CLK:" {if (s == 1) gm = $2; if (s == 2) mm = $2} END {if (gc == "") exit 1; print gc ", " mc ", " gm ", " mm}') 2>/dev/null' ::     0.000000 sec
+W1126 19:50:32.335388 2667518 simple_timer.cpp:55] [rocprofv3] tool initialization ::     0.003972 sec
+W1126 19:50:32.335577 2667518 simple_timer.cpp:55] [rocprofv3] 'sh -c -- amd-smi version | head -1 2>/dev/null' ::     0.000000 sec
+W1126 19:50:32.382326 2667527 simple_timer.cpp:55] [rocprofv3] tool initialization ::     0.003949 sec
+W1126 19:50:32.382540 2667527 simple_timer.cpp:55] [rocprofv3] '/usr/bin/env python3 /usr/bin/amd-smi version' ::     0.000000 sec
+W1126 19:50:32.430116 2667527 simple_timer.cpp:55] [rocprofv3] tool initialization ::     0.004719 sec
+W1126 19:50:32.430419 2667527 simple_timer.cpp:55] [rocprofv3] 'python3 /usr/bin/amd-smi version' ::     0.000000 sec
+W1126 19:50:32.502638 2667527 simple_timer.cpp:55] [rocprofv3] 'python3 /usr/bin/amd-smi version' ::     0.072219 sec
+W1126 19:50:32.514400 2667527 simple_timer.cpp:55] [rocprofv3] output generation ::     0.011540 sec
+W1126 19:50:32.514420 2667527 simple_timer.cpp:55] [rocprofv3] tool finalization ::     0.011743 sec
+W1126 19:50:32.514642 2667582 tool.cpp:4559] [PPID=2667518][PID=2667527][TID=2667582][signal_finalization_worker] rocprofv3 finalizing after signal 0...
+W1126 19:50:32.514694 2667582 tool.cpp:4484] [PPID=2667518][PID=2667527][TID=2667582][signal_finalization_worker] rocprofv3 waiting for 0 children to exit
+W1126 19:50:32.832866 2667621 simple_timer.cpp:55] [rocprofv3] tool initialization ::     0.004078 sec
+W1126 19:50:32.833073 2667621 simple_timer.cpp:55] [rocprofv3] 'sh -c -- grep -m1 'model name' /proc/cpuinfo | cut -d: -f2- | sed 's/^ *//' 2>/dev/null' ::     0.000000 sec
+W1126 19:50:32.880557 2667643 simple_timer.cpp:55] [rocprofv3] tool initialization ::     0.004006 sec
+W1126 19:50:32.880786 2667643 simple_timer.cpp:55] [rocprofv3] 'cut -d: -f2-' ::     0.000000 sec
+W1126 19:50:32.881995 2667636 simple_timer.cpp:55] [rocprofv3] tool initialization ::     0.004012 sec
+W1126 19:50:32.882176 2667636 simple_timer.cpp:55] [rocprofv3] 'grep -m1 model name /proc/cpuinfo' ::     0.000000 sec
+W1126 19:50:32.882724 2667636 simple_timer.cpp:55] [rocprofv3] 'grep -m1 model name /proc/cpuinfo' ::     0.000548 sec
+W1126 19:50:32.893949 2667636 simple_timer.cpp:55] [rocprofv3] output generation ::     0.011046 sec
+W1126 19:50:32.893971 2667636 simple_timer.cpp:55] [rocprofv3] tool finalization ::     0.011226 sec
+W1126 19:50:32.894171 2667685 tool.cpp:4559] [PPID=2667621][PID=2667636][TID=2667685][signal_finalization_worker] rocprofv3 finalizing after signal 0...
+W1126 19:50:32.894224 2667685 tool.cpp:4484] [PPID=2667621][PID=2667636][TID=2667685][signal_finalization_worker] rocprofv3 waiting for 0 children to exit
+W1126 19:50:32.906937 2667643 simple_timer.cpp:55] [rocprofv3] output generation ::     0.012461 sec
+W1126 19:50:32.906959 2667643 simple_timer.cpp:55] [rocprofv3] tool finalization ::     0.012649 sec
+W1126 19:50:32.907162 2667680 tool.cpp:4559] [PPID=2667621][PID=2667643][TID=2667680][signal_finalization_worker] rocprofv3 finalizing after signal 0...
+W1126 19:50:32.907213 2667680 tool.cpp:4484] [PPID=2667621][PID=2667643][TID=2667680][signal_finalization_worker] rocprofv3 waiting for 0 children to exit
+W1126 19:50:32.975180 2667700 simple_timer.cpp:55] [rocprofv3] tool initialization ::     0.004041 sec
+W1126 19:50:32.975367 2667700 simple_timer.cpp:55] [rocprofv3] 'sh -c -- (. /etc/os-release && echo "$PRETTY_NAME") 2>/dev/null' ::     0.000000 sec
+W1126 19:50:33.022364 2667719 simple_timer.cpp:55] [rocprofv3] tool initialization ::     0.004038 sec
+W1126 19:50:33.022550 2667719 simple_timer.cpp:55] [rocprofv3] 'sh -c -- uname -sr 2>/dev/null' ::     0.000000 sec
+W1126 19:50:33.131663 2667750 simple_timer.cpp:55] [rocprofv3] tool initialization ::     0.004031 sec
+W1126 19:50:33.131853 2667750 simple_timer.cpp:55] [rocprofv3] 'sh -c -- (amd-smi metric -g 0000:0d:00.0 --clock | awk '/^ +[A-Z]+_[0-9]+:$/ {s = ($1 == "GFX_0:") ? 1 : (($1 == "MEM_0:") ? 2 : 0)} $1 == "CLK:" {if (s == 1) gc = $2; if (s == 2) mc = $2} $1 == "MAX_CLK:" {if (s == 1) gm = $2; if (s == 2) mm = $2} END {if (gc == "") exit 1; print gc ", " mc ", " gm ", " mm}') 2>/dev/null' ::     0.000000 sec
+W1126 19:50:33.382137 2667837 simple_timer.cpp:55] [rocprofv3] tool initialization ::     0.004011 sec
+W1126 19:50:33.382340 2667837 simple_timer.cpp:55] [rocprofv3] 'sh -c -- amd-smi version | head -1 2>/dev/null' ::     0.000000 sec
+W1126 19:50:33.431358 2667846 simple_timer.cpp:55] [rocprofv3] tool initialization ::     0.004189 sec
+W1126 19:50:33.431603 2667846 simple_timer.cpp:55] [rocprofv3] '/usr/bin/env python3 /usr/bin/amd-smi version' ::     0.000000 sec
+W1126 19:50:33.479166 2667846 simple_timer.cpp:55] [rocprofv3] tool initialization ::     0.004066 sec
+W1126 19:50:33.479399 2667846 simple_timer.cpp:55] [rocprofv3] 'python3 /usr/bin/amd-smi version' ::     0.000000 sec
+W1126 19:50:33.552585 2667846 simple_timer.cpp:55] [rocprofv3] 'python3 /usr/bin/amd-smi version' ::     0.073186 sec
+W1126 19:50:33.565414 2667846 simple_timer.cpp:55] [rocprofv3] output generation ::     0.012625 sec
+W1126 19:50:33.565437 2667846 simple_timer.cpp:55] [rocprofv3] tool finalization ::     0.012810 sec
+W1126 19:50:33.565670 2667901 tool.cpp:4559] [PPID=2667837][PID=2667846][TID=2667901][signal_finalization_worker] rocprofv3 finalizing after signal 0...
+W1126 19:50:33.565720 2667901 tool.cpp:4484] [PPID=2667837][PID=2667846][TID=2667901][signal_finalization_worker] rocprofv3 waiting for 0 children to exit
+W1126 19:50:35.575448 2667181 tool.cpp:3671] MARKER (ROCTx) version 1.4.1 initialized (instance=0)
+W1126 19:50:37.884156 2667181 simple_timer.cpp:55] [rocprofv3] '/home/cudeiro/rocm-fkl-benchmarks/tmp/vbuild/rt-73a9650-hip/bin/e19_crop_sweep_hip' ::     7.046637 sec
+E1126 19:50:37.896956 2667181 output_stream.cpp:110] Opened result file: trace/e19_kernel_trace.csv
+E1126 19:50:38.186259 2667181 output_stream.cpp:110] Opened result file: trace/e19_hip_api_trace.csv
+E1126 19:50:38.537676 2667181 output_stream.cpp:110] Opened result file: trace/e19_memory_copy_trace.csv
+E1126 19:50:38.548590 2667181 output_stream.cpp:110] Opened result file: trace/e19_memory_allocation_trace.csv
+E1126 19:50:38.555932 2667181 output_stream.cpp:110] Opened result file: trace/e19_marker_api_trace.csv
+E1126 19:50:38.567257 2667181 output_stream.cpp:110] Opened result file: trace/e19_agent_info.csv
+W1126 19:50:38.573358 2667181 simple_timer.cpp:55] [rocprofv3] output generation ::     0.682844 sec
+W1126 19:50:38.573476 2667181 simple_timer.cpp:55] [rocprofv3] tool finalization ::     0.683112 sec
+W1126 19:50:38.573795 2667190 tool.cpp:4559] [PPID=2667178][PID=2667181][TID=2667190][signal_finalization_worker] rocprofv3 finalizing after signal 0...
+W1126 19:50:38.573850 2667190 tool.cpp:4484] [PPID=2667178][PID=2667181][TID=2667190][signal_finalization_worker] rocprofv3 waiting for 0 children to exit

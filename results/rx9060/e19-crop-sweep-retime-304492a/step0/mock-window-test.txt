@@ -1,0 +1,9 @@
+1. E19 window: exit 0; runs 160; sweeps: unused-A unused-B quiet-run1-A quiet-run1-B quiet-run2-A quiet-run2-B quiet-run3-A quiet-run3-B rocprofv3-A rocprofv3-B 
+   binaries in order: 16A 16B 16A 16B 16A 16B 16A 16B 16A 16B ; runs with one E19_ variable: 160
+   N of the first sweep: 1 10 20 30 40 50 60 70 80 90 100 110 120 130 140 150 
+   E18 window: exit 0; runs: A:unused-A B:unused-B A:quiet-run1-A B:quiet-run1-B A:quiet-run2-A B:quiet-run2-B A:quiet-run3-A B:quiet-run3-B A:rocprofv3-A B:rocprofv3-B ; E18_ variables set: 0
+2. MOCK_FAIL=B-40: exit 1; runs 21; last line: unused-B/n040 FAILED: the window stops here
+3. existing folder: M/o1 exists: not starting (nothing is overwritten)
+   wrong sha256 of B: M/19B/e19_crop_sweep_hip differs from the record: not starting; created: 0
+   wrong fkl-benchmarks commit: M/19B/e19_crop_sweep_hip does not carry fkl-benchmarks 976e42b000000000000000000000000000000000: not starting; created: 0
+4. a GPU process listed: exit 1; runs 0; last line: not idle after 15 s (GPU processes 4242 ; loadavg ...): the window stops here
