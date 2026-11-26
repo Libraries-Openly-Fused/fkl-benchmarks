@@ -20,12 +20,19 @@
 
 Nothing is timed. This repository's pin does not change.
 
-**State.** Done:
+**State.** Everything is done:
 - the builds (steps 1 and 1b);
 - the device-code comparison;
-- the harness build.
+- the harness build;
+- the GPU window, granted by the coordinator for #65 at 008c9d7 and run 2026-11-26 15:08:31-15:08:52 (+01:00, from `window/window-console.txt`).
 
-**Pending:** the GPU window (`window-script.sh`), after the coordinator's grant.
+**Results.**
+- At the 64 kernels that #435 changes by design, the SASS differs; every other kernel pair is identical.
+- FKL's 59 CUDA tests pass at both commits, including #435's new split-KV + combine test.
+- The harness outputs of every CUDA DPP are equal bit for bit, base against head: 59 of 59.
+- **The split path:**
+  - the head's split + combine passes the PR test's checks against the double oracle, with and without the epilogue;
+  - the base's split output with the epilogue o * 2 + 0.5 is bit for bit its output with the identity, so the base dropped the epilogue, the bug #435 fixes.
 
 ## Result (compile only)
 **Builds** (`compile/`): FKL's test matrix built at both commits, with no failure.
@@ -144,8 +151,48 @@ Nothing is timed. This repository's pin does not change.
 - nvcc 13.4.92 with the CUDA flags of FKL's tests: `-O3 -DNDEBUG -std=c++17 --generate-code=arch=compute_89,code=[compute_89,sm_89] -ftemplate-depth=1000 -lineinfo`;
 - FKL's include folder, compile only. The sources' and binaries' sha256 are in the console.
 
-## The GPU window (`window-script.sh`, pending)
-The window starts only after the coordinator's grant. It stops at the first failure.
+## The GPU window (`window-script.sh`), 2026-11-26 15:08:31-15:08:52 +01:00
+The coordinator granted it for #65 at 008c9d7, with the script's sha256 6c5f57b5, the manifest's 1f193c5d and compare_harness.py's 54fe97ba. The paper agent held its compiles. The times come from `window/window-console.txt`.
+
+### Results
+**FKL's CUDA tests: every test passed.**
+- At 48fbf3f: 59 of 59 in 10 s (`window/fkl-tests-head-48fbf3f-console.txt`, `.log`).
+- In `utest_flash_attention_mma_cu`, the new split-KV test passed all 9 checks. Its largest error against its bound is 1.68e-3 within 6e-3: the causal d64 shape with the epilogue.
+- At b10fc66: 59 of 59 in 10 s (`window/fkl-tests-base-b10fc66-console.txt`, `.log`).
+
+**The harness: 4 runs, every one exited 0 with an empty standard error and its PASS line** (`window/harness/<side>/`).
+- **Files:** the base wrote 62 output files (36 + 26), the head 68 (36 + 32). The head's 6 more are the unsplit outputs of the split shapes, which only the head runs.
+- **Split counts:**
+  - `flashAttentionMmaSplits` gave 4, 2 and 5 on the three split shapes, the base formula's counts;
+  - the automatic split shape: 4 at both commits.
+- **The automatic tiles at the head:** 64 x 128 x 4, 128 x 64 x 4, 128 x 128 x 8, 64 x 64 x 4 (split), and 128 x 32 x 4 (int8).
+- **FlashDecode:** 16, 4 and 1 splits.
+- **The label:** the head harness's first line says "FKL e322cad API". That text was written into `pr435_common.h` before the head moved. The binary was built against the 48fbf3f tree (`harness/build/build-console.txt`), whose library headers are e322cad's.
+
+**Base against head** (`window/harness-comparison.txt`, `.csv`), on the CPU after the GPU steps:
+- **Bit for bit:** 59 of 59 shared outputs are equal. They are:
+  - every image DPP case: the filter DPPs, whose SASS changed; the batches with per-image sizes; the four Quads; TransformDPP and DivergentBatch;
+  - the removed convenience functions against the PR's replacements (`executeBoxFilter`, `executeErode/Dilate/Open/Close`, `executeBoxBlur`);
+  - softmax, SIMT FlashAttention, every MMA case, the automatic ones included;
+  - the identity split + combine against the base's automatic split;
+  - FlashDecode;
+  - the three oracles.
+- **The split path** (TOL = 3e-3):
+
+  | shape | head split + combine vs oracle | head split + combine, epilogue, vs 2 * oracle + 0.5 | head unsplit, epilogue | max \|split - unsplit\| (identity / epilogue) | base split, epilogue, vs 2 * oracle + 0.5 |
+  |---|--:|--:|--:|--:|--:|
+  | d64 dense b2 s64 -> s1024 | 1.25e-4 | 2.50e-4 | 2.59e-4 | 1.49e-4 / 2.97e-4 | 0.563 |
+  | d64 causal b1 s1024 | 1.32e-3 | 2.63e-3 | 2.63e-3 | 3.20e-4 / 6.39e-4 | 1.48 |
+  | d128 dense b2 s70 -> s1500 | 9.73e-5 | 1.95e-4 | 2.02e-4 | 1.29e-4 / 2.59e-4 | 0.558 |
+
+  - **The head:** every check passes, within 3e-3 without the epilogue and within 6e-3 with it.
+  - **The base, on all three shapes:** its split output with the epilogue is bit for bit its output with the identity. It therefore misses 2 * oracle + 0.5 by 0.56-1.48: the epilogue is dropped.
+  - **The base without the epilogue:** within TOL of the oracle (the same numbers as the head's, which are equal bit for bit).
+
+**The clock.** The samples (`window/gpu_clocks.csv`, every 100 ms) read 2,550 and 2,700 MHz while the GPU ran, and 210 MHz while it was idle. Nothing was timed.
+
+### The steps
+The window stopped at the first failure; there was none.
 1. **FKL's CUDA tests at 48fbf3f:** the 59 ctest tests named `*_cu`, with `ctest -j1 --stop-on-failure --timeout 300`. They include `utest_flash_attention_mma_cu` with the new split-KV test.
 2. **The same 59 at b10fc66,** the baseline.
 3. **The harness, base build:** `pr435_image`, then `pr435_attention`.
@@ -203,7 +250,13 @@ Then, on the CPU, `compare_harness.py`.
 | `harness/build/` | the harness build's console and the compiler output |
 | `scripts-used/` | compile.sh, compile-48fbf3f.sh, pr435_sass_identity.py, diff_summary.py, combine_compare.py |
 | `window-script.sh`, `window-binaries.sha256` | the window's script and the sha256 of the 146 binaries it runs |
+| `window/window-console.txt`, `window/window-script.sh` | the window's console and the copy of the script it ran |
+| `window/fkl-tests-{head-48fbf3f,base-b10fc66}-console.txt`, `.log` | ctest's console and its output log (`-V --output-log`) |
+| `window/harness/<side>/` | each harness run: stdout, stderr, exit code, the clock at its end |
+| `window/harness-comparison.txt`, `.csv` | the comparison base against head |
+| `window/harness-outputs-sha256.txt` | the sha256 of the 130 harness output files |
+| `window/environment-{before,after}.txt`, `gpu-info.csv`, `gpu_clocks.csv`, `gpu_clocks.err`, `load.log` | the machine's state and the samplers |
 
 **Left out:**
 - the build trees and the binaries, in `scratch/pr435/` of the RTX 4090 machine;
-- the harness outputs, which the window writes to `scratch/pr435/harness-out/`. Their sha256 will be in `window/`.
+- the harness outputs (130 files, 56 MiB, in `scratch/pr435/harness-out/`). Their sha256 are in `window/harness-outputs-sha256.txt`.
