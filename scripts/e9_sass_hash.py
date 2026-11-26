@@ -50,7 +50,7 @@ def kernels(binary):
 
 def name_of(mangled):
     d = subprocess.run(["c++filt", mangled], capture_output=True, text=True).stdout
-    if "launchTransformDPP_Kernel" not in d:
+    if "launchTransformDPP_Kernel" not in d and "launchDPP_Kernel<fk::TransformDPP<" not in d:   # the old name, or FKL #435's
         return None
     cv = "PlanePolicy)1" in d
     swap = "VectorReorderRT" in d

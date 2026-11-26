@@ -64,7 +64,7 @@ struct VerticalFusionMAD {
         const dim3 block(256);
         const dim3 grid(ceil(inputWidth / static_cast<float>(block.x)));
         const cudaStream_t stream = cv::cuda::StreamAccessor::getStream(cv_stream);
-        fk::launchTransformDPP_Kernel<fk::ParArch::GPU_NVIDIA, fk::TF::DISABLED, true><<<grid, block, 0, stream>>>(tDetails, readOp, cvGS::convertTo<CV_TYPE_I, CV_TYPE_O>(), loop, writeOp);
+        fk::launchDPP_Kernel<fk::TransformDPP<fk::ParArch::GPU_NVIDIA, fk::TF::DISABLED, std::decay_t<decltype(tDetails)>, true>><<<grid, block, 0, stream>>>(tDetails, readOp, cvGS::convertTo<CV_TYPE_I, CV_TYPE_O>(), loop, writeOp);
         gpuErrchk(cudaGetLastError());
     }
 };

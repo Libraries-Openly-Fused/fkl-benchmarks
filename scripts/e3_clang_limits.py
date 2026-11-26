@@ -149,9 +149,9 @@ class Setup:
 
 
 def hip_resources(err):
-    """The resource usage remark of the fused kernel (launchTransformDPP_Kernel)."""
+    """The resource usage remark of the fused kernel (launchTransformDPP_Kernel; since FKL #435 launchDPP_Kernel<fk::TransformDPP<...>, ...>)."""
     for block in re.split(r"Function Name: ", err)[1:]:
-        if "launchTransformDPP_Kernel" not in block.split("\n")[0]:
+        if "launchTransformDPP_Kernel" not in block.split("\n")[0] and "16launchDPP_KernelINS_12TransformDPPI" not in block.split("\n")[0]:
             continue
         def g(key):
             m = re.search(re.escape(key) + r":\s*(\d+)", block)
@@ -265,7 +265,7 @@ def kernel_metadata(exe, rocm, arch):
                         "--output=" + code], check=True, capture_output=True)
         notes = subprocess.run([os.path.join(llvm, "llvm-readobj"), "--notes", code], capture_output=True, text=True, check=True).stdout
     for block in re.split(r"\n  - (?=\.)", notes.split("amdhsa.kernels:", 1)[-1] if "amdhsa.kernels:" in notes else notes):
-        if "launchTransformDPP_Kernel" in block:
+        if "launchTransformDPP_Kernel" in block or "16launchDPP_KernelINS_12TransformDPPI" in block:
             def g(key):
                 m = re.search(re.escape(key) + r":\s*(\d+)", block)
                 return int(m.group(1)) if m else ""

@@ -31,7 +31,7 @@
 // batched call at all; NPP's batched calls are its resize and its colour twist, and nppiColorTwistBatch keeps the channel count, so it is not
 // a grey conversion), so each library loops over the crops. FKL as it runs at the pin 24478f0, in two rows. fkl_loop: its linear filter
 // (LinearFilterDPP) computes one image per call, so it loops too, with the whole pipeline of a crop in one fused call (one kernel per crop);
-// it is the reference that a batched LinearFilterDPP must match later. fkl_batch: its box blur (MorphologyDPP, fk::executeBoxBlur) takes a
+// it is the reference that a batched LinearFilterDPP must match later. fkl_batch: its box blur (MorphologyDPP, fk::boxBlurReducers) takes a
 // batch, so it computes the N crops in one call (one kernel per frame).
 //
 // The pipeline, per frame, the same in every library:
@@ -67,7 +67,7 @@
 //                    (nppi_data_exchange_and_initialization.h, "Scale To Higher Bit Depth") documents dst = nMin + (nMax - nMin) / (srcMax - srcMin)
 //                    * (src - srcMin), with nMin and nMax as the destination range and the clamp: with the 8-bit range [0, 255] as the source
 //                    range, dst = v * (nMax - nMin) / 255 + nMin = v * ALPHA + BETA in one call. The float check below tests that reading
-//   fkl_loop     per crop, one fk::executeLinearFilter (FKL's linear_filter.h, its GPU_NVIDIA version), one kernel:
+//   fkl_loop     per crop, one fk::executeOperations<fk::LinearFilterDPP<GPU_NVIDIA, FklDetails>> (FKL's linear_filter.h), one kernel:
 //                  image read   fk::PerThreadRead<_2D, uchar3> of the crop view (crop2D of the rectangle of detection i), then
 //                               fk::ColorConversion<COLOR_RGB2GRAY, uchar3, float>, which is fk::RGB2Gray<uchar3, float> (color_conversion.h):
 //                               (R * 0.299f) + (G * 0.587f) + (B * 0.114f) in float, then rounded to the nearest integer, ties to even, held in
@@ -77,21 +77,22 @@
 //                               resize there: the DPP stages the grey values of each tile with its replicated border in shared memory, the
 //                               border at the crop's own edges (readReplicate in neighborhood.h)
 //                  coefficient  fk::ConstantFilterRead<float> with 1 / 9 in float (scale / (kernel width * kernel height), computed as
-//                               fk::executeBoxFilter computes it), as E18's fkl_box_* rows (e18_box.cu, fkl_box_asym)
+//                               the removed fk::executeBoxFilter computed it), as E18's fkl_box_* rows (e18_box.cu, fkl_box_asym)
 //                  multiply     fk::Mul<float, float, float, fk::UnaryType>; accumulate fk::Add<float, float, float, fk::UnaryType>
 //                  write        fk::Div<float> by 255, fk::Sub<float> of 0.45, fk::Div<float> by 0.225 (correctly rounded divisions: the target is
 //                               built without fast math), then fk::PerThreadWrite<_3D, float> of the view of plane i of FKL's tensor
 //                               (fk::Tensor<float> of 256 x 256 x N planes, contiguous; the view is fk::Ptr::crop at (0, 0, i) with one plane)
 //                  details      fk::LinearFilterDPPDetails<float> with its defaults (a 16 x 8 tile, a largest kernel of 7 x 7)
 //                Every call builds the N crop views, the IOps and the details, and launches N kernels.
-//   fkl_batch    per frame, one fk::executeBoxBlur<1> (FKL's morphology.h, MorphologyDPP, its GPU_NVIDIA version), one kernel: one block per
+//   fkl_batch    per frame, one fk::executeOperations<fk::MorphologyDPP<GPU_NVIDIA, FklBatchDetails>> with fk::boxBlurReducers<float, 1>
+//                (FKL's morphology.h), one kernel: one block per
 //                16 x 8 tile of a plane, and one grid z plane per plane of the input (morphology_detail::planesOf, the z of the input's active
 //                threads: here the batch, N). Each plane is read and written at Point{x, y, plane}, with its own replicated border:
 //                  image read   a BatchRead of the N crop views: fk::PerThreadRead<_2D, uchar3>::build of a std::array of the N fkFrame.crop2D
 //                               (rectangle of detection i), then .then() the grey op of fkl_loop (fk::ColorConversion<COLOR_RGB2GRAY, uchar3,
 //                               float>, the same rounding to an integer). FKL's Fuser makes it a BatchRead of the N fused (read, grey) IOps
 //                               (iop_fuser.h); its active threads are 256 x 256 x N
-//                  box          the box blur's one pass (boxBlurReducers, morphology.h:179-208): an fk::Add reducer sums the 9 values of the
+//                  box          the box blur's one pass (boxBlurReducers, morphology.h:182-216): an fk::Add reducer sums the 9 values of the
 //                               3 x 3 window in float, and its finalizer, fk::Mul, multiplies the sum by 1 / 9 in float
 //                               (static_cast<float>(1. / (maskW * maskH)), the same float as fkl_loop's SCALE / 9.f). fkl_loop instead multiplies
 //                               each of the 9 values by 1 / 9 and sums the products
@@ -189,7 +190,7 @@ constexpr size_t PLANE = static_cast<size_t>(CROP_W) * CROP_H;   // 65,536 value
 constexpr double ALPHA = 1.0 / 57.375, BETA = -2.0;               // (v / 255 - 0.45) / 0.225 = v / 57.375 - 2 (0.225 * 255 = 57.375)
 constexpr float NPP_MIN = -2.0f, NPP_MAX = 0.55f / 0.225f;        // the values of v = 0 and v = 255
 constexpr double FLOAT_TOLERANCE = 1e-5;
-constexpr float SCALE = 1.f;   // the scale argument of fk::executeBoxFilter: FKL's coefficient is SCALE / (BOX_W * BOX_H), as in E18
+constexpr float SCALE = 1.f;   // the scale argument of the removed fk::executeBoxFilter: FKL's coefficient is SCALE / (BOX_W * BOX_H), as in E18
 // fkl_loop's tolerance against its reference in double, from FKL's float arithmetic (bounds, one rounding = half a unit in the last place):
 //   grey        none: the reference computes FKL's grey value exactly as the kernel does (an integer, see fklReference)
 //   box         9 products (at most 28.3) and 8 sums (at most 255): at most 6.9e-5 in grey levels (the reference holds the same coefficient,
@@ -462,11 +463,12 @@ std::vector<double> fklReference(const std::vector<unsigned char>& frame, const 
     return out;
 }
 
-// fkl_batch's reference in double: FKL's pipeline as fk::executeBoxBlur<1> computes it (morphology.h at 24478f0).
+// fkl_batch's reference in double: FKL's pipeline as its box blur computes it (fk::executeBoxBlur<1>, morphology.h at 24478f0; MorphologyDPP
+// with fk::boxBlurReducers<float, 1> since FKL #435).
 //   grey   FKL's grey rule, the lines of fklReference: std::nearbyint of t = 0.587f G, t = fma(0.299f, R, t), t = fma(0.114f, B, t)
 //   box    the box blur's one pass: its Add reducer sums the 9 grey values of the 3 x 3 window (border REPLICATE at the crop's edges: the kernel
 //          clamps every sample to the plane) in float, which is exact (integers up to 9 * 255 = 2,295); its finalizer, fk::Mul, multiplies the
-//          sum by 1 / 9 in float, static_cast<float>(1. / (maskW * maskH)) (boxBlurReducers, morphology.h:189-208), and rounds once to
+//          sum by 1 / 9 in float, static_cast<float>(1. / (maskW * maskH)) (boxBlurReducers, morphology.h:196-204), and rounds once to
 //          float. The reference rounds the same product once: the product of the two floats is exact in double, then it is cast to float
 //   output (box / 255 - 0.45) / 0.225 in double
 // Crop by crop, row by row, as the tensor.
@@ -733,7 +735,8 @@ int launchWithCrops() {
     };
     rows.push_back({"npp", callNpp, fillNpp, downloadNpp});
 
-    // ---- FKL (fkl_loop), at the pin 24478f0: one fk::executeLinearFilter per crop, the whole pipeline of the crop in its one kernel
+    // ---- FKL (fkl_loop): one fk::executeOperations<LinearFilterDPP> per crop (fk::executeLinearFilter until FKL #435), the whole pipeline of
+    // the crop in its one kernel
     // Set once: FKL's stream object of the program's stream (it depends on nothing of a frame)
     fk::Stream_<fk::ParArch::GPU_NVIDIA> fkStream(cs);
     // Set once: FKL's own copy of the frame (fk::Ptr2D), uploaded before the calls as in E18
@@ -762,9 +765,8 @@ int launchWithCrops() {
                                     .then(fk::Sub<float>::build(0.45f))
                                     .then(fk::Div<float>::build(0.225f))
                                     .then(fk::PerThreadWrite<fk::ND::_3D, float>::build(plane));
-            if (!fk::executeLinearFilter(details, fk::make_tuple(image, coefficient), FklMultiply::build(), FklAccumulate::build(), output, fkStream)) {
-                throw std::runtime_error("fkl_loop: the details are not valid");
-            }
+            fk::executeOperations<fk::LinearFilterDPP<fk::ParArch::GPU_NVIDIA, FklDetails>>(fkStream, details, fk::make_tuple(image, coefficient),
+                FklMultiply::build(), FklAccumulate::build(), output);
         }
     };
     // (end of the timed call)
@@ -774,7 +776,8 @@ int launchWithCrops() {
     };
     rows.push_back({"fkl_loop", callFkl, fillFkl, downloadFkl, false});
 
-    // ---- FKL (fkl_batch), at the pin 24478f0: one fk::executeBoxBlur<1> per frame, the N crops in its one kernel (grid z = N). It shares
+    // ---- FKL (fkl_batch): one fk::executeOperations<MorphologyDPP> per frame (fk::executeBoxBlur<1> until FKL #435), the N crops in its one
+    // kernel (grid z = N). It shares
     // fkl_loop's stream object, frame and tensor (all FKL's), and its fill and download (the whole tensor)
     using FklBatchDetails = fk::MorphologyDPPDetails<float>;   // the default tile (16 x 8) and largest mask (7 x 7): the call a user writes
     // The timed call (whole_call and kernel_only): the whole frame. Everything in this lambda is inside the interval
@@ -790,9 +793,8 @@ int launchWithCrops() {
                                 .then(fk::Sub<float>::build(0.45f))
                                 .then(fk::Div<float>::build(0.225f))
                                 .then(fk::PerThreadWrite<fk::ND::_3D, float>::build(fkTensor));
-        if (!fk::executeBoxBlur<1>(details, image, output, fkStream)) {
-            throw std::runtime_error("fkl_batch: the details are not valid");
-        }
+        fk::executeOperations<fk::MorphologyDPP<fk::ParArch::GPU_NVIDIA, FklBatchDetails>>(fkStream, details, image, output,
+            fk::boxBlurReducers<float, 1>(details));
     };
     // (end of the timed call)
     rows.push_back({"fkl_batch", callFklBatch, fillFkl, downloadFkl, false});

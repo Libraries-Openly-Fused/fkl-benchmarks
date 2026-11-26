@@ -16,7 +16,9 @@
 
   python scripts/e16_sass_counts.py build/local-rtx4090/bin/e16_attention_cu sm_89 results/rtx4090/e16-attention/e16_sass_counts.csv
 
-For every launchFlashAttentionMmaDPP_Kernel / launchFlashAttentionDPP_Kernel in the cubin of the architecture: head dimension, the K and V read types, the epilogue type, BLOCK_Q, BLOCK_KV, NUM_WARPS, SPLIT_KV, registers and
+For every launchFlashAttentionMmaDPP_Kernel / launchFlashAttentionDPP_Kernel in the cubin of the architecture (since FKL #435: every
+launchDPP_Kernel<fk::FlashAttentionMmaDPP<...>>, <fk::FlashAttentionMmaSplitKVDPP<...>> (SPLIT_KV true) and <fk::FlashAttentionDPP<...>>; the
+split-KV combine, launchDPP_Kernel<fk::FlashAttentionSplitCombineDPP<...>>, is left out as flashFwdSplitCombineKernel was): head dimension, the K and V read types, the epilogue type, BLOCK_Q, BLOCK_KV, NUM_WARPS, SPLIT_KV, registers and
 stack bytes (cuobjdump --dump-resource-usage), and the number of SASS instructions of the families that tell the load schedule: LDGSTS (cp.async global to shared), LDG (global to registers), LDS / LDSM (shared to registers),
 STS (registers to shared), HMMA (tensor-core mma), BAR, MUFU. The 'schedule' column is what the instruction counts show: 'cp.async' when the kernel has LDGSTS, 'registers' when it loads from global memory with LDG and has none.
 """
@@ -83,9 +85,22 @@ def main():
     rows = []
     for n in attn:
         d = dem[n]
-        mma = "launchFlashAttentionMmaDPP_Kernel<" in d
-        key = "launchFlashAttentionMmaDPP_Kernel<" if mma else "launchFlashAttentionDPP_Kernel<"
-        a = split_args(d[d.index(key) - 1 + len(key) - 1:] if False else d[d.index(key) + len(key) - 1:])
+        if "launchDPP_Kernel<fk::FlashAttentionSplitCombineDPP<" in d:
+            continue
+        if "launchDPP_Kernel<fk::FlashAttention" in d:
+            # FKL #435: the kernel's first template argument is the DPP, whose arguments are the old kernel's after a leading ParArch;
+            # the split-KV producer is the DPP FlashAttentionMmaSplitKVDPP (without a SPLIT_KV argument)
+            split = "launchDPP_Kernel<fk::FlashAttentionMmaSplitKVDPP<" in d
+            mma = split or "launchDPP_Kernel<fk::FlashAttentionMmaDPP<" in d
+            key = ("launchDPP_Kernel<fk::FlashAttentionMmaSplitKVDPP<" if split else
+                   "launchDPP_Kernel<fk::FlashAttentionMmaDPP<" if mma else "launchDPP_Kernel<fk::FlashAttentionDPP<")
+            a = split_args(d[d.index(key) + len(key) - 1:])[1:]
+            if mma:
+                a = a + ["true" if split else "false"]
+        else:
+            mma = "launchFlashAttentionMmaDPP_Kernel<" in d
+            key = "launchFlashAttentionMmaDPP_Kernel<" if mma else "launchFlashAttentionDPP_Kernel<"
+            a = split_args(d[d.index(key) - 1 + len(key) - 1:] if False else d[d.index(key) + len(key) - 1:])
         row = {"arch": arch, "kind": "mma" if mma else "simt", "head_dim": a[1]}
         if mma:   # OT, HEAD_DIM, QIOp, KIOp, VIOp, EpilogueIOp, BLOCK_Q, BLOCK_KV, NUM_WARPS, ScoreModOp, SPLIT_KV
             row.update({"q_read": short(a[2]), "k_read": short(a[3]), "v_read": short(a[4]), "epilogue": short(a[5]), "block_q": a[6], "block_kv": a[7], "num_warps": a[8], "split_kv": a[10] if len(a) > 10 else "false"})

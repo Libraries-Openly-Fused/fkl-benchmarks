@@ -108,7 +108,7 @@ void p1Fused(fk::Ptr2D<float>& in, fk::Ptr2D<float>& out, cudaStream_t s) {
     const auto tDetails = fk::TransformDPP<fk::ParArch::GPU_NVIDIA, fk::TF::DISABLED>::build_details(readOp, loop, writeOp);
     const dim3 block(32, 8);
     const dim3 grid((P1_W + block.x - 1) / block.x, (P1_H + block.y - 1) / block.y);
-    fk::launchTransformDPP_Kernel<fk::ParArch::GPU_NVIDIA, fk::TF::DISABLED, true><<<grid, block, 0, s>>>(tDetails, readOp, loop, writeOp);
+    fk::launchDPP_Kernel<fk::TransformDPP<fk::ParArch::GPU_NVIDIA, fk::TF::DISABLED, std::decay_t<decltype(tDetails)>, true>><<<grid, block, 0, s>>>(tDetails, readOp, loop, writeOp);
     FKLB_CUDA_CHECK(cudaGetLastError());
 }
 

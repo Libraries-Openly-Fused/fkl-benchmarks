@@ -55,7 +55,7 @@ def sass(binary):
     found = {}
     for k, v in n.items():
         d = subprocess.run(["c++filt", k], capture_output=True, text=True).stdout
-        if "launchTransformDPP_Kernel" not in d:
+        if "launchTransformDPP_Kernel" not in d and "launchDPP_Kernel<fk::TransformDPP<" not in d:   # the old name, or FKL #435's
             continue
         cv_resize = "PlanePolicy)1" in d
         swap_np = "VectorReorderRT" in d

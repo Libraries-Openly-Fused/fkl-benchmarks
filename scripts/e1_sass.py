@@ -78,7 +78,7 @@ def classify_kernels(funcs):
         if m:
             variant = {"handParams": "hand_params", "handImmediates": "hand_imm", "handVectorized": "hand_vec"}[m.group(1)]
             out[name] = (variant, int(m.group(2)), lines)
-        elif "launchTransformDPP_Kernel" in name:
+        elif "launchTransformDPP_Kernel" in name or "16launchDPP_KernelINS_12TransformDPPI" in name:   # the old name, or FKL #435's launchDPP_Kernel<fk::TransformDPP<...>, ...>
             demangled = subprocess.run(["c++filt", name], capture_output=True, text=True).stdout
             thread_fusion = "(fk::TF)1" in demangled
             if thread_fusion and hist.get("LDG", 0) >= 2:

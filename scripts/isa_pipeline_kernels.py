@@ -38,8 +38,8 @@ import devcode_compare as dc  # noqa: E402  (code_object, the patterns and the h
 BATCHES = (10, 150, 300)
 FKL = re.compile(r'BatchReadILNS_11PlanePolicyE0ELm(\d+)E')
 VARIANTS = [
-    ('fkl_fused', lambda n: 'launchTransformDPP_Kernel' in n and 'TensorSplit' in n and 'Resize' in n and 'ResizeSamplingE0' in n, FKL),
-    ('fkl_fused_halfpixel', lambda n: 'launchTransformDPP_Kernel' in n and 'TensorSplit' in n and 'Resize' in n and 'ResizeSamplingE1' in n, FKL),
+    ('fkl_fused', lambda n: ('launchTransformDPP_Kernel' in n or '16launchDPP_KernelINS_12TransformDPPI' in n) and 'TensorSplit' in n and 'Resize' in n and 'ResizeSamplingE0' in n, FKL),
+    ('fkl_fused_halfpixel', lambda n: ('launchTransformDPP_Kernel' in n or '16launchDPP_KernelINS_12TransformDPPI' in n) and 'TensorSplit' in n and 'Resize' in n and 'ResizeSamplingE1' in n, FKL),
     ('hand_batch', lambda n: n.startswith('_ZN8rppbench3e1c11handPreprocILi'), re.compile(r'^_ZN8rppbench3e1c11handPreprocILi(\d+)E')),
     ('hand_padded', lambda n: n.startswith('_ZN8rppbench3e1c17handPreprocPaddedILi'), re.compile(r'^_ZN8rppbench3e1c17handPreprocPaddedILi(\d+)E')),
     ('hand_roi', lambda n: n.startswith('_ZN8rppbench3e1c14handPreprocRoiILi'), re.compile(r'^_ZN8rppbench3e1c14handPreprocRoiILi(\d+)E')),

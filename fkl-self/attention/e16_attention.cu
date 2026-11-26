@@ -301,7 +301,7 @@ bool variantWanted(const std::string& name) {
 struct KernelFacts {
     int kernels{-1};
     std::string text;
-    // the first attention kernel of the call, from its demangled template arguments (BLOCK_Q, BLOCK_KV, NUM_WARPS, SPLIT_KV) and from the types of its K and V reads (the schedule the library selects for them);
+    // the first attention kernel of the call, from its demangled template arguments (BLOCK_Q, BLOCK_KV, NUM_WARPS; SPLIT_KV: the split DPP) and from the types of its K and V reads (the schedule the library selects for them);
     // scripts/e16_sass_counts.py counts the LDGSTS (cp.async) instructions of every instantiation in the binary as the measured check of the schedule
     std::string schedule, splitKV;
     int blockQ{0}, blockKV{0}, numWarps{0};
@@ -330,22 +330,25 @@ void parseAttentionKernel(const std::string& mangled, KernelFacts& f) {
     const std::string dem = (status == 0 && d) ? d : mangled;
     std::free(d);
     const auto has = [](const std::string& s, const char* what) { return s.find(what) != std::string::npos; };
-    const std::vector<std::string> mma = templateArgs(dem, "launchFlashAttentionMmaDPP_Kernel");
-    if (mma.size() >= 9) {   // OT, HEAD_DIM, QIOp, KIOp, VIOp, EpilogueIOp, BLOCK_Q, BLOCK_KV, NUM_WARPS, ScoreModOp, SPLIT_KV
-        f.blockQ = std::atoi(mma[6].c_str());
-        f.blockKV = std::atoi(mma[7].c_str());
-        f.numWarps = std::atoi(mma[8].c_str());
-        f.splitKV = mma.size() > 10 ? mma[10] : "false";
-        const bool kRaw = has(mma[3], "Bf16AttentionRead") && has(mma[4], "Bf16AttentionRead");
-        const bool kQuant = (has(mma[3], "Int8TokenDequantRead") && has(mma[4], "Int8TokenDequantRead")) || (has(mma[3], "Fp8TokenDequantRead") && has(mma[4], "Fp8TokenDequantRead"));
+    // FKL #435: every kernel is fk::launchDPP_Kernel<DPP, ...>; its DPP's template arguments start with the ParArch. The split-KV producer is
+    // the DPP fk::FlashAttentionMmaSplitKVDPP (the same arguments as fk::FlashAttentionMmaDPP), so SPLIT_KV is the name of the DPP
+    const std::vector<std::string> split = templateArgs(dem, "fk::FlashAttentionMmaSplitKVDPP");
+    const std::vector<std::string> mma = split.empty() ? templateArgs(dem, "fk::FlashAttentionMmaDPP") : split;
+    if (mma.size() >= 10) {   // ParArch, OT, HEAD_DIM, QIOp, KIOp, VIOp, EpilogueIOp, BLOCK_Q, BLOCK_KV, NUM_WARPS, ScoreModOp
+        f.blockQ = std::atoi(mma[7].c_str());
+        f.blockKV = std::atoi(mma[8].c_str());
+        f.numWarps = std::atoi(mma[9].c_str());
+        f.splitKV = split.empty() ? "false" : "true";
+        const bool kRaw = has(mma[4], "Bf16AttentionRead") && has(mma[5], "Bf16AttentionRead");
+        const bool kQuant = (has(mma[4], "Int8TokenDequantRead") && has(mma[5], "Int8TokenDequantRead")) || (has(mma[4], "Fp8TokenDequantRead") && has(mma[5], "Fp8TokenDequantRead"));
         f.schedule = kRaw ? "cp.async bf16" : (kQuant ? "cp.async quantised bytes + smem dequant" : "register prefetch");
         return;
     }
-    const std::vector<std::string> simt = templateArgs(dem, "launchFlashAttentionDPP_Kernel");
-    if (simt.size() >= 8) {   // OT, HEAD_DIM, QIOp, KIOp, VIOp, EpilogueIOp, BLOCK_N, WARPS_PER_BLOCK
-        f.blockQ = std::atoi(simt[7].c_str());
-        f.blockKV = std::atoi(simt[6].c_str());
-        f.numWarps = std::atoi(simt[7].c_str());
+    const std::vector<std::string> simt = templateArgs(dem, "fk::FlashAttentionDPP");
+    if (simt.size() >= 9) {   // ParArch, OT, HEAD_DIM, QIOp, KIOp, VIOp, EpilogueIOp, BLOCK_N, WARPS_PER_BLOCK
+        f.blockQ = std::atoi(simt[8].c_str());
+        f.blockKV = std::atoi(simt[7].c_str());
+        f.numWarps = std::atoi(simt[8].c_str());
         f.splitKV = "false";
         f.schedule = "simt (thread-staged shared tiles)";
     }
@@ -593,46 +596,761 @@ struct Runner {
             [&] { return std::make_tuple(fk::makeAttentionRead(q, pt.bh, pt.seq, D), fk::makeAttentionRead(k, pt.bh, pt.seq, D), fk::makeAttentionRead(v, pt.bh, pt.seq, D)); },
             [&](const auto& set) {
                 const auto& [qr, kr, vr] = set;
-                fk::executeFlashAttentionMma<D>(qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal, stream);
+                // the library's automatic choice (FKL #435: the caller makes it): fk::flashAttentionMmaTiles names the FlashAttentionMmaDPP, and
+                // fk::flashAttentionMmaSplits decides the split-KV (then FlashAttentionMmaSplitKVDPP and its CombineDPP, two kernels)
+                using QIOp = std::decay_t<decltype(qr)>;
+                using KIOp = std::decay_t<decltype(kr)>;
+                using VIOp = std::decay_t<decltype(vr)>;
+                const fk::FlashAttentionMmaTiles tiles = fk::flashAttentionMmaTiles<D, KIOp, VIOp>(pt.bh, pt.seq, pt.causal);
+                if constexpr (fk::isRawBf16Read<KIOp> && fk::isRawBf16Read<VIOp> && D <= 64) {
+                    if (tiles.blockQ == 128 && tiles.blockKV == 64 && tiles.numWarps == 4) {
+                        using MmaDPP = fk::FlashAttentionMmaDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, fk::AttentionIdentityEpilogue, 128, 64, 4>;
+                        const int splits = fk::flashAttentionMmaSplits<MmaDPP>(pt.bh, pt.seq, pt.seq, pt.causal);
+                        if (splits == 1) {
+                            fk::executeOperations<MmaDPP>(stream, qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal);
+                        } else {
+                            using SplitDPP = fk::FlashAttentionMmaSplitKVDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, fk::AttentionIdentityEpilogue, 128, 64, 4>;
+                            float* partial = nullptr;
+                            FKLB_CUDA_CHECK(cudaMallocAsync(reinterpret_cast<void**>(&partial),
+                                                            fk::flashAttentionMmaPartialFloats(pt.bh, pt.seq, splits, D) * sizeof(float), stream.getCUDAStream()));
+                            fk::executeOperations<SplitDPP>(stream, qr, kr, vr, partial, splits, pt.bh, pt.seq, pt.seq, pt.causal);
+                            fk::executeOperations<typename SplitDPP::CombineDPP>(stream, partial, o, pt.bh, pt.seq, splits);
+                            FKLB_CUDA_CHECK(cudaFreeAsync(partial, stream.getCUDAStream()));
+                        }
+                    } else if (tiles.blockQ == 64 && tiles.blockKV == 128 && tiles.numWarps == 4) {
+                        using MmaDPP = fk::FlashAttentionMmaDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, fk::AttentionIdentityEpilogue, 64, 128, 4>;
+                        const int splits = fk::flashAttentionMmaSplits<MmaDPP>(pt.bh, pt.seq, pt.seq, pt.causal);
+                        if (splits == 1) {
+                            fk::executeOperations<MmaDPP>(stream, qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal);
+                        } else {
+                            using SplitDPP = fk::FlashAttentionMmaSplitKVDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, fk::AttentionIdentityEpilogue, 64, 128, 4>;
+                            float* partial = nullptr;
+                            FKLB_CUDA_CHECK(cudaMallocAsync(reinterpret_cast<void**>(&partial),
+                                                            fk::flashAttentionMmaPartialFloats(pt.bh, pt.seq, splits, D) * sizeof(float), stream.getCUDAStream()));
+                            fk::executeOperations<SplitDPP>(stream, qr, kr, vr, partial, splits, pt.bh, pt.seq, pt.seq, pt.causal);
+                            fk::executeOperations<typename SplitDPP::CombineDPP>(stream, partial, o, pt.bh, pt.seq, splits);
+                            FKLB_CUDA_CHECK(cudaFreeAsync(partial, stream.getCUDAStream()));
+                        }
+                    } else if (tiles.blockQ == 64 && tiles.blockKV == 64 && tiles.numWarps == 4) {
+                        using MmaDPP = fk::FlashAttentionMmaDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, fk::AttentionIdentityEpilogue, 64, 64, 4>;
+                        const int splits = fk::flashAttentionMmaSplits<MmaDPP>(pt.bh, pt.seq, pt.seq, pt.causal);
+                        if (splits == 1) {
+                            fk::executeOperations<MmaDPP>(stream, qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal);
+                        } else {
+                            using SplitDPP = fk::FlashAttentionMmaSplitKVDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, fk::AttentionIdentityEpilogue, 64, 64, 4>;
+                            float* partial = nullptr;
+                            FKLB_CUDA_CHECK(cudaMallocAsync(reinterpret_cast<void**>(&partial),
+                                                            fk::flashAttentionMmaPartialFloats(pt.bh, pt.seq, splits, D) * sizeof(float), stream.getCUDAStream()));
+                            fk::executeOperations<SplitDPP>(stream, qr, kr, vr, partial, splits, pt.bh, pt.seq, pt.seq, pt.causal);
+                            fk::executeOperations<typename SplitDPP::CombineDPP>(stream, partial, o, pt.bh, pt.seq, splits);
+                            FKLB_CUDA_CHECK(cudaFreeAsync(partial, stream.getCUDAStream()));
+                        }
+                    } else {
+                        throw std::logic_error("flashAttentionMmaTiles returned tiles this variant does not name");
+                    }
+                } else if constexpr (fk::isRawBf16Read<KIOp> && fk::isRawBf16Read<VIOp>) {
+                    if (tiles.blockQ == 128 && tiles.blockKV == 128 && tiles.numWarps == 8) {
+                        using MmaDPP = fk::FlashAttentionMmaDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, fk::AttentionIdentityEpilogue, 128, 128, 8>;
+                        const int splits = fk::flashAttentionMmaSplits<MmaDPP>(pt.bh, pt.seq, pt.seq, pt.causal);
+                        if (splits == 1) {
+                            fk::executeOperations<MmaDPP>(stream, qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal);
+                        } else {
+                            using SplitDPP = fk::FlashAttentionMmaSplitKVDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, fk::AttentionIdentityEpilogue, 128, 128, 8>;
+                            float* partial = nullptr;
+                            FKLB_CUDA_CHECK(cudaMallocAsync(reinterpret_cast<void**>(&partial),
+                                                            fk::flashAttentionMmaPartialFloats(pt.bh, pt.seq, splits, D) * sizeof(float), stream.getCUDAStream()));
+                            fk::executeOperations<SplitDPP>(stream, qr, kr, vr, partial, splits, pt.bh, pt.seq, pt.seq, pt.causal);
+                            fk::executeOperations<typename SplitDPP::CombineDPP>(stream, partial, o, pt.bh, pt.seq, splits);
+                            FKLB_CUDA_CHECK(cudaFreeAsync(partial, stream.getCUDAStream()));
+                        }
+                    } else if (tiles.blockQ == 64 && tiles.blockKV == 64 && tiles.numWarps == 4) {
+                        using MmaDPP = fk::FlashAttentionMmaDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, fk::AttentionIdentityEpilogue, 64, 64, 4>;
+                        const int splits = fk::flashAttentionMmaSplits<MmaDPP>(pt.bh, pt.seq, pt.seq, pt.causal);
+                        if (splits == 1) {
+                            fk::executeOperations<MmaDPP>(stream, qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal);
+                        } else {
+                            using SplitDPP = fk::FlashAttentionMmaSplitKVDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, fk::AttentionIdentityEpilogue, 64, 64, 4>;
+                            float* partial = nullptr;
+                            FKLB_CUDA_CHECK(cudaMallocAsync(reinterpret_cast<void**>(&partial),
+                                                            fk::flashAttentionMmaPartialFloats(pt.bh, pt.seq, splits, D) * sizeof(float), stream.getCUDAStream()));
+                            fk::executeOperations<SplitDPP>(stream, qr, kr, vr, partial, splits, pt.bh, pt.seq, pt.seq, pt.causal);
+                            fk::executeOperations<typename SplitDPP::CombineDPP>(stream, partial, o, pt.bh, pt.seq, splits);
+                            FKLB_CUDA_CHECK(cudaFreeAsync(partial, stream.getCUDAStream()));
+                        }
+                    } else {
+                        throw std::logic_error("flashAttentionMmaTiles returned tiles this variant does not name");
+                    }
+                } else {
+                    if (tiles.blockQ == (D <= 64 ? 128 : 64) && tiles.blockKV == 32 && tiles.numWarps == 4) {
+                        using MmaDPP = fk::FlashAttentionMmaDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, fk::AttentionIdentityEpilogue, (D <= 64 ? 128 : 64), 32, 4>;
+                        const int splits = fk::flashAttentionMmaSplits<MmaDPP>(pt.bh, pt.seq, pt.seq, pt.causal);
+                        if (splits == 1) {
+                            fk::executeOperations<MmaDPP>(stream, qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal);
+                        } else {
+                            using SplitDPP = fk::FlashAttentionMmaSplitKVDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, fk::AttentionIdentityEpilogue, (D <= 64 ? 128 : 64), 32, 4>;
+                            float* partial = nullptr;
+                            FKLB_CUDA_CHECK(cudaMallocAsync(reinterpret_cast<void**>(&partial),
+                                                            fk::flashAttentionMmaPartialFloats(pt.bh, pt.seq, splits, D) * sizeof(float), stream.getCUDAStream()));
+                            fk::executeOperations<SplitDPP>(stream, qr, kr, vr, partial, splits, pt.bh, pt.seq, pt.seq, pt.causal);
+                            fk::executeOperations<typename SplitDPP::CombineDPP>(stream, partial, o, pt.bh, pt.seq, splits);
+                            FKLB_CUDA_CHECK(cudaFreeAsync(partial, stream.getCUDAStream()));
+                        }
+                    } else {
+                        throw std::logic_error("flashAttentionMmaTiles returned tiles this variant does not name");
+                    }
+                }
             }, kRef, vRef, 1.f, 0.f, iters, 0);
         add("mma_int8kv_fused",
             [&] { return std::make_tuple(fk::makeAttentionRead(q, pt.bh, pt.seq, D), fk::makeInt8KVRead(k8, k8s, pt.bh, pt.seq, D), fk::makeInt8KVRead(v8, v8s, pt.bh, pt.seq, D)); },
             [&](const auto& set) {
                 const auto& [qr, kr, vr] = set;
-                fk::executeFlashAttentionMma<D>(qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal, stream);
+                // the library's automatic choice (FKL #435: the caller makes it): fk::flashAttentionMmaTiles names the FlashAttentionMmaDPP, and
+                // fk::flashAttentionMmaSplits decides the split-KV (then FlashAttentionMmaSplitKVDPP and its CombineDPP, two kernels)
+                using QIOp = std::decay_t<decltype(qr)>;
+                using KIOp = std::decay_t<decltype(kr)>;
+                using VIOp = std::decay_t<decltype(vr)>;
+                const fk::FlashAttentionMmaTiles tiles = fk::flashAttentionMmaTiles<D, KIOp, VIOp>(pt.bh, pt.seq, pt.causal);
+                if constexpr (fk::isRawBf16Read<KIOp> && fk::isRawBf16Read<VIOp> && D <= 64) {
+                    if (tiles.blockQ == 128 && tiles.blockKV == 64 && tiles.numWarps == 4) {
+                        using MmaDPP = fk::FlashAttentionMmaDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, fk::AttentionIdentityEpilogue, 128, 64, 4>;
+                        const int splits = fk::flashAttentionMmaSplits<MmaDPP>(pt.bh, pt.seq, pt.seq, pt.causal);
+                        if (splits == 1) {
+                            fk::executeOperations<MmaDPP>(stream, qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal);
+                        } else {
+                            using SplitDPP = fk::FlashAttentionMmaSplitKVDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, fk::AttentionIdentityEpilogue, 128, 64, 4>;
+                            float* partial = nullptr;
+                            FKLB_CUDA_CHECK(cudaMallocAsync(reinterpret_cast<void**>(&partial),
+                                                            fk::flashAttentionMmaPartialFloats(pt.bh, pt.seq, splits, D) * sizeof(float), stream.getCUDAStream()));
+                            fk::executeOperations<SplitDPP>(stream, qr, kr, vr, partial, splits, pt.bh, pt.seq, pt.seq, pt.causal);
+                            fk::executeOperations<typename SplitDPP::CombineDPP>(stream, partial, o, pt.bh, pt.seq, splits);
+                            FKLB_CUDA_CHECK(cudaFreeAsync(partial, stream.getCUDAStream()));
+                        }
+                    } else if (tiles.blockQ == 64 && tiles.blockKV == 128 && tiles.numWarps == 4) {
+                        using MmaDPP = fk::FlashAttentionMmaDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, fk::AttentionIdentityEpilogue, 64, 128, 4>;
+                        const int splits = fk::flashAttentionMmaSplits<MmaDPP>(pt.bh, pt.seq, pt.seq, pt.causal);
+                        if (splits == 1) {
+                            fk::executeOperations<MmaDPP>(stream, qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal);
+                        } else {
+                            using SplitDPP = fk::FlashAttentionMmaSplitKVDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, fk::AttentionIdentityEpilogue, 64, 128, 4>;
+                            float* partial = nullptr;
+                            FKLB_CUDA_CHECK(cudaMallocAsync(reinterpret_cast<void**>(&partial),
+                                                            fk::flashAttentionMmaPartialFloats(pt.bh, pt.seq, splits, D) * sizeof(float), stream.getCUDAStream()));
+                            fk::executeOperations<SplitDPP>(stream, qr, kr, vr, partial, splits, pt.bh, pt.seq, pt.seq, pt.causal);
+                            fk::executeOperations<typename SplitDPP::CombineDPP>(stream, partial, o, pt.bh, pt.seq, splits);
+                            FKLB_CUDA_CHECK(cudaFreeAsync(partial, stream.getCUDAStream()));
+                        }
+                    } else if (tiles.blockQ == 64 && tiles.blockKV == 64 && tiles.numWarps == 4) {
+                        using MmaDPP = fk::FlashAttentionMmaDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, fk::AttentionIdentityEpilogue, 64, 64, 4>;
+                        const int splits = fk::flashAttentionMmaSplits<MmaDPP>(pt.bh, pt.seq, pt.seq, pt.causal);
+                        if (splits == 1) {
+                            fk::executeOperations<MmaDPP>(stream, qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal);
+                        } else {
+                            using SplitDPP = fk::FlashAttentionMmaSplitKVDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, fk::AttentionIdentityEpilogue, 64, 64, 4>;
+                            float* partial = nullptr;
+                            FKLB_CUDA_CHECK(cudaMallocAsync(reinterpret_cast<void**>(&partial),
+                                                            fk::flashAttentionMmaPartialFloats(pt.bh, pt.seq, splits, D) * sizeof(float), stream.getCUDAStream()));
+                            fk::executeOperations<SplitDPP>(stream, qr, kr, vr, partial, splits, pt.bh, pt.seq, pt.seq, pt.causal);
+                            fk::executeOperations<typename SplitDPP::CombineDPP>(stream, partial, o, pt.bh, pt.seq, splits);
+                            FKLB_CUDA_CHECK(cudaFreeAsync(partial, stream.getCUDAStream()));
+                        }
+                    } else {
+                        throw std::logic_error("flashAttentionMmaTiles returned tiles this variant does not name");
+                    }
+                } else if constexpr (fk::isRawBf16Read<KIOp> && fk::isRawBf16Read<VIOp>) {
+                    if (tiles.blockQ == 128 && tiles.blockKV == 128 && tiles.numWarps == 8) {
+                        using MmaDPP = fk::FlashAttentionMmaDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, fk::AttentionIdentityEpilogue, 128, 128, 8>;
+                        const int splits = fk::flashAttentionMmaSplits<MmaDPP>(pt.bh, pt.seq, pt.seq, pt.causal);
+                        if (splits == 1) {
+                            fk::executeOperations<MmaDPP>(stream, qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal);
+                        } else {
+                            using SplitDPP = fk::FlashAttentionMmaSplitKVDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, fk::AttentionIdentityEpilogue, 128, 128, 8>;
+                            float* partial = nullptr;
+                            FKLB_CUDA_CHECK(cudaMallocAsync(reinterpret_cast<void**>(&partial),
+                                                            fk::flashAttentionMmaPartialFloats(pt.bh, pt.seq, splits, D) * sizeof(float), stream.getCUDAStream()));
+                            fk::executeOperations<SplitDPP>(stream, qr, kr, vr, partial, splits, pt.bh, pt.seq, pt.seq, pt.causal);
+                            fk::executeOperations<typename SplitDPP::CombineDPP>(stream, partial, o, pt.bh, pt.seq, splits);
+                            FKLB_CUDA_CHECK(cudaFreeAsync(partial, stream.getCUDAStream()));
+                        }
+                    } else if (tiles.blockQ == 64 && tiles.blockKV == 64 && tiles.numWarps == 4) {
+                        using MmaDPP = fk::FlashAttentionMmaDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, fk::AttentionIdentityEpilogue, 64, 64, 4>;
+                        const int splits = fk::flashAttentionMmaSplits<MmaDPP>(pt.bh, pt.seq, pt.seq, pt.causal);
+                        if (splits == 1) {
+                            fk::executeOperations<MmaDPP>(stream, qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal);
+                        } else {
+                            using SplitDPP = fk::FlashAttentionMmaSplitKVDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, fk::AttentionIdentityEpilogue, 64, 64, 4>;
+                            float* partial = nullptr;
+                            FKLB_CUDA_CHECK(cudaMallocAsync(reinterpret_cast<void**>(&partial),
+                                                            fk::flashAttentionMmaPartialFloats(pt.bh, pt.seq, splits, D) * sizeof(float), stream.getCUDAStream()));
+                            fk::executeOperations<SplitDPP>(stream, qr, kr, vr, partial, splits, pt.bh, pt.seq, pt.seq, pt.causal);
+                            fk::executeOperations<typename SplitDPP::CombineDPP>(stream, partial, o, pt.bh, pt.seq, splits);
+                            FKLB_CUDA_CHECK(cudaFreeAsync(partial, stream.getCUDAStream()));
+                        }
+                    } else {
+                        throw std::logic_error("flashAttentionMmaTiles returned tiles this variant does not name");
+                    }
+                } else {
+                    if (tiles.blockQ == (D <= 64 ? 128 : 64) && tiles.blockKV == 32 && tiles.numWarps == 4) {
+                        using MmaDPP = fk::FlashAttentionMmaDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, fk::AttentionIdentityEpilogue, (D <= 64 ? 128 : 64), 32, 4>;
+                        const int splits = fk::flashAttentionMmaSplits<MmaDPP>(pt.bh, pt.seq, pt.seq, pt.causal);
+                        if (splits == 1) {
+                            fk::executeOperations<MmaDPP>(stream, qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal);
+                        } else {
+                            using SplitDPP = fk::FlashAttentionMmaSplitKVDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, fk::AttentionIdentityEpilogue, (D <= 64 ? 128 : 64), 32, 4>;
+                            float* partial = nullptr;
+                            FKLB_CUDA_CHECK(cudaMallocAsync(reinterpret_cast<void**>(&partial),
+                                                            fk::flashAttentionMmaPartialFloats(pt.bh, pt.seq, splits, D) * sizeof(float), stream.getCUDAStream()));
+                            fk::executeOperations<SplitDPP>(stream, qr, kr, vr, partial, splits, pt.bh, pt.seq, pt.seq, pt.causal);
+                            fk::executeOperations<typename SplitDPP::CombineDPP>(stream, partial, o, pt.bh, pt.seq, splits);
+                            FKLB_CUDA_CHECK(cudaFreeAsync(partial, stream.getCUDAStream()));
+                        }
+                    } else {
+                        throw std::logic_error("flashAttentionMmaTiles returned tiles this variant does not name");
+                    }
+                }
             }, kRefI8, vRefI8, 1.f, 0.f, iters, 1);
         add("mma_int8kv_unfused",
             [&] { return std::make_tuple(fk::makeAttentionRead(q, pt.bh, pt.seq, D), fk::makeAttentionRead(kd, pt.bh, pt.seq, D), fk::makeAttentionRead(vd, pt.bh, pt.seq, D)); },
             [&](const auto& set) {
                 const auto& [qr, kr, vr] = set;
                 dequantKV<D, false><<<dqGrid, 256, 0, stream.getCUDAStream()>>>(k8, k8s, v8, v8s, kd, vd, tokens);
-                fk::executeFlashAttentionMma<D>(qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal, stream);
+                // the library's automatic choice (FKL #435: the caller makes it): fk::flashAttentionMmaTiles names the FlashAttentionMmaDPP, and
+                // fk::flashAttentionMmaSplits decides the split-KV (then FlashAttentionMmaSplitKVDPP and its CombineDPP, two kernels)
+                using QIOp = std::decay_t<decltype(qr)>;
+                using KIOp = std::decay_t<decltype(kr)>;
+                using VIOp = std::decay_t<decltype(vr)>;
+                const fk::FlashAttentionMmaTiles tiles = fk::flashAttentionMmaTiles<D, KIOp, VIOp>(pt.bh, pt.seq, pt.causal);
+                if constexpr (fk::isRawBf16Read<KIOp> && fk::isRawBf16Read<VIOp> && D <= 64) {
+                    if (tiles.blockQ == 128 && tiles.blockKV == 64 && tiles.numWarps == 4) {
+                        using MmaDPP = fk::FlashAttentionMmaDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, fk::AttentionIdentityEpilogue, 128, 64, 4>;
+                        const int splits = fk::flashAttentionMmaSplits<MmaDPP>(pt.bh, pt.seq, pt.seq, pt.causal);
+                        if (splits == 1) {
+                            fk::executeOperations<MmaDPP>(stream, qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal);
+                        } else {
+                            using SplitDPP = fk::FlashAttentionMmaSplitKVDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, fk::AttentionIdentityEpilogue, 128, 64, 4>;
+                            float* partial = nullptr;
+                            FKLB_CUDA_CHECK(cudaMallocAsync(reinterpret_cast<void**>(&partial),
+                                                            fk::flashAttentionMmaPartialFloats(pt.bh, pt.seq, splits, D) * sizeof(float), stream.getCUDAStream()));
+                            fk::executeOperations<SplitDPP>(stream, qr, kr, vr, partial, splits, pt.bh, pt.seq, pt.seq, pt.causal);
+                            fk::executeOperations<typename SplitDPP::CombineDPP>(stream, partial, o, pt.bh, pt.seq, splits);
+                            FKLB_CUDA_CHECK(cudaFreeAsync(partial, stream.getCUDAStream()));
+                        }
+                    } else if (tiles.blockQ == 64 && tiles.blockKV == 128 && tiles.numWarps == 4) {
+                        using MmaDPP = fk::FlashAttentionMmaDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, fk::AttentionIdentityEpilogue, 64, 128, 4>;
+                        const int splits = fk::flashAttentionMmaSplits<MmaDPP>(pt.bh, pt.seq, pt.seq, pt.causal);
+                        if (splits == 1) {
+                            fk::executeOperations<MmaDPP>(stream, qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal);
+                        } else {
+                            using SplitDPP = fk::FlashAttentionMmaSplitKVDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, fk::AttentionIdentityEpilogue, 64, 128, 4>;
+                            float* partial = nullptr;
+                            FKLB_CUDA_CHECK(cudaMallocAsync(reinterpret_cast<void**>(&partial),
+                                                            fk::flashAttentionMmaPartialFloats(pt.bh, pt.seq, splits, D) * sizeof(float), stream.getCUDAStream()));
+                            fk::executeOperations<SplitDPP>(stream, qr, kr, vr, partial, splits, pt.bh, pt.seq, pt.seq, pt.causal);
+                            fk::executeOperations<typename SplitDPP::CombineDPP>(stream, partial, o, pt.bh, pt.seq, splits);
+                            FKLB_CUDA_CHECK(cudaFreeAsync(partial, stream.getCUDAStream()));
+                        }
+                    } else if (tiles.blockQ == 64 && tiles.blockKV == 64 && tiles.numWarps == 4) {
+                        using MmaDPP = fk::FlashAttentionMmaDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, fk::AttentionIdentityEpilogue, 64, 64, 4>;
+                        const int splits = fk::flashAttentionMmaSplits<MmaDPP>(pt.bh, pt.seq, pt.seq, pt.causal);
+                        if (splits == 1) {
+                            fk::executeOperations<MmaDPP>(stream, qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal);
+                        } else {
+                            using SplitDPP = fk::FlashAttentionMmaSplitKVDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, fk::AttentionIdentityEpilogue, 64, 64, 4>;
+                            float* partial = nullptr;
+                            FKLB_CUDA_CHECK(cudaMallocAsync(reinterpret_cast<void**>(&partial),
+                                                            fk::flashAttentionMmaPartialFloats(pt.bh, pt.seq, splits, D) * sizeof(float), stream.getCUDAStream()));
+                            fk::executeOperations<SplitDPP>(stream, qr, kr, vr, partial, splits, pt.bh, pt.seq, pt.seq, pt.causal);
+                            fk::executeOperations<typename SplitDPP::CombineDPP>(stream, partial, o, pt.bh, pt.seq, splits);
+                            FKLB_CUDA_CHECK(cudaFreeAsync(partial, stream.getCUDAStream()));
+                        }
+                    } else {
+                        throw std::logic_error("flashAttentionMmaTiles returned tiles this variant does not name");
+                    }
+                } else if constexpr (fk::isRawBf16Read<KIOp> && fk::isRawBf16Read<VIOp>) {
+                    if (tiles.blockQ == 128 && tiles.blockKV == 128 && tiles.numWarps == 8) {
+                        using MmaDPP = fk::FlashAttentionMmaDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, fk::AttentionIdentityEpilogue, 128, 128, 8>;
+                        const int splits = fk::flashAttentionMmaSplits<MmaDPP>(pt.bh, pt.seq, pt.seq, pt.causal);
+                        if (splits == 1) {
+                            fk::executeOperations<MmaDPP>(stream, qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal);
+                        } else {
+                            using SplitDPP = fk::FlashAttentionMmaSplitKVDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, fk::AttentionIdentityEpilogue, 128, 128, 8>;
+                            float* partial = nullptr;
+                            FKLB_CUDA_CHECK(cudaMallocAsync(reinterpret_cast<void**>(&partial),
+                                                            fk::flashAttentionMmaPartialFloats(pt.bh, pt.seq, splits, D) * sizeof(float), stream.getCUDAStream()));
+                            fk::executeOperations<SplitDPP>(stream, qr, kr, vr, partial, splits, pt.bh, pt.seq, pt.seq, pt.causal);
+                            fk::executeOperations<typename SplitDPP::CombineDPP>(stream, partial, o, pt.bh, pt.seq, splits);
+                            FKLB_CUDA_CHECK(cudaFreeAsync(partial, stream.getCUDAStream()));
+                        }
+                    } else if (tiles.blockQ == 64 && tiles.blockKV == 64 && tiles.numWarps == 4) {
+                        using MmaDPP = fk::FlashAttentionMmaDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, fk::AttentionIdentityEpilogue, 64, 64, 4>;
+                        const int splits = fk::flashAttentionMmaSplits<MmaDPP>(pt.bh, pt.seq, pt.seq, pt.causal);
+                        if (splits == 1) {
+                            fk::executeOperations<MmaDPP>(stream, qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal);
+                        } else {
+                            using SplitDPP = fk::FlashAttentionMmaSplitKVDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, fk::AttentionIdentityEpilogue, 64, 64, 4>;
+                            float* partial = nullptr;
+                            FKLB_CUDA_CHECK(cudaMallocAsync(reinterpret_cast<void**>(&partial),
+                                                            fk::flashAttentionMmaPartialFloats(pt.bh, pt.seq, splits, D) * sizeof(float), stream.getCUDAStream()));
+                            fk::executeOperations<SplitDPP>(stream, qr, kr, vr, partial, splits, pt.bh, pt.seq, pt.seq, pt.causal);
+                            fk::executeOperations<typename SplitDPP::CombineDPP>(stream, partial, o, pt.bh, pt.seq, splits);
+                            FKLB_CUDA_CHECK(cudaFreeAsync(partial, stream.getCUDAStream()));
+                        }
+                    } else {
+                        throw std::logic_error("flashAttentionMmaTiles returned tiles this variant does not name");
+                    }
+                } else {
+                    if (tiles.blockQ == (D <= 64 ? 128 : 64) && tiles.blockKV == 32 && tiles.numWarps == 4) {
+                        using MmaDPP = fk::FlashAttentionMmaDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, fk::AttentionIdentityEpilogue, (D <= 64 ? 128 : 64), 32, 4>;
+                        const int splits = fk::flashAttentionMmaSplits<MmaDPP>(pt.bh, pt.seq, pt.seq, pt.causal);
+                        if (splits == 1) {
+                            fk::executeOperations<MmaDPP>(stream, qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal);
+                        } else {
+                            using SplitDPP = fk::FlashAttentionMmaSplitKVDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, fk::AttentionIdentityEpilogue, (D <= 64 ? 128 : 64), 32, 4>;
+                            float* partial = nullptr;
+                            FKLB_CUDA_CHECK(cudaMallocAsync(reinterpret_cast<void**>(&partial),
+                                                            fk::flashAttentionMmaPartialFloats(pt.bh, pt.seq, splits, D) * sizeof(float), stream.getCUDAStream()));
+                            fk::executeOperations<SplitDPP>(stream, qr, kr, vr, partial, splits, pt.bh, pt.seq, pt.seq, pt.causal);
+                            fk::executeOperations<typename SplitDPP::CombineDPP>(stream, partial, o, pt.bh, pt.seq, splits);
+                            FKLB_CUDA_CHECK(cudaFreeAsync(partial, stream.getCUDAStream()));
+                        }
+                    } else {
+                        throw std::logic_error("flashAttentionMmaTiles returned tiles this variant does not name");
+                    }
+                }
             }, kRefI8, vRefI8, 1.f, 0.f, iters, 1);
         add("mma_fp8kv_fused",
             [&] { return std::make_tuple(fk::makeAttentionRead(q, pt.bh, pt.seq, D), fk::makeFp8KVRead(kf8, kf8s, pt.bh, pt.seq, D), fk::makeFp8KVRead(vf8, vf8s, pt.bh, pt.seq, D)); },
             [&](const auto& set) {
                 const auto& [qr, kr, vr] = set;
-                fk::executeFlashAttentionMma<D>(qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal, stream);
+                // the library's automatic choice (FKL #435: the caller makes it): fk::flashAttentionMmaTiles names the FlashAttentionMmaDPP, and
+                // fk::flashAttentionMmaSplits decides the split-KV (then FlashAttentionMmaSplitKVDPP and its CombineDPP, two kernels)
+                using QIOp = std::decay_t<decltype(qr)>;
+                using KIOp = std::decay_t<decltype(kr)>;
+                using VIOp = std::decay_t<decltype(vr)>;
+                const fk::FlashAttentionMmaTiles tiles = fk::flashAttentionMmaTiles<D, KIOp, VIOp>(pt.bh, pt.seq, pt.causal);
+                if constexpr (fk::isRawBf16Read<KIOp> && fk::isRawBf16Read<VIOp> && D <= 64) {
+                    if (tiles.blockQ == 128 && tiles.blockKV == 64 && tiles.numWarps == 4) {
+                        using MmaDPP = fk::FlashAttentionMmaDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, fk::AttentionIdentityEpilogue, 128, 64, 4>;
+                        const int splits = fk::flashAttentionMmaSplits<MmaDPP>(pt.bh, pt.seq, pt.seq, pt.causal);
+                        if (splits == 1) {
+                            fk::executeOperations<MmaDPP>(stream, qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal);
+                        } else {
+                            using SplitDPP = fk::FlashAttentionMmaSplitKVDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, fk::AttentionIdentityEpilogue, 128, 64, 4>;
+                            float* partial = nullptr;
+                            FKLB_CUDA_CHECK(cudaMallocAsync(reinterpret_cast<void**>(&partial),
+                                                            fk::flashAttentionMmaPartialFloats(pt.bh, pt.seq, splits, D) * sizeof(float), stream.getCUDAStream()));
+                            fk::executeOperations<SplitDPP>(stream, qr, kr, vr, partial, splits, pt.bh, pt.seq, pt.seq, pt.causal);
+                            fk::executeOperations<typename SplitDPP::CombineDPP>(stream, partial, o, pt.bh, pt.seq, splits);
+                            FKLB_CUDA_CHECK(cudaFreeAsync(partial, stream.getCUDAStream()));
+                        }
+                    } else if (tiles.blockQ == 64 && tiles.blockKV == 128 && tiles.numWarps == 4) {
+                        using MmaDPP = fk::FlashAttentionMmaDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, fk::AttentionIdentityEpilogue, 64, 128, 4>;
+                        const int splits = fk::flashAttentionMmaSplits<MmaDPP>(pt.bh, pt.seq, pt.seq, pt.causal);
+                        if (splits == 1) {
+                            fk::executeOperations<MmaDPP>(stream, qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal);
+                        } else {
+                            using SplitDPP = fk::FlashAttentionMmaSplitKVDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, fk::AttentionIdentityEpilogue, 64, 128, 4>;
+                            float* partial = nullptr;
+                            FKLB_CUDA_CHECK(cudaMallocAsync(reinterpret_cast<void**>(&partial),
+                                                            fk::flashAttentionMmaPartialFloats(pt.bh, pt.seq, splits, D) * sizeof(float), stream.getCUDAStream()));
+                            fk::executeOperations<SplitDPP>(stream, qr, kr, vr, partial, splits, pt.bh, pt.seq, pt.seq, pt.causal);
+                            fk::executeOperations<typename SplitDPP::CombineDPP>(stream, partial, o, pt.bh, pt.seq, splits);
+                            FKLB_CUDA_CHECK(cudaFreeAsync(partial, stream.getCUDAStream()));
+                        }
+                    } else if (tiles.blockQ == 64 && tiles.blockKV == 64 && tiles.numWarps == 4) {
+                        using MmaDPP = fk::FlashAttentionMmaDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, fk::AttentionIdentityEpilogue, 64, 64, 4>;
+                        const int splits = fk::flashAttentionMmaSplits<MmaDPP>(pt.bh, pt.seq, pt.seq, pt.causal);
+                        if (splits == 1) {
+                            fk::executeOperations<MmaDPP>(stream, qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal);
+                        } else {
+                            using SplitDPP = fk::FlashAttentionMmaSplitKVDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, fk::AttentionIdentityEpilogue, 64, 64, 4>;
+                            float* partial = nullptr;
+                            FKLB_CUDA_CHECK(cudaMallocAsync(reinterpret_cast<void**>(&partial),
+                                                            fk::flashAttentionMmaPartialFloats(pt.bh, pt.seq, splits, D) * sizeof(float), stream.getCUDAStream()));
+                            fk::executeOperations<SplitDPP>(stream, qr, kr, vr, partial, splits, pt.bh, pt.seq, pt.seq, pt.causal);
+                            fk::executeOperations<typename SplitDPP::CombineDPP>(stream, partial, o, pt.bh, pt.seq, splits);
+                            FKLB_CUDA_CHECK(cudaFreeAsync(partial, stream.getCUDAStream()));
+                        }
+                    } else {
+                        throw std::logic_error("flashAttentionMmaTiles returned tiles this variant does not name");
+                    }
+                } else if constexpr (fk::isRawBf16Read<KIOp> && fk::isRawBf16Read<VIOp>) {
+                    if (tiles.blockQ == 128 && tiles.blockKV == 128 && tiles.numWarps == 8) {
+                        using MmaDPP = fk::FlashAttentionMmaDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, fk::AttentionIdentityEpilogue, 128, 128, 8>;
+                        const int splits = fk::flashAttentionMmaSplits<MmaDPP>(pt.bh, pt.seq, pt.seq, pt.causal);
+                        if (splits == 1) {
+                            fk::executeOperations<MmaDPP>(stream, qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal);
+                        } else {
+                            using SplitDPP = fk::FlashAttentionMmaSplitKVDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, fk::AttentionIdentityEpilogue, 128, 128, 8>;
+                            float* partial = nullptr;
+                            FKLB_CUDA_CHECK(cudaMallocAsync(reinterpret_cast<void**>(&partial),
+                                                            fk::flashAttentionMmaPartialFloats(pt.bh, pt.seq, splits, D) * sizeof(float), stream.getCUDAStream()));
+                            fk::executeOperations<SplitDPP>(stream, qr, kr, vr, partial, splits, pt.bh, pt.seq, pt.seq, pt.causal);
+                            fk::executeOperations<typename SplitDPP::CombineDPP>(stream, partial, o, pt.bh, pt.seq, splits);
+                            FKLB_CUDA_CHECK(cudaFreeAsync(partial, stream.getCUDAStream()));
+                        }
+                    } else if (tiles.blockQ == 64 && tiles.blockKV == 64 && tiles.numWarps == 4) {
+                        using MmaDPP = fk::FlashAttentionMmaDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, fk::AttentionIdentityEpilogue, 64, 64, 4>;
+                        const int splits = fk::flashAttentionMmaSplits<MmaDPP>(pt.bh, pt.seq, pt.seq, pt.causal);
+                        if (splits == 1) {
+                            fk::executeOperations<MmaDPP>(stream, qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal);
+                        } else {
+                            using SplitDPP = fk::FlashAttentionMmaSplitKVDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, fk::AttentionIdentityEpilogue, 64, 64, 4>;
+                            float* partial = nullptr;
+                            FKLB_CUDA_CHECK(cudaMallocAsync(reinterpret_cast<void**>(&partial),
+                                                            fk::flashAttentionMmaPartialFloats(pt.bh, pt.seq, splits, D) * sizeof(float), stream.getCUDAStream()));
+                            fk::executeOperations<SplitDPP>(stream, qr, kr, vr, partial, splits, pt.bh, pt.seq, pt.seq, pt.causal);
+                            fk::executeOperations<typename SplitDPP::CombineDPP>(stream, partial, o, pt.bh, pt.seq, splits);
+                            FKLB_CUDA_CHECK(cudaFreeAsync(partial, stream.getCUDAStream()));
+                        }
+                    } else {
+                        throw std::logic_error("flashAttentionMmaTiles returned tiles this variant does not name");
+                    }
+                } else {
+                    if (tiles.blockQ == (D <= 64 ? 128 : 64) && tiles.blockKV == 32 && tiles.numWarps == 4) {
+                        using MmaDPP = fk::FlashAttentionMmaDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, fk::AttentionIdentityEpilogue, (D <= 64 ? 128 : 64), 32, 4>;
+                        const int splits = fk::flashAttentionMmaSplits<MmaDPP>(pt.bh, pt.seq, pt.seq, pt.causal);
+                        if (splits == 1) {
+                            fk::executeOperations<MmaDPP>(stream, qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal);
+                        } else {
+                            using SplitDPP = fk::FlashAttentionMmaSplitKVDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, fk::AttentionIdentityEpilogue, (D <= 64 ? 128 : 64), 32, 4>;
+                            float* partial = nullptr;
+                            FKLB_CUDA_CHECK(cudaMallocAsync(reinterpret_cast<void**>(&partial),
+                                                            fk::flashAttentionMmaPartialFloats(pt.bh, pt.seq, splits, D) * sizeof(float), stream.getCUDAStream()));
+                            fk::executeOperations<SplitDPP>(stream, qr, kr, vr, partial, splits, pt.bh, pt.seq, pt.seq, pt.causal);
+                            fk::executeOperations<typename SplitDPP::CombineDPP>(stream, partial, o, pt.bh, pt.seq, splits);
+                            FKLB_CUDA_CHECK(cudaFreeAsync(partial, stream.getCUDAStream()));
+                        }
+                    } else {
+                        throw std::logic_error("flashAttentionMmaTiles returned tiles this variant does not name");
+                    }
+                }
             }, kRefF8, vRefF8, 1.f, 0.f, iters, 2);
         add("mma_fp8kv_unfused",
             [&] { return std::make_tuple(fk::makeAttentionRead(q, pt.bh, pt.seq, D), fk::makeAttentionRead(kd, pt.bh, pt.seq, D), fk::makeAttentionRead(vd, pt.bh, pt.seq, D)); },
             [&](const auto& set) {
                 const auto& [qr, kr, vr] = set;
                 dequantKV<D, true><<<dqGrid, 256, 0, stream.getCUDAStream()>>>(kf8, kf8s, vf8, vf8s, kd, vd, tokens);
-                fk::executeFlashAttentionMma<D>(qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal, stream);
+                // the library's automatic choice (FKL #435: the caller makes it): fk::flashAttentionMmaTiles names the FlashAttentionMmaDPP, and
+                // fk::flashAttentionMmaSplits decides the split-KV (then FlashAttentionMmaSplitKVDPP and its CombineDPP, two kernels)
+                using QIOp = std::decay_t<decltype(qr)>;
+                using KIOp = std::decay_t<decltype(kr)>;
+                using VIOp = std::decay_t<decltype(vr)>;
+                const fk::FlashAttentionMmaTiles tiles = fk::flashAttentionMmaTiles<D, KIOp, VIOp>(pt.bh, pt.seq, pt.causal);
+                if constexpr (fk::isRawBf16Read<KIOp> && fk::isRawBf16Read<VIOp> && D <= 64) {
+                    if (tiles.blockQ == 128 && tiles.blockKV == 64 && tiles.numWarps == 4) {
+                        using MmaDPP = fk::FlashAttentionMmaDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, fk::AttentionIdentityEpilogue, 128, 64, 4>;
+                        const int splits = fk::flashAttentionMmaSplits<MmaDPP>(pt.bh, pt.seq, pt.seq, pt.causal);
+                        if (splits == 1) {
+                            fk::executeOperations<MmaDPP>(stream, qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal);
+                        } else {
+                            using SplitDPP = fk::FlashAttentionMmaSplitKVDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, fk::AttentionIdentityEpilogue, 128, 64, 4>;
+                            float* partial = nullptr;
+                            FKLB_CUDA_CHECK(cudaMallocAsync(reinterpret_cast<void**>(&partial),
+                                                            fk::flashAttentionMmaPartialFloats(pt.bh, pt.seq, splits, D) * sizeof(float), stream.getCUDAStream()));
+                            fk::executeOperations<SplitDPP>(stream, qr, kr, vr, partial, splits, pt.bh, pt.seq, pt.seq, pt.causal);
+                            fk::executeOperations<typename SplitDPP::CombineDPP>(stream, partial, o, pt.bh, pt.seq, splits);
+                            FKLB_CUDA_CHECK(cudaFreeAsync(partial, stream.getCUDAStream()));
+                        }
+                    } else if (tiles.blockQ == 64 && tiles.blockKV == 128 && tiles.numWarps == 4) {
+                        using MmaDPP = fk::FlashAttentionMmaDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, fk::AttentionIdentityEpilogue, 64, 128, 4>;
+                        const int splits = fk::flashAttentionMmaSplits<MmaDPP>(pt.bh, pt.seq, pt.seq, pt.causal);
+                        if (splits == 1) {
+                            fk::executeOperations<MmaDPP>(stream, qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal);
+                        } else {
+                            using SplitDPP = fk::FlashAttentionMmaSplitKVDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, fk::AttentionIdentityEpilogue, 64, 128, 4>;
+                            float* partial = nullptr;
+                            FKLB_CUDA_CHECK(cudaMallocAsync(reinterpret_cast<void**>(&partial),
+                                                            fk::flashAttentionMmaPartialFloats(pt.bh, pt.seq, splits, D) * sizeof(float), stream.getCUDAStream()));
+                            fk::executeOperations<SplitDPP>(stream, qr, kr, vr, partial, splits, pt.bh, pt.seq, pt.seq, pt.causal);
+                            fk::executeOperations<typename SplitDPP::CombineDPP>(stream, partial, o, pt.bh, pt.seq, splits);
+                            FKLB_CUDA_CHECK(cudaFreeAsync(partial, stream.getCUDAStream()));
+                        }
+                    } else if (tiles.blockQ == 64 && tiles.blockKV == 64 && tiles.numWarps == 4) {
+                        using MmaDPP = fk::FlashAttentionMmaDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, fk::AttentionIdentityEpilogue, 64, 64, 4>;
+                        const int splits = fk::flashAttentionMmaSplits<MmaDPP>(pt.bh, pt.seq, pt.seq, pt.causal);
+                        if (splits == 1) {
+                            fk::executeOperations<MmaDPP>(stream, qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal);
+                        } else {
+                            using SplitDPP = fk::FlashAttentionMmaSplitKVDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, fk::AttentionIdentityEpilogue, 64, 64, 4>;
+                            float* partial = nullptr;
+                            FKLB_CUDA_CHECK(cudaMallocAsync(reinterpret_cast<void**>(&partial),
+                                                            fk::flashAttentionMmaPartialFloats(pt.bh, pt.seq, splits, D) * sizeof(float), stream.getCUDAStream()));
+                            fk::executeOperations<SplitDPP>(stream, qr, kr, vr, partial, splits, pt.bh, pt.seq, pt.seq, pt.causal);
+                            fk::executeOperations<typename SplitDPP::CombineDPP>(stream, partial, o, pt.bh, pt.seq, splits);
+                            FKLB_CUDA_CHECK(cudaFreeAsync(partial, stream.getCUDAStream()));
+                        }
+                    } else {
+                        throw std::logic_error("flashAttentionMmaTiles returned tiles this variant does not name");
+                    }
+                } else if constexpr (fk::isRawBf16Read<KIOp> && fk::isRawBf16Read<VIOp>) {
+                    if (tiles.blockQ == 128 && tiles.blockKV == 128 && tiles.numWarps == 8) {
+                        using MmaDPP = fk::FlashAttentionMmaDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, fk::AttentionIdentityEpilogue, 128, 128, 8>;
+                        const int splits = fk::flashAttentionMmaSplits<MmaDPP>(pt.bh, pt.seq, pt.seq, pt.causal);
+                        if (splits == 1) {
+                            fk::executeOperations<MmaDPP>(stream, qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal);
+                        } else {
+                            using SplitDPP = fk::FlashAttentionMmaSplitKVDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, fk::AttentionIdentityEpilogue, 128, 128, 8>;
+                            float* partial = nullptr;
+                            FKLB_CUDA_CHECK(cudaMallocAsync(reinterpret_cast<void**>(&partial),
+                                                            fk::flashAttentionMmaPartialFloats(pt.bh, pt.seq, splits, D) * sizeof(float), stream.getCUDAStream()));
+                            fk::executeOperations<SplitDPP>(stream, qr, kr, vr, partial, splits, pt.bh, pt.seq, pt.seq, pt.causal);
+                            fk::executeOperations<typename SplitDPP::CombineDPP>(stream, partial, o, pt.bh, pt.seq, splits);
+                            FKLB_CUDA_CHECK(cudaFreeAsync(partial, stream.getCUDAStream()));
+                        }
+                    } else if (tiles.blockQ == 64 && tiles.blockKV == 64 && tiles.numWarps == 4) {
+                        using MmaDPP = fk::FlashAttentionMmaDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, fk::AttentionIdentityEpilogue, 64, 64, 4>;
+                        const int splits = fk::flashAttentionMmaSplits<MmaDPP>(pt.bh, pt.seq, pt.seq, pt.causal);
+                        if (splits == 1) {
+                            fk::executeOperations<MmaDPP>(stream, qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal);
+                        } else {
+                            using SplitDPP = fk::FlashAttentionMmaSplitKVDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, fk::AttentionIdentityEpilogue, 64, 64, 4>;
+                            float* partial = nullptr;
+                            FKLB_CUDA_CHECK(cudaMallocAsync(reinterpret_cast<void**>(&partial),
+                                                            fk::flashAttentionMmaPartialFloats(pt.bh, pt.seq, splits, D) * sizeof(float), stream.getCUDAStream()));
+                            fk::executeOperations<SplitDPP>(stream, qr, kr, vr, partial, splits, pt.bh, pt.seq, pt.seq, pt.causal);
+                            fk::executeOperations<typename SplitDPP::CombineDPP>(stream, partial, o, pt.bh, pt.seq, splits);
+                            FKLB_CUDA_CHECK(cudaFreeAsync(partial, stream.getCUDAStream()));
+                        }
+                    } else {
+                        throw std::logic_error("flashAttentionMmaTiles returned tiles this variant does not name");
+                    }
+                } else {
+                    if (tiles.blockQ == (D <= 64 ? 128 : 64) && tiles.blockKV == 32 && tiles.numWarps == 4) {
+                        using MmaDPP = fk::FlashAttentionMmaDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, fk::AttentionIdentityEpilogue, (D <= 64 ? 128 : 64), 32, 4>;
+                        const int splits = fk::flashAttentionMmaSplits<MmaDPP>(pt.bh, pt.seq, pt.seq, pt.causal);
+                        if (splits == 1) {
+                            fk::executeOperations<MmaDPP>(stream, qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal);
+                        } else {
+                            using SplitDPP = fk::FlashAttentionMmaSplitKVDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, fk::AttentionIdentityEpilogue, (D <= 64 ? 128 : 64), 32, 4>;
+                            float* partial = nullptr;
+                            FKLB_CUDA_CHECK(cudaMallocAsync(reinterpret_cast<void**>(&partial),
+                                                            fk::flashAttentionMmaPartialFloats(pt.bh, pt.seq, splits, D) * sizeof(float), stream.getCUDAStream()));
+                            fk::executeOperations<SplitDPP>(stream, qr, kr, vr, partial, splits, pt.bh, pt.seq, pt.seq, pt.causal);
+                            fk::executeOperations<typename SplitDPP::CombineDPP>(stream, partial, o, pt.bh, pt.seq, splits);
+                            FKLB_CUDA_CHECK(cudaFreeAsync(partial, stream.getCUDAStream()));
+                        }
+                    } else {
+                        throw std::logic_error("flashAttentionMmaTiles returned tiles this variant does not name");
+                    }
+                }
             }, kRefF8, vRefF8, 1.f, 0.f, iters, 2);
         add("mma_epilogue_fused",
             [&] { return std::make_tuple(fk::makeAttentionRead(q, pt.bh, pt.seq, D), fk::makeAttentionRead(k, pt.bh, pt.seq, D), fk::makeAttentionRead(v, pt.bh, pt.seq, D),
                                          fk::Mul<float>::build(epiA).then(fk::Add<float>::build(epiB))); },
             [&](const auto& set) {
                 const auto& [qr, kr, vr, epilogue] = set;
-                fk::executeFlashAttentionMma<D>(qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal, stream, -1.f, epilogue);
+                // the library's automatic choice (FKL #435: the caller makes it): fk::flashAttentionMmaTiles names the FlashAttentionMmaDPP, and
+                // fk::flashAttentionMmaSplits decides the split-KV (then FlashAttentionMmaSplitKVDPP and its CombineDPP, two kernels)
+                using QIOp = std::decay_t<decltype(qr)>;
+                using KIOp = std::decay_t<decltype(kr)>;
+                using VIOp = std::decay_t<decltype(vr)>;
+                using EpiIOp = std::decay_t<decltype(epilogue)>;
+                const fk::FlashAttentionMmaTiles tiles = fk::flashAttentionMmaTiles<D, KIOp, VIOp>(pt.bh, pt.seq, pt.causal);
+                if constexpr (fk::isRawBf16Read<KIOp> && fk::isRawBf16Read<VIOp> && D <= 64) {
+                    if (tiles.blockQ == 128 && tiles.blockKV == 64 && tiles.numWarps == 4) {
+                        using MmaDPP = fk::FlashAttentionMmaDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, EpiIOp, 128, 64, 4>;
+                        const int splits = fk::flashAttentionMmaSplits<MmaDPP>(pt.bh, pt.seq, pt.seq, pt.causal);
+                        if (splits == 1) {
+                            fk::executeOperations<MmaDPP>(stream, qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal, -1.f, epilogue);
+                        } else {
+                            using SplitDPP = fk::FlashAttentionMmaSplitKVDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, EpiIOp, 128, 64, 4>;
+                            float* partial = nullptr;
+                            FKLB_CUDA_CHECK(cudaMallocAsync(reinterpret_cast<void**>(&partial),
+                                                            fk::flashAttentionMmaPartialFloats(pt.bh, pt.seq, splits, D) * sizeof(float), stream.getCUDAStream()));
+                            fk::executeOperations<SplitDPP>(stream, qr, kr, vr, partial, splits, pt.bh, pt.seq, pt.seq, pt.causal, -1.f, epilogue);
+                            fk::executeOperations<typename SplitDPP::CombineDPP>(stream, partial, o, pt.bh, pt.seq, splits, epilogue);
+                            FKLB_CUDA_CHECK(cudaFreeAsync(partial, stream.getCUDAStream()));
+                        }
+                    } else if (tiles.blockQ == 64 && tiles.blockKV == 128 && tiles.numWarps == 4) {
+                        using MmaDPP = fk::FlashAttentionMmaDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, EpiIOp, 64, 128, 4>;
+                        const int splits = fk::flashAttentionMmaSplits<MmaDPP>(pt.bh, pt.seq, pt.seq, pt.causal);
+                        if (splits == 1) {
+                            fk::executeOperations<MmaDPP>(stream, qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal, -1.f, epilogue);
+                        } else {
+                            using SplitDPP = fk::FlashAttentionMmaSplitKVDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, EpiIOp, 64, 128, 4>;
+                            float* partial = nullptr;
+                            FKLB_CUDA_CHECK(cudaMallocAsync(reinterpret_cast<void**>(&partial),
+                                                            fk::flashAttentionMmaPartialFloats(pt.bh, pt.seq, splits, D) * sizeof(float), stream.getCUDAStream()));
+                            fk::executeOperations<SplitDPP>(stream, qr, kr, vr, partial, splits, pt.bh, pt.seq, pt.seq, pt.causal, -1.f, epilogue);
+                            fk::executeOperations<typename SplitDPP::CombineDPP>(stream, partial, o, pt.bh, pt.seq, splits, epilogue);
+                            FKLB_CUDA_CHECK(cudaFreeAsync(partial, stream.getCUDAStream()));
+                        }
+                    } else if (tiles.blockQ == 64 && tiles.blockKV == 64 && tiles.numWarps == 4) {
+                        using MmaDPP = fk::FlashAttentionMmaDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, EpiIOp, 64, 64, 4>;
+                        const int splits = fk::flashAttentionMmaSplits<MmaDPP>(pt.bh, pt.seq, pt.seq, pt.causal);
+                        if (splits == 1) {
+                            fk::executeOperations<MmaDPP>(stream, qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal, -1.f, epilogue);
+                        } else {
+                            using SplitDPP = fk::FlashAttentionMmaSplitKVDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, EpiIOp, 64, 64, 4>;
+                            float* partial = nullptr;
+                            FKLB_CUDA_CHECK(cudaMallocAsync(reinterpret_cast<void**>(&partial),
+                                                            fk::flashAttentionMmaPartialFloats(pt.bh, pt.seq, splits, D) * sizeof(float), stream.getCUDAStream()));
+                            fk::executeOperations<SplitDPP>(stream, qr, kr, vr, partial, splits, pt.bh, pt.seq, pt.seq, pt.causal, -1.f, epilogue);
+                            fk::executeOperations<typename SplitDPP::CombineDPP>(stream, partial, o, pt.bh, pt.seq, splits, epilogue);
+                            FKLB_CUDA_CHECK(cudaFreeAsync(partial, stream.getCUDAStream()));
+                        }
+                    } else {
+                        throw std::logic_error("flashAttentionMmaTiles returned tiles this variant does not name");
+                    }
+                } else if constexpr (fk::isRawBf16Read<KIOp> && fk::isRawBf16Read<VIOp>) {
+                    if (tiles.blockQ == 128 && tiles.blockKV == 128 && tiles.numWarps == 8) {
+                        using MmaDPP = fk::FlashAttentionMmaDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, EpiIOp, 128, 128, 8>;
+                        const int splits = fk::flashAttentionMmaSplits<MmaDPP>(pt.bh, pt.seq, pt.seq, pt.causal);
+                        if (splits == 1) {
+                            fk::executeOperations<MmaDPP>(stream, qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal, -1.f, epilogue);
+                        } else {
+                            using SplitDPP = fk::FlashAttentionMmaSplitKVDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, EpiIOp, 128, 128, 8>;
+                            float* partial = nullptr;
+                            FKLB_CUDA_CHECK(cudaMallocAsync(reinterpret_cast<void**>(&partial),
+                                                            fk::flashAttentionMmaPartialFloats(pt.bh, pt.seq, splits, D) * sizeof(float), stream.getCUDAStream()));
+                            fk::executeOperations<SplitDPP>(stream, qr, kr, vr, partial, splits, pt.bh, pt.seq, pt.seq, pt.causal, -1.f, epilogue);
+                            fk::executeOperations<typename SplitDPP::CombineDPP>(stream, partial, o, pt.bh, pt.seq, splits, epilogue);
+                            FKLB_CUDA_CHECK(cudaFreeAsync(partial, stream.getCUDAStream()));
+                        }
+                    } else if (tiles.blockQ == 64 && tiles.blockKV == 64 && tiles.numWarps == 4) {
+                        using MmaDPP = fk::FlashAttentionMmaDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, EpiIOp, 64, 64, 4>;
+                        const int splits = fk::flashAttentionMmaSplits<MmaDPP>(pt.bh, pt.seq, pt.seq, pt.causal);
+                        if (splits == 1) {
+                            fk::executeOperations<MmaDPP>(stream, qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal, -1.f, epilogue);
+                        } else {
+                            using SplitDPP = fk::FlashAttentionMmaSplitKVDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, EpiIOp, 64, 64, 4>;
+                            float* partial = nullptr;
+                            FKLB_CUDA_CHECK(cudaMallocAsync(reinterpret_cast<void**>(&partial),
+                                                            fk::flashAttentionMmaPartialFloats(pt.bh, pt.seq, splits, D) * sizeof(float), stream.getCUDAStream()));
+                            fk::executeOperations<SplitDPP>(stream, qr, kr, vr, partial, splits, pt.bh, pt.seq, pt.seq, pt.causal, -1.f, epilogue);
+                            fk::executeOperations<typename SplitDPP::CombineDPP>(stream, partial, o, pt.bh, pt.seq, splits, epilogue);
+                            FKLB_CUDA_CHECK(cudaFreeAsync(partial, stream.getCUDAStream()));
+                        }
+                    } else {
+                        throw std::logic_error("flashAttentionMmaTiles returned tiles this variant does not name");
+                    }
+                } else {
+                    if (tiles.blockQ == (D <= 64 ? 128 : 64) && tiles.blockKV == 32 && tiles.numWarps == 4) {
+                        using MmaDPP = fk::FlashAttentionMmaDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, EpiIOp, (D <= 64 ? 128 : 64), 32, 4>;
+                        const int splits = fk::flashAttentionMmaSplits<MmaDPP>(pt.bh, pt.seq, pt.seq, pt.causal);
+                        if (splits == 1) {
+                            fk::executeOperations<MmaDPP>(stream, qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal, -1.f, epilogue);
+                        } else {
+                            using SplitDPP = fk::FlashAttentionMmaSplitKVDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, EpiIOp, (D <= 64 ? 128 : 64), 32, 4>;
+                            float* partial = nullptr;
+                            FKLB_CUDA_CHECK(cudaMallocAsync(reinterpret_cast<void**>(&partial),
+                                                            fk::flashAttentionMmaPartialFloats(pt.bh, pt.seq, splits, D) * sizeof(float), stream.getCUDAStream()));
+                            fk::executeOperations<SplitDPP>(stream, qr, kr, vr, partial, splits, pt.bh, pt.seq, pt.seq, pt.causal, -1.f, epilogue);
+                            fk::executeOperations<typename SplitDPP::CombineDPP>(stream, partial, o, pt.bh, pt.seq, splits, epilogue);
+                            FKLB_CUDA_CHECK(cudaFreeAsync(partial, stream.getCUDAStream()));
+                        }
+                    } else {
+                        throw std::logic_error("flashAttentionMmaTiles returned tiles this variant does not name");
+                    }
+                }
             }, kRef, vRef, epiA, epiB, iters, 3);
         add("mma_epilogue_separate",
             [&] { return std::make_tuple(fk::makeAttentionRead(q, pt.bh, pt.seq, D), fk::makeAttentionRead(k, pt.bh, pt.seq, D), fk::makeAttentionRead(v, pt.bh, pt.seq, D)); },
             [&](const auto& set) {
                 const auto& [qr, kr, vr] = set;
-                fk::executeFlashAttentionMma<D>(qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal, stream);
+                // the library's automatic choice (FKL #435: the caller makes it): fk::flashAttentionMmaTiles names the FlashAttentionMmaDPP, and
+                // fk::flashAttentionMmaSplits decides the split-KV (then FlashAttentionMmaSplitKVDPP and its CombineDPP, two kernels)
+                using QIOp = std::decay_t<decltype(qr)>;
+                using KIOp = std::decay_t<decltype(kr)>;
+                using VIOp = std::decay_t<decltype(vr)>;
+                const fk::FlashAttentionMmaTiles tiles = fk::flashAttentionMmaTiles<D, KIOp, VIOp>(pt.bh, pt.seq, pt.causal);
+                if constexpr (fk::isRawBf16Read<KIOp> && fk::isRawBf16Read<VIOp> && D <= 64) {
+                    if (tiles.blockQ == 128 && tiles.blockKV == 64 && tiles.numWarps == 4) {
+                        using MmaDPP = fk::FlashAttentionMmaDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, fk::AttentionIdentityEpilogue, 128, 64, 4>;
+                        const int splits = fk::flashAttentionMmaSplits<MmaDPP>(pt.bh, pt.seq, pt.seq, pt.causal);
+                        if (splits == 1) {
+                            fk::executeOperations<MmaDPP>(stream, qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal);
+                        } else {
+                            using SplitDPP = fk::FlashAttentionMmaSplitKVDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, fk::AttentionIdentityEpilogue, 128, 64, 4>;
+                            float* partial = nullptr;
+                            FKLB_CUDA_CHECK(cudaMallocAsync(reinterpret_cast<void**>(&partial),
+                                                            fk::flashAttentionMmaPartialFloats(pt.bh, pt.seq, splits, D) * sizeof(float), stream.getCUDAStream()));
+                            fk::executeOperations<SplitDPP>(stream, qr, kr, vr, partial, splits, pt.bh, pt.seq, pt.seq, pt.causal);
+                            fk::executeOperations<typename SplitDPP::CombineDPP>(stream, partial, o, pt.bh, pt.seq, splits);
+                            FKLB_CUDA_CHECK(cudaFreeAsync(partial, stream.getCUDAStream()));
+                        }
+                    } else if (tiles.blockQ == 64 && tiles.blockKV == 128 && tiles.numWarps == 4) {
+                        using MmaDPP = fk::FlashAttentionMmaDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, fk::AttentionIdentityEpilogue, 64, 128, 4>;
+                        const int splits = fk::flashAttentionMmaSplits<MmaDPP>(pt.bh, pt.seq, pt.seq, pt.causal);
+                        if (splits == 1) {
+                            fk::executeOperations<MmaDPP>(stream, qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal);
+                        } else {
+                            using SplitDPP = fk::FlashAttentionMmaSplitKVDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, fk::AttentionIdentityEpilogue, 64, 128, 4>;
+                            float* partial = nullptr;
+                            FKLB_CUDA_CHECK(cudaMallocAsync(reinterpret_cast<void**>(&partial),
+                                                            fk::flashAttentionMmaPartialFloats(pt.bh, pt.seq, splits, D) * sizeof(float), stream.getCUDAStream()));
+                            fk::executeOperations<SplitDPP>(stream, qr, kr, vr, partial, splits, pt.bh, pt.seq, pt.seq, pt.causal);
+                            fk::executeOperations<typename SplitDPP::CombineDPP>(stream, partial, o, pt.bh, pt.seq, splits);
+                            FKLB_CUDA_CHECK(cudaFreeAsync(partial, stream.getCUDAStream()));
+                        }
+                    } else if (tiles.blockQ == 64 && tiles.blockKV == 64 && tiles.numWarps == 4) {
+                        using MmaDPP = fk::FlashAttentionMmaDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, fk::AttentionIdentityEpilogue, 64, 64, 4>;
+                        const int splits = fk::flashAttentionMmaSplits<MmaDPP>(pt.bh, pt.seq, pt.seq, pt.causal);
+                        if (splits == 1) {
+                            fk::executeOperations<MmaDPP>(stream, qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal);
+                        } else {
+                            using SplitDPP = fk::FlashAttentionMmaSplitKVDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, fk::AttentionIdentityEpilogue, 64, 64, 4>;
+                            float* partial = nullptr;
+                            FKLB_CUDA_CHECK(cudaMallocAsync(reinterpret_cast<void**>(&partial),
+                                                            fk::flashAttentionMmaPartialFloats(pt.bh, pt.seq, splits, D) * sizeof(float), stream.getCUDAStream()));
+                            fk::executeOperations<SplitDPP>(stream, qr, kr, vr, partial, splits, pt.bh, pt.seq, pt.seq, pt.causal);
+                            fk::executeOperations<typename SplitDPP::CombineDPP>(stream, partial, o, pt.bh, pt.seq, splits);
+                            FKLB_CUDA_CHECK(cudaFreeAsync(partial, stream.getCUDAStream()));
+                        }
+                    } else {
+                        throw std::logic_error("flashAttentionMmaTiles returned tiles this variant does not name");
+                    }
+                } else if constexpr (fk::isRawBf16Read<KIOp> && fk::isRawBf16Read<VIOp>) {
+                    if (tiles.blockQ == 128 && tiles.blockKV == 128 && tiles.numWarps == 8) {
+                        using MmaDPP = fk::FlashAttentionMmaDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, fk::AttentionIdentityEpilogue, 128, 128, 8>;
+                        const int splits = fk::flashAttentionMmaSplits<MmaDPP>(pt.bh, pt.seq, pt.seq, pt.causal);
+                        if (splits == 1) {
+                            fk::executeOperations<MmaDPP>(stream, qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal);
+                        } else {
+                            using SplitDPP = fk::FlashAttentionMmaSplitKVDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, fk::AttentionIdentityEpilogue, 128, 128, 8>;
+                            float* partial = nullptr;
+                            FKLB_CUDA_CHECK(cudaMallocAsync(reinterpret_cast<void**>(&partial),
+                                                            fk::flashAttentionMmaPartialFloats(pt.bh, pt.seq, splits, D) * sizeof(float), stream.getCUDAStream()));
+                            fk::executeOperations<SplitDPP>(stream, qr, kr, vr, partial, splits, pt.bh, pt.seq, pt.seq, pt.causal);
+                            fk::executeOperations<typename SplitDPP::CombineDPP>(stream, partial, o, pt.bh, pt.seq, splits);
+                            FKLB_CUDA_CHECK(cudaFreeAsync(partial, stream.getCUDAStream()));
+                        }
+                    } else if (tiles.blockQ == 64 && tiles.blockKV == 64 && tiles.numWarps == 4) {
+                        using MmaDPP = fk::FlashAttentionMmaDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, fk::AttentionIdentityEpilogue, 64, 64, 4>;
+                        const int splits = fk::flashAttentionMmaSplits<MmaDPP>(pt.bh, pt.seq, pt.seq, pt.causal);
+                        if (splits == 1) {
+                            fk::executeOperations<MmaDPP>(stream, qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal);
+                        } else {
+                            using SplitDPP = fk::FlashAttentionMmaSplitKVDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, fk::AttentionIdentityEpilogue, 64, 64, 4>;
+                            float* partial = nullptr;
+                            FKLB_CUDA_CHECK(cudaMallocAsync(reinterpret_cast<void**>(&partial),
+                                                            fk::flashAttentionMmaPartialFloats(pt.bh, pt.seq, splits, D) * sizeof(float), stream.getCUDAStream()));
+                            fk::executeOperations<SplitDPP>(stream, qr, kr, vr, partial, splits, pt.bh, pt.seq, pt.seq, pt.causal);
+                            fk::executeOperations<typename SplitDPP::CombineDPP>(stream, partial, o, pt.bh, pt.seq, splits);
+                            FKLB_CUDA_CHECK(cudaFreeAsync(partial, stream.getCUDAStream()));
+                        }
+                    } else {
+                        throw std::logic_error("flashAttentionMmaTiles returned tiles this variant does not name");
+                    }
+                } else {
+                    if (tiles.blockQ == (D <= 64 ? 128 : 64) && tiles.blockKV == 32 && tiles.numWarps == 4) {
+                        using MmaDPP = fk::FlashAttentionMmaDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, fk::AttentionIdentityEpilogue, (D <= 64 ? 128 : 64), 32, 4>;
+                        const int splits = fk::flashAttentionMmaSplits<MmaDPP>(pt.bh, pt.seq, pt.seq, pt.causal);
+                        if (splits == 1) {
+                            fk::executeOperations<MmaDPP>(stream, qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal);
+                        } else {
+                            using SplitDPP = fk::FlashAttentionMmaSplitKVDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, fk::AttentionIdentityEpilogue, (D <= 64 ? 128 : 64), 32, 4>;
+                            float* partial = nullptr;
+                            FKLB_CUDA_CHECK(cudaMallocAsync(reinterpret_cast<void**>(&partial),
+                                                            fk::flashAttentionMmaPartialFloats(pt.bh, pt.seq, splits, D) * sizeof(float), stream.getCUDAStream()));
+                            fk::executeOperations<SplitDPP>(stream, qr, kr, vr, partial, splits, pt.bh, pt.seq, pt.seq, pt.causal);
+                            fk::executeOperations<typename SplitDPP::CombineDPP>(stream, partial, o, pt.bh, pt.seq, splits);
+                            FKLB_CUDA_CHECK(cudaFreeAsync(partial, stream.getCUDAStream()));
+                        }
+                    } else {
+                        throw std::logic_error("flashAttentionMmaTiles returned tiles this variant does not name");
+                    }
+                }
                 affineBf16<<<(n + 255) / 256, 256, 0, stream.getCUDAStream()>>>(o, n, epiA, epiB);
             }, kRef, vRef, epiA, epiB, iters, 3);
         if (pt.seq <= simtMaxSeq) {
@@ -640,7 +1358,9 @@ struct Runner {
                 [&] { return std::make_tuple(fk::makeAttentionRead(q, pt.bh, pt.seq, D), fk::makeAttentionRead(k, pt.bh, pt.seq, D), fk::makeAttentionRead(v, pt.bh, pt.seq, D)); },
                 [&](const auto& set) {
                     const auto& [qr, kr, vr] = set;
-                    fk::executeFlashAttention<D>(qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal, stream);
+                    fk::executeOperations<fk::FlashAttentionDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, std::decay_t<decltype(qr)>,
+                                                              std::decay_t<decltype(kr)>, std::decay_t<decltype(vr)>>>(
+                        stream, qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal);
                 }, kRef, vRef, 1.f, 0.f, simtIters, 4);
         }
         // ORDER: the groups {raw}, {int8 pair}, {fp8 pair}, {epilogue pair} are rotated by (configuration index + E16_ROTATE) mod 4 and the two members of a pair are swapped when that shift is odd, so that over the
@@ -707,7 +1427,7 @@ int launch() {
                         "(the GPU time of the call, no host gap between calls; the block lasts about E16_BLOCK_MS), after a warm-up of at least E16_WARMUP_MS of GPU time; every call launches its own argument set (the operations of the call), rebuilt before the events; "
                         "prep_us_per_call = host time (steady_clock) of building that set and releasing the one it replaces, per call; position = place of the variant in the order of its configuration (ORDER: groups rotated by configuration + E16_ROTATE, pair members swapped on odd shifts, SIMT last); t_start_ms and t_end_ms = wall clock of the blocks, for the join with the SM clock sampler; single_ms_median = median of `blocks` single calls, each between two events and synchronised (launch latency included); "
                         "TFLOP/s = 4 BH S^2 D (halved for causal) / time_ms_median; error against an fp32 attention of the same (dequantised) inputs for the first and the last head; kernels and per-kernel facts from capturing one call "
-                        "into a CUDA graph; the library chooses the tiles (no tuning: <D, 0, 0, 4> and <D, 32, 4> are the library's defaults); mma_epilogue_*: o * " + envString("E16_EPI_A", "1.25") + " + " + envString("E16_EPI_B", "0.5") + "; SCHEDULES (columns schedule, block_q, block_kv, num_warps, split_kv: from the template arguments of the attention kernel; the LDGSTS count of every instantiation is in e16_sass_counts.csv): mma_raw, mma_epilogue_* and the bf16 buffers "
+                        "into a CUDA graph; the library chooses the tiles (no tuning: fk::flashAttentionMmaTiles and fk::flashAttentionMmaSplits, the choice of executeFlashAttentionMma<D, 0, 0, 4> before FKL #435, and FlashAttentionDPP's default <32, 4>); mma_epilogue_*: o * " + envString("E16_EPI_A", "1.25") + " + " + envString("E16_EPI_B", "0.5") + "; SCHEDULES (columns schedule, block_q, block_kv, num_warps, split_kv: from the template arguments of the attention kernel; the LDGSTS count of every instantiation is in e16_sass_counts.csv): mma_raw, mma_epilogue_* and the bf16 buffers "
                         "of the *_unfused variants run the library's bf16 cp.async schedule (16-byte cp.async copies of K and V tiles); the fused int8 and fp8 variants run the library's quantised schedule: the raw quantised bytes are copied with cp.async (8 bytes) into a "
                         "staging area of shared memory and dequantised shared memory to shared memory inside the kernel, the per-token scales are read from global memory; each path has its own tile sizes (the library's choice). A fused-against-unfused prologue "
                         "pair therefore compares an in-kernel shared-memory dequantisation pass (half the global bytes for K and V) with a separate dequantisation kernel that writes bf16 to global memory, and the two kernels differ in schedule details and tile "
