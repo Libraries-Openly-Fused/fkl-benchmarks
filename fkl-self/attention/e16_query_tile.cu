@@ -14,7 +14,7 @@
 
 // E16 query-tile experiment: does the extra time of the fused int8 attention kernel fall in proportion to the number of query tiles?
 // Derived from e16_attention.cu (same inputs, timing, error check and kernel-facts code); only the variants, their order and one CSV column differ. D = 128 (D = 64 compiles but is not the question), bf16 Q, K, V
-// (BH, S, D), BH = max(4, tokens / S), non-causal. Every variant is the tensor-core kernel with EXPLICIT tile arguments (executeFlashAttentionMma<D, BLOCK_Q, BLOCK_KV, NUM_WARPS, bf16>, which bypasses the library's heuristic):
+// (BH, S, D), BH = max(4, tokens / S), non-causal. Every variant is the tensor-core kernel with EXPLICIT tile arguments (fk::executeOperations<fk::FlashAttentionMmaDPP<GPU_NVIDIA, bf16, D, Q, K, V, identity, BLOCK_Q, BLOCK_KV, NUM_WARPS>>, which bypasses the library's heuristic; executeFlashAttentionMma<D, BLOCK_Q, BLOCK_KV, NUM_WARPS, bf16> before FKL #435):
 //   raw_default              the library's own pick for raw bf16 (BQ64 / BKV64 / 4 warps at D = 128 below S = 16384): the bf16 control of e16_attention.cu
 //   raw_bq32_kv32_w2, raw_bq64_kv32_w4, raw_bq128_kv32_w4        bf16 raw, BLOCK_KV = 32 as the quantised schedule uses, 2 / 4 / 4 warps (BLOCK_Q / NUM_WARPS = 16 / 16 / 32)
 //   int8_bq32_w2, int8_bq64_w4, int8_bq128_w4                    K and V int8 with one fp32 scale per token (the library's quantised schedule), BLOCK_KV = 32, the same tiles
@@ -275,7 +275,7 @@ bool variantWanted(const std::string& name) {
 struct KernelFacts {
     int kernels{-1};
     std::string text;
-    // the first attention kernel of the call, from its demangled template arguments (BLOCK_Q, BLOCK_KV, NUM_WARPS, SPLIT_KV) and from the types of its K and V reads (the schedule the library selects for them);
+    // the first attention kernel of the call, from its demangled template arguments (BLOCK_Q, BLOCK_KV, NUM_WARPS; SPLIT_KV: the split DPP) and from the types of its K and V reads (the schedule the library selects for them);
     // scripts/e16_sass_counts.py counts the LDGSTS (cp.async) instructions of every instantiation in the binary as the measured check of the schedule
     std::string schedule, splitKV;
     int blockQ{0}, blockKV{0}, numWarps{0};
@@ -304,22 +304,25 @@ void parseAttentionKernel(const std::string& mangled, KernelFacts& f) {
     const std::string dem = (status == 0 && d) ? d : mangled;
     std::free(d);
     const auto has = [](const std::string& s, const char* what) { return s.find(what) != std::string::npos; };
-    const std::vector<std::string> mma = templateArgs(dem, "launchFlashAttentionMmaDPP_Kernel");
-    if (mma.size() >= 9) {   // OT, HEAD_DIM, QIOp, KIOp, VIOp, EpilogueIOp, BLOCK_Q, BLOCK_KV, NUM_WARPS, ScoreModOp, SPLIT_KV
-        f.blockQ = std::atoi(mma[6].c_str());
-        f.blockKV = std::atoi(mma[7].c_str());
-        f.numWarps = std::atoi(mma[8].c_str());
-        f.splitKV = mma.size() > 10 ? mma[10] : "false";
-        const bool kRaw = has(mma[3], "Bf16AttentionRead") && has(mma[4], "Bf16AttentionRead");
-        const bool kQuant = (has(mma[3], "Int8TokenDequantRead") && has(mma[4], "Int8TokenDequantRead")) || (has(mma[3], "Fp8TokenDequantRead") && has(mma[4], "Fp8TokenDequantRead"));
+    // FKL #435: every kernel is fk::launchDPP_Kernel<DPP, ...>; its DPP's template arguments start with the ParArch. The split-KV producer is
+    // the DPP fk::FlashAttentionMmaSplitKVDPP (the same arguments as fk::FlashAttentionMmaDPP), so SPLIT_KV is the name of the DPP
+    const std::vector<std::string> split = templateArgs(dem, "fk::FlashAttentionMmaSplitKVDPP");
+    const std::vector<std::string> mma = split.empty() ? templateArgs(dem, "fk::FlashAttentionMmaDPP") : split;
+    if (mma.size() >= 10) {   // ParArch, OT, HEAD_DIM, QIOp, KIOp, VIOp, EpilogueIOp, BLOCK_Q, BLOCK_KV, NUM_WARPS, ScoreModOp
+        f.blockQ = std::atoi(mma[7].c_str());
+        f.blockKV = std::atoi(mma[8].c_str());
+        f.numWarps = std::atoi(mma[9].c_str());
+        f.splitKV = split.empty() ? "false" : "true";
+        const bool kRaw = has(mma[4], "Bf16AttentionRead") && has(mma[5], "Bf16AttentionRead");
+        const bool kQuant = (has(mma[4], "Int8TokenDequantRead") && has(mma[5], "Int8TokenDequantRead")) || (has(mma[4], "Fp8TokenDequantRead") && has(mma[5], "Fp8TokenDequantRead"));
         f.schedule = kRaw ? "cp.async bf16" : (kQuant ? "cp.async quantised bytes + smem dequant" : "register prefetch");
         return;
     }
-    const std::vector<std::string> simt = templateArgs(dem, "launchFlashAttentionDPP_Kernel");
-    if (simt.size() >= 8) {   // OT, HEAD_DIM, QIOp, KIOp, VIOp, EpilogueIOp, BLOCK_N, WARPS_PER_BLOCK
-        f.blockQ = std::atoi(simt[7].c_str());
-        f.blockKV = std::atoi(simt[6].c_str());
-        f.numWarps = std::atoi(simt[7].c_str());
+    const std::vector<std::string> simt = templateArgs(dem, "fk::FlashAttentionDPP");
+    if (simt.size() >= 9) {   // ParArch, OT, HEAD_DIM, QIOp, KIOp, VIOp, EpilogueIOp, BLOCK_N, WARPS_PER_BLOCK
+        f.blockQ = std::atoi(simt[8].c_str());
+        f.blockKV = std::atoi(simt[7].c_str());
+        f.numWarps = std::atoi(simt[8].c_str());
         f.splitKV = "false";
         f.schedule = "simt (thread-staged shared tiles)";
     }
@@ -554,61 +557,181 @@ struct Runner {
             [&] { return std::make_tuple(fk::makeAttentionRead(q, pt.bh, pt.seq, D), fk::makeAttentionRead(k, pt.bh, pt.seq, D), fk::makeAttentionRead(v, pt.bh, pt.seq, D)); },
             [&](const auto& set) {
                 const auto& [qr, kr, vr] = set;
-                fk::executeFlashAttentionMma<D>(qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal, stream);
+                // the library's automatic choice (FKL #435: the caller makes it): fk::flashAttentionMmaTiles names the FlashAttentionMmaDPP, and
+                // fk::flashAttentionMmaSplits decides the split-KV (then FlashAttentionMmaSplitKVDPP and its CombineDPP, two kernels)
+                using QIOp = std::decay_t<decltype(qr)>;
+                using KIOp = std::decay_t<decltype(kr)>;
+                using VIOp = std::decay_t<decltype(vr)>;
+                const fk::FlashAttentionMmaTiles tiles = fk::flashAttentionMmaTiles<D, KIOp, VIOp>(pt.bh, pt.seq, pt.causal);
+                if constexpr (fk::isRawBf16Read<KIOp> && fk::isRawBf16Read<VIOp> && D <= 64) {
+                    if (tiles.blockQ == 128 && tiles.blockKV == 64 && tiles.numWarps == 4) {
+                        using MmaDPP = fk::FlashAttentionMmaDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, fk::AttentionIdentityEpilogue, 128, 64, 4>;
+                        const int splits = fk::flashAttentionMmaSplits<MmaDPP>(pt.bh, pt.seq, pt.seq, pt.causal);
+                        if (splits == 1) {
+                            fk::executeOperations<MmaDPP>(stream, qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal);
+                        } else {
+                            using SplitDPP = fk::FlashAttentionMmaSplitKVDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, fk::AttentionIdentityEpilogue, 128, 64, 4>;
+                            float* partial = nullptr;
+                            FKLB_CUDA_CHECK(cudaMallocAsync(reinterpret_cast<void**>(&partial),
+                                                            fk::flashAttentionMmaPartialFloats(pt.bh, pt.seq, splits, D) * sizeof(float), stream.getCUDAStream()));
+                            fk::executeOperations<SplitDPP>(stream, qr, kr, vr, partial, splits, pt.bh, pt.seq, pt.seq, pt.causal);
+                            fk::executeOperations<typename SplitDPP::CombineDPP>(stream, partial, o, pt.bh, pt.seq, splits);
+                            FKLB_CUDA_CHECK(cudaFreeAsync(partial, stream.getCUDAStream()));
+                        }
+                    } else if (tiles.blockQ == 64 && tiles.blockKV == 128 && tiles.numWarps == 4) {
+                        using MmaDPP = fk::FlashAttentionMmaDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, fk::AttentionIdentityEpilogue, 64, 128, 4>;
+                        const int splits = fk::flashAttentionMmaSplits<MmaDPP>(pt.bh, pt.seq, pt.seq, pt.causal);
+                        if (splits == 1) {
+                            fk::executeOperations<MmaDPP>(stream, qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal);
+                        } else {
+                            using SplitDPP = fk::FlashAttentionMmaSplitKVDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, fk::AttentionIdentityEpilogue, 64, 128, 4>;
+                            float* partial = nullptr;
+                            FKLB_CUDA_CHECK(cudaMallocAsync(reinterpret_cast<void**>(&partial),
+                                                            fk::flashAttentionMmaPartialFloats(pt.bh, pt.seq, splits, D) * sizeof(float), stream.getCUDAStream()));
+                            fk::executeOperations<SplitDPP>(stream, qr, kr, vr, partial, splits, pt.bh, pt.seq, pt.seq, pt.causal);
+                            fk::executeOperations<typename SplitDPP::CombineDPP>(stream, partial, o, pt.bh, pt.seq, splits);
+                            FKLB_CUDA_CHECK(cudaFreeAsync(partial, stream.getCUDAStream()));
+                        }
+                    } else if (tiles.blockQ == 64 && tiles.blockKV == 64 && tiles.numWarps == 4) {
+                        using MmaDPP = fk::FlashAttentionMmaDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, fk::AttentionIdentityEpilogue, 64, 64, 4>;
+                        const int splits = fk::flashAttentionMmaSplits<MmaDPP>(pt.bh, pt.seq, pt.seq, pt.causal);
+                        if (splits == 1) {
+                            fk::executeOperations<MmaDPP>(stream, qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal);
+                        } else {
+                            using SplitDPP = fk::FlashAttentionMmaSplitKVDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, fk::AttentionIdentityEpilogue, 64, 64, 4>;
+                            float* partial = nullptr;
+                            FKLB_CUDA_CHECK(cudaMallocAsync(reinterpret_cast<void**>(&partial),
+                                                            fk::flashAttentionMmaPartialFloats(pt.bh, pt.seq, splits, D) * sizeof(float), stream.getCUDAStream()));
+                            fk::executeOperations<SplitDPP>(stream, qr, kr, vr, partial, splits, pt.bh, pt.seq, pt.seq, pt.causal);
+                            fk::executeOperations<typename SplitDPP::CombineDPP>(stream, partial, o, pt.bh, pt.seq, splits);
+                            FKLB_CUDA_CHECK(cudaFreeAsync(partial, stream.getCUDAStream()));
+                        }
+                    } else {
+                        throw std::logic_error("flashAttentionMmaTiles returned tiles this variant does not name");
+                    }
+                } else if constexpr (fk::isRawBf16Read<KIOp> && fk::isRawBf16Read<VIOp>) {
+                    if (tiles.blockQ == 128 && tiles.blockKV == 128 && tiles.numWarps == 8) {
+                        using MmaDPP = fk::FlashAttentionMmaDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, fk::AttentionIdentityEpilogue, 128, 128, 8>;
+                        const int splits = fk::flashAttentionMmaSplits<MmaDPP>(pt.bh, pt.seq, pt.seq, pt.causal);
+                        if (splits == 1) {
+                            fk::executeOperations<MmaDPP>(stream, qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal);
+                        } else {
+                            using SplitDPP = fk::FlashAttentionMmaSplitKVDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, fk::AttentionIdentityEpilogue, 128, 128, 8>;
+                            float* partial = nullptr;
+                            FKLB_CUDA_CHECK(cudaMallocAsync(reinterpret_cast<void**>(&partial),
+                                                            fk::flashAttentionMmaPartialFloats(pt.bh, pt.seq, splits, D) * sizeof(float), stream.getCUDAStream()));
+                            fk::executeOperations<SplitDPP>(stream, qr, kr, vr, partial, splits, pt.bh, pt.seq, pt.seq, pt.causal);
+                            fk::executeOperations<typename SplitDPP::CombineDPP>(stream, partial, o, pt.bh, pt.seq, splits);
+                            FKLB_CUDA_CHECK(cudaFreeAsync(partial, stream.getCUDAStream()));
+                        }
+                    } else if (tiles.blockQ == 64 && tiles.blockKV == 64 && tiles.numWarps == 4) {
+                        using MmaDPP = fk::FlashAttentionMmaDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, fk::AttentionIdentityEpilogue, 64, 64, 4>;
+                        const int splits = fk::flashAttentionMmaSplits<MmaDPP>(pt.bh, pt.seq, pt.seq, pt.causal);
+                        if (splits == 1) {
+                            fk::executeOperations<MmaDPP>(stream, qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal);
+                        } else {
+                            using SplitDPP = fk::FlashAttentionMmaSplitKVDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, fk::AttentionIdentityEpilogue, 64, 64, 4>;
+                            float* partial = nullptr;
+                            FKLB_CUDA_CHECK(cudaMallocAsync(reinterpret_cast<void**>(&partial),
+                                                            fk::flashAttentionMmaPartialFloats(pt.bh, pt.seq, splits, D) * sizeof(float), stream.getCUDAStream()));
+                            fk::executeOperations<SplitDPP>(stream, qr, kr, vr, partial, splits, pt.bh, pt.seq, pt.seq, pt.causal);
+                            fk::executeOperations<typename SplitDPP::CombineDPP>(stream, partial, o, pt.bh, pt.seq, splits);
+                            FKLB_CUDA_CHECK(cudaFreeAsync(partial, stream.getCUDAStream()));
+                        }
+                    } else {
+                        throw std::logic_error("flashAttentionMmaTiles returned tiles this variant does not name");
+                    }
+                } else {
+                    if (tiles.blockQ == (D <= 64 ? 128 : 64) && tiles.blockKV == 32 && tiles.numWarps == 4) {
+                        using MmaDPP = fk::FlashAttentionMmaDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, fk::AttentionIdentityEpilogue, (D <= 64 ? 128 : 64), 32, 4>;
+                        const int splits = fk::flashAttentionMmaSplits<MmaDPP>(pt.bh, pt.seq, pt.seq, pt.causal);
+                        if (splits == 1) {
+                            fk::executeOperations<MmaDPP>(stream, qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal);
+                        } else {
+                            using SplitDPP = fk::FlashAttentionMmaSplitKVDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, QIOp, KIOp, VIOp, fk::AttentionIdentityEpilogue, (D <= 64 ? 128 : 64), 32, 4>;
+                            float* partial = nullptr;
+                            FKLB_CUDA_CHECK(cudaMallocAsync(reinterpret_cast<void**>(&partial),
+                                                            fk::flashAttentionMmaPartialFloats(pt.bh, pt.seq, splits, D) * sizeof(float), stream.getCUDAStream()));
+                            fk::executeOperations<SplitDPP>(stream, qr, kr, vr, partial, splits, pt.bh, pt.seq, pt.seq, pt.causal);
+                            fk::executeOperations<typename SplitDPP::CombineDPP>(stream, partial, o, pt.bh, pt.seq, splits);
+                            FKLB_CUDA_CHECK(cudaFreeAsync(partial, stream.getCUDAStream()));
+                        }
+                    } else {
+                        throw std::logic_error("flashAttentionMmaTiles returned tiles this variant does not name");
+                    }
+                }
             }, kRef, vRef);
         add("raw_bq32_kv32_w2",
             [&] { return std::make_tuple(fk::makeAttentionRead(q, pt.bh, pt.seq, D), fk::makeAttentionRead(k, pt.bh, pt.seq, D), fk::makeAttentionRead(v, pt.bh, pt.seq, D)); },
             [&](const auto& set) {
                 const auto& [qr, kr, vr] = set;
-                fk::executeFlashAttentionMma<D, 32, 32, 2>(qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal, stream);
+                fk::executeOperations<fk::FlashAttentionMmaDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, std::decay_t<decltype(qr)>, std::decay_t<decltype(kr)>,
+                                                                std::decay_t<decltype(vr)>, fk::AttentionIdentityEpilogue, 32, 32, 2>>(
+                    stream, qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal);
             }, kRef, vRef);
         add("raw_bq64_kv32_w4",
             [&] { return std::make_tuple(fk::makeAttentionRead(q, pt.bh, pt.seq, D), fk::makeAttentionRead(k, pt.bh, pt.seq, D), fk::makeAttentionRead(v, pt.bh, pt.seq, D)); },
             [&](const auto& set) {
                 const auto& [qr, kr, vr] = set;
-                fk::executeFlashAttentionMma<D, 64, 32, 4>(qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal, stream);
+                fk::executeOperations<fk::FlashAttentionMmaDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, std::decay_t<decltype(qr)>, std::decay_t<decltype(kr)>,
+                                                                std::decay_t<decltype(vr)>, fk::AttentionIdentityEpilogue, 64, 32, 4>>(
+                    stream, qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal);
             }, kRef, vRef);
         add("raw_bq128_kv32_w4",
             [&] { return std::make_tuple(fk::makeAttentionRead(q, pt.bh, pt.seq, D), fk::makeAttentionRead(k, pt.bh, pt.seq, D), fk::makeAttentionRead(v, pt.bh, pt.seq, D)); },
             [&](const auto& set) {
                 const auto& [qr, kr, vr] = set;
-                fk::executeFlashAttentionMma<D, 128, 32, 4>(qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal, stream);
+                fk::executeOperations<fk::FlashAttentionMmaDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, std::decay_t<decltype(qr)>, std::decay_t<decltype(kr)>,
+                                                                std::decay_t<decltype(vr)>, fk::AttentionIdentityEpilogue, 128, 32, 4>>(
+                    stream, qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal);
             }, kRef, vRef);
         add("int8_bq32_w2",
             [&] { return std::make_tuple(fk::makeAttentionRead(q, pt.bh, pt.seq, D), fk::makeInt8KVRead(k8, k8s, pt.bh, pt.seq, D), fk::makeInt8KVRead(v8, v8s, pt.bh, pt.seq, D)); },
             [&](const auto& set) {
                 const auto& [qr, kr, vr] = set;
-                fk::executeFlashAttentionMma<D, 32, 32, 2>(qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal, stream);
+                fk::executeOperations<fk::FlashAttentionMmaDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, std::decay_t<decltype(qr)>, std::decay_t<decltype(kr)>,
+                                                                std::decay_t<decltype(vr)>, fk::AttentionIdentityEpilogue, 32, 32, 2>>(
+                    stream, qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal);
             }, kRefI8, vRefI8);
         add("int8_bq64_w4",
             [&] { return std::make_tuple(fk::makeAttentionRead(q, pt.bh, pt.seq, D), fk::makeInt8KVRead(k8, k8s, pt.bh, pt.seq, D), fk::makeInt8KVRead(v8, v8s, pt.bh, pt.seq, D)); },
             [&](const auto& set) {
                 const auto& [qr, kr, vr] = set;
-                fk::executeFlashAttentionMma<D, 64, 32, 4>(qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal, stream);
+                fk::executeOperations<fk::FlashAttentionMmaDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, std::decay_t<decltype(qr)>, std::decay_t<decltype(kr)>,
+                                                                std::decay_t<decltype(vr)>, fk::AttentionIdentityEpilogue, 64, 32, 4>>(
+                    stream, qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal);
             }, kRefI8, vRefI8);
         add("int8_bq128_w4",
             [&] { return std::make_tuple(fk::makeAttentionRead(q, pt.bh, pt.seq, D), fk::makeInt8KVRead(k8, k8s, pt.bh, pt.seq, D), fk::makeInt8KVRead(v8, v8s, pt.bh, pt.seq, D)); },
             [&](const auto& set) {
                 const auto& [qr, kr, vr] = set;
-                fk::executeFlashAttentionMma<D, 128, 32, 4>(qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal, stream);
+                fk::executeOperations<fk::FlashAttentionMmaDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, std::decay_t<decltype(qr)>, std::decay_t<decltype(kr)>,
+                                                                std::decay_t<decltype(vr)>, fk::AttentionIdentityEpilogue, 128, 32, 4>>(
+                    stream, qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal);
             }, kRefI8, vRefI8);
         add("int8nodq_bq32_w2",
             [&] { return std::make_tuple(fk::makeAttentionRead(q, pt.bh, pt.seq, D), fk::makeInt8KVNoDequantRead(k8, k8s, pt.bh, pt.seq, D), fk::makeInt8KVNoDequantRead(v8, v8s, pt.bh, pt.seq, D)); },
             [&](const auto& set) {
                 const auto& [qr, kr, vr] = set;
-                fk::executeFlashAttentionMma<D, 32, 32, 2>(qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal, stream);
+                fk::executeOperations<fk::FlashAttentionMmaDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, std::decay_t<decltype(qr)>, std::decay_t<decltype(kr)>,
+                                                                std::decay_t<decltype(vr)>, fk::AttentionIdentityEpilogue, 32, 32, 2>>(
+                    stream, qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal);
             }, kRefI8, vRefI8);
         add("int8nodq_bq64_w4",
             [&] { return std::make_tuple(fk::makeAttentionRead(q, pt.bh, pt.seq, D), fk::makeInt8KVNoDequantRead(k8, k8s, pt.bh, pt.seq, D), fk::makeInt8KVNoDequantRead(v8, v8s, pt.bh, pt.seq, D)); },
             [&](const auto& set) {
                 const auto& [qr, kr, vr] = set;
-                fk::executeFlashAttentionMma<D, 64, 32, 4>(qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal, stream);
+                fk::executeOperations<fk::FlashAttentionMmaDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, std::decay_t<decltype(qr)>, std::decay_t<decltype(kr)>,
+                                                                std::decay_t<decltype(vr)>, fk::AttentionIdentityEpilogue, 64, 32, 4>>(
+                    stream, qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal);
             }, kRefI8, vRefI8);
         add("int8nodq_bq128_w4",
             [&] { return std::make_tuple(fk::makeAttentionRead(q, pt.bh, pt.seq, D), fk::makeInt8KVNoDequantRead(k8, k8s, pt.bh, pt.seq, D), fk::makeInt8KVNoDequantRead(v8, v8s, pt.bh, pt.seq, D)); },
             [&](const auto& set) {
                 const auto& [qr, kr, vr] = set;
-                fk::executeFlashAttentionMma<D, 128, 32, 4>(qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal, stream);
+                fk::executeOperations<fk::FlashAttentionMmaDPP<fk::ParArch::GPU_NVIDIA, __nv_bfloat16, D, std::decay_t<decltype(qr)>, std::decay_t<decltype(kr)>,
+                                                                std::decay_t<decltype(vr)>, fk::AttentionIdentityEpilogue, 128, 32, 4>>(
+                    stream, qr, kr, vr, o, pt.bh, pt.seq, pt.seq, pt.causal);
             }, kRefI8, vRefI8);
         // ORDER: the variants are rotated by (configuration index + E16_ROTATE) modulo their number, so that over the configurations and the three runs every variant is measured at several positions
         const int shift = (configIndex()++ + rotateOffset()) % static_cast<int>(variants.size());
@@ -663,7 +786,7 @@ int launch() {
                         {"gpu", "variant", "d", "seq", "bh", "causal", "position", "blocks", "calls_per_block", "t_start_ms", "t_end_ms", "time_ms_median", "time_ms_min", "time_ms_max", "single_ms_median", "tflops_median", "max_abs_err", "mean_abs_err", "kernels", "schedule", "block_q", "block_kv", "num_warps", "split_kv", "kernel_facts", "note", "timing_only", "prep_us_per_call"},
                         "bf16 Q, K, V (BH, S, D) contiguous, normal(0, 1), fp32 accumulation, bf16 output; D = 128, non-causal; inputs: the files of e16_attention.cu (e16_input_d<D>_s<S>_bh<BH>.bin of E16_INPUT_DIR, generated on the host); time_ms_* = per call, from `blocks` blocks of `calls_per_block` calls enqueued back to back between two CUDA events "
                         "(the GPU time of the call; the block lasts about E16_BLOCK_MS), after a warm-up of at least E16_WARMUP_MS of GPU time; every call launches its own argument set (the operations of the call), rebuilt before the events; prep_us_per_call = host time (steady_clock) of building that set and releasing the one it replaces, per call; position = place of the variant in the order of its configuration (the variants are rotated by "
-                        "configuration index + E16_ROTATE); TFLOP/s = 4 BH S^2 D / time_ms_median. Every variant is executeFlashAttentionMma with EXPLICIT tiles (variant name: bq = BLOCK_Q, kv = BLOCK_KV, w = warps; raw_default is "
+                        "configuration index + E16_ROTATE); TFLOP/s = 4 BH S^2 D / time_ms_median. Every variant is FlashAttentionMmaDPP with EXPLICIT tiles (variant name: bq = BLOCK_Q, kv = BLOCK_KV, w = warps; raw_default is "
                         "the library's own pick). int8_* = K and V int8 with one fp32 scale per token (quantised schedule). int8nodq_* = TIMING ONLY (timing_only = 1): THE OUTPUT IS WRONG (max_abs_err and mean_abs_err of those "
                         "rows are meaningless) and the rows are never a result: the same schedule with a patched private copy of the library header whose dequantTile removes the int-to-float conversion, the scale multiply and the "
                         "float-to-bf16 rounding and keeps the copies, the shared-memory pass, the barriers, the scale loads and the 16-byte store. The decision rule and the definitions of excess, ratio and share are in the "

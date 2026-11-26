@@ -1,5 +1,5 @@
---- external/fkl/include/fused_kernel/algorithms/attention/flash_attention_mma.h	2026-10-30 07:35:07.356811498 +0100
-+++ fkl-self/attention/nodq/fused_kernel/algorithms/attention/flash_attention_mma.h	2026-11-04 12:04:16.222724057 +0100
+--- external/fkl/include/fused_kernel/algorithms/attention/flash_attention_mma.h (FKL 48fbf3f)
++++ fkl-self/attention/nodq/fused_kernel/algorithms/attention/flash_attention_mma.h
 @@ -108,8 +108,43 @@
  template <typename IOp>
  constexpr bool isFp8KVRead = false;
@@ -45,7 +45,7 @@
  
  // ---- FLEX ATTENTION: score mods (FlexAttention-style score_mod) ------------
  // A score mod is a tiny device functor applied to each attention score
-@@ -568,7 +603,7 @@
+@@ -578,7 +613,7 @@
  
      /* smem bytes -> swizzled bf16 smem, dequantizing in-register. scales
         read from global (coalesced; BLOCK_KV floats per tile). */
@@ -54,7 +54,7 @@
      FK_DEVICE_FUSE void dequantTile(char* smemBytes, const uint32_t stageOff,
                                      const uint32_t bf16Off, const float* scales,
                                      const int rowBase, const int seqLen) {
-@@ -587,6 +622,14 @@
+@@ -597,6 +632,14 @@
                  float lo, hi;
                  const int8_t b0 = static_cast<int8_t>((packed >> (16 * h)) & 0xFF);
                  const int8_t b1 = static_cast<int8_t>((packed >> (16 * h + 8)) & 0xFF);
@@ -69,7 +69,7 @@
                  if constexpr (FP8) {
  #ifdef FK_HAS_FP8
                      __nv_fp8_e4m3 f0, f1;
-@@ -1702,7 +1745,7 @@
+@@ -1712,7 +1755,7 @@
                  if constexpr (!FP8_QK) {
                      // bf16 fallback: dequant K smem->smem, then ldmatrix
                      if (act) {
@@ -78,7 +78,7 @@
                                                         kScales, offKV, p.seq_k);
                      }
                      __syncthreads();
-@@ -1742,7 +1785,7 @@
+@@ -1752,7 +1795,7 @@
                  cp_async_wait<1>();   // V bytes ready
                  __syncthreads();
                  if (act) {
