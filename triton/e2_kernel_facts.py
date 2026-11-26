@@ -138,7 +138,8 @@ def main():
             ptx_text = subprocess.run(["cuobjdump", "-ptx", path], capture_output=True, text=True).stdout
             ptx = ptx_entries(ptx_text)
             for name, lines in sas.items():
-                if op_count(lines, "FFMA") != k // 2 or "launchTransformDPP_Kernel" not in subprocess.run(["c++filt", name], capture_output=True, text=True).stdout:
+                if op_count(lines, "FFMA") != k // 2 or not any(k in subprocess.run(["c++filt", name], capture_output=True, text=True).stdout
+                                                                   for k in ("launchTransformDPP_Kernel", "launchDPP_Kernel<fk::TransformDPP<")):
                     continue
                 body = ptx.get(name, "")
                 rows.append(dict(impl=impl, k=k, kernel=name[:60] + "...", config="one element per thread, 32 x 8 threads per block", threads_per_block=256, regs=regs.get(name, -1), instr=sum(1 for l in lines if not l.endswith(":")),
