@@ -149,7 +149,7 @@ Nothing is timed. This repository's pin does not change.
   - the harness also recomputes the base's formula from `executeFlashAttentionMma`'s code, with the occupancy of each commit's unsplit kernel, and prints it;
   - at the head the harness requires the two counts to be equal.
 
-**Build** (`harness/build/build-console.txt`, `harness/source/build_harness.sh`), 2026-11-26 14:55:37-14:56:36:
+**Build** (`harness/compile/build-console.txt`, `harness/source/build_harness.sh`), 2026-11-26 14:55:37-14:56:36:
 - nvcc 13.4.92 with the CUDA flags of FKL's tests: `-O3 -DNDEBUG -std=c++17 --generate-code=arch=compute_89,code=[compute_89,sm_89] -ftemplate-depth=1000 -lineinfo`;
 - FKL's include folder, compile only. The sources' and binaries' sha256 are in the console.
 
@@ -169,7 +169,7 @@ The coordinator granted it for #65 at 008c9d7, with the script's sha256 6c5f57b5
   - the automatic split shape: 4 at both commits.
 - **The automatic tiles at the head:** 64 x 128 x 4, 128 x 64 x 4, 128 x 128 x 8, 64 x 64 x 4 (split), and 128 x 32 x 4 (int8).
 - **FlashDecode:** 16, 4 and 1 splits.
-- **The label:** the head harness's first line says "FKL e322cad API". That text was written into `pr435_common.h` before the head moved. The binary was built against the 48fbf3f tree (`harness/build/build-console.txt`), whose library headers are e322cad's.
+- **The label:** the head harness's first line says "FKL e322cad API". That text was written into `pr435_common.h` before the head moved. The binary was built against the 48fbf3f tree (`harness/compile/build-console.txt`), whose library headers are e322cad's.
 
 **Base against head** (`window/harness-comparison.txt`, `.csv`), on the CPU after the GPU steps:
 - **Bit for bit:** 59 of 59 shared outputs are equal. They are:
@@ -249,7 +249,7 @@ Then, on the CPU, `compare_harness.py`.
 | `sass-identity/sass-identity-harness-b10fc66-vs-48fbf3f.{txt,csv}` | the same for the harness's two programs |
 | `sass-identity/combine-b10fc66-vs-48fbf3f.txt` | the combine kernels, line by line |
 | `harness/source/` | the harness, its build script and its comparison |
-| `harness/build/` | the harness build's console and the compiler output |
+| `harness/compile/` | the harness build's console and the compiler output (added in the d1cff06 commit: `.gitignore`'s `build*/` had kept them out as `harness/build/`) |
 | `scripts-used/` | compile.sh, compile-48fbf3f.sh, pr435_sass_identity.py, diff_summary.py, combine_compare.py |
 | `window-script.sh`, `window-binaries.sha256` | the window's script and the sha256 of the 146 binaries it runs |
 | `window/window-console.txt`, `window/window-script.sh` | the window's console and the copy of the script it ran |
@@ -283,7 +283,7 @@ Decision: the coordinator's assignment C-NV-A of 2026-11-26 (Oscar's decision on
      compiled and 12 of 12 expected rejections held (18:10:15 to 18:10:51).
    - The 48fbf3f executables were first copied to `scratch/pr435/fkl-head48-bins/`. Their sha256 are the C-NV window's manifest's.
      Of the 59 `*_cu` executables, only `utest_flash_attention_mma_cu` differs byte-wise at d1cff06.
-   - **The harness:** `pr435_attention` (source unchanged) was built against d1cff06 with the C-NV flags (`d1cff06/harness/build/`,
+   - **The harness:** `pr435_attention` (source unchanged) was built against d1cff06 with the C-NV flags (`d1cff06/harness/compile/`,
      `harness/source/build_harness_d1cff06.sh`, 18:11:22 to 18:11:31).
 2. **Device code** (`d1cff06/sass-identity/`), 48fbf3f against d1cff06, with `scripts-used/sass_identity_norename.py`.
    - That is `pr435_sass_identity.py` without the rename rule, since both sides already have the new names. With the rule, A's attention
@@ -299,7 +299,7 @@ Decision: the coordinator's assignment C-NV-A of 2026-11-26 (Oscar's decision on
 3. **The pin of fkl-benchmarks #66** (`pin-fkl-435`) moved to d1cff06: ccfbba6, one gitlink commit on 339825b, not force-pushed. When #435
    merges, the pin moves again, to the merge commit.
 
-   **E16** was then built at ccfbba6 (`d1cff06/e16-host-code/build-head-d1cff06/`, `scripts-used/check_fkl_tree_e16.sh`, 18:11:22 to 18:11:55).
+   **E16** was then built at ccfbba6 (`d1cff06/e16-host-code/e16-make-head-d1cff06/`, `scripts-used/check_fkl_tree_e16.sh`, 18:11:22 to 18:11:55).
    - The build script is a copy of `scripts/check_fkl_tree.sh` with two changes: the checkout comes from `CHECK_ROOT`, and the bench
      targets are only `e16_attention_cu` and `e16_query_tile_cu`.
    - The configure options, the link farm and the folder-name length are those of the 48fbf3f build of #68's identity builds
@@ -356,9 +356,9 @@ The binaries it runs are listed in `d1cff06/window-binaries.sha256`: 60 of them,
 | path | content |
 |---|---|
 | `compile/fkl-head-d1cff06-*` | step 1: console, commands, configure log, target lists, build log, what was rebuilt, rejection log, report |
-| `harness/build/` | the build console and log of `pr435_attention` at d1cff06 |
+| `harness/compile/` | the build console and log of `pr435_attention` at d1cff06 |
 | `harness/source/` | `compare_attention_bitwise.py` and `build_harness_d1cff06.sh` |
 | `sass-identity/` | the three reports and their CSVs (the tests' CSV gzipped) |
-| `e16-host-code/` | the reports, CSVs, interval CSVs and diffs of `e16_attention_cu` and `e16_query_tile_cu`; `attr-calls-*`; the moved lines; the E16 build (`build-head-d1cff06/`, `build-console.txt`) |
+| `e16-host-code/` | the reports, CSVs, interval CSVs and diffs of `e16_attention_cu` and `e16_query_tile_cu`; `attr-calls-*`; the moved lines; the E16 build (`e16-make-head-d1cff06/`, `build-console.txt`) |
 | `scripts-used/` | `compile-d1cff06.sh`, `sass_identity_norename.py`, `check_fkl_tree_e16.sh`, `host_compare435.py`, `moved_lines.py`, `attr_calls.py` |
 | `window-script.sh`, `window-binaries.sha256` | the window's script and the sha256 of its 60 binaries |

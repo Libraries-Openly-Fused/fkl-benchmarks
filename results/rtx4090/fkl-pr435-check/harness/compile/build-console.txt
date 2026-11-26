@@ -1,0 +1,17 @@
+# 2026-11-26T14:55:37+01:00 harness build starts; nvcc Cuda compilation tools, release 13.4, V13.4.92
+source sha256 0f88b045d02fe6ac0b18c60757790b54fe7d04e31fecd3bd0708f57eae353587  /home/oscar/tfkl-bench/scratch/pr435/harness/pr435_common.h
+source sha256 e6c0d3c0569b0c0bc1dc4208287856287ebb272cbff062732d4dbd673b17b74d  /home/oscar/tfkl-bench/scratch/pr435/harness/pr435_image.cu
+source sha256 e78d6d522983b4d8530af20c53a682100c7b0ecc2244500a9749293b3848ae7e  /home/oscar/tfkl-bench/scratch/pr435/harness/pr435_attention.cu
+source sha256 f32b715e56eb4dbf8723f9ada642e4c5cefd7b087da7165d2781e6d60795a16a  /home/oscar/tfkl-bench/scratch/pr435/harness/build_harness.sh
+source sha256 54fe97ba66723c1d95019d6d25b2cd37482e3d924a6bfb9868beef8a8224eddf  /home/oscar/tfkl-bench/scratch/pr435/harness/compare_harness.py
+base-b10fc66: FKL tree /home/oscar/tfkl-bench/worktrees/fkl-pr435-base-b10fc66 at b10fc6609426bd18020b9213c7196b528fc677a8 (b10fc66), clean
+base-b10fc66 pr435_image: /home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/nvcc -O3 -DNDEBUG -std=c++17 --generate-code=arch=compute_89,code=[compute_89,sm_89] -ftemplate-depth=1000 -lineinfo -I/home/oscar/tfkl-bench/scratch/pr435/harness -I/home/oscar/tfkl-bench/worktrees/fkl-pr435-base-b10fc66/include /home/oscar/tfkl-bench/scratch/pr435/harness/pr435_image.cu -o /home/oscar/tfkl-bench/scratch/pr435/harness-build/base-b10fc66/pr435_image
+base-b10fc66 pr435_image: built in 20 s, sha256 2be05f81299bdd4c7ce933703b16eb9020718fa1b9e4a34ac364cfe858f14cb9, 25 warning lines
+base-b10fc66 pr435_attention: /home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/nvcc -O3 -DNDEBUG -std=c++17 --generate-code=arch=compute_89,code=[compute_89,sm_89] -ftemplate-depth=1000 -lineinfo -I/home/oscar/tfkl-bench/scratch/pr435/harness -I/home/oscar/tfkl-bench/worktrees/fkl-pr435-base-b10fc66/include /home/oscar/tfkl-bench/scratch/pr435/harness/pr435_attention.cu -o /home/oscar/tfkl-bench/scratch/pr435/harness-build/base-b10fc66/pr435_attention
+base-b10fc66 pr435_attention: built in 9 s, sha256 7046efc2920300f77ff59b7a72b7c7858ca4c96cfde4efe4f08dcb2d3db203ee, 27 warning lines
+head-48fbf3f: FKL tree /home/oscar/tfkl-bench/worktrees/fkl-pr435-e322cad at 48fbf3f08e7551c3eb70ac2302d8ebc15ecad645 (48fbf3f), clean
+head-48fbf3f pr435_image: /home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/nvcc -O3 -DNDEBUG -std=c++17 --generate-code=arch=compute_89,code=[compute_89,sm_89] -ftemplate-depth=1000 -lineinfo -DPR435_HEAD -I/home/oscar/tfkl-bench/scratch/pr435/harness -I/home/oscar/tfkl-bench/worktrees/fkl-pr435-e322cad/include /home/oscar/tfkl-bench/scratch/pr435/harness/pr435_image.cu -o /home/oscar/tfkl-bench/scratch/pr435/harness-build/head-48fbf3f/pr435_image
+head-48fbf3f pr435_image: built in 21 s, sha256 4521e9811c26d20693cf50c88b93ca8b65363875a3befd4abe36ce4ad0c35b32, 25 warning lines
+head-48fbf3f pr435_attention: /home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/nvcc -O3 -DNDEBUG -std=c++17 --generate-code=arch=compute_89,code=[compute_89,sm_89] -ftemplate-depth=1000 -lineinfo -DPR435_HEAD -I/home/oscar/tfkl-bench/scratch/pr435/harness -I/home/oscar/tfkl-bench/worktrees/fkl-pr435-e322cad/include /home/oscar/tfkl-bench/scratch/pr435/harness/pr435_attention.cu -o /home/oscar/tfkl-bench/scratch/pr435/harness-build/head-48fbf3f/pr435_attention
+head-48fbf3f pr435_attention: built in 9 s, sha256 82683e908002e8c42c0e42bc585807ff06cca5273453e453627122331d66f21d, 25 warning lines
+# 2026-11-26T14:56:36+01:00 harness build ends
