@@ -31,27 +31,27 @@
 //                      converts only an LTRB ROI (box_filter.cpp:2050), so its XYWH ROI is written once.
 //   rpp_ltrb           rpp with the crop passed to rppt_resize as an LTRB ROI (640, 360, 3199, 1799), rppt_resize's own form: it converts only
 //                      an XYWH ROI (resize.cpp:944), so it launches no conversion kernel. Its ROI is written before every call as well.
-//   fkl_box_halfpixel  FKL, one kernel: one fk::executeLinearFilter. Its image Read IOp is the read of the crop view (Ptr2D::crop2D) followed by
+//   fkl_box_halfpixel  FKL, one kernel: one fk::executeOperations<fk::LinearFilterDPP<GPU_AMD, Details>>. Its image Read IOp is the read of the crop view (Ptr2D::crop2D) followed by
 //                      fk::Resize (INTER_LINEAR, ResizeSampling::HALF_PIXEL, to float3), fk::SaturateCast<float3, uchar3> (the 8-bit resized
 //                      image, rounded inside the kernel as RPP rounds it between its two calls) and fk::Cast<uchar3, float3>. The coefficients
 //                      are fk::ConstantFilterRead<float3> with 1/9 in every channel; multiply and accumulate are the Unary forms of fk::Mul and
 //                      fk::Add on float3; the write is fk::SaturateCast<float3, uchar3> followed by the write of the output. These are the
-//                      arguments that fk::executeBoxFilter builds (linear_filter.h:452-468 at 24478f0); executeBoxFilter itself does not compile
+//                      arguments that fk::executeBoxFilter built (linear_filter.h:452-468 at 24478f0; FKL #435 removed it); it did not compile
 //                      for LinearFilterDPPDetails<float3>, because its coefficient scale / static_cast<T>(kernelWidth * kernelHeight)
 //                      (linear_filter.h:459-460, GPU_AMD; 324-325 GPU_NVIDIA) has no conversion from int to a vector T. Every call builds
 //                      the crop view, every IOp and the details, and launches.
-//   fkl_half_once      fkl_box_halfpixel with the crop view, the IOps and the details built once; every call is fk::executeLinearFilter
+//   fkl_half_once      fkl_box_halfpixel with the crop view, the IOps and the details built once; every call is that fk::executeOperations
 //
 // Every run checks first, then times (the timing is skipped when a required check fails). Every comparison counts the interior and the last
 // two rows and columns separately (RPP's resize never reads the last column and row of its ROI). In the check runs every RPP call is followed by
 // hipGetLastError and hipStreamSynchronize, because RPP returns RPP_SUCCESS when a launch fails.
 //   a. The resize alone, against the exact reference resize (exactResizeHalfPixel: in integers, rounded to the nearest integer with ties to
-//      even exactly): RPP's intermediate tensor, and FKL's image Read IOp written by fk::executeLinearFilter with the identity coefficients
+//      even exactly): RPP's intermediate tensor, and FKL's image Read IOp written by LinearFilterDPP (fk::executeOperations) with the identity coefficients
 //      0 0 0 / 0 1 0 / 0 0 0 (a 3 x 3 fk::Ptr2D<float3>) and the same write; FKL against RPP; and, as a cross-check, the double-precision
 //      resize (common/resize_reference.h) rounded with std::nearbyint. The differences are counted at the exact ties of the exact resize, within
 //      1/36 of a tie, and at the other values; e18_box_ties_GPU_AMD.csv counts the ties and how each image rounds them. Informational.
 //   b. The box alone, on one 1920 x 1080 8UC3 image (E4's generator at 1920 x 1080, the whole image as the ROI): rppt_box_filter, and FKL's
-//      fk::executeLinearFilter of the box on a plain read of the image (PerThreadRead, Cast<uchar3, float3>), each against round(sum / 9) with the
+//      LinearFilterDPP (fk::executeOperations) of the box on a plain read of the image (PerThreadRead, Cast<uchar3, float3>), each against round(sum / 9) with the
 //      border replicated, in integers. Required: 0 differences.
 //   c. The whole pipeline: rpp and fkl_box_halfpixel against the exact reference (the exact resize, then round(sum / 9)), and
 //      fkl_box_halfpixel against rpp. Whether every difference comes from step (a): each output against round(sum / 9) of its own 8-bit resized
@@ -502,9 +502,8 @@ int launch() {
         const auto accumulate = fk::Add<float3, float3, float3, fk::UnaryType>::build();
         const auto output = fk::SaturateCast<float3, uchar3>::build().then(fk::PerThreadWrite<fk::ND::_2D, uchar3>::build(outBox));
         const Details details{KERNEL_W, KERNEL_H, ANCHOR_X, ANCHOR_Y};
-        if (!fk::executeLinearFilter(details, fk::make_tuple(image, coefficient), multiply, accumulate, output, fkStream)) {
-            throw std::runtime_error("fkl_box_halfpixel: the details are not valid");
-        }
+        fk::executeOperations<fk::LinearFilterDPP<fk::ParArch::GPU_AMD, Details>>(fkStream, details, fk::make_tuple(image, coefficient), multiply,
+            accumulate, output);
     };
     const auto prepareBox = [&] {
         const fk::Ptr2D<uchar3> crop = dFrame.crop2D(fk::Rect(CROP_X, CROP_Y, CROP_W, CROP_H));
@@ -522,9 +521,7 @@ int launch() {
                                                                Details{KERNEL_W, KERNEL_H, ANCHOR_X, ANCHOR_Y}};
     };
     const auto launchPrepared = [&](const auto& a) {
-        if (!fk::executeLinearFilter(a.details, a.reads, a.multiply, a.accumulate, a.output, fkStream)) {
-            throw std::runtime_error("fkl_box_halfpixel: the details are not valid");
-        }
+        fk::executeOperations<fk::LinearFilterDPP<fk::ParArch::GPU_AMD, Details>>(fkStream, a.details, a.reads, a.multiply, a.accumulate, a.output);
     };
     // fkl_half_once: built once, valid only while the crop (its position and size) does not change
     const fk::Ptr2D<uchar3> cropOnce = dFrame.crop2D(fk::Rect(CROP_X, CROP_Y, CROP_W, CROP_H));
@@ -539,9 +536,8 @@ int launch() {
     const auto outputOnce = fk::SaturateCast<float3, uchar3>::build().then(fk::PerThreadWrite<fk::ND::_2D, uchar3>::build(outOnce));
     const Details detailsOnce{KERNEL_W, KERNEL_H, ANCHOR_X, ANCHOR_Y};
     const auto callOnce = [&] {
-        if (!fk::executeLinearFilter(detailsOnce, readsOnce, multiplyOnce, accumulateOnce, outputOnce, fkStream)) {
-            throw std::runtime_error("fkl_half_once: the details are not valid");
-        }
+        fk::executeOperations<fk::LinearFilterDPP<fk::ParArch::GPU_AMD, Details>>(fkStream, detailsOnce, readsOnce, multiplyOnce, accumulateOnce,
+            outputOnce);
     };
 
     // ---- The variants, in the order of the checks and of the timing
@@ -654,7 +650,7 @@ int launch() {
         std::vector<unsigned char> doubleResized8(OUT_BYTES);
         for (size_t i = 0; i < OUT_BYTES; ++i) doubleResized8[i] = static_cast<unsigned char>(std::nearbyint(doubleResized[i]));
 
-        // ---- (a) FKL's image Read IOp, written through fk::executeLinearFilter with the identity coefficients and the same write
+        // ---- (a) FKL's image Read IOp, written through LinearFilterDPP with the identity coefficients and the same write
         fk::Ptr2D<float3> dIdentity(KERNEL_W, KERNEL_H);
         {
             std::vector<float3> id(KERNEL_W * KERNEL_H);
@@ -676,12 +672,10 @@ int launch() {
                                    .then(fk::SaturateCast<float3, uchar3>::build())
                                    .then(fk::Cast<uchar3, float3>::build());
             const Details details{KERNEL_W, KERNEL_H, ANCHOR_X, ANCHOR_Y};
-            if (!fk::executeLinearFilter(details, fk::make_tuple(image, fk::PerThreadRead<fk::ND::_2D, float3>::build(dIdentity)),
-                                         fk::Mul<float3, float3, float3, fk::UnaryType>::build(), fk::Add<float3, float3, float3, fk::UnaryType>::build(),
-                                         fk::SaturateCast<float3, uchar3>::build().then(fk::PerThreadWrite<fk::ND::_2D, uchar3>::build(dFklResized)),
-                                         fkStream)) {
-                throw std::runtime_error("identity check: the details are not valid");
-            }
+            fk::executeOperations<fk::LinearFilterDPP<fk::ParArch::GPU_AMD, Details>>(fkStream, details,
+                fk::make_tuple(image, fk::PerThreadRead<fk::ND::_2D, float3>::build(dIdentity)),
+                fk::Mul<float3, float3, float3, fk::UnaryType>::build(), fk::Add<float3, float3, float3, fk::UnaryType>::build(),
+                fk::SaturateCast<float3, uchar3>::build().then(fk::PerThreadWrite<fk::ND::_2D, uchar3>::build(dFklResized)));
             FKLB_HIP_CHECK(hipStreamSynchronize(fklStream));
         }
         const std::vector<unsigned char> fklResized8 = download8u(dFklResized.ptr().data, dFklResized.ptr().dims.pitch);
@@ -704,14 +698,11 @@ int launch() {
                                    static_cast<size_t>(OUT_W) * 3, OUT_H, hipMemcpyHostToDevice));
         {
             const Details details{KERNEL_W, KERNEL_H, ANCHOR_X, ANCHOR_Y};
-            if (!fk::executeLinearFilter(details,
-                                         fk::make_tuple(fk::PerThreadRead<fk::ND::_2D, uchar3>::build(dBoxIn).then(fk::Cast<uchar3, float3>::build()),
-                                                        fk::ConstantFilterRead<float3>::build(float3{1.f, 1.f, 1.f} / float3{9.f, 9.f, 9.f})),
-                                         fk::Mul<float3, float3, float3, fk::UnaryType>::build(), fk::Add<float3, float3, float3, fk::UnaryType>::build(),
-                                         fk::SaturateCast<float3, uchar3>::build().then(fk::PerThreadWrite<fk::ND::_2D, uchar3>::build(dBoxOut)),
-                                         fkStream)) {
-                throw std::runtime_error("box-alone check: the details are not valid");
-            }
+            fk::executeOperations<fk::LinearFilterDPP<fk::ParArch::GPU_AMD, Details>>(fkStream, details,
+                fk::make_tuple(fk::PerThreadRead<fk::ND::_2D, uchar3>::build(dBoxIn).then(fk::Cast<uchar3, float3>::build()),
+                               fk::ConstantFilterRead<float3>::build(float3{1.f, 1.f, 1.f} / float3{9.f, 9.f, 9.f})),
+                fk::Mul<float3, float3, float3, fk::UnaryType>::build(), fk::Add<float3, float3, float3, fk::UnaryType>::build(),
+                fk::SaturateCast<float3, uchar3>::build().then(fk::PerThreadWrite<fk::ND::_2D, uchar3>::build(dBoxOut)));
             FKLB_HIP_CHECK(hipStreamSynchronize(fklStream));
         }
         const std::vector<unsigned char> fklBoxAlone = download8u(dBoxOut.ptr().data, dBoxOut.ptr().dims.pitch);
