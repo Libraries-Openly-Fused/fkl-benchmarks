@@ -1,0 +1,68 @@
+trace	range	kernel	dispatches	median_us	mean_us
+old	whole_call:rpp	roi_conversion_xywh_to_ltrb	101	2.36	2.47
+old	whole_call:rpp	resize_bilinear_pkd_hip_tensor	101	40.68	57.93
+old	whole_call:rpp	box_filter_3x3_pkd_hip_tensor	101	100.24	105.83
+old	kernel_only:rpp	roi_conversion_xywh_to_ltrb	101	2.40	2.39
+old	kernel_only:rpp	resize_bilinear_pkd_hip_tensor	101	42.76	42.84
+old	kernel_only:rpp	box_filter_3x3_pkd_hip_tensor	101	99.24	99.19
+old	kernel_only:rpp	e18box::gpuSpin	100	5024.45	5024.10
+old	whole_call:rpp_ltrb	resize_bilinear_pkd_hip_tensor	101	40.20	42.80
+old	whole_call:rpp_ltrb	box_filter_3x3_pkd_hip_tensor	101	100.48	100.17
+old	kernel_only:rpp_ltrb	resize_bilinear_pkd_hip_tensor	101	45.00	44.74
+old	kernel_only:rpp_ltrb	box_filter_3x3_pkd_hip_tensor	101	98.04	98.01
+old	kernel_only:rpp_ltrb	e18box::gpuSpin	100	5024.37	5023.26
+old	whole_call:fkl_box_halfpixel	fk::linearFilterDPPKernel	101	216.32	218.62
+old	kernel_only:fkl_box_halfpixel	fk::linearFilterDPPKernel	101	200.80	200.81
+old	kernel_only:fkl_box_halfpixel	e18box::gpuSpin	100	5025.53	5024.96
+old	whole_call:fkl_half_once	fk::linearFilterDPPKernel	101	218.92	219.30
+old	kernel_only:fkl_half_once	fk::linearFilterDPPKernel	101	199.04	201.18
+old	kernel_only:fkl_half_once	e18box::gpuSpin	100	5025.53	5024.08
+A	whole_call:rpp	roi_conversion_xywh_to_ltrb	101	2.36	2.48
+A	whole_call:rpp	resize_bilinear_pkd_hip_tensor	101	41.08	55.85
+A	whole_call:rpp	box_filter_3x3_pkd_hip_tensor	101	100.60	103.88
+A	kernel_only:rpp	roi_conversion_xywh_to_ltrb	101	2.40	2.42
+A	kernel_only:rpp	resize_bilinear_pkd_hip_tensor	101	44.32	44.13
+A	kernel_only:rpp	box_filter_3x3_pkd_hip_tensor	101	99.12	99.21
+A	kernel_only:rpp	e18box::gpuSpin	100	5024.41	5023.14
+A	whole_call:rpp_ltrb	resize_bilinear_pkd_hip_tensor	101	41.36	41.92
+A	whole_call:rpp_ltrb	box_filter_3x3_pkd_hip_tensor	101	99.84	101.65
+A	kernel_only:rpp_ltrb	resize_bilinear_pkd_hip_tensor	101	45.24	45.25
+A	kernel_only:rpp_ltrb	box_filter_3x3_pkd_hip_tensor	101	97.92	97.91
+A	kernel_only:rpp_ltrb	e18box::gpuSpin	100	5024.37	5023.99
+A	whole_call:fkl_box_halfpixel	fk::linearFilterDPPKernel	101	219.60	220.76
+A	kernel_only:fkl_box_halfpixel	fk::linearFilterDPPKernel	101	200.88	203.42
+A	kernel_only:fkl_box_halfpixel	e18box::gpuSpin	100	5025.55	5023.62
+A	whole_call:fkl_half_once	fk::linearFilterDPPKernel	101	219.08	219.50
+A	kernel_only:fkl_half_once	fk::linearFilterDPPKernel	101	199.48	199.49
+A	kernel_only:fkl_half_once	e18box::gpuSpin	100	5025.53	5024.98
+B	whole_call:rpp	roi_conversion_xywh_to_ltrb	101	2.36	2.49
+B	whole_call:rpp	resize_bilinear_pkd_hip_tensor	101	41.12	56.08
+B	whole_call:rpp	box_filter_3x3_pkd_hip_tensor	101	100.36	104.08
+B	kernel_only:rpp	roi_conversion_xywh_to_ltrb	101	2.36	2.39
+B	kernel_only:rpp	resize_bilinear_pkd_hip_tensor	101	43.96	45.98
+B	kernel_only:rpp	box_filter_3x3_pkd_hip_tensor	101	99.20	99.31
+B	kernel_only:rpp	e18box::gpuSpin	100	5024.27	5022.76
+B	whole_call:rpp_ltrb	resize_bilinear_pkd_hip_tensor	101	40.64	43.07
+B	whole_call:rpp_ltrb	box_filter_3x3_pkd_hip_tensor	101	100.72	100.63
+B	kernel_only:rpp_ltrb	resize_bilinear_pkd_hip_tensor	101	45.28	45.06
+B	kernel_only:rpp_ltrb	box_filter_3x3_pkd_hip_tensor	101	98.12	98.15
+B	kernel_only:rpp_ltrb	e18box::gpuSpin	100	5024.45	5023.32
+B	whole_call:fkl_box_halfpixel	fk::launchDPP_Kernel	101	218.32	217.08
+B	kernel_only:fkl_box_halfpixel	fk::launchDPP_Kernel	101	201.24	201.47
+B	kernel_only:fkl_box_halfpixel	e18box::gpuSpin	100	5025.33	5023.39
+B	whole_call:fkl_half_once	fk::launchDPP_Kernel	101	219.12	219.50
+B	kernel_only:fkl_half_once	fk::launchDPP_Kernel	101	200.32	200.36
+B	kernel_only:fkl_half_once	e18box::gpuSpin	100	5024.49	5023.19
+
+old	kernel_only:rpp	per call after the spin: GPU span median 152.66 us, sum of kernel durations median 144.28 us (100 calls)
+old	kernel_only:rpp_ltrb	per call after the spin: GPU span median 146.96 us, sum of kernel durations median 142.88 us (100 calls)
+old	kernel_only:fkl_box_halfpixel	per call after the spin: GPU span median 200.78 us, sum of kernel durations median 200.78 us (100 calls)
+old	kernel_only:fkl_half_once	per call after the spin: GPU span median 199.04 us, sum of kernel durations median 199.04 us (100 calls)
+A	kernel_only:rpp	per call after the spin: GPU span median 153.92 us, sum of kernel durations median 145.72 us (100 calls)
+A	kernel_only:rpp_ltrb	per call after the spin: GPU span median 147.26 us, sum of kernel durations median 143.18 us (100 calls)
+A	kernel_only:fkl_box_halfpixel	per call after the spin: GPU span median 200.88 us, sum of kernel durations median 200.88 us (100 calls)
+A	kernel_only:fkl_half_once	per call after the spin: GPU span median 199.48 us, sum of kernel durations median 199.48 us (100 calls)
+B	kernel_only:rpp	per call after the spin: GPU span median 153.42 us, sum of kernel durations median 145.54 us (100 calls)
+B	kernel_only:rpp_ltrb	per call after the spin: GPU span median 147.20 us, sum of kernel durations median 143.22 us (100 calls)
+B	kernel_only:fkl_box_halfpixel	per call after the spin: GPU span median 201.24 us, sum of kernel durations median 201.24 us (100 calls)
+B	kernel_only:fkl_half_once	per call after the spin: GPU span median 200.32 us, sum of kernel durations median 200.32 us (100 calls)

@@ -1,12 +1,12 @@
-# E19 crop sweep re-time at FKL 304492a (the merge of FKL #435): RT-A1, prepared, window not run yet
+# E19 crop sweep re-time at FKL 304492a (the merge of FKL #435): RT-A1, 2026-11-26, 18:15:47-18:50:38Z, RX 9060
 
 `rpp/e19_crop_sweep.h` is E19 at N = 1, 10, 20, ..., 150 crops on the RX 9060. Its record is `../e19-crop-sweep/` (2026-11-24, fkl-benchmarks
 c8eb575, FKL 24478f0); the paper's RX 9060 stencil factors come from it. The pin move to FKL #435 (#66, merged as af96aef with FKL 304492a)
 left the device code identical but changed the timed host code of the fkl_batch row: the row's lambda, FKL's entry function and the new
 `requireArguments` (`../pin-move-devcode-b10fc66-48fbf3f/`, #67). Oscar ordered this re-time on 2026-11-26, through the coordinator session.
 
-**This folder holds, so far,** the binaries' checks and the window script, for the coordinator to check before the GPU window is granted.
-Nothing has run on the GPU. The E18 re-time, RT-A2, is `../e18-box-retime-304492a/`; one window runs both (`launch.sh`).
+The coordinator checked the scripts on #71 (cffcdcd, by sha256) and granted the window. `launch.sh` ran it as one detached call from
+18:15:47 to 18:52:43Z; RT-A1 took 18:15:47-18:50:38Z, then the E18 re-time RT-A2 (`../e18-box-retime-304492a/`) ran.
 
 Decision: Oscar's re-time order of 2026-11-26 (RT-A1 and RT-A2), relayed by the coordinator session that day.
 
@@ -90,11 +90,57 @@ It is run as one detached call after the coordinator's GRANTED. No other tool ca
   - the guards refuse an existing folder, a wrong sha256 and a wrong commit, and create nothing;
   - a listed GPU process blocks the first run until IDLE_MAX.
 
-## After the window
+## Result
 
-The summary will be made without the GPU, from `window/`, with the record's tables for A and for B (`../e19-crop-sweep/analysis/`):
-- old (the record) / A / B for fkl_batch and rpp, both intervals, at every N: the median of the three quiet runs' means, the spread, the
-  change B against A and A against old, whether it exceeds the larger spread, and a flag above 3 %;
-- the rpp / fkl_batch ratios for A and B;
-- the clocks and the unused runs;
-- for the paper, a data package: the whole_call ratios to fkl_batch at all 16 N, and the resource table above.
+- **All 160 runs exited 0 and printed "E19 checks passed".** No CSV has `# INCOMPLETE` or `-nan`.
+  - 69 runs started after an idle wait: 56 of 15 s, 12 of 30 s and 1 of 45 s. The back-to-back runs raised the 1-minute load past 0.8, as in the
+    record. No wait reached IDLE_MAX.
+- **The check rows are the record's.** Every run's checks CSV has the data rows of the record's quiet-run1 at the same N: 80 of 80 runs of A
+  and 80 of 80 of B (`summary/checks-identity.txt`).
+- **The kernels per call and the spin coverage are the record's** at every N, in A and B (`summary/kernels-retime.txt`, `analysis/kernels-and-spin-{A,B}.tsv`):
+  - fkl_batch: 1 kernel per call; rpp: N + 3;
+  - the spin covers 100 of 100 kernel_only iterations at every N and row. The smallest margin is 2.46 ms (A) and 2.37 ms (B), both rpp.
+- **From N = 30 to 150, B is within -1.5 % to +0.8 % of A in every row and interval.** No change there is flagged. Two exceed the larger spread:
+  - fkl_batch whole_call at N = 50: +0.66 %, against spreads of 0.58 / 0.65 %;
+  - fkl_batch kernel_only at N = 60: -0.90 %.
+- **A repeats the record within -1.8 % to +0.9 % from N = 30 on,** with no flag. Two changes exceed the larger spread: fkl_batch whole_call at
+  N = 50 (-0.74 %) and rpp whole_call at N = 150 (+0.09 %).
+- **The flags are all at N = 1 to 20,** where the three runs' means spread most. B against A has 2 flags, A against old has 4:
+
+| N | row, interval | old (ms, spread) | A (ms, spread) | B (ms, spread) | B vs A | exceeds? | A vs old | exceeds? |
+|--:|---|--:|--:|--:|--:|---|--:|---|
+| 1 | rpp whole_call | 0.0231 (23.5 %) | 0.0258 (19.6 %) | 0.0251 (9.0 %) | **-3.0 %** | no | **+11.6 %** | no |
+| 10 | fkl_batch whole_call | 0.0521 (3.5 %) | 0.0492 (9.0 %) | 0.0526 (11.3 %) | **+6.7 %** | no | **-5.5 %** | no |
+| 10 | fkl_batch kernel_only | 0.0533 (4.4 %) | 0.0510 (6.0 %) | 0.0521 (8.7 %) | +2.2 % | no | **-4.3 %** | no |
+| 20 | fkl_batch whole_call | 0.0808 (2.2 %) | 0.0770 (3.2 %) | 0.0786 (4.1 %) | +2.1 % | no | **-4.7 %** | **yes** |
+
+  These are calls of 14 to 80 µs. Only A against old at N = 20 exceeds the larger spread. No cause is claimed.
+- **rpp / fkl_batch, whole_call** (the median of the three per-run ratios):
+  - from N = 30 to 150, B's ratio is within -0.9 % to +1.6 % of A's, and A's within -0.3 % to +2.7 % of the record's;
+  - at N = 1, 10 and 20 it moves by -2.4 %, -8.0 % and -1.9 % (B against A).
+
+  `summary/ratios-retime.csv` has every N for old, A and B, both intervals.
+- **The clocks** (`summary/{A,B}/clock.csv`): in the quiet runs' timing, 9 of 691 samples (A) and 11 of 690 (B) are below 3.1 GHz, against 10
+  of 692 in the record. The lowest are 3,007 MHz (A) and 2,974 MHz (B).
+- **The unused runs:**
+  - the warm-up sweeps: 3 of 64 values of each binary are more than 3 % from its quiet median;
+  - the rocprofv3 sweeps run under tracing: 56 (A) and 54 (B) of 64 are more than 3 % above, as in the record (49 of 64). Their times are not used.
+
+**How the summary was made,** without the GPU: `analysis/post_window.sh`. It runs the record's scripts on each rocprofv3 run (`calls.txt`,
+`rpp-spin-with-copies.txt`, with the traces gzipped as in the record), builds `views/A` and `views/B` (each binary's runs under the record's
+folder names), runs the record's report on each, then `analysis/retime_report.py`.
+
+`summary/retime-report.md` has the four full tables (fkl_batch and rpp, whole_call and kernel_only, all 16 N, old / A / B) and the ratios.
+`summary/A/` and `summary/B/` are the record's own report (`../e19-crop-sweep/analysis/e19_crop_sweep_report.py`) on each binary's runs.
+
+## For the paper (`paper-data/`)
+
+`paper-data/A/` and `paper-data/B/` (B is the new pin) hold two of the coordinator's three package files, in its headers, with gpu `rx9060`:
+- `e19_crop_sweep_times.csv`: per N, row (fkl_batch, rpp) and interval, the median, min and max of the three quiet runs' means (µs) and their
+  spread; for rpp, its ratio to fkl_batch (the median, min and max over the three runs);
+- `e19_crop_sweep_kernels.csv`: the kernels of one call, from the rocprofv3 sweep: 1 for fkl_batch, N + 3 for rpp.
+
+**`e19_crop_sweep_differences.csv` is not written.** It compares fkl_batch's tensor with rpp's, and it needs the output dumps of the check runs
+(`E19_DUMP`, phase 1: `../e19-crop-sweep-phase1/analysis/between.py`). The timing protocol leaves `E19_DUMP` unset, so this window wrote no
+dumps. The record's numbers come from the phase-1 dumps of the record's binary. A's and B's fkl_batch kernels are the record's (section on
+the code), and every run's check rows equal the record's. That supports the same numbers, but it is not a measurement of A's or B's tensors.
