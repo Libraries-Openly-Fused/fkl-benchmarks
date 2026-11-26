@@ -175,7 +175,7 @@ least in the FKL commit string they write and in their kernel names.
 
 The builds (`identity-builds/`) used `scripts/check_fkl_tree.sh --only bench` of each checkout. They had the FKLB options, OpenCV and nvcc of the reference build `build/local-rtx4090`,
 which was only read, and ran at the same time on separate cores. Each built 44 of 44 targets: the base in 3,442 s and the head in 3,473 s
-(`report.txt`, `bench-report.csv`; `console.txt` is the script's output).
+(`report.txt`, `bench-report.csv`; `console.txt` is the script's output). These build times ran under another session's heavy CPU load on this machine (about 14:40-16:30Z, fkl-reduce); they are not results.
 
 ## 3. Host code of the timed calls (`host-code/`)
 
