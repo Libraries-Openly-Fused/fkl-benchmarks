@@ -341,15 +341,37 @@ Decision: the coordinator's assignment C-NV-A of 2026-11-26 (Oscar's decision on
    - **So, for the six measured kernels of 49,152 B,** a timed call now sets the attribute once, in the executor, as at b10fc66. The
      initializer sets it once more, the first time only.
 
-### The GPU window (`d1cff06/window-script.sh`)
+### The GPU window (`d1cff06/window-script.sh`), 2026-11-26 18:25:35-18:25:46 +01:00
 
-(To be filled when the window has run.) The script runs:
-- FKL's 59 CUDA tests at d1cff06;
-- then `pr435_attention` at d1cff06;
-- then, on the CPU only, `harness/source/compare_attention_bitwise.py`, which compares its 32 outputs with the C-NV window's 48fbf3f
-  outputs bit for bit. Before starting, it checks that those outputs still have the sha256 that window recorded.
+The coordinator granted the window for #69 at 7451786, with HOLD COMPILES sent to the paper agent. It ran on the first attempt
+(`d1cff06/window-attempts.txt`), and the times are from `d1cff06/window/window-console.txt`. The binaries it ran are listed in
+`d1cff06/window-binaries.sha256`: 60 of them, the 59 tests and `pr435_attention`.
 
-The binaries it runs are listed in `d1cff06/window-binaries.sha256`: 60 of them, the 59 tests and `pr435_attention`.
+**Results:**
+- **FKL's 59 CUDA tests at d1cff06:** 100 % passed, 0 failed out of 59, in 10 s (18:25:35 to 18:25:45). This includes
+  `utest_flash_attention_mma_cu` with #435's split-KV + combine test.
+- **`pr435_attention` at d1cff06:** exit 0, empty standard error, "32 output files written; PASS" (18:25:45).
+- **The 32 attention outputs, d1cff06 against 48fbf3f:** all 32 are identical bit for bit (`d1cff06/window/harness-comparison.txt`).
+  - Before the window started, every 48fbf3f output still had the sha256 that the C-NV window recorded.
+  - The split-path checks of the C-NV window (the head within the PR test's tolerances of the double oracle, with and without the
+    epilogue) therefore hold for d1cff06 too.
+- **The GPU:** the RTX 4090 started in P8 at 41 °C. The highest SM clock that the 100 ms sampler saw was 2,685 MHz (`gpu_clocks.csv`).
+  Nothing was timed.
+
+**The steps:** the script first runs its guards. They check that:
+- no blocked program runs, and every binary's sha256 is the manifest's;
+- the ctest list is the C-NV window's 59 tests;
+- the FKL head worktree is a clean d1cff06 (thread-pool 27e733f), and the build is configured from it;
+- the 48fbf3f outputs are as recorded;
+- the record's branch differs from main bd019f6 only in this folder, and the script and its comparison are the committed versions;
+- nothing else runs and no other program uses the GPU.
+
+Then it runs, pinned to cores 0-3,16-19 with `CUDA_DEVICE_ORDER=PCI_BUS_ID CUDA_VISIBLE_DEVICES=1`:
+1. `ctest -R '_cu$' -j1 --stop-on-failure --timeout 300`;
+2. `pr435_attention <scratch/pr435/harness-out-d1cff06/head-d1cff06>` under `timeout 300`;
+3. then, on the CPU only, `harness/source/compare_attention_bitwise.py`.
+
+The harness outputs (32 files, 28 MiB) stay in the scratch folder. Their sha256 are in `d1cff06/window/harness-outputs-sha256.txt`.
 
 ### Files (`d1cff06/`)
 
@@ -362,3 +384,10 @@ The binaries it runs are listed in `d1cff06/window-binaries.sha256`: 60 of them,
 | `e16-host-code/` | the reports, CSVs, interval CSVs and diffs of `e16_attention_cu` and `e16_query_tile_cu`; `attr-calls-*`; the moved lines; the E16 build (`e16-make-head-d1cff06/`, `build-console.txt`) |
 | `scripts-used/` | `compile-d1cff06.sh`, `sass_identity_norename.py`, `check_fkl_tree_e16.sh`, `host_compare435.py`, `moved_lines.py`, `attr_calls.py` |
 | `window-script.sh`, `window-binaries.sha256` | the window's script and the sha256 of its 60 binaries |
+| `window-attempts.txt` | the call that ran the script: its attempts (one) |
+| `window/window-console.txt`, `window/window-script.sh` | the window's console and the copy of the script it ran |
+| `window/fkl-tests-head-d1cff06-console.txt`, `.log` | ctest's console and its output log (`-V --output-log`) |
+| `window/harness/head-d1cff06/` | the harness run: stdout, stderr, exit code, the clock at its end |
+| `window/harness-comparison.txt` | the 32 outputs, d1cff06 against 48fbf3f |
+| `window/harness-outputs-sha256.txt` | the sha256 of the 32 harness output files (not committed: 28 MiB in `scratch/pr435/harness-out-d1cff06/`) |
+| `window/environment-{before,after}.txt`, `gpu-info.csv`, `gpu_clocks.csv`, `gpu_clocks.err`, `load.log` | the machine's state and the samplers |
