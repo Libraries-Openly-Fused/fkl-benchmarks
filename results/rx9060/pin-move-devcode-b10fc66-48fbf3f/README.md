@@ -13,7 +13,9 @@ fkl-benchmarks #66 (branch `pin-fkl-435`) moves `external/fkl` to it. This recor
     `fk::executeOperations<fk::MorphologyDPP<fk::ParArch::GPU_AMD, D>>(stream, details, input, output, fk::boxBlurReducers<float, 1>(details))`.
   - The `bool` checks around the calls go. Each call stays in place, in its row's timed lambda.
 
-The NVIDIA session adds the CUDA ports to the same branch afterwards. They are not part of this record.
+The NVIDIA session then added the CUDA ports to the same branch (f3d66da to 2518c75). They change `.cu` files, `scripts/` and one header of the E16 CUDA
+variant `fkl-self/attention/nodq/`. B's ninja dependency log lists no file of `fkl-self/attention/`, so the sources of every HIP program are
+the same at 2518c75 as at a4b493c. The CUDA side is not part of this record.
 
 **The check.** Every HIP program of this repository was built twice, with the same tools and flags:
 - A: 976e42b with FKL b10fc66, the pin on main;
@@ -213,9 +215,12 @@ the same machine and with the same compiler.
 - **The threshold is the same, about 1,370 operations.** With randomisation on, N = 1,367 compiled 4 times of 5 here and once of 5 at
   c8fcbe8. This is the run-to-run spread that `../e3-compile-limits/` describes ("the boundary moves by about one operation from run to
   run"). The repeats do not measure a change of the stack use per operation.
-- **The register columns of the CSV are empty at 48fbf3f.** `e3_clang_limits.py` reads the resource usage remark of the kernel named
-  `launchTransformDPP_Kernel`. After FKL #435 that kernel is `launchDPP_Kernel<fk::TransformDPP<...>, ...>`, so the script finds no remark.
-  The compiles themselves are unaffected. E3 runs at the new pin need that name in `hip_resources()`; this record does not change the script.
+- **The register columns of `e3/e3_limits.csv` are empty.** At a4b493c, `e3_clang_limits.py` reads the resource usage remark of the kernel
+  named `launchTransformDPP_Kernel`. After FKL #435 that kernel is `launchDPP_Kernel<fk::TransformDPP<...>, ...>`, so the script found no
+  remark. The compiles themselves are unaffected. The NVIDIA session's 2518c75 on `pin-fkl-435` adds the new name.
+- **The kernel's resources, with 2518c75's script** (`e3/registers/e3_limits.csv`; N = 1,100 and 2,046, stack 16 MiB): 54 SGPRs, 9 VGPRs,
+  no scratch, no spills, occupancy 16 at both N. These are the values that `../e3-compile-limits/` gives at c8fcbe8 for N = 1,100 and 2,046.
+  `fkl-self/compiletime/gen_chain.py` is unchanged from a4b493c to 2518c75. The two files were run from a copy of those paths.
 - The first run of the series stopped before the 16 MiB compiles: `ulimit -s 8192` in the script had also lowered the hard limit. The script
   now sets the soft limit only, and `e3/` holds the complete second run. Its bisection and repeats gave the same outcomes as the first run's.
 - `e3/`: `e3_limits.csv`, `bisect.txt`, `series.log` and the compiler logs of the compiles that failed.
@@ -264,7 +269,7 @@ this folder except `e3/`, which `step0/e3_series.sh` writes.
     reached from each row (`.reach-<row>-{A,B}.txt.gz`).
 - `vi-k-sources.txt`: the row sources at the measured commits against main.
 - `e11/`: E11 at c8fcbe8, b10fc66 and 48fbf3f (CSV, logs).
-- `e3/`: E3 at 48fbf3f (`e3_limits.csv`, `bisect.txt`, `series.log`, the logs of the compiles that failed).
+- `e3/`: E3 at 48fbf3f (`e3_limits.csv`, `bisect.txt`, `series.log`, the logs of the compiles that failed; `registers/e3_limits.csv`).
 - `vi-n.txt`: the test counts.
 - `binaries-sha256.txt`: the 30 executables of the two builds. `builds.txt`: the builds.
 - `step0/`: `pin_build.sh`, `run_checks.sh`, `e3_series.sh`, `devcode_compare_taskc.py`, `host_compare_taskc.py` and `row_sources.py`.
