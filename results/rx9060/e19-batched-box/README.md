@@ -1,5 +1,7 @@
 # E19 batched box, the timing window (e19-batched-box), 2026-11-18, 16:30:11-16:30:35Z, RX 9060
 
+> **Superseded (dated note, 2026-11-27).** These times were measured at fkl-benchmarks `89b0dc0` (CSV repo `2ad7ac5`) with FKL `24478f0`. They were not timed again at the later pins b10fc66 (#60) or 304492a (#66). The paper takes its 30-crop values from the E19 crop sweep, which was timed again at FKL 304492a in `../e19-crop-sweep-retime-304492a/` (#71, 7ae214f). Oscar's decision, 2026-11-26.
+
 The timing of `rpp/e19_batched_box.h`. The phase-1 checks are in `../e19-batched-box-phase1/`.
 
 ## What ran

@@ -1,5 +1,7 @@
 # E19 batched box, phase 3: the timing window e19-fkl-batch-timing (RTX 4090, 2026-11-18 17:33:13-17:33:39 +01:00)
 
+> **Superseded (dated note, 2026-11-27).** These times were measured at fkl-benchmarks `f5f79f4` (CSV repo `8ff14e5`) with FKL `24478f0`. They were not timed again at the later pins b10fc66 (#60) or 304492a (#66). The paper takes its 30-crop values from the E19 crop sweep, which was timed again at FKL 304492a in `../e19-crop-sweep-retime-304492a/` (#70, 8c419c7). Oscar's decision, 2026-11-26.
+
 **The pipeline, per frame:** 30 crops of 256 x 256 of the 3840 x 2160 seeded frame. Each crop is converted RGB to grey, box filtered (3 x 3, REPLICATE at the crop's edges) and converted to float as (v / 255 - 0.45) / 0.225, into plane i of a 30 x 1 x 256 x 256 tensor. The program is `opencv-cuda/stencil/e19_batched_box.cu`.
 
 **The rows**, in this order in every run:
