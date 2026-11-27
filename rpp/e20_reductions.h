@@ -37,29 +37,40 @@
 //         fk::TensorWrite<double3> of a tensor of 5 x 1 x N: the five values of crop i in plane i. The thread blocks of the kernel leave their
 //         values in a workspace that the caller owns, allocated and zeroed once for each N. Every call builds the array of the N crop views,
 //         the read with its resize, the reductions, the write and the details, and launches 1 kernel.
-//   rpp   RPP 3.2.0 (HIP back-end), its own stream, handle, frame, buffers, ROIs and parameter arrays, and no FKL object. RPP's batched calls
-//         take a dense batch of images (one descriptor with an image stride), so, as in the E19 RX 9060 programs, the batch is built in every
-//         call: one hipMemcpy2DAsync per crop, from the crop's position in the detection table, into a dense N x 280 x 280 x 3 U8 NHWC batch
-//         (the batch building, timed as part of the call). Then one batched call each:
-//           rppt_resize_mirror_normalize   the batch to an N x 224 x 224 x 3 F32 NHWC batch, BILINEAR, mean 0, std 1 and mirror 0 for every
-//                                          image: RPP's call that resizes 8-bit images into floats (rppt_resize takes one data type in and
-//                                          out). In RPP's source it computes (v - mean) * (1 / std) with no scaling and no clamp, so it writes
-//                                          the resized value exactly. Its ROIs are LTRB {0, 0, 279, 279}: an XYWH ROI array is converted
-//                                          to LTRB in place by the call (RPP 3.2.0), an LTRB one is read as it is
+//   rpp   RPP 3.2.0 (HIP back-end), its own stream, handles, frame, buffers, ROIs and parameter arrays, and no FKL object, written with
+//         RPP's public calls as Oscar answered the questions of E20-RPP (the coordinator session, 2026-11-27). RPP's batched calls take a
+//         dense batch of images (one descriptor with an image stride), so, as in the E19 RX 9060 programs, the batch is built in every call:
+//         one hipMemcpy2DAsync per crop, from the crop's position in the detection table, into a dense N x 280 x 280 x 3 U8 NHWC batch (the
+//         batch building, timed as part of the call). Then one batched call each:
+//           rppt_resize_mirror_normalize   the batch to an N x 3 x 224 x 224 F32 NCHW (planar) batch, BILINEAR, mean 0, std 1 and mirror 0
+//                                          for every image: RPP's call that resizes 8-bit images into floats (rppt_resize takes one data
+//                                          type in and out). In RPP's source it computes (v - mean) * (1 / std) with no scaling and no
+//                                          clamp, so it writes the resized value exactly. Its ROIs are LTRB {0, 0, 279, 279}: an XYWH ROI
+//                                          array is converted to LTRB in place by the call (RPP 3.2.0), an LTRB one is read as it is
 //           rppt_tensor_min, rppt_tensor_max, rppt_tensor_sum   of the resized batch, per image and channel (XYWH ROIs {0, 0, 224, 224},
 //                                          which these calls do not convert), into RPP's own arrays of N x 4 floats in device memory
-//         RPP has no call for the number of pixels that are not zero and none for the sum of their squares: the rpp row has neither, and so
-//         no variance and no standard deviation (a question for Oscar, see the report of E20-RPP; nothing is computed in their place). RPP
-//         documents F32 data as 0 to 1; the resized values are 0 to 255, as in every row: in RPP's source neither the resize nor the three
-//         statistics scale or clamp them, and the minimum and the maximum start from the values of each image. The sum of F32 data is
-//         accumulated in float by RPP (Rpp32f partial sums and result, tensor_sum.cpp), so it is not exact: see the checks. Each RPP call
-//         clears its partial results (hipMemsetAsync) and synchronises its stream inside the call (RPP 3.2.0): the host waits for the GPU
-//         inside every call of the row.
+//           rppt_threshold, rppt_tensor_sum   the count of the pixels that are not zero (RPP has no call for it): of the same planar memory
+//                                          seen as 3N one-channel images (rppt_threshold of a three-channel image writes one value for its
+//                                          three channels, 1 only when all three are in range), with a second handle of batch 3N (RPP
+//                                          launches the batch size of the handle), a mask of 1.0 where a pixel is in [the smallest positive
+//                                          float, 255] and 0 elsewhere, and its sum per plane: exact (a sum in float of up to 50,176 ones)
+//           rppt_tensor_multiply_tensor, rppt_tensor_sum   the sum of the squares (RPP has no call for it): the resized batch multiplied by
+//                                          itself element by element (a generic 4D descriptor, broadcast disabled; one call for the batch,
+//                                          which launches one kernel per image), and its sum
+//         Its mean, variance and standard deviation are computed on the host from these sums, as for every row (Oscar: no rppt_tensor_mean
+//         nor rppt_tensor_stddev). RPP documents F32 data, and the cutoffs of rppt_threshold, as 0 to 1; the resized values are 0 to 255, as in
+//         every row (Oscar's answer): in RPP's source neither the resize, the statistics nor the threshold scale or clamp them, and the
+//         minimum and the maximum start from the values of each image. RPP accumulates the sums of F32 data in float (Rpp32f partial sums and
+//         result, tensor_sum.cpp), and a square in float is not exact, so its sums are not exact: see the checks. Each statistics call clears
+//         its partial results (hipMemsetAsync) and synchronises its stream inside the call, and so does the resize (RPP 3.2.0): the host waits
+//         for the GPU inside every call of the row. rppt_tensor_multiply_tensor sets up its strides on the host, in an OpenMP loop of N
+//         threads, in every call.
 // Calls per call of a row (library_calls) and GPU operations (gpu_operations, by reading FKL's and RPP's source: kernels, copies and
-// memsets): fkl 1 and 1 kernel; rpp N + 4 (N hipMemcpy2DAsync and 4 RPP calls) and N copies + 4 memsets + 7 kernels (the resize 1, each
-// statistic 2: a partial kernel and a kernel of the per-image results). ROCm runs the copies and the memsets as kernels too
-// (__amd_rocclr_copyBufferRectAligned, __amd_rocclr_fillBufferUnAligned): a call of rpp is N + 11 kernels in a rocprofv3 kernel trace, a
-// call of fkl 1 (verified in a development run at N = 1 and 30).
+// memsets): fkl 1 and 1 kernel; rpp N + 8 (N hipMemcpy2DAsync and 8 RPP calls) and N copies + 6 memsets + N + 12 kernels (the resize 1, the
+// threshold 1, the multiply N, one per image, and each of the five sums, the minimum and the maximum 2: a partial kernel and a kernel of the
+// per-image results). ROCm runs the copies and the memsets as kernels too (__amd_rocclr_copyBufferRectAligned,
+// __amd_rocclr_fillBufferUnAligned): a call of rpp is 2 N + 18 kernels in a rocprofv3 kernel trace (20, 78 and 318 at N = 1, 30 and 150), a
+// call of fkl 1 (development runs).
 // The sampling of the resize (the names are those of fk::ResizeSampling and of common/resize_reference.h; see E4): RPP's batched resize
 // calls (rppt_resize, rppt_resize_mirror_normalize, rppt_resize_crop_mirror) compute the source position of pixel x as x * ratio +
 // (ratio - 1) / 2, which is HALF_PIXEL ((x + 0.5) * scale - 0.5), and RPP has no call with the other convention (RpptInterpolationType
@@ -88,11 +99,14 @@
 // that is timed. Every library's copy of the frame is uploaded again for each. The host resizes every crop with fklb::resizeBilinear in
 // double, in each convention. Each row is called once, after the buffers that EVERY row writes are filled with 0xFF bytes (a NaN in a float
 // and in a double), and one line per statistic that the row has compares its 3 N values with the reference of the row's convention:
-//   minimum, maximum, non_zero, sum, sum_of_squares   equal (fkl, against HALF_PIXEL); rpp, against HALF_PIXEL_RPP_EDGE: minimum and
-//                                maximum equal, sum at most RPP_SUM_RELATIVE_BOUND relative difference (its float accumulation; the bound
-//                                is a development choice that waits for Oscar)
+//   minimum, maximum, non_zero, sum, sum_of_squares   fkl, against HALF_PIXEL: equal. rpp, against HALF_PIXEL_RPP_EDGE: minimum,
+//                                maximum and non_zero equal; sum and sum_of_squares at most RPP_SUM_RELATIVE_BOUND relative difference
+//                                (Oscar's answer to question 3: a relative bound, measured in a development run and stated in the table)
 //   mean                         from the row's sum; fkl at most 1e-9 relative difference, rpp at most RPP_SUM_RELATIVE_BOUND
-//   variance, std_dev            fkl only, from its sums, at most 1e-9
+//   variance, std_dev            from the row's sums; fkl at most 1e-9, rpp at most RPP_VARIANCE_RELATIVE_BOUND (the difference of two sums
+//                                that are not exact)
+// The bounds of rpp, and what a development run on the RX 9060 measured over the 16 N and both frames (FKL 5a9f35b, RPP 3.2.0): sum 1.23e-7,
+// sum_of_squares 1.36e-7 and mean 1.23e-7, bound 1e-6; variance 7.04e-6 and std_dev 3.52e-6, bound 5e-5.
 // Every line also has the number of its values that differ from the reference of the OTHER convention (not a criterion): ASYMMETRIC for
 // fkl, and for rpp HALF_PIXEL, the fkl row's, so that line counts where rpp computes another result than fkl. In the check run
 // every RPP call and the copies are followed by hipGetLastError and hipStreamSynchronize (RPP returns RPP_SUCCESS when a launch fails).
@@ -182,9 +196,11 @@ constexpr int OUT_ELEMENTS = OUT_W * OUT_H;   // 50,176 resized pixels per crop
 constexpr int MAX_CROPS = 150;                // the largest N: the crop table has 150 crops, and N crops are its first N
 constexpr int STATISTICS = 5;                 // minimum, maximum, sum, non zero, sum of squares
 constexpr double RELATIVE_TOLERANCE = 1e-9;   // the mean, the variance and the standard deviation, against the host's in double
-// The bound of the rpp row's sums (and of the mean from them): RPP accumulates the sum of F32 data in float. A development choice, to be
-// confirmed or changed by Oscar (E20-RPP, question 3); the checks table writes it as the criterion
+// The bounds of the rpp row (Oscar's answer to question 3 of E20-RPP: a relative bound, measured in a development run): its sum and its
+// sum of squares, accumulated in float by RPP, and the mean from the sum; and the variance and the standard deviation from both sums. The
+// checks table writes them as the criterion
 constexpr double RPP_SUM_RELATIVE_BOUND = 1e-6;
+constexpr double RPP_VARIANCE_RELATIVE_BOUND = 5e-5;
 // RPP's buffers have RPP_TAIL bytes after their images (RPP stores 8 pixels at a time, as in the E19 RX 9060 programs), and every ROI array
 // has 256 * ceil(N / 256) entries (RPP's ROI conversion kernels, which these calls do not run with these ROI types, rewrite that many)
 constexpr size_t RPP_TAIL = 64;
@@ -524,8 +540,8 @@ struct Row {
     std::string gpuOperations;       // the GPU operations of one call, by reading the libraries' source
     size_t intermediateBytes;        // the device memory of the intermediate images of the row (0: none)
     hipStream_t stream;
-    bool allFive;                    // the five statistics (fkl); otherwise the minimum, the maximum and the sum only (rpp)
-    double sumBound;                 // the relative bound of its sums and of the mean from them (0: equal)
+    double sumBound;                 // the relative bound of its sum and its sum of squares, and of the mean (0: equal, and 1e-9 for the mean)
+    double varianceBound;            // the relative bound of the variance and the standard deviation from its sums
     std::function<void()> call;
     std::function<void()> fill;
     std::function<std::vector<Statistics>()> download;
@@ -563,7 +579,7 @@ size_t addFklRow(Fkl& fkl, const hipStream_t stream, const std::vector<Detection
         fk::executeOperations<fk::ReduceDPP<>>(fkl.stream, fk::ReduceDPP<>::build_details(fkl.workspace), read, fklReductions(), write);
     };
     // (end of the timed call)
-    rows.push_back({"fkl", Sampling::HALF_PIXEL, Sampling::ASYMMETRIC, 1, "1 kernel", 0, stream, true, 0, callFkl, fill, download});
+    rows.push_back({"fkl", Sampling::HALF_PIXEL, Sampling::ASYMMETRIC, 1, "1 kernel", 0, stream, 0, RELATIVE_TOLERANCE, callFkl, fill, download});
 
     // The workspace that the kernel needs: it depends on the size and the number of the resized crops and on the accumulators, and on
     // nothing of a frame
@@ -690,36 +706,74 @@ int launch() {
         fkl.workspace = fk::Ptr1D<uchar>(static_cast<uint>(fkWorkspaceBytes));
         FKLB_HIP_CHECK(hipMemset(fkl.workspace.ptr().data, 0, fkWorkspaceBytes));
 
-        // ---- RPP: one handle for the batch of N, and every buffer, descriptor, ROI and parameter array set once for N (they depend on N and
-        // the sizes only); the batch building and the four calls in every call
-        rppHandle_t handle{};
+        // ---- RPP: two handles, of batch N (the images) and of batch 3N (their 3N planes, for the count: RPP launches the batch size of the
+        // handle, not desc.n), and every buffer, descriptor, ROI and parameter array set once for N (they depend on N and the sizes only); the
+        // batch building and the eight calls in every call
+        rppHandle_t handle{}, planesHandle{};
         FKLB_RPP_CHECK(rppCreate(&handle, N, 0, rppStream, RppBackend::RPP_HIP_BACKEND));
+        FKLB_RPP_CHECK(rppCreate(&planesHandle, 3 * N, 0, rppStream, RppBackend::RPP_HIP_BACKEND));
         const size_t batchBytes = static_cast<size_t>(N) * CROP_W * CROP_H * 3, resizedBytes = static_cast<size_t>(N) * OUT_ELEMENTS * 3 * sizeof(float);
         unsigned char* rppBatch = nullptr;
-        float *rppResized = nullptr, *rppMin = nullptr, *rppMax = nullptr, *rppSum = nullptr;
+        float *rppResized = nullptr, *rppMask = nullptr, *rppSquares = nullptr;
+        float *rppMin = nullptr, *rppMax = nullptr, *rppSum = nullptr, *rppCount = nullptr, *rppSumOfSquares = nullptr;
         FKLB_HIP_CHECK(hipMalloc(&rppBatch, batchBytes + RPP_TAIL));
         FKLB_HIP_CHECK(hipMalloc(&rppResized, resizedBytes + RPP_TAIL));
+        FKLB_HIP_CHECK(hipMalloc(&rppMask, resizedBytes + RPP_TAIL));
+        FKLB_HIP_CHECK(hipMalloc(&rppSquares, resizedBytes + RPP_TAIL));
         FKLB_HIP_CHECK(hipMalloc(&rppMin, static_cast<size_t>(N) * 4 * sizeof(float)));
         FKLB_HIP_CHECK(hipMalloc(&rppMax, static_cast<size_t>(N) * 4 * sizeof(float)));
         FKLB_HIP_CHECK(hipMalloc(&rppSum, static_cast<size_t>(N) * 4 * sizeof(float)));
+        FKLB_HIP_CHECK(hipMalloc(&rppCount, static_cast<size_t>(N) * 3 * sizeof(float)));
+        FKLB_HIP_CHECK(hipMalloc(&rppSumOfSquares, static_cast<size_t>(N) * 4 * sizeof(float)));
         RpptDesc batchDesc(N, 3, CROP_H, CROP_W, RpptDataType::U8, RpptLayout::NHWC);     // the dense batch of the N crops
-        RpptDesc resizedDesc(N, 3, OUT_H, OUT_W, RpptDataType::F32, RpptLayout::NHWC);    // RPP's resized batch
+        RpptDesc resizedDesc(N, 3, OUT_H, OUT_W, RpptDataType::F32, RpptLayout::NCHW);    // RPP's resized batch, planar
+        // The same planar memory as 3N one-channel images, plane c of image i being image 3 i + c: rppt_threshold of a three-channel image
+        // writes one value for its three channels (1 only when all three are in range), so the count of every channel needs its own plane
+        RpptDesc planesDesc(3 * N, 1, OUT_H, OUT_W, RpptDataType::F32, RpptLayout::NCHW);
+        // The generic descriptor of the resized batch for rppt_tensor_multiply_tensor: dims[0] is the batch
+        RpptGenericDesc squaresDesc{};
+        squaresDesc.numDims = 4;
+        squaresDesc.offsetInBytes = 0;
+        squaresDesc.dataType = RpptDataType::F32;
+        squaresDesc.layout = RpptLayout::NCHW;
+        squaresDesc.dims[0] = N;
+        squaresDesc.dims[1] = 3;
+        squaresDesc.dims[2] = OUT_H;
+        squaresDesc.dims[3] = OUT_W;
+        squaresDesc.strides[0] = 3 * OUT_ELEMENTS;
+        squaresDesc.strides[1] = OUT_ELEMENTS;
+        squaresDesc.strides[2] = OUT_W;
+        squaresDesc.strides[3] = 1;
         // The ROIs and the parameter arrays, in pinned host memory: RPP's kernels read them on the GPU, and the statistics calls also read
         // their ROIs on the host (the size checks of rppt_tensor_statistical_operations.cpp)
-        const size_t roiEntries = 256 * ((static_cast<size_t>(N) + 255) / 256);
-        RpptROI *resizeRoi = nullptr, *statisticsRoi = nullptr;
+        const size_t roiEntries = 256 * ((static_cast<size_t>(3 * N) + 255) / 256);
+        RpptROI *resizeRoi = nullptr, *statisticsRoi = nullptr, *planesRoi = nullptr;
         RpptImagePatch* resizedSizes = nullptr;
-        Rpp32f *mean = nullptr, *stdDev = nullptr;
-        Rpp32u* mirror = nullptr;
+        Rpp32f *mean = nullptr, *stdDev = nullptr, *countFrom = nullptr, *countTo = nullptr;
+        Rpp32u *mirror = nullptr, *squaresRoi = nullptr;
         FKLB_HIP_CHECK(hipHostMalloc(&resizeRoi, sizeof(RpptROI) * roiEntries));
         FKLB_HIP_CHECK(hipHostMalloc(&statisticsRoi, sizeof(RpptROI) * roiEntries));
+        FKLB_HIP_CHECK(hipHostMalloc(&planesRoi, sizeof(RpptROI) * roiEntries));
+        FKLB_HIP_CHECK(hipHostMalloc(&countFrom, sizeof(Rpp32f) * 3 * N));
+        FKLB_HIP_CHECK(hipHostMalloc(&countTo, sizeof(Rpp32f) * 3 * N));
+        FKLB_HIP_CHECK(hipHostMalloc(&squaresRoi, sizeof(Rpp32u) * 6 * N));
         FKLB_HIP_CHECK(hipHostMalloc(&resizedSizes, sizeof(RpptImagePatch) * N));
         FKLB_HIP_CHECK(hipHostMalloc(&mean, sizeof(Rpp32f) * 3 * N));
         FKLB_HIP_CHECK(hipHostMalloc(&stdDev, sizeof(Rpp32f) * 3 * N));
         FKLB_HIP_CHECK(hipHostMalloc(&mirror, sizeof(Rpp32u) * N));
         std::memset(resizeRoi, 0, sizeof(RpptROI) * roiEntries);
         std::memset(statisticsRoi, 0, sizeof(RpptROI) * roiEntries);
+        std::memset(planesRoi, 0, sizeof(RpptROI) * roiEntries);
+        for (int k = 0; k < 3 * N; ++k) {
+            planesRoi[k].xywhROI = {{0, 0}, OUT_W, OUT_H};
+            // the pixels that are not zero: from the smallest positive float to 255, the largest resized value (no pixel is negative)
+            countFrom[k] = std::numeric_limits<float>::denorm_min();
+            countTo[k] = 255.f;
+        }
         for (int i = 0; i < N; ++i) {
+            // rppt_tensor_multiply_tensor's ROI of every image: the begin and then the length of every dimension but the batch
+            const Rpp32u roi[6] = {0, 0, 0, 3, OUT_H, OUT_W};
+            std::memcpy(squaresRoi + 6 * i, roi, sizeof(roi));
             resizeRoi[i].ltrbROI = {{0, 0}, {CROP_W - 1, CROP_H - 1}};   // LTRB, inclusive: the whole crop of the batch
             statisticsRoi[i].xywhROI = {{0, 0}, OUT_W, OUT_H};
             resizedSizes[i].width = OUT_W;
@@ -730,7 +784,10 @@ int launch() {
                 stdDev[i * 3 + c] = 1.f;
             }
         }
-        const std::vector<RpptROI> resizeRoiCopy(resizeRoi, resizeRoi + roiEntries), statisticsRoiCopy(statisticsRoi, statisticsRoi + roiEntries);
+        const std::vector<RpptROI> resizeRoiCopy(resizeRoi, resizeRoi + roiEntries), statisticsRoiCopy(statisticsRoi, statisticsRoi + roiEntries),
+            planesRoiCopy(planesRoi, planesRoi + roiEntries);
+        const std::vector<Rpp32f> countFromCopy(countFrom, countFrom + 3 * N), countToCopy(countTo, countTo + 3 * N);
+        const std::vector<Rpp32u> squaresRoiCopy(squaresRoi, squaresRoi + 6 * N);
         const auto checkedRpp = [&] {
             if (checking) {
                 FKLB_HIP_CHECK(hipGetLastError());
@@ -758,18 +815,39 @@ int launch() {
             FKLB_RPP_CHECK(rppt_tensor_sum(rppResized, &resizedDesc, rppSum, static_cast<Rpp32u>(N) * 4, statisticsRoi, RpptRoiType::XYWH, handle,
                                            RppBackend::RPP_HIP_BACKEND));
             checkedRpp();
+            // The count of the pixels that are not zero: 1.0 where a pixel of a plane is in [smallest positive float, 255], 0 elsewhere, and
+            // the sum of every plane's mask
+            FKLB_RPP_CHECK(rppt_threshold(rppResized, &planesDesc, rppMask, &planesDesc, countFrom, countTo, planesRoi, RpptRoiType::XYWH,
+                                          planesHandle, RppBackend::RPP_HIP_BACKEND));
+            checkedRpp();
+            FKLB_RPP_CHECK(rppt_tensor_sum(rppMask, &planesDesc, rppCount, static_cast<Rpp32u>(N) * 3, planesRoi, RpptRoiType::XYWH, planesHandle,
+                                           RppBackend::RPP_HIP_BACKEND));
+            checkedRpp();
+            // The sum of the squares: the resized batch multiplied by itself, element by element, and its sum
+            FKLB_RPP_CHECK(rppt_tensor_multiply_tensor(rppResized, rppResized, &squaresDesc, &squaresDesc, rppSquares, &squaresDesc,
+                                                       RPP_BROADCAST_DISABLE, squaresRoi, squaresRoi, handle, RppBackend::RPP_HIP_BACKEND));
+            checkedRpp();
+            FKLB_RPP_CHECK(rppt_tensor_sum(rppSquares, &resizedDesc, rppSumOfSquares, static_cast<Rpp32u>(N) * 4, statisticsRoi, RpptRoiType::XYWH,
+                                           handle, RppBackend::RPP_HIP_BACKEND));
+            checkedRpp();
         };
         // (end of the timed call)
         const auto fillRpp = [&] {
             FKLB_HIP_CHECK(hipMemset(rppBatch, 0xFF, batchBytes));
-            FKLB_HIP_CHECK(hipMemset(rppResized, 0xFF, resizedBytes));
-            for (float* p : {rppMin, rppMax, rppSum}) FKLB_HIP_CHECK(hipMemset(p, 0xFF, static_cast<size_t>(N) * 4 * sizeof(float)));
+            for (float* p : {rppResized, rppMask, rppSquares}) FKLB_HIP_CHECK(hipMemset(p, 0xFF, resizedBytes));
+            for (float* p : {rppMin, rppMax, rppSum, rppSumOfSquares}) FKLB_HIP_CHECK(hipMemset(p, 0xFF, static_cast<size_t>(N) * 4 * sizeof(float)));
+            FKLB_HIP_CHECK(hipMemset(rppCount, 0xFF, static_cast<size_t>(N) * 3 * sizeof(float)));
         };
         const auto downloadRpp = [&] {
             // RPP must not change its ROIs and parameter arrays
             if (std::memcmp(resizeRoi, resizeRoiCopy.data(), sizeof(RpptROI) * roiEntries) != 0 ||
-                std::memcmp(statisticsRoi, statisticsRoiCopy.data(), sizeof(RpptROI) * roiEntries) != 0) {
+                std::memcmp(statisticsRoi, statisticsRoiCopy.data(), sizeof(RpptROI) * roiEntries) != 0 ||
+                std::memcmp(planesRoi, planesRoiCopy.data(), sizeof(RpptROI) * roiEntries) != 0 ||
+                std::memcmp(squaresRoi, squaresRoiCopy.data(), sizeof(Rpp32u) * 6 * N) != 0) {
                 throw std::runtime_error("rpp: a call changed its ROIs");
+            }
+            if (std::memcmp(countFrom, countFromCopy.data(), sizeof(Rpp32f) * 3 * N) != 0 || std::memcmp(countTo, countToCopy.data(), sizeof(Rpp32f) * 3 * N) != 0) {
+                throw std::runtime_error("rpp: a call changed the cutoffs of the threshold");
             }
             for (int i = 0; i < N; ++i) {
                 if (resizedSizes[i].width != OUT_W || resizedSizes[i].height != OUT_H || mirror[i] != 0 || mean[3 * i] != 0.f || stdDev[3 * i] != 1.f) {
@@ -779,19 +857,24 @@ int launch() {
             const std::vector<float> minimum = fromDevice<float>(rppMin, static_cast<size_t>(N) * 4);
             const std::vector<float> maximum = fromDevice<float>(rppMax, static_cast<size_t>(N) * 4);
             const std::vector<float> sum = fromDevice<float>(rppSum, static_cast<size_t>(N) * 4);
+            const std::vector<float> count = fromDevice<float>(rppCount, static_cast<size_t>(N) * 3);
+            const std::vector<float> sumOfSquares = fromDevice<float>(rppSumOfSquares, static_cast<size_t>(N) * 4);
             std::vector<Statistics> s(N);
             for (int i = 0; i < N; ++i) {
                 for (int c = 0; c < 3; ++c) {   // per image: R, G, B and the whole image; the channels are the first three
                     s[i].minimum[c] = minimum[4 * i + c];
                     s[i].maximum[c] = maximum[4 * i + c];
                     s[i].sum[c] = sum[4 * i + c];
+                    s[i].nonZero[c] = count[3 * i + c];   // one value per plane
+                    s[i].sumOfSquares[c] = sumOfSquares[4 * i + c];
                 }
             }
             return s;
         };
-        rows.push_back({"rpp", Sampling::HALF_PIXEL_RPP_EDGE, Sampling::HALF_PIXEL, N + 4,
-                        std::to_string(N) + " copies + 4 memsets + 7 kernels", batchBytes + resizedBytes, rppStream, false, RPP_SUM_RELATIVE_BOUND,
-                        callRpp, fillRpp, downloadRpp});
+        rows.push_back({"rpp", Sampling::HALF_PIXEL_RPP_EDGE, Sampling::HALF_PIXEL, N + 8,
+                        std::to_string(N) + " copies + 6 memsets + " + std::to_string(N + 12) + " kernels", batchBytes + 3 * resizedBytes, rppStream,
+                        RPP_SUM_RELATIVE_BOUND,
+                        RPP_VARIANCE_RELATIVE_BOUND, callRpp, fillRpp, downloadRpp});
 
         if (rows.size() != ROWS.size()) throw std::runtime_error("the rows are not the ones of ROWS");
         for (size_t k = 0; k < rows.size(); ++k) {
@@ -866,24 +949,17 @@ int launch() {
                     };
                     check("minimum", "host", [&](int i, int c) { return s[i].minimum[c]; }, [](const Reference& r, int c) { return r.minimum[c]; }, 0);
                     check("maximum", "host", [&](int i, int c) { return s[i].maximum[c]; }, [](const Reference& r, int c) { return r.maximum[c]; }, 0);
-                    if (row.allFive) {
-                        check("non_zero", "host", [&](int i, int c) { return s[i].nonZero[c]; },
-                              [](const Reference& r, int c) { return r.nonZero[c]; }, 0);
-                    }
+                    check("non_zero", "host", [&](int i, int c) { return s[i].nonZero[c]; }, [](const Reference& r, int c) { return r.nonZero[c]; }, 0);
                     check("sum", "host", [&](int i, int c) { return s[i].sum[c]; }, [](const Reference& r, int c) { return r.sum[c]; }, row.sumBound);
-                    if (row.allFive) {
-                        check("sum_of_squares", "host", [&](int i, int c) { return s[i].sumOfSquares[c]; },
-                              [](const Reference& r, int c) { return r.sumOfSquares[c]; }, 0);
-                    }
+                    check("sum_of_squares", "host", [&](int i, int c) { return s[i].sumOfSquares[c]; },
+                          [](const Reference& r, int c) { return r.sumOfSquares[c]; }, row.sumBound);
                     const char* fromTheSums = "host; computed on the host from what the row left";
                     check("mean", fromTheSums, [&](int i, int c) { return s[i].sum[c] / n; }, [](const Reference& r, int c) { return r.mean[c]; },
                           row.sumBound == 0 ? RELATIVE_TOLERANCE : row.sumBound);
-                    if (row.allFive) {
-                        const auto variance = [&](int i, int c) { return s[i].sumOfSquares[c] / n - (s[i].sum[c] / n) * (s[i].sum[c] / n); };
-                        check("variance", fromTheSums, variance, [](const Reference& r, int c) { return r.variance[c]; }, RELATIVE_TOLERANCE);
-                        check("std_dev", fromTheSums, [&](int i, int c) { return std::sqrt(variance(i, c)); },
-                              [](const Reference& r, int c) { return r.stdDev[c]; }, RELATIVE_TOLERANCE);
-                    }
+                    const auto variance = [&](int i, int c) { return s[i].sumOfSquares[c] / n - (s[i].sum[c] / n) * (s[i].sum[c] / n); };
+                    check("variance", fromTheSums, variance, [](const Reference& r, int c) { return r.variance[c]; }, row.varianceBound);
+                    check("std_dev", fromTheSums, [&](int i, int c) { return std::sqrt(variance(i, c)); },
+                          [](const Reference& r, int c) { return r.stdDev[c]; }, row.varianceBound);
                 }
             }
             checksTable->flush();
@@ -940,8 +1016,13 @@ int launch() {
 
         FKLB_HIP_CHECK(hipDeviceSynchronize());
         FKLB_RPP_CHECK(rppDestroy(handle, RppBackend::RPP_HIP_BACKEND));
-        for (void* p : std::vector<void*>{rppBatch, rppResized, rppMin, rppMax, rppSum}) FKLB_HIP_CHECK(hipFree(p));
-        for (void* p : std::vector<void*>{resizeRoi, statisticsRoi, resizedSizes, mean, stdDev, mirror}) FKLB_HIP_CHECK(hipHostFree(p));
+        FKLB_RPP_CHECK(rppDestroy(planesHandle, RppBackend::RPP_HIP_BACKEND));
+        for (void* p : std::vector<void*>{rppBatch, rppResized, rppMask, rppSquares, rppMin, rppMax, rppSum, rppCount, rppSumOfSquares}) {
+            FKLB_HIP_CHECK(hipFree(p));
+        }
+        for (void* p : std::vector<void*>{resizeRoi, statisticsRoi, planesRoi, resizedSizes, mean, stdDev, mirror, countFrom, countTo, squaresRoi}) {
+            FKLB_HIP_CHECK(hipHostFree(p));
+        }
     }
     if (profile) {
         std::cout << "profile mode: " << profileCalls << " calls per selected row and N, each in its ROCTx range" << std::endl;
