@@ -1,5 +1,7 @@
 # E3 controlled compile repeat at the head of FKL PR #423 (9e20bd4e), 2026-11-06, against the repeat at c8fcbe8 (2026-11-02)
 
+**Measured again (dated note, 2026-11-27).** These compiles were measured again at FKL 304492a in `../repeat-304492a/` (#78), with this repeat's protocol, scripts and translation units (byte-identical). One difference: there the temporaries were on disk (TMPDIR), here on the RAM disk /tmp. Oscar's order of 2026-11-26. This record's numbers are unchanged.
+
 One window (2026-11-06, 19:20:00 to 20:12:02 by the machine's clock; the set was done at 20:11:51), approved by the coordinator; one compile at a time, nothing else of mine running and the other agents asked to run nothing on the machine (compile only: no GPU program ran). It is the set of `../repeat-c8fcbe8/` without its StaticLoop part, compiled against the library as it is at the head of FusedKernelLibrary PR #423 (the chain check of the executors; `../../fkl-pr423-check/README.md`). PR #423 was merged into LTS-C++17 on 2026-11-06 as `7b2deb6660921106e524a12cd5fca376feb0d544`, after #426; the merged tree differs from 9e20bd4e only in `.github/workflows/cmake-linux-rocm-amd64.yml`, one line that #426 removed; `include/`, `tests/` and `utests/` are the same tree objects, so these results apply unchanged to the merged commit.
 
 ## Conditions

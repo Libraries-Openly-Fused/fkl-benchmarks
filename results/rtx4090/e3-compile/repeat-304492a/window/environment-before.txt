@@ -1,0 +1,43 @@
+# 2026-11-27T05:50:06+01:00 before the window
+# os: Ubuntu 26.04.1 LTS
+# kernel: Linux 7.0.0-43-generic
+ 05:50:06 up 2 days, 22:05,  1 user,  load average: 0.37, 0.38, 0.47
+0.37 0.38 0.47 4/1218 1743010
+               total        used        free      shared  buff/cache   available
+Mem:          124361       24510       76613       17930       42283       99850
+scaling governor, core 8: performance; current frequency: 3983635 kHz; boost: 1
+TMPDIR: /home/oscar/tfkl-bench/scratch/rt3/tmp (ext4 /)
+    PID %CPU PSR COMMAND         COMMAND
+1743022  100   8 ps              ps -eo pid,pcpu,psr,comm,args --sort=-pcpu
+1742896 10.0   6 localsearch-ext /usr/libexec/localsearch-extractor-3 --socket-fd 3
+   7844  4.0  17 localsearch-3   /usr/libexec/localsearch-3
+ 416267  3.0   1 claude          claude
+   9312  1.0  20 ptyxis          /usr/bin/ptyxis --gapplication-service
+   9594  0.4   0 claude          claude --resume
+   9705  0.4   2 claude          claude --resume
+   9459  0.2   1 claude          claude --resume
+   7485  0.2   2 gnome-shell     /usr/bin/gnome-shell --mode=ubuntu
+   3037  0.1   1 hermes          /home/oscar/.hermes/hermes-agent/venv/bin/python -m hermes_cli.main gateway run
+   1592  0.1   6 nvidia-modeset/ [nvidia-modeset/kthread_q]
+   7860  0.0   6 dropbox         /home/oscar/.dropbox-dist/dropbox-lnx.x86_64-278.4.4020/dropbox
+   2409  0.0   5 wpa_supplicant  /usr/sbin/wpa_supplicant -u -s -O DIR=/run/wpa_supplicant GROUP=netdev
+   7442  0.0  18 gnome-remote-de /usr/libexec/gnome-remote-desktop-daemon
+   7912  0.0  21 goa-identity-se /usr/libexec/goa-identity-service
+fkl-benchmarks: /home/oscar/tfkl-bench/worktrees/fkl-benchmarks-rt3 e2666949b7131b368908b9f8480ddc68e06cb945; tracked files that differ from it:
+FKL tree compiled against (the pin, external/fkl): /home/oscar/tfkl-bench/worktrees/fkl-benchmarks-rt3/external/fkl 304492af4d777165bd556fdd6113439635724d02; files that differ: 0
+scripts:
+scripts/e3_sweep.py: OK
+scripts/e1_table.py: OK
+scripts/e1_sass.py: OK
+scripts/sass_tools.py: OK
+common/fklb_csv.py: OK
+fkl-self/compiletime/gen_chain.py: OK
+scripts/load_logger.py: OK
+scripts/quiet_check.sh: OK
+scripts/os_kernel_lines.sh: OK
+scripts/e3_repeat_table.py: OK
+scripts/e3_repeat_pair.py: OK
+Cuda compilation tools, release 13.4, V13.4.92
+Build cuda_13.4.r13.4/compiler.38855100_0
+g++ (Ubuntu 15.2.0-16ubuntu1) 15.2.0
+python: Python 3.12.13
