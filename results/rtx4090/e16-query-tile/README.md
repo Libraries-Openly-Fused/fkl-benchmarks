@@ -1,5 +1,7 @@
 # E16 query-tile experiment (RTX 4090, 2026-11-04 12:20:00 to 12:21:57)
 
+**Dated note, 2026-11-27.** Neither this record nor `../e16-query-tile-retime-304492a/` backs any printed text of the paper (Oscar's answers of 2026-11-27).
+
 **Timed again (dated note, 2026-11-27).** This experiment's three timing runs were timed again at FKL 304492a in `../e16-query-tile-retime-304492a/` (#77), with the builds of the pins b10fc66 (A) and 304492a (B) alternating, as part of the E16 re-time Oscar ordered on 2026-11-26. The kernels are this record's, but the timed host code is not: the cleanup of 2026-11-07 rewrote the program's timing, and #435 its launch path. This record's numbers are unchanged.
 
 Program `fkl-self/attention/e16_query_tile.cu` (origin/main 5023053; the decision rule is in its header comment and was pushed before the first run), analysis `scripts/e16_query_tile_analyse.py`. One window, whole machine quiet except the desktop session, RTX 4090 (nvidia-smi index 1), cores 0-3,16-19; three runs one after the other (E16_ROTATE 0, 1, 2, 38 to 39 s each), D = 128, non-causal, S = 512 .. 8192, BH = max(4, 262,144 / S), 10 variants, the order rotated per configuration and run; the first run is THE run, no row was dropped (50 rows per run). `run{0,1,2}/e16_query_tile.csv` (times with t_start_ms / t_end_ms per row, tile and kernel facts), `e16_query_tile_derived.csv/.md` (the rule applied), `window-console.txt`, `load.log`, `binary-sha256.txt`.

@@ -1,5 +1,7 @@
 # The E16 query tile timed again at the new pin, FKL 304492a, against FKL b10fc66 (RTX 4090, RT-2b)
 
+**Dated note, 2026-11-27.** Neither this record nor `../e16-query-tile/` backs any printed text of the paper (Oscar's answers of 2026-11-27). The section "What the paper prints from it" below was written before this note.
+
 **What.** `fkl-self/attention/e16_query_tile.cu`, the E16 query-tile experiment (D = 128, non-causal, S = 512 to 8,192), timed again
 after the pin move of fkl-benchmarks to FKL #435 (merged as `304492af4d777165bd556fdd6113439635724d02`; the pin move is #66).
 

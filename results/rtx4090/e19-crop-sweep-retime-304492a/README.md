@@ -1,5 +1,7 @@
 # E19 crop sweep timed again at the new pin, FKL 304492a, against FKL b10fc66 (RTX 4090, RT-1)
 
+> **Dated note, 2026-11-27.** Side B of this record (FKL 304492a: `window/quiet-run{1,2,3}-B/` and `differences-B/`) backs the paper's RTX 4090 crop-sweep factors and chart, in place of `../e19-crop-sweep/` (Oscar's answers of 2026-11-27).
+
 **What.** The RTX 4090 half of the E19 crop sweep, `results/rtx4090/e19-crop-sweep/` (old), timed again after the pin move of
 fkl-benchmarks to FKL #435:
 - #435 was merged as `304492af4d777165bd556fdd6113439635724d02`, the tree of its last head d1cff06;

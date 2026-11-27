@@ -1,5 +1,7 @@
 # E16 timed again at the new pin, FKL 304492a, against FKL b10fc66 (RTX 4090, RT-2)
 
+**Dated note, 2026-11-27.** Side B of this record (FKL 304492a, `B/e16-summary/`) backs the paper's attention numbers, in place of the E16 runs of `../cleanup-window-d/` (`cleaned/e16-summary/`) (Oscar's answers of 2026-11-27). Below, "old" names the paper's data as it stood before this note.
+
 **What.** E16, `fkl-self/attention/e16_attention.cu` and the PyTorch baselines `pytorch-attention/e16_baselines.py`, timed again after the
 pin move of fkl-benchmarks to FKL #435:
 - #435 was merged as `304492af4d777165bd556fdd6113439635724d02`;

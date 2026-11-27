@@ -1,5 +1,7 @@
 # E19 crop sweep re-time at FKL 304492a (the merge of FKL #435): RT-A1, 2026-11-26, 18:15:47-18:50:38Z, RX 9060
 
+> **Dated note, 2026-11-27.** Side B of this record (FKL 304492a, `paper-data/B/`) backs the paper's RPP comparison sentence and the chart's RX 9060 line, in place of `../e19-crop-sweep/` (Oscar's answers of 2026-11-27). The text below, which says that the paper's RX 9060 stencil factors come from `../e19-crop-sweep/`, was written before this note.
+
 `rpp/e19_crop_sweep.h` is E19 at N = 1, 10, 20, ..., 150 crops on the RX 9060. Its record is `../e19-crop-sweep/` (2026-11-24, fkl-benchmarks
 c8eb575, FKL 24478f0); the paper's RX 9060 stencil factors come from it. The pin move to FKL #435 (#66, merged as af96aef with FKL 304492a)
 left the device code identical but changed the timed host code of the fkl_batch row: the row's lambda, FKL's entry function and the new

@@ -1,5 +1,7 @@
 # E19 crop sweep: the timing window e19-crop-sweep-timing (RTX 4090)
 
+> **Dated note, 2026-11-27.** The paper no longer prints numbers from this record. Its RTX 4090 crop-sweep factors and chart come from side B of `../e19-crop-sweep-retime-304492a/` (`window/quiet-run{1,2,3}-B/` and `differences-B/`; Oscar's answers of 2026-11-27). This record is unchanged.
+
 > **Timed again (dated note, 2026-11-27).** These times were measured at fkl-benchmarks `b4fb594` (CSV repo `246b1c8`) with FKL `24478f0`. The sweep was timed again at FKL 304492a in `../e19-crop-sweep-retime-304492a/` (#70, 8c419c7), with the builds of the pins b10fc66 and 304492a alternating, as Oscar ordered on 2026-11-26.
 
 This is the timing of the E19 crop sweep: E19's pipeline with N crops, N = 1, 10, 20, ..., 150. The program is `e19_crop_sweep_cu` at 246b1c8 (sha256 `2b800f1d...`), the binary of the checks window `results/rtx4090/e19-crop-sweep-checks/`, where every check passed at every N. The script is `results/rtx4090/e19-crop-sweep-phase2/window-timing.sh`; `window-script.sh` here is the copy that ran, and it is the same file.

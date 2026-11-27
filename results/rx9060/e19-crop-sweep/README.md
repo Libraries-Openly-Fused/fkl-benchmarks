@@ -1,5 +1,7 @@
 # E19 crop sweep, the timing window (e19-crop-sweep), 2026-11-24, 07:31:16-07:45:14Z, RX 9060
 
+> **Dated note, 2026-11-27.** The paper no longer prints numbers from this record. Its RX 9060 numbers, the RPP comparison sentence and the chart's RX 9060 line, come from side B of `../e19-crop-sweep-retime-304492a/` (`paper-data/B/`; Oscar's answers of 2026-11-27). This record is unchanged.
+
 > **Timed again (dated note, 2026-11-27).** These times were measured at fkl-benchmarks `b7002e9` (CSV repo `c8eb575`) with FKL `24478f0`. The sweep was timed again at FKL 304492a in `../e19-crop-sweep-retime-304492a/` (#71, 7ae214f), with the builds of the pins b10fc66 and 304492a alternating, as Oscar ordered on 2026-11-26.
 
 This is the timing of `rpp/e19_crop_sweep.h`: E19 at N = 1, 10, 20, ..., 150 crops. The phase-1 checks are in `../e19-crop-sweep-phase1/`.
