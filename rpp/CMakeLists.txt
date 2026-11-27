@@ -33,3 +33,18 @@ if(TARGET e19_crop_sweep_hip)
     find_package(rocprofiler-sdk-roctx CONFIG REQUIRED)
     target_link_libraries(e19_crop_sweep_hip PRIVATE rocprofiler-sdk-roctx::rocprofiler-sdk-roctx)
 endif()
+
+# E20 reductions (AMD): crop, resize and reduce of N = 1, 10, 20, ..., 150 crops of one frame, the AMD side of opencv-cuda/reductions/
+# e20_reductions.cu: FKL's ReduceDPP in one kernel for the N crops (fkl) against RPP's batched resize and statistics calls (rpp). Needs a
+# FKL with reduce_dpp.h, as the NVIDIA program.
+if(EXISTS "${CMAKE_SOURCE_DIR}/external/fkl/include/fused_kernel/core/execution_model/reduce_dpp.h")
+    fklb_add_benchmark(e20_reductions
+        BACKENDS hip LIBS fkl rpp
+        LAUNCHER_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/e20_reductions.h")
+    if(TARGET e20_reductions_hip)
+        find_package(rocprofiler-sdk-roctx CONFIG REQUIRED)
+        target_link_libraries(e20_reductions_hip PRIVATE rocprofiler-sdk-roctx::rocprofiler-sdk-roctx)
+    endif()
+else()
+    message(STATUS "fkl-benchmarks: e20_reductions (AMD) skipped (external/fkl has no reduce_dpp.h)")
+endif()
