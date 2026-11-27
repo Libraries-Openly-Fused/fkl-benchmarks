@@ -57,7 +57,9 @@
 //         inside every call of the row.
 // Calls per call of a row (library_calls) and GPU operations (gpu_operations, by reading FKL's and RPP's source: kernels, copies and
 // memsets): fkl 1 and 1 kernel; rpp N + 4 (N hipMemcpy2DAsync and 4 RPP calls) and N copies + 4 memsets + 7 kernels (the resize 1, each
-// statistic 2: a partial kernel and a kernel of the per-image results).
+// statistic 2: a partial kernel and a kernel of the per-image results). ROCm runs the copies and the memsets as kernels too
+// (__amd_rocclr_copyBufferRectAligned, __amd_rocclr_fillBufferUnAligned): a call of rpp is N + 11 kernels in a rocprofv3 kernel trace, a
+// call of fkl 1 (verified in a development run at N = 1 and 30).
 // The sampling of the resize (the names are those of fk::ResizeSampling and of common/resize_reference.h; see E4): RPP's batched resize
 // calls (rppt_resize, rppt_resize_mirror_normalize, rppt_resize_crop_mirror) compute the source position of pixel x as x * ratio +
 // (ratio - 1) / 2, which is HALF_PIXEL ((x + 0.5) * scale - 0.5), and RPP has no call with the other convention (RpptInterpolationType
@@ -76,8 +78,10 @@
 //            and SY = {0, 0, 200, 200, 100}. Every call reads the positions from the detection table and builds every crop view or copy from
 //            them
 //   factors  the crop size is a multiple of 28 in both dimensions, so the factor is a multiple of 1/8 (here 1.25): the positions are exact
-//            in float in both conventions (the program verifies it), the weights are multiples of 1/16, a resized pixel is exact in float,
-//            and sums in double are exact in any order. So every statistic of the fkl row can be compared with the host's for equality.
+//            in float in both conventions (the program verifies it), the weights of a resized pixel are multiples of 1/16 (ASYMMETRIC) or
+//            1/64 (HALF_PIXEL, the rows of this program), a resized pixel has at most 14 significant bits and is exact in float, and sums in
+//            double are exact in any order. So every statistic of the fkl row can be compared with the host's for equality. (Its square
+//            needs up to 28 bits: fkl squares in double; a square in float is not exact.)
 //
 // The checks (e20_reductions_checks_GPU_AMD.csv), for every N, on two frames: the probe of the NVIDIA program (see its header: values 64..192,
 // zeros in blocks of 64 x 64 in channels 0 and 1, and the two corners of every crop above and below every other value) and then the frame
