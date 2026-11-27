@@ -23,10 +23,11 @@
 // library has for these operations, as a plain user would write them:
 //   fkl   one fk::executeOperations<fk::ReduceDPP<>> (FKL's reduce_dpp.h; ReduceDPP<> is ReduceDPP<ParArch::GPU_AMD> in a HIP build), one
 //         kernel for the N crops. The read is a BatchRead of the N crop views (fk::PerThreadRead<_2D, uchar3>::build of a std::array of the
-//         N fkFrame.crop2D) .then(fk::ResizeHalfPixel<INTER_LINEAR>::build(Size(224, 224))): one grid z plane per crop, a float3 per resized
-//         pixel, interpolated and accumulated in the same kernel, so no resized crop exists in any memory. ResizeHalfPixel is fk::Resize
-//         with ResizeSampling::HALF_PIXEL, the sampling of RPP (see "sampling"), as in the RX 9060 pipeline (fkl_fused_halfpixel of
-//         rpp/benchmark_rpp_preprocessing.h). The five reductions are the ones of the NVIDIA program:
+//         N fkFrame.crop2D) .then(fk::Resize<INTER_LINEAR, IGNORE_AR, NullType, ResizeSampling::HALF_PIXEL>::build(Size(224, 224))): one
+//         grid z plane per crop, a float3 per resized pixel, interpolated and accumulated in the same kernel, so no resized crop exists in
+//         any memory. The sampling is fk::Resize's own template parameter, HALF_PIXEL, the sampling of RPP (see "sampling"), as Oscar
+//         decided (2026-11-27: the matched row, with the sampling "as a template parameter of resize"). The five reductions are the ones
+//         of the NVIDIA program:
 //           minimum         Cast<float3, float3> (nothing),  Min<float3>,   Cast<float3, double3>
 //           maximum         Cast<float3, float3>,            Max<float3>,   Cast<float3, double3>
 //           sum             Cast<float3, double3>,           Add<double3>,  Cast<double3, double3>
@@ -60,7 +61,7 @@
 // The sampling of the resize (the names are those of fk::ResizeSampling and of common/resize_reference.h; see E4): RPP's batched resize
 // calls (rppt_resize, rppt_resize_mirror_normalize, rppt_resize_crop_mirror) compute the source position of pixel x as x * ratio +
 // (ratio - 1) / 2, which is HALF_PIXEL ((x + 0.5) * scale - 0.5), and RPP has no call with the other convention (RpptInterpolationType
-// chooses the filter only). The fkl row uses fk::ResizeHalfPixel. (The NVIDIA program's fkl row samples ASYMMETRIC, FKL's default.) At the
+// chooses the filter only). The fkl row's fk::Resize samples HALF_PIXEL. (The NVIDIA program's fkl row samples ASYMMETRIC, FKL's default.) At the
 // edge the two differ: RPP's bilinear interpolation clamps both neighbours of a source position to the columns 0 .. w - 2 and the rows
 // 0 .. h - 2 of its ROI (rpp_hip_roi_range_check in RPP 3.2.0's rpp_hip_interpolation.hpp), so it never reads the last column and the
 // last row of a crop, and the last column and the last row of every resized crop (447 of its 50,176 pixels) are not FKL's (E4 found the
@@ -207,7 +208,8 @@ auto fklReductions() {
                           fk::make_tuple(e20::Square::build(), AddSum::build(), fk::Cast<fk::double3, fk::double3>::build()));
 }
 
-using FklResize = fk::ResizeHalfPixel<fk::InterpolationType::INTER_LINEAR>;
+// The resize of the fkl row: fk::Resize with HALF_PIXEL sampling, its fourth template parameter (the first three are their defaults)
+using FklResize = fk::Resize<fk::InterpolationType::INTER_LINEAR, fk::AspectRatio::IGNORE_AR, NullType, fk::ResizeSampling::HALF_PIXEL>;
 
 const std::vector<std::string> ROWS = {"fkl", "rpp"};
 
