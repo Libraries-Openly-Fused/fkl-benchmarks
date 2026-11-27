@@ -1,5 +1,7 @@
 # E19 crop sweep, the timing window (e19-crop-sweep), 2026-11-24, 07:31:16-07:45:14Z, RX 9060
 
+> **Timed again (dated note, 2026-11-27).** These times were measured at fkl-benchmarks `b7002e9` (CSV repo `c8eb575`) with FKL `24478f0`. The sweep was timed again at FKL 304492a in `../e19-crop-sweep-retime-304492a/` (#71, 7ae214f), with the builds of the pins b10fc66 and 304492a alternating, as Oscar ordered on 2026-11-26.
+
 This is the timing of `rpp/e19_crop_sweep.h`: E19 at N = 1, 10, 20, ..., 150 crops. The phase-1 checks are in `../e19-crop-sweep-phase1/`.
 - **`fkl_loop` is not compared** (Oscar, 2026-11-20). It is timed first in every run only to keep E19's row order. Its numbers are in the raw CSVs and in no table or ratio here.
 - **Decision:** Oscar's order of 2026-11-24, relayed by the coordinator session the same day. The coordinator session verified phase 1 and granted this window.
