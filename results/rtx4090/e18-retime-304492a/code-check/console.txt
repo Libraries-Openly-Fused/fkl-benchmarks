@@ -1,0 +1,31 @@
+# 2026-11-27T04:13:48+01:00 RT-4 code checks start (CPU only); script sha256 d5308c8c458040578a0c64129bdd75220532090cb097759cde60cee1a7739926
+tool sha256 6d5f4a254a94d7481c9af81740b572c6304c647318795381aa5fb30aa34c3f71  /home/oscar/tfkl-bench/scratch/rt4/sass_linecounts_vs_60.py
+tool sha256 c9cedd90cf9e42b9beaccd9ad1966bf26f9117eb3bd3c28cd48941cdc4a44b1e  /home/oscar/tfkl-bench/scratch/pr435/analysis/pr435_sass_identity.py
+tool sha256 ea4da45677f4c4569391b7c3ff1822b9a9e5f4f0ad1836a6f8ed00a1e659a006  /home/oscar/tfkl-bench/scratch/pr435/analysis/sass_identity_norename.py
+tool sha256 79b8317c5998fba4143a69a4d9eb6b1b1372fdf4d7275d3a79e889f7d46c175f  /home/oscar/tfkl-bench/scratch/pin-435/host_compare435.py
+tool sha256 c8ab1c23168b8026c0d3d6dc07fa90383e2f6ebb59c711b932be11324aaf375f  /home/oscar/tfkl-bench/worktrees/fkl-benchmarks-rt4/results/rtx4090/fkl-pr433-pin-check/scripts-used/sass_identity.py
+tool sha256 dce27491d51524207ac8917471bfebe8b8a4a2c371c60016d350e60711f1147c  /home/oscar/tfkl-bench/scratch/rt4/tools-2160c70/sass_tools.py
+scripts/sass_tools.py is the same at 2160c70 and at 8c419c7
+binary d5caf9612c16039b3e6bcd80ca662667b0c6fd9cf590092efd3435ce6bb936ff  /home/oscar/tfkl-bench/scratch/pin-435/base-b10fc66/bench-build/bin/e18_box_cu
+binary a9066622020f352d4524bd903637826dbfed360da327a5c4551f4abb61784e8a  /home/oscar/tfkl-bench/scratch/pin-435/base-b10fc66/bench-build/bin/e18_box_split_cu
+binary ea93b093a4647cb090623794343b36169e003f054fda7ced0fbb0e03c316d32e  /home/oscar/tfkl-bench/scratch/pin-435/base-b10fc66/bench-build/bin/e18_stencil_cu
+binary 0858e97aee575d67ce120db9f403997e3de0222034b46468a51a4b90e1f05718  /home/oscar/tfkl-bench/scratch/pin-435/main-304492a/bench-build/bin/e18_box_cu
+binary 051fc78a89e7781fe92546918b6a850240aa77b1ed388b29335701e30614671b  /home/oscar/tfkl-bench/scratch/pin-435/main-304492a/bench-build/bin/e18_box_split_cu
+binary b3515d73e8016efc716a1de0bc916559243aaf68524f39af808749d7c42ea8d0  /home/oscar/tfkl-bench/scratch/pin-435/main-304492a/bench-build/bin/e18_stencil_cu
+binary e48cca185e2155743a03a81ed584a654aad5f860a1898cb6f91d068bd67bd6ac  /home/oscar/tfkl-bench/scratch/pin-433/head-b10fc66/bench-build/bin/e18_box_cu
+binary c48c3ec31c0a8cf48d44c1f51168c039a9103024dfc245e93689c1a1ce0c1768  /home/oscar/tfkl-bench/scratch/pin-433/head-b10fc66/bench-build/bin/e18_box_split_cu
+binary 1bf2c9e7ad1007a01cb597fd7f8acf0f5043da6705ab46b1cf85bf061f5d0f81  /home/oscar/tfkl-bench/scratch/pin-433/head-b10fc66/bench-build/bin/e18_stencil_cu
+# 2026-11-27T04:13:48+01:00 1. the rebuild's configure log against #63's B's (#60's record)
+configure logs: exit 0 (0 diff lines, the two CMake timing lines left out; 32 lines each)
+# 2026-11-27T04:13:48+01:00 2. SASS line counts against #60's record of #63's B (cuobjdump 13.3)
+A: exit 0: TOTAL: 17 recorded kernels in 5 groups: 5 groups equal, 0 different
+rebuild: exit 0: TOTAL: 17 recorded kernels in 5 groups: 5 groups equal, 0 different
+# 2026-11-27T04:13:49+01:00 3. the device code of A against the rebuild (no rename)
+exit 0: kernels: A 23, B 23; pairs 23 (renamed 0); identical 23, different 0, only in A 0, only in B 0
+# 2026-11-27T04:13:51+01:00 4. the host code of A against the rebuild (no rename, with the timed intervals)
+e18_box: exit 0: TOTAL: functions A 300, B 300; pairs 300; identical 300, different 0; only in A 0, only in B 0; name collisions A 11, B 11
+e18_box_split: exit 0: TOTAL: functions A 252, B 252; pairs 252; identical 252, different 0; only in A 0, only in B 0; name collisions A 10, B 10
+e18_stencil: exit 0: TOTAL: functions A 234, B 234; pairs 234; identical 234, different 0; only in A 0, only in B 0; name collisions A 8, B 8
+# 2026-11-27T04:13:53+01:00 5. the device code of B against A (FKL #435's rename rule) and the resources
+exit 1: kernels: A 23, B 23; pairs 23 (renamed 23); identical 6, different 17, only in A 0, only in B 0
+# 2026-11-27T04:13:55+01:00 RT-4 code checks end

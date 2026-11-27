@@ -1,0 +1,18 @@
+A = A: /home/oscar/tfkl-bench/scratch/pin-435/base-b10fc66/bench-build/bin
+B = rebuild: /home/oscar/tfkl-bench/scratch/pin-433/head-b10fc66/bench-build/bin
+arch sm_89; Build cuda_13.4.r13.4/compiler.38855100_0; files (e18_*_cu executables, libe18_*_cu.so): A 3, B 3, in both 3
+only in A: []
+only in B: []
+kernels: A 23, B 23; pairs 23 (renamed 0); identical 23, different 0, only in A 0, only in B 0
+names demangled by llvm-cxxfilt because GNU c++filt returned them unchanged: 0
+renamed pairs by rule: none
+by kernel family (B's name, or A's for a kernel only in A): identical / different / only in A / only in B
+  : 3 / 0 / 0 / 0
+  void fk::launchTransformDPP_Kernel<: 3 / 0 / 0 / 0
+  void fk::linearFilterDPPKernel<: 17 / 0 / 0 / 0
+per file:
+  e18_box_cu: kernels A 9, B 9; renamed pairs 0; identical 9, different 0, only in A 0, only in B 0  (all identical)
+  e18_box_split_cu: kernels A 7, B 7; renamed pairs 0; identical 7, different 0, only in A 0, only in B 0  (all identical)
+  e18_stencil_cu: kernels A 7, B 7; renamed pairs 0; identical 7, different 0, only in A 0, only in B 0  (all identical)
+every kernel that is different or on one side only (A = base, B = head):
+  none

@@ -1,0 +1,26 @@
+# 2026-11-27T04:09:59+01:00 RT-4 rebuild of #63's B starts (compile only, nice 19, -j8); script sha256 d585d53bfb904afecfc0d253ffdab4a10b5400faf87d6a955768f35aa33e92ed, build script a2aab3bc4ed04164d7034935300e44f2ae254a492027218bead963197ba58dd4; load 0.15 0.15 0.25
+# 2026-11-27T04:09:59+01:00 2160c70 and 976e42b differ only under results/; worktree clean at 976e42b, FKL b10fc66
+check_fkl_tree: FKL tree /home/oscar/tfkl-bench/worktrees/fkl-benchmarks-pin-435-base/external/fkl (b10fc6609426bd18020b9213c7196b528fc677a8), 2026-11-27T04:10:00+01:00, jobs 8, cores 8-15,24-31, groups bench
+nvcc: Cuda compilation tools, release 13.4, V13.4.92  c++: c++ (Ubuntu 15.2.0-16ubuntu1) 15.2.0  OpenCV: /home/oscar/tfkl-bench/deps/opencv-4.14-cuda13.4/install
+fkl-benchmarks HEAD 976e42b; cvGPUSpeedup 6d26c65; FastNPP a1b5e24; the repository itself is not changed
+
+== bench: configure (/home/oscar/tfkl-bench/scratch/pin-433/head-b10fc66/bench-src)
+bench: 3 targets: e18_box_cu e18_box_split_cu e18_stencil_cu 
+bench: build finished after 24 s (24.60 s wall, largest resident set of one process 573212 KiB)
+OK            e18_box_cu
+OK            e18_box_split_cu
+OK            e18_stencil_cu
+bench: 3 targets, 3 compiled, 0 failed, 0 not built
+
+check_fkl_tree: done 2026-11-27T04:10:26+01:00, exit status 0 (0 = every target of every group compiled and every expected rejection held)
+# 2026-11-27T04:10:26+01:00 build exit 0
+# 2026-11-27T04:10:26+01:00 the rebuild does NOT reproduce #63's B byte for byte:
+1,3c1,3
+< 8a9f66bf37a5223bb27b7909561d2cea7aa6297d82bd764756324db3ece39b3d  /home/oscar/tfkl-bench/scratch/pin-433/head-b10fc66/bench-build/bin/e18_box_cu
+< 60c617166a0ede69ad86b893ad1e7cba360ed2b4ea80d32e975fbf5b7f693cc8  /home/oscar/tfkl-bench/scratch/pin-433/head-b10fc66/bench-build/bin/e18_box_split_cu
+< 798027498aadf23f97d0b1314853fe4fddafe4b2df399818ac24ea1a1fb9c593  /home/oscar/tfkl-bench/scratch/pin-433/head-b10fc66/bench-build/bin/e18_stencil_cu
+---
+> e48cca185e2155743a03a81ed584a654aad5f860a1898cb6f91d068bd67bd6ac  /home/oscar/tfkl-bench/scratch/pin-433/head-b10fc66/bench-build/bin/e18_box_cu
+> c48c3ec31c0a8cf48d44c1f51168c039a9103024dfc245e93689c1a1ce0c1768  /home/oscar/tfkl-bench/scratch/pin-433/head-b10fc66/bench-build/bin/e18_box_split_cu
+> 1bf2c9e7ad1007a01cb597fd7f8acf0f5043da6705ab46b1cf85bf061f5d0f81  /home/oscar/tfkl-bench/scratch/pin-433/head-b10fc66/bench-build/bin/e18_stencil_cu
+# 2026-11-27T04:10:26+01:00 RT-4 rebuild of #63's B ends; load 0.64 0.27 0.29
