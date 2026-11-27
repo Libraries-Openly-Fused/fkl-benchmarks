@@ -1,5 +1,7 @@
 # E3 controlled compile repeat at the pin FKL 304492a, against the repeat at the head of FKL PR #423 (9e20bd4e) (RT-3)
 
+**Dated note, 2026-11-27.** The paper prints no numbers from this record. Its compile times come from `../repeat-pr423-9e20bd4e/` (Oscar's answers of 2026-11-27).
+
 **What.** The E3 compile times, the paper's section VI-L, measured again at the pin of fkl-benchmarks after the move to FKL #435:
 - #435 was merged as `304492af4d777165bd556fdd6113439635724d02`;
 - the pin move is #66.
