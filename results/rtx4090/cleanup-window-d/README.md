@@ -1,5 +1,7 @@
 # Cleanup window D, 2026-11-08, 01:25:14-02:08:43: E16, E2 at k = 5,002 and E1's ncu pass, reference against cleaned
 
+**Timed again (dated note, 2026-11-27).** The E16 step of this window (its cleaned side, behind the paper's attention numbers) was timed again at FKL 304492a in `../e16-retime-304492a/` (#76), with the builds of the pins b10fc66 (A, the same timed code as this window's cleaned build) and 304492a (B) alternating in this window's protocol, as Oscar ordered on 2026-11-26. This record's numbers are unchanged.
+
 Part of the re-measurement after the baseline cleanup of the CUDA programs (Oscar's decisions of 2026-11-07, coordinator session). This is the last window of the series.
 - The sequence (`sequence-script.sh`, `sequence-console.txt`):
   - step 0, 01:18:10-01:18:30, compile only;

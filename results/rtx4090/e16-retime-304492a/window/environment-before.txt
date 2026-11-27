@@ -1,0 +1,43 @@
+2026-11-27T04:41:27+01:00
+0.17 0.19 0.27 4/1207 1726062
+    PID %CPU PSR COMMAND         COMMAND
+   7844  4.0   0 localsearch-3   /usr/libexec/localsearch-3
+ 416267  3.2  20 claude          claude
+   9312  1.0   6 ptyxis          /usr/bin/ptyxis --gapplication-service
+   9594  0.4   1 claude          claude --resume
+   9705  0.4   1 claude          claude --resume
+   9459  0.2   3 claude          claude --resume
+1725890  0.2   6 localsearch-ext /usr/libexec/localsearch-extractor-3 --socket-fd 3
+   7485  0.2   1 gnome-shell     /usr/bin/gnome-shell --mode=ubuntu
+   3037  0.1   5 hermes          /home/oscar/.hermes/hermes-agent/venv/bin/python -m hermes_cli.main gateway run
+   1592  0.1   0 nvidia-modeset/ [nvidia-modeset/kthread_q]
+   7860  0.0   3 dropbox         /home/oscar/.dropbox-dist/dropbox-lnx.x86_64-278.4.4020/dropbox
+   2409  0.0  21 wpa_supplicant  /usr/sbin/wpa_supplicant -u -s -O DIR=/run/wpa_supplicant GROUP=netdev
+   7442  0.0  18 gnome-remote-de /usr/libexec/gnome-remote-desktop-daemon
+   7912  0.0  21 goa-identity-se /usr/libexec/goa-identity-service
+   1558  0.0   1 nv_mem_pool_scr [nv_mem_pool_scrubber_queue]
+compute contexts on the RTX 4090: 9312, /usr/bin/ptyxis;
+/home/oscar/tfkl-bench/worktrees/fkl-benchmarks-rt2 73b40ee028274b385dc59c069905831f3612d245
+/home/oscar/tfkl-bench/worktrees/fkl-benchmarks-pin-435-base 976e42bfad0ba61c3bb22a555cf72f4da6896aeb
+/home/oscar/tfkl-bench/worktrees/fkl-benchmarks-pin-435-base/external/fkl b10fc6609426bd18020b9213c7196b528fc677a8
+manifest:
+/home/oscar/tfkl-bench/scratch/pin-435/base-b10fc66/bench-build/bin/e16_attention_cu: OK
+/home/oscar/tfkl-bench/scratch/pin-435/main-304492a/bench-build/bin/e16_attention_cu: OK
+/home/oscar/tfkl-bench/worktrees/fkl-benchmarks-rt2/pytorch-attention/e16_baselines.py: OK
+/home/oscar/tfkl-bench/worktrees/fkl-benchmarks-rt2/scripts/triton_env.sh: OK
+inputs (/home/oscar/tfkl-bench/e16-work/inputs):
+e16_input_d128_s1024_bh256.bin: OK
+e16_input_d128_s2048_bh128.bin: OK
+e16_input_d128_s4096_bh64.bin: OK
+e16_input_d128_s512_bh512.bin: OK
+e16_input_d128_s8192_bh32.bin: OK
+e16_input_d64_s1024_bh256.bin: OK
+e16_input_d64_s2048_bh128.bin: OK
+e16_input_d64_s4096_bh64.bin: OK
+e16_input_d64_s512_bh512.bin: OK
+e16_input_d64_s8192_bh32.bin: OK
+/home/oscar/tfkl-bench/scratch/pin-435/base-b10fc66/bench-build/bin/e16_attention_cu: commits unknown b10fc6609426bd18020b9213c7196b528fc677a8 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c a1b5e245d7dd70fba23dcb51a0aea80495dbc61d 
+	libcudart.so.13 => /home/oscar/tfkl-bench/toolchains/cuda-13.4.3/lib64/libcudart.so.13 (0x00007c9adde00000)
+/home/oscar/tfkl-bench/scratch/pin-435/main-304492a/bench-build/bin/e16_attention_cu: commits unknown 304492af4d777165bd556fdd6113439635724d02 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c a1b5e245d7dd70fba23dcb51a0aea80495dbc61d 
+	libcudart.so.13 => /home/oscar/tfkl-bench/toolchains/cuda-13.4.3/lib64/libcudart.so.13 (0x0000782d67000000)
+python: Python 3.12.13; torch 2.14.1+cu130 cuda 13.0 cudnn 92400 triton 3.8.0

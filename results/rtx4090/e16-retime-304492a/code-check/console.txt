@@ -1,0 +1,15 @@
+# 2026-11-27T04:32:33+01:00 RT-2 code checks start (CPU only); script sha256 168e7622b586931b93e3d72f974bd064eefdfb700ce725882fdbdd6fa4bd5bc6
+tool sha256 c8ab1c23168b8026c0d3d6dc07fa90383e2f6ebb59c711b932be11324aaf375f  /home/oscar/tfkl-bench/worktrees/fkl-benchmarks-rt2/results/rtx4090/fkl-pr433-pin-check/scripts-used/sass_identity.py
+tool sha256 c9cedd90cf9e42b9beaccd9ad1966bf26f9117eb3bd3c28cd48941cdc4a44b1e  /home/oscar/tfkl-bench/scratch/pr435/analysis/pr435_sass_identity.py
+tool sha256 79b8317c5998fba4143a69a4d9eb6b1b1372fdf4d7275d3a79e889f7d46c175f  /home/oscar/tfkl-bench/scratch/pin-435/host_compare435.py
+tool sha256 dce27491d51524207ac8917471bfebe8b8a4a2c371c60016d350e60711f1147c  /home/oscar/tfkl-bench/worktrees/fkl-benchmarks-rt2/scripts/sass_tools.py
+binary 268c78adf599b94b519c88cb49f91031ca7de486a21358d59600e6062ab18ccc  /home/oscar/tfkl-bench/worktrees/fkl-benchmarks-window-d/build/local-rtx4090/bin/e16_attention_cu; commits f27c6051c6d2a94e9f7f6e32307abcc1b3c43ec1 64ad9195cd785d0c93a70b35e02d5a6c7c4a5048 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c a1b5e245d7dd70fba23dcb51a0aea80495dbc61d 
+binary 4374e41a84338bc5a07cee039ec14a98892e35390307fa8143585861aee00d43  /home/oscar/tfkl-bench/scratch/pin-435/base-b10fc66/bench-build/bin/e16_attention_cu; commits unknown b10fc6609426bd18020b9213c7196b528fc677a8 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c a1b5e245d7dd70fba23dcb51a0aea80495dbc61d 
+binary 531fa7ce6571f8b7633aba5016a5f950cd5c8cf77c79f5294f1c31f840d9d888  /home/oscar/tfkl-bench/scratch/pin-435/main-304492a/bench-build/bin/e16_attention_cu; commits unknown 304492af4d777165bd556fdd6113439635724d02 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c a1b5e245d7dd70fba23dcb51a0aea80495dbc61d 
+# 2026-11-27T04:32:33+01:00 1. the device code of old against A (#60's sass_identity.py, BinaryType default dropped)
+exit 0: TOTAL: kernels A 41, B 41; pairs 41, of which renamed 19; identical SASS 41, different 0; only in A 0, only in B 0; key collisions 0; BinaryType arguments removed from the names: A 0, B 20
+# 2026-11-27T04:32:36+01:00 2. the host code of old against A (no rename, BinaryType default dropped, path delta 5, the timed intervals)
+exit 1: TOTAL: functions A 336, B 336; pairs 336; identical 332, different 4; only in A 0, only in B 0; name collisions A 3, B 3
+# 2026-11-27T04:32:38+01:00 3. the device code of B against A (FKL #435's rename rule) and the resources
+exit 1: kernels: A 41, B 43; pairs 41 (renamed 41); identical 39, different 2, only in A 0, only in B 2
+# 2026-11-27T04:32:41+01:00 RT-2 code checks end
