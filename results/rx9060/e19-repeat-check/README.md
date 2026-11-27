@@ -1,5 +1,7 @@
 # E19 RX 9060 repeat check (e19-repeat-check), 2026-11-24, 19:01:11-19:02:14Z, RX 9060
 
+> **Superseded (dated note, 2026-11-27).** These times were measured at fkl-benchmarks `104fee7` (CSV repo `2ad7ac5` for binary A, E19's own, and `c8eb575` for binary B, the crop sweep's) with FKL `24478f0`. They were not timed again at the later pins b10fc66 (#60) or 304492a (#66). The paper takes its 30-crop values from the E19 crop sweep, which was timed again at FKL 304492a in `../e19-crop-sweep-retime-304492a/` (#71, 7ae214f). Oscar's decision, 2026-11-26.
+
 The question: does the change of rpp's kernel_only at N = 30 follow the program or the window? The change is between E19's timing window (`../e19-batched-box/`, 2026-11-18, 0.2010 ms) and the crop sweep's (`../e19-crop-sweep/`, 2026-11-24 07:31-07:45Z, 0.1858 ms, -7.6 %, flagged).
 
 **The answer, by the reading rule fixed before the window: the change does not follow the program.**
