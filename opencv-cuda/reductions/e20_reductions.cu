@@ -18,12 +18,13 @@
 // sum of their squares, left in device memory (the thrust row: in host memory). From them the host computes the mean, the variance and
 // the standard deviation of every channel of every crop. N is 1, 10, 20, ..., 150, the values of the E19 crop sweep.
 //
-// The rows, one per library. Each one is a call that computes the N crops, written with the calls that its library has for these
-// operations, as a plain user would write them; a library is called once per crop where it has no call for a batch of images, as in E4
-// and E19:
+// The rows, one per library, and a second fkl row for the sampling of NPP's resize. Each one is a call that computes the N crops, written
+// with the calls that its library has for these operations, as a plain user would write them; a library is called once per crop where it
+// has no call for a batch of images, as in E4 and E19:
 //   fkl          one fk::executeOperations<fk::ReduceDPP<>> (FKL's reduce_dpp.h), one kernel for the N crops. The read is a BatchRead of
 //                the N crop views (fk::PerThreadRead<_2D, uchar3>::build of a std::array of the N fkFrame.crop2D)
-//                .then(fk::Resize<INTER_LINEAR>::build(Size(224, 224))): one grid z plane per crop, a float3 per resized pixel, which
+//                .then(fk::Resize<INTER_LINEAR, IGNORE_AR, NullType, ASYMMETRIC>::build(Size(224, 224))) (ASYMMETRIC is the default of
+//                the sampling, Resize's last template parameter): one grid z plane per crop, a float3 per resized pixel, which
 //                is interpolated and accumulated in the same kernel, so no resized crop exists in any memory. The reductions are five
 //                Tuple<FirstIOp, AccumulationIOp, FinalIOp>:
 //                  minimum         Cast<float3, float3> (nothing),  Min<float3>,   Cast<float3, double3>
@@ -40,6 +41,9 @@
 //                its three channels, in plane i. The thread blocks of the kernel leave their values in a workspace, device memory
 //                that the caller owns, allocated and zeroed once for each N, as NPP's scratch buffers. Every call builds the array of
 //                the N crop views, the read with its Resize, the reductions, the write and the details, and launches 1 kernel.
+//   fkl_half_pixel  the fkl row with fk::Resize<INTER_LINEAR, IGNORE_AR, NullType, HALF_PIXEL>: the same operation with the other value
+//                of its sampling parameter, the one of NPP's resize, so that fkl_half_pixel and npp compute the same statistics (and fkl,
+//                opencv_cuda and thrust the same ones). The same reductions, the same write into the same tensor and the same workspace.
 //   opencv_cuda  per crop: GpuMat::convertTo (the ROI of the crop to CV_32FC3: cv::cuda::resize of an 8-bit image rounds every resized
 //                pixel to 8 bits), cv::cuda::resize (INTER_LINEAR, to 224 x 224), cv::cuda::split (cv::cuda::findMinMax and
 //                cv::cuda::countNonZero, OpenCV-CUDA's calls for the minimum, the maximum and the count, take one-channel images
@@ -96,17 +100,21 @@
 //            the positions from the detection table and builds every ROI, crop pointer or crop view from them
 //   factors  FKL, cv::cuda::resize and the single pass written by hand compute the source position of a resized pixel in float (their
 //            sources; NPP's are not public). The crop size is a multiple of 28 in both dimensions, so the factor is a multiple of 1/8
-//            (here 1.25): the positions are exact in float (the program verifies it), the weights of both conventions are multiples
-//            of 1/16, a resized pixel has at most 16 significant bits and is exact in float, and the sums of the pixels and of their
+//            (here 1.25): the positions are exact in float (the program verifies it), the weights are multiples of 1/16 (ASYMMETRIC)
+//            or 1/64 (HALF_PIXEL), a resized pixel has at most 14 significant bits and is exact in float, and the sums of the pixels and of their
 //            squares are exact in double in any order. So every statistic that a row leaves can be compared with the host's for
 //            equality.
 // Each library reads its own copy of the same host bytes, crops its own way (OpenCV: a GpuMat ROI; NPP: a pointer into its frame and the
 // frame's step; Thrust: a pointer into a contiguous copy; FKL: fk::Ptr2D::crop2D), and owns its intermediate images and its outputs. The
 // OpenCV-CUDA, NPP and Thrust rows use no FKL object.
 // The sampling convention of the resize (the names are those of fk::ResizeSampling and of common/resize_reference.h; see E4) is the
-// one of each library: ASYMMETRIC (source position x * scale) in FKL, in cv::cuda::resize and in the single pass written by hand, which
-// writes out FKL's arithmetic; HALF_PIXEL ((x + 0.5) * scale - 0.5) in NPP. The two read different source positions, so they give
-// different statistics: every row is checked against the reference of its OWN convention.
+// one of each library: ASYMMETRIC (source position x * scale) in cv::cuda::resize and in the single pass written by hand, which writes
+// out FKL's arithmetic; HALF_PIXEL ((x + 0.5) * scale - 0.5) in NPP. Neither library offers the other one with its plain calls
+// (cv::cuda::resize with INTER_LINEAR has no option for it, and NPP's resize calls have none; nppiResizeSqrPixel takes a shift, which
+// would have to be computed by hand, and has no batched form). FKL's Resize takes the sampling as a template parameter, so the fkl rows
+// are one per convention: fkl (ASYMMETRIC) is compared with opencv_cuda and thrust, and fkl_half_pixel (HALF_PIXEL) with npp. The two
+// conventions read different source positions, so they give different statistics: every row is checked against the reference of its
+// OWN convention.
 //
 // The checks (e20_reductions_checks.csv), for every N, on two frames: a probe and then the frame that is timed. Every library's copy of
 // the frame is uploaded again for each. The probe is made so that every statistic depends on what it should:
@@ -137,14 +145,14 @@
 // Every line also has the number of its values that differ from the reference of the OTHER convention (it is not a criterion: it shows
 // that the check tells the conventions apart).
 //
-// The timing (e20_reductions.csv), for every N after its checks: two intervals per row, in the order fkl, opencv_cuda, npp, thrust, the
-// same in every run. The first interval timed in a run starts at a lower SM clock (2,550 MHz in place of 2,700 MHz during the first 0.1
-// to 0.25 s of load after an idle GPU: about 5% slower), so the first row is FKL's, not a baseline's: in a complete run it is the
-// whole_call of fkl at the first N, and with E20_ONLY it is the one of the first row selected, which is then not comparable with a
-// complete run's. Both intervals hold the whole frame (the N crops). An N whose check fails is not timed, and the others are: the timing
-// table of a run that ends with CHECK FAILED (exit code 1) holds the N that passed. The column intermediate_image_bytes is the device
-// memory of the intermediate images of the row: one set, written again for every crop, in opencv_cuda, and the stacks of the N crops
-// in npp.
+// The timing (e20_reductions.csv), for every N after its checks: two intervals per row, in the order fkl, fkl_half_pixel, opencv_cuda,
+// npp, thrust, the same in every run. The first interval timed in a run starts at a lower SM clock (2,550 MHz in place of 2,700 MHz
+// during the first 0.1 to 0.25 s of load after an idle GPU: about 5% slower), so the first row is FKL's, not a baseline's: in a complete
+// run it is the whole_call of fkl at the first N, and with E20_ONLY it is the one of the first row selected, which is then not
+// comparable with a complete run's. Both intervals hold the whole frame (the N crops). An N whose check fails is not timed, and the
+// others are: the timing table of a run that ends with CHECK FAILED (exit code 1) holds the N that passed. The column
+// intermediate_image_bytes is the device memory of the intermediate images of the row: one set, written again for every crop, in
+// opencv_cuda, and the stacks of the N crops in npp (0 in the fkl rows and in thrust, which have none).
 //   whole_call   fklb::timeIt (common/cuda_timing.h): CUDA events around one call, 100 calls after one warm-up call. When the GPU waits
 //                for the host, the interval holds the host's work too
 //   kernel_only  fklb::timePreparedLaunch with gpuSpin as beforeLaunch and nothing to prepare: the whole call is enqueued behind one spin
@@ -209,7 +217,7 @@
 #include <string>
 #include <vector>
 
-// ---- The user's operations of the fkl row, which FKL's basic operations do not have
+// ---- The user's operations of the fkl rows, which FKL's basic operations do not have
 namespace e20 {
 // 1 in every channel of a resized pixel that is not zero: the FirstIOp of the count
 struct IsNonZero {
@@ -251,7 +259,7 @@ struct Detection {
     int x, y;
 };
 
-// ---- The five reductions of the fkl row, each one a Tuple<FirstIOp, AccumulationIOp, FinalIOp>, over the float3 pixels that its read
+// ---- The five reductions of the fkl rows, each one a Tuple<FirstIOp, AccumulationIOp, FinalIOp>, over the float3 pixels that their read
 // gives: the minimum and the maximum accumulated in float3, the count in uint3, and the sum and the sum of squares in double3
 auto fklReductions() {
     using Same = fk::Cast<float3, float3>;
@@ -266,7 +274,6 @@ auto fklReductions() {
                           fk::make_tuple(e20::Square::build(), AddSum::build(), fk::Cast<double3, double3>::build()));
 }
 
-using FklResize = fk::Resize<fk::InterpolationType::INTER_LINEAR>;
 
 // ---- The single pass of the thrust row: the five values of the three channels, with the accumulator types of the fkl row
 struct Five {
@@ -336,7 +343,7 @@ constexpr Npp32f NON_ZERO_FROM = std::numeric_limits<Npp32f>::denorm_min();
 constexpr Npp32f NON_ZERO_TO = std::numeric_limits<Npp32f>::max();
 
 // The rows, in the order of the checks and of the timing: FKL's first
-const std::vector<std::string> ROWS = {"fkl", "opencv_cuda", "npp", "thrust"};
+const std::vector<std::string> ROWS = {"fkl", "fkl_half_pixel", "opencv_cuda", "npp", "thrust"};
 
 // A value of E20_ONLY or of E20_CROPS that the program does not take: its message, and the exit status 2 of a refused environment variable
 // (as fklb::envInt, common/env_args.h), which is not the 1 of a failed check or of a failed call
@@ -643,8 +650,8 @@ std::vector<T> fromDevice(const void* device, const size_t count) {
 }
 
 // ---- FKL
-// What the fkl row uses: FKL's stream object of the program's stream and FKL's own copy of the frame (set once), and, set again for each
-// N, the output tensor (5 x 1 x N double3: the five values of crop i in plane i) and the workspace of the kernel
+// What the fkl rows use: FKL's stream object of the program's stream and FKL's own copy of the frame (set once), and, set again for each
+// N, the output tensor (5 x 1 x N double3: the five values of crop i in plane i) and the workspace of the kernels
 struct Fkl {
     fk::Stream_<fk::ParArch::GPU_NVIDIA>& stream;
     fk::Ptr2D<uchar3>& frame;
@@ -652,11 +659,18 @@ struct Fkl {
     fk::Ptr1D<uchar>& workspace;
 };
 
-// The fkl row for N crops. N is a template parameter because the batched read takes it at compile time (the std::array of the N crop
-// views). It returns the bytes of workspace that the kernel needs
-template <int N>
-size_t addFklRow(Fkl& fkl, const std::vector<Detection>& detections, const std::function<void()>& fill,
+// The sampling of the resize of an fkl row, as fk::ResizeSampling and as the program's references name it
+template <fk::ResizeSampling SAMPLING>
+constexpr fklb::ResizeSampling SAMPLING_OF = SAMPLING == fk::ResizeSampling::ASYMMETRIC ? fklb::ResizeSampling::ASYMMETRIC
+                                                                                       : fklb::ResizeSampling::HALF_PIXEL;
+
+// An fkl row for N crops, with the sampling SAMPLING of the resize: fk::Resize with its sampling as its own template parameter. N is a
+// template parameter because the batched read takes it at compile time (the std::array of the N crop views). It returns the bytes of
+// workspace that the kernel needs
+template <int N, fk::ResizeSampling SAMPLING>
+size_t addFklRow(const char* version, Fkl& fkl, const std::vector<Detection>& detections, const std::function<void()>& fill,
                  const std::function<std::vector<Statistics>()>& download, std::vector<Row>& rows) {
+    using FklResize = fk::Resize<fk::InterpolationType::INTER_LINEAR, fk::AspectRatio::IGNORE_AR, NullType, SAMPLING>;
     // The timed call (whole_call and kernel_only): the whole frame. Everything in this lambda is inside the interval
     const auto callFkl = [&fkl, &detections] {
         // The batch: the N crop views of the frame, from the detections (filling the array is the batch's build, part of the call)
@@ -667,7 +681,7 @@ size_t addFklRow(Fkl& fkl, const std::vector<Detection>& detections, const std::
         fk::executeOperations<fk::ReduceDPP<>>(fkl.stream, fk::ReduceDPP<>::build_details(fkl.workspace), read, fklReductions(), write);
     };
     // (end of the timed call)
-    rows.push_back({"fkl", fklb::ResizeSampling::ASYMMETRIC, 1, 0, callFkl, fill, download});
+    rows.push_back({version, SAMPLING_OF<SAMPLING>, 1, 0, callFkl, fill, download});
 
     // The workspace that the kernel needs: it depends on the size and the number of the resized crops and on the accumulators, and on
     // nothing of a frame
@@ -675,6 +689,16 @@ size_t addFklRow(Fkl& fkl, const std::vector<Detection>& detections, const std::
     for (int i = 0; i < N; ++i) crops[i] = fkl.frame.crop2D(fk::Rect(detections[i].x, detections[i].y, CROP_W, CROP_H));
     const auto read = fk::PerThreadRead<fk::ND::_2D, uchar3>::build(crops).then(FklResize::build(fk::Size(OUT_W, OUT_H)));
     return fk::ReduceDPP<>::workspaceBytes(read, fklReductions());
+}
+
+// The two fkl rows for N crops: fkl, with the sampling of cv::cuda::resize and of the thrust row (ASYMMETRIC, the default of fk::Resize),
+// and fkl_half_pixel, with the one of NPP (HALF_PIXEL). It returns the bytes of workspace that the larger of them needs
+template <int N>
+size_t addFklRows(Fkl& fkl, const std::vector<Detection>& detections, const std::function<void()>& fill,
+                  const std::function<std::vector<Statistics>()>& download, std::vector<Row>& rows) {
+    const size_t asymmetric = addFklRow<N, fk::ResizeSampling::ASYMMETRIC>("fkl", fkl, detections, fill, download, rows);
+    const size_t halfPixel = addFklRow<N, fk::ResizeSampling::HALF_PIXEL>("fkl_half_pixel", fkl, detections, fill, download, rows);
+    return std::max(asymmetric, halfPixel);
 }
 } // namespace
 
@@ -775,7 +799,7 @@ int launch() {
         const std::vector<Detection> detections(table.begin(), table.begin() + N);
         std::vector<Row> rows;
 
-        // ---- FKL: one fk::executeOperations<fk::ReduceDPP<>>, one kernel, no intermediate image
+        // ---- FKL: one fk::executeOperations<fk::ReduceDPP<>> per row, one kernel, no intermediate image
         fkOut = fk::Tensor<double3>(STATISTICS, 1, N, 1);
         fkWorkspace = fk::Ptr1D<uchar>();
         Fkl fkl{fkStream, fkFrame, fkOut, fkWorkspace};
@@ -798,26 +822,27 @@ int launch() {
         };
         size_t fkWorkspaceBytes = 0;
         switch (N) {
-        case 1: fkWorkspaceBytes = addFklRow<1>(fkl, detections, fillFkl, downloadFkl, rows); break;
-        case 10: fkWorkspaceBytes = addFklRow<10>(fkl, detections, fillFkl, downloadFkl, rows); break;
-        case 20: fkWorkspaceBytes = addFklRow<20>(fkl, detections, fillFkl, downloadFkl, rows); break;
-        case 30: fkWorkspaceBytes = addFklRow<30>(fkl, detections, fillFkl, downloadFkl, rows); break;
-        case 40: fkWorkspaceBytes = addFklRow<40>(fkl, detections, fillFkl, downloadFkl, rows); break;
-        case 50: fkWorkspaceBytes = addFklRow<50>(fkl, detections, fillFkl, downloadFkl, rows); break;
-        case 60: fkWorkspaceBytes = addFklRow<60>(fkl, detections, fillFkl, downloadFkl, rows); break;
-        case 70: fkWorkspaceBytes = addFklRow<70>(fkl, detections, fillFkl, downloadFkl, rows); break;
-        case 80: fkWorkspaceBytes = addFklRow<80>(fkl, detections, fillFkl, downloadFkl, rows); break;
-        case 90: fkWorkspaceBytes = addFklRow<90>(fkl, detections, fillFkl, downloadFkl, rows); break;
-        case 100: fkWorkspaceBytes = addFklRow<100>(fkl, detections, fillFkl, downloadFkl, rows); break;
-        case 110: fkWorkspaceBytes = addFklRow<110>(fkl, detections, fillFkl, downloadFkl, rows); break;
-        case 120: fkWorkspaceBytes = addFklRow<120>(fkl, detections, fillFkl, downloadFkl, rows); break;
-        case 130: fkWorkspaceBytes = addFklRow<130>(fkl, detections, fillFkl, downloadFkl, rows); break;
-        case 140: fkWorkspaceBytes = addFklRow<140>(fkl, detections, fillFkl, downloadFkl, rows); break;
-        case 150: fkWorkspaceBytes = addFklRow<150>(fkl, detections, fillFkl, downloadFkl, rows); break;
+        case 1: fkWorkspaceBytes = addFklRows<1>(fkl, detections, fillFkl, downloadFkl, rows); break;
+        case 10: fkWorkspaceBytes = addFklRows<10>(fkl, detections, fillFkl, downloadFkl, rows); break;
+        case 20: fkWorkspaceBytes = addFklRows<20>(fkl, detections, fillFkl, downloadFkl, rows); break;
+        case 30: fkWorkspaceBytes = addFklRows<30>(fkl, detections, fillFkl, downloadFkl, rows); break;
+        case 40: fkWorkspaceBytes = addFklRows<40>(fkl, detections, fillFkl, downloadFkl, rows); break;
+        case 50: fkWorkspaceBytes = addFklRows<50>(fkl, detections, fillFkl, downloadFkl, rows); break;
+        case 60: fkWorkspaceBytes = addFklRows<60>(fkl, detections, fillFkl, downloadFkl, rows); break;
+        case 70: fkWorkspaceBytes = addFklRows<70>(fkl, detections, fillFkl, downloadFkl, rows); break;
+        case 80: fkWorkspaceBytes = addFklRows<80>(fkl, detections, fillFkl, downloadFkl, rows); break;
+        case 90: fkWorkspaceBytes = addFklRows<90>(fkl, detections, fillFkl, downloadFkl, rows); break;
+        case 100: fkWorkspaceBytes = addFklRows<100>(fkl, detections, fillFkl, downloadFkl, rows); break;
+        case 110: fkWorkspaceBytes = addFklRows<110>(fkl, detections, fillFkl, downloadFkl, rows); break;
+        case 120: fkWorkspaceBytes = addFklRows<120>(fkl, detections, fillFkl, downloadFkl, rows); break;
+        case 130: fkWorkspaceBytes = addFklRows<130>(fkl, detections, fillFkl, downloadFkl, rows); break;
+        case 140: fkWorkspaceBytes = addFklRows<140>(fkl, detections, fillFkl, downloadFkl, rows); break;
+        case 150: fkWorkspaceBytes = addFklRows<150>(fkl, detections, fillFkl, downloadFkl, rows); break;
         default: throw std::runtime_error("no FKL batch of " + std::to_string(N) + " crops is compiled in");
         }
-        // Set once for N: the workspace of the kernel, device memory of the caller, zeroed
-        if (fkWorkspaceBytes == 0) throw std::runtime_error("fkl: the row needs no workspace");
+        // Set once for N: the workspace of the kernels, device memory of the caller, zeroed: the two fkl rows, whose calls never run at the
+        // same time, share it
+        if (fkWorkspaceBytes == 0) throw std::runtime_error("fkl: the rows need no workspace");
         fkl.workspace = fk::Ptr1D<uchar>(static_cast<uint>(fkWorkspaceBytes));
         FKLB_CUDA_CHECK(cudaMemset(fkl.workspace.ptr().data, 0, fkWorkspaceBytes));
 
