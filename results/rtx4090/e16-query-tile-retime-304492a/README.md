@@ -20,7 +20,50 @@ Decision: the coordinator's task RT-2b of 2026-11-27. The paper agent confirmed 
 the kernels are identical at 304492a, but the timed host code changed with #435 (QA3). Oscar's rule of 2026-11-26 applies: "Coordinate with
 fkl-reduce, fkl-reduce has priority".
 
-**State.** The code check is done (CPU only; nothing was built for RT-2b). The window waits for the coordinator's GRANTED.
+**State.** The window ran on the coordinator's GRANTED (HOLD COMPILES and WINDOW STARTS sent) from 2026-11-27 05:35:23 to 05:42:37
+(+01:00; 04:35:23Z to 04:42:37Z, `window/window-console.txt`). The analysis below was done afterwards, on the CPU only.
+
+## Result
+
+**The window** (`window/`):
+- **Runs:** 6 of 6 exited 0, each writing 50 rows, with no INCOMPLETE and an empty stderr.
+  - Each run took 43-44 s (the record's runs took 38-39 s), from its `load.txt`.
+  - The console's "after N s" counts from before the idle wait, so it shows 44-89 s.
+- **Guards:** the after-run check never fired, so no run is affected and none is redone. The idle wait never timed out: it waited 0 to 46 s
+  before a run, and the 1-minute load at the start of a run was 0.43 to 0.49.
+- **Clocks** (`gpu_clocks.csv`, `gpu_clocks.err` empty): 2,284 of the 4,286 readings have a utilisation of 50 % or more, all at P2. Their SM
+  clock was 2,670 MHz in 1,496 of them, the rest 2,400 to 2,655 MHz. The temperature was 41 to 71 °C.
+- **The rows:** every row of every run, old's, A's and B's, ran with `split_kv = false` and one kernel per call. So the split-KV
+  instantiations that only A has were never launched.
+
+**The sentence's quantities** (`analysis/retime-report.md`, every number in `retime-numbers.csv`):
+- **What they are:** the median of the three runs [min-max], with the definitions of `scripts/e16_query_tile_analyse.py`.
+- **Bound and flag:** these are GPU times and their ratios, so the flag is a change above 3 %.
+- **Cause:** not shown for any change.
+
+| S | ratio excess BQ128 / BQ64: old / A / B | share left out by the timing-only variant, BQ64: old / A / B | BQ128: old / A / B |
+|---:|---|---|---|
+| 2,048 | 0.483 [0.481-0.484] / 0.485 [0.446-0.504] / 0.484 [0.456-0.501] | 0.439 / 0.436 / 0.431 | 0.461 / 0.469 / 0.463 |
+| 4,096 | 0.470 [0.465-0.470] / 0.460 [0.454-0.475] / 0.468 [0.459-0.475] | 0.397 / 0.388 / 0.393 | 0.471 / 0.472 / 0.475 |
+| 8,192 | 0.438 [0.437-0.438] / 0.436 [0.429-0.438] / 0.438 [0.438-0.441] | 0.333 / 0.328 / 0.331 | 0.480 / 0.485 / 0.484 |
+
+- **No flag** among the 15 quantities at S = 2,048, 4,096 and 8,192: the excess at BQ 64 and 128, the ratio, and the two shares.
+  - B against A: -2.14 % to +1.85 %, none exceeding the larger spread.
+  - A against old: -2.30 % to +1.81 %; 1 exceeds the larger spread and 2 are apart.
+  - B against old: -1.85 % to +1.48 %; 1 exceeds and 4 are apart.
+- **At two decimals**, B's ratios are the record's (0.48, 0.47, 0.44). A's are the record's except 0.46 at S = 4,096. Every share is within
+  0.01 of the record's.
+- **The excess itself** (ms): at S = 2,048 BQ64 0.496 / 0.492 / 0.500 and BQ128 0.240 / 0.242 / 0.243. At 8,192, BQ64 2.025 / 2.013 / 2.018
+  and BQ128 0.886 / 0.874 / 0.884.
+- **At S = 512 and 1,024** (not in the sentence): no flag; -2.27 % to +2.32 %.
+- **Every timed row** (50): no flag. B against A -0.46 % to +0.91 %, A against old -0.81 % to +0.40 %, B against old -0.80 % to +0.82 %.
+
+**Checks:**
+- **The error columns:** the error columns of the rows that are not timing only are equal in 105 of 105 rows, A against old and B against
+  A. The input files give the record's results.
+- **The order:** the position of every variant in every run is old's on both sides.
+- **The record's formats:** `A/` and `B/` hold `run0..2/e16_query_tile.csv` and `e16_query_tile_derived.csv` / `.md`, by the record's
+  `e16_query_tile_analyse.py`.
 
 ## The binaries (`manifest.sha256`)
 
@@ -75,7 +118,7 @@ No cause of a time difference is claimed from this.
 
 ## The window (`window-script.sh`)
 
-(To be run on the coordinator's GRANTED; about 5-8 minutes with the idle waits. Each of the record's runs took 38-39 s.)
+(Run on the coordinator's GRANTED, 2026-11-27 05:35:23 to 05:42:37 +01:00; the result is above.)
 
 **The record's protocol** (`../e16-query-tile/window-script.sh`): `E16_DIMS=128 E16_CAUSAL=0 E16_ROTATE=r`, a 1500 s timeout, cores
 0-3,16-19, and TMPDIR on disk. A and B alternate as in RT-2:
@@ -139,4 +182,7 @@ No cause is named unless shown.
 | `window-script.sh` | the window's script |
 | `code-check/` | A against old: the console, the device-code and host-code comparisons (the diffs gzipped: `gzip -n -9`, over 1 MiB), `cuobjdump -res-usage` of both |
 | `resources/` | B against A: the SASS comparison and its CSV, the host-code comparison with the timed intervals (its CSV and diffs gzipped, over 1 MiB), `cuobjdump -res-usage` of both |
+| `window/` | the window: console, environment before and after, `gpu-info.csv`, `gpu_clocks.csv` (and `.err`), `load.log`, the copy of the script it ran, and `{A,B}/run0..2` (each with its CSV, stdout, stderr, exit code, load and the GPU state at its end) |
+| `A/`, `B/` | each side in the record's layout: `run0..2/e16_query_tile.csv`, `e16_query_tile_derived.csv`, `.md`, and the analysis script's stdout |
+| `analysis/` | `retime-report.md`, `retime-numbers.csv` (`rt2b_report.py`) |
 | `scripts-used/` | `rt2b_code_check.sh`, `sass_identity_60.py` (#60's `sass_identity.py`), `host_compare435.py`, `pr435_sass_identity.py`, `rt2b_after.sh`, `rt2b_report.py`, `after_window.sh` |

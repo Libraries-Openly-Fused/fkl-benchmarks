@@ -1,0 +1,55 @@
+input /home/oscar/tfkl-bench/e16-work/inputs/e16_input_d128_s512_bh512.bin (read): 339738624 bytes, sha256 4ed01cd81790aa9e043dd26a68d186e0c2458b784e9d5d0a7eb5b6cebee810ae
+input /home/oscar/tfkl-bench/e16-work/inputs/e16_input_d128_s1024_bh256.bin (read): 339738624 bytes, sha256 616d9917dce64c955991ba072804126bd8aa5e51f95ab7955d6d9e9bdf3ef8e3
+input /home/oscar/tfkl-bench/e16-work/inputs/e16_input_d128_s2048_bh128.bin (read): 339738624 bytes, sha256 807248c516ab178acd9b794aab661dd3da5a37b7dd376f3c38d5ffba3cfd073e
+input /home/oscar/tfkl-bench/e16-work/inputs/e16_input_d128_s4096_bh64.bin (read): 339738624 bytes, sha256 aa40eff4f083ea34a47c6f3f5db398a0cd8b2730771fab9bb180713f9be1f653
+input /home/oscar/tfkl-bench/e16-work/inputs/e16_input_d128_s8192_bh32.bin (read): 339738624 bytes, sha256 b871426457883fe1718d2633ec6d3f6aa2aafd6c54cf7c151f9fb19e42ecfae4
+raw_bq64_kv32_w4 D=128 S=512 BH=512 causal=0: 0.504298 ms (40 calls per block), single 0.504832 ms, 136.267 TFLOP/s, preparation 0.00286179 us per call, max err 0.001818, kernels 1
+raw_bq128_kv32_w4 D=128 S=512 BH=512 causal=0: 0.505649 ms (40 calls per block), single 0.506528 ms, 135.904 TFLOP/s, preparation 0.00291057 us per call, max err 0.001818, kernels 1
+int8_bq32_w2 D=128 S=512 BH=512 causal=0: 1.47924 ms (14 calls per block), single 1.47558 ms, 46.4559 TFLOP/s, preparation 0.00484444 us per call, max err 0.00339437, kernels 1
+int8_bq64_w4 D=128 S=512 BH=512 causal=0: 0.651984 ms (31 calls per block), single 0.652416 ms, 105.401 TFLOP/s, preparation 0.00352083 us per call, max err 0.00339437, kernels 1
+int8_bq128_w4 D=128 S=512 BH=512 causal=0: 0.590244 ms (34 calls per block), single 0.590848 ms, 116.426 TFLOP/s, preparation 0.00335238 us per call, max err 0.00339437, kernels 1
+int8nodq_bq32_w2 D=128 S=512 BH=512 causal=0: 0.954365 ms (21 calls per block), single 0.95744 ms, 72.0054 TFLOP/s, preparation 0.00475758 us per call, max err 0.605753, kernels 1
+int8nodq_bq64_w4 D=128 S=512 BH=512 causal=0: 0.562509 ms (36 calls per block), single 0.5632 ms, 122.166 TFLOP/s, preparation 0.00320721 us per call, max err 0.605753, kernels 1
+int8nodq_bq128_w4 D=128 S=512 BH=512 causal=0: 0.54737 ms (37 calls per block), single 0.54784 ms, 125.545 TFLOP/s, preparation 0.0032807 us per call, max err 0.605753, kernels 1
+raw_default D=128 S=512 BH=512 causal=0: 0.483112 ms (42 calls per block), single 0.501664 ms, 142.243 TFLOP/s, preparation 0.00289767 us per call, max err 0.001818, kernels 1
+raw_bq32_kv32_w2 D=128 S=512 BH=512 causal=0: 0.56246 ms (36 calls per block), single 0.553984 ms, 122.177 TFLOP/s, preparation 0.00322523 us per call, max err 0.001818, kernels 1
+raw_bq128_kv32_w4 D=128 S=1024 BH=256 causal=0: 0.934167 ms (22 calls per block), single 0.935936 ms, 147.125 TFLOP/s, preparation 0.00437681 us per call, max err 0.00121558, kernels 1
+int8_bq32_w2 D=128 S=1024 BH=256 causal=0: 2.83853 ms (8 calls per block), single 2.83814 ms, 48.4191 TFLOP/s, preparation 0.00711111 us per call, max err 0.00161889, kernels 1
+int8_bq64_w4 D=128 S=1024 BH=256 causal=0: 1.20981 ms (17 calls per block), single 1.21242 ms, 113.604 TFLOP/s, preparation 0.0047037 us per call, max err 0.00161889, kernels 1
+int8_bq128_w4 D=128 S=1024 BH=256 causal=0: 1.07051 ms (19 calls per block), single 1.06912 ms, 128.386 TFLOP/s, preparation 0.00456667 us per call, max err 0.00161889, kernels 1
+int8nodq_bq32_w2 D=128 S=1024 BH=256 causal=0: 1.82048 ms (11 calls per block), single 1.8217 ms, 75.4959 TFLOP/s, preparation 0.00561111 us per call, max err 0.463213, kernels 1
+int8nodq_bq64_w4 D=128 S=1024 BH=256 causal=0: 1.07935 ms (19 calls per block), single 1.08032 ms, 127.335 TFLOP/s, preparation 0.00433333 us per call, max err 0.463213, kernels 1
+int8nodq_bq128_w4 D=128 S=1024 BH=256 causal=0: 1.00771 ms (20 calls per block), single 1.00864 ms, 136.388 TFLOP/s, preparation 0.00444444 us per call, max err 0.463213, kernels 1
+raw_default D=128 S=1024 BH=256 causal=0: 0.911635 ms (22 calls per block), single 0.913408 ms, 150.761 TFLOP/s, preparation 0.0037971 us per call, max err 0.00121388, kernels 1
+raw_bq32_kv32_w2 D=128 S=1024 BH=256 causal=0: 1.05181 ms (19 calls per block), single 1.03498 ms, 130.669 TFLOP/s, preparation 0.00396667 us per call, max err 0.00121558, kernels 1
+raw_bq64_kv32_w4 D=128 S=1024 BH=256 causal=0: 0.964977 ms (22 calls per block), single 0.972512 ms, 142.427 TFLOP/s, preparation 0.004 us per call, max err 0.00121558, kernels 1
+int8_bq32_w2 D=128 S=2048 BH=128 causal=0: 5.61584 ms (4 calls per block), single 5.61664 ms, 48.9469 TFLOP/s, preparation 0.0126667 us per call, max err 0.00128269, kernels 1
+int8_bq64_w4 D=128 S=2048 BH=128 causal=0: 2.33802 ms (9 calls per block), single 2.33677 ms, 117.569 TFLOP/s, preparation 0.0072 us per call, max err 0.00128269, kernels 1
+int8_bq128_w4 D=128 S=2048 BH=128 causal=0: 2.05052 ms (10 calls per block), single 2.05133 ms, 134.052 TFLOP/s, preparation 0.00618182 us per call, max err 0.00128269, kernels 1
+int8nodq_bq32_w2 D=128 S=2048 BH=128 causal=0: 3.56506 ms (6 calls per block), single 3.56557 ms, 77.1034 TFLOP/s, preparation 0.01 us per call, max err 0.397096, kernels 1
+int8nodq_bq64_w4 D=128 S=2048 BH=128 causal=0: 2.12275 ms (10 calls per block), single 2.12378 ms, 129.491 TFLOP/s, preparation 0.0066 us per call, max err 0.397096, kernels 1
+int8nodq_bq128_w4 D=128 S=2048 BH=128 causal=0: 1.93946 ms (11 calls per block), single 1.93946 ms, 141.729 TFLOP/s, preparation 0.00622222 us per call, max err 0.397096, kernels 1
+raw_default D=128 S=2048 BH=128 causal=0: 1.75589 ms (12 calls per block), single 1.77901 ms, 156.546 TFLOP/s, preparation 0.00492308 us per call, max err 0.00114033, kernels 1
+raw_bq32_kv32_w2 D=128 S=2048 BH=128 causal=0: 2.05227 ms (10 calls per block), single 2.01814 ms, 133.939 TFLOP/s, preparation 0.00678788 us per call, max err 0.001111, kernels 1
+raw_bq64_kv32_w4 D=128 S=2048 BH=128 causal=0: 1.83827 ms (11 calls per block), single 1.84934 ms, 149.531 TFLOP/s, preparation 0.00588889 us per call, max err 0.001111, kernels 1
+raw_bq128_kv32_w4 D=128 S=2048 BH=128 causal=0: 1.80864 ms (12 calls per block), single 1.80941 ms, 151.98 TFLOP/s, preparation 0.00507692 us per call, max err 0.001111, kernels 1
+int8_bq64_w4 D=128 S=4096 BH=64 causal=0: 4.58874 ms (5 calls per block), single 4.59357 ms, 119.805 TFLOP/s, preparation 0.0107778 us per call, max err 0.00127733, kernels 1
+int8_bq128_w4 D=128 S=4096 BH=64 causal=0: 4.00466 ms (5 calls per block), single 4.00493 ms, 137.279 TFLOP/s, preparation 0.0101111 us per call, max err 0.00127733, kernels 1
+int8nodq_bq32_w2 D=128 S=4096 BH=64 causal=0: 7.04341 ms (3 calls per block), single 7.04717 ms, 78.0525 TFLOP/s, preparation 0.016 us per call, max err 0.36932, kernels 1
+int8nodq_bq64_w4 D=128 S=4096 BH=64 causal=0: 4.20884 ms (5 calls per block), single 4.21043 ms, 130.619 TFLOP/s, preparation 0.00933333 us per call, max err 0.36932, kernels 1
+int8nodq_bq128_w4 D=128 S=4096 BH=64 causal=0: 3.79033 ms (6 calls per block), single 3.79187 ms, 145.042 TFLOP/s, preparation 0.00904762 us per call, max err 0.36932, kernels 1
+raw_default D=128 S=4096 BH=64 causal=0: 3.43175 ms (6 calls per block), single 3.4537 ms, 160.197 TFLOP/s, preparation 0.00809524 us per call, max err 0.0010615, kernels 1
+raw_bq32_kv32_w2 D=128 S=4096 BH=64 causal=0: 3.91663 ms (6 calls per block), single 3.84608 ms, 140.364 TFLOP/s, preparation 0.00838095 us per call, max err 0.0010615, kernels 1
+raw_bq64_kv32_w4 D=128 S=4096 BH=64 causal=0: 3.63047 ms (6 calls per block), single 3.63184 ms, 151.428 TFLOP/s, preparation 0.00809524 us per call, max err 0.0010615, kernels 1
+raw_bq128_kv32_w4 D=128 S=4096 BH=64 causal=0: 3.55601 ms (6 calls per block), single 3.55738 ms, 154.599 TFLOP/s, preparation 0.00819048 us per call, max err 0.0010615, kernels 1
+int8_bq32_w2 D=128 S=4096 BH=64 causal=0: 11.3336 ms (2 calls per block), single 11.35 ms, 48.5069 TFLOP/s, preparation 0.0197778 us per call, max err 0.00127733, kernels 1
+int8_bq128_w4 D=128 S=8192 BH=32 causal=0: 7.91654 ms (3 calls per block), single 7.91754 ms, 138.888 TFLOP/s, preparation 0.0145 us per call, max err 0.00114956, kernels 1
+int8nodq_bq32_w2 D=128 S=8192 BH=32 causal=0: 13.9868 ms (2 calls per block), single 13.9826 ms, 78.6106 TFLOP/s, preparation 0.0195556 us per call, max err 0.337793, kernels 1
+int8nodq_bq64_w4 D=128 S=8192 BH=32 causal=0: 8.38153 ms (3 calls per block), single 8.38208 ms, 131.183 TFLOP/s, preparation 0.0136667 us per call, max err 0.337793, kernels 1
+int8nodq_bq128_w4 D=128 S=8192 BH=32 causal=0: 7.49363 ms (3 calls per block), single 7.49379 ms, 146.726 TFLOP/s, preparation 0.0148333 us per call, max err 0.337793, kernels 1
+raw_default D=128 S=8192 BH=32 causal=0: 6.83418 ms (3 calls per block), single 6.84006 ms, 160.884 TFLOP/s, preparation 0.0131667 us per call, max err 0.00105849, kernels 1
+raw_bq32_kv32_w2 D=128 S=8192 BH=32 causal=0: 7.55027 ms (3 calls per block), single 7.54483 ms, 145.625 TFLOP/s, preparation 0.0141667 us per call, max err 0.00105849, kernels 1
+raw_bq64_kv32_w4 D=128 S=8192 BH=32 causal=0: 7.07038 ms (3 calls per block), single 7.02976 ms, 155.51 TFLOP/s, preparation 0.0133333 us per call, max err 0.00105849, kernels 1
+raw_bq128_kv32_w4 D=128 S=8192 BH=32 causal=0: 7.04341 ms (3 calls per block), single 7.0441 ms, 156.105 TFLOP/s, preparation 0.0133333 us per call, max err 0.00105849, kernels 1
+int8_bq32_w2 D=128 S=8192 BH=32 causal=0: 22.8369 ms (1 calls per block), single 22.834 ms, 48.1463 TFLOP/s, preparation 0.0276667 us per call, max err 0.00114956, kernels 1
+int8_bq64_w4 D=128 S=8192 BH=32 causal=0: 9.06377 ms (3 calls per block), single 9.05357 ms, 121.308 TFLOP/s, preparation 0.0158333 us per call, max err 0.00114956, kernels 1
