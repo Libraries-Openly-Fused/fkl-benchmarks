@@ -14,9 +14,9 @@
 
 // E20 reductions (NVIDIA): several reductions of the same matrix. For one one-channel matrix: its minimum, its maximum, the sum of its
 // elements, the number of elements that are not zero and the sum of their squares, left in device memory (the thrust row: in host
-// memory; the msd rows: the mean and the standard deviation in place of the two sums; the hist rows: the 256 counts that give the
-// five); the variance is then computed on the host from the sum, the sum of the squares and the number of elements (in the msd rows,
-// from the standard deviation). The matrix is of bytes (8u) or of floats (32f): two types, each with its rows, its checks and its times.
+// memory; the msd rows: the mean and the standard deviation in place of the two sums); the variance is then computed on the host from
+// the sum, the sum of the squares and the number of elements (in the msd rows, from the standard deviation). The matrix is of bytes (8u)
+// or of floats (32f): two types, each with its rows, its checks and its times.
 // FKL's ReduceDPP computes the five in one kernel that reads every element once. OpenCV-CUDA and NPP have one call per reduction (the
 // minimum and the maximum share one), and every call reads the whole matrix at least once (OpenCV-CUDA: 4 calls, 4 passes; NPP: 4
 // calls, 5 passes, because nppiMinMax launches two kernels over the image, as nppiMean_StdDev does). Thrust and CUB are the single pass
@@ -35,16 +35,6 @@
 // and the sum that it leaves is equal to the host's up to the width at which one row of the matrix adds up to 2^21, where the multiples
 // of 1/8 that a float holds end, and at no width tried beyond (below: the 32f matrix, and the sizes that fail). So in the NPP rows of
 // the 32f matrix the sum is not accumulated as in its other rows.
-// The histogram. For a matrix of bytes one histogram gives the five statistics: a route that is not a reduction. One call of
-// cv::cuda::calcHist, of nppiHistogramEven_8u_C1R_Ctx or of cub::DeviceHistogram::HistogramEven reads the matrix once and leaves the
-// 256 counts of the values of a byte in device memory: the counts, not the five statistics, which follow from them in 256 steps that
-// the host does where it reads the statistics of the other rows back. The hist rows measure that call. (With the five statistics
-// themselves in device memory, as the other rows leave them, the route needs one more call, over the 256 counts; no row makes it.)
-// The route exists only for 8-bit elements, which have 256 values, and for 16-bit ones, which have 65,536 (cv::cuda::histEven and
-// nppiHistogramEven take them too). A float matrix has no such route: its elements are not a few values known in advance, and the
-// counts of the bins of a histogram (cv::cuda::histRange, nppiHistogramRange_32f_C1R_Ctx, cub::DeviceHistogram with float levels) do
-// not give the sum of the elements of a bin. The 32f matrix is that case, and it has no hist row. (Its elements are multiples of 1/8
-// only to make its checks exact, below; no row uses that.)
 //
 // The 8u matrix: width x height bytes, row by row, from the LCG of E4, E18 and E19 (seed 12345, state = state * 1664525 + 1013904223), one
 // element per state from its bits 31..24 (b): 0 when b < 8, and 5 + b mod 246 otherwise. So about 3% of the elements are zero, the minimum
@@ -75,14 +65,12 @@
 //                                     host's, and at 8388608x1 5e-5.
 //   8u and 32f, above 524,280 rows    (8 x 65,535) NPP's reductions return NPP_CUDA_KERNEL_EXECUTION_ERROR, and the program stops in
 //                                     opencv_cuda_msd, npp or npp_msd: 1x524280 passes, 1x524281 does not.
-//   8u, close to 2^31 elements        from 8192x261888 (2^21 elements below 2^31) to 8192x262143 the histogram of CUB, and from
-//                                     8192x262016 that of NPP, counts more elements than the matrix has; 8192x261632 passes in every row.
 //   8u, of 2^31 elements or more      the counts of OpenCV-CUDA and NPP are ints, and at 8192x262144 the mean of
-//                                     nppiMean_StdDev_8u_C1R_Ctx changes sign and the histogram of NPP has no element.
+//                                     nppiMean_StdDev_8u_C1R_Ctx changes sign; 8192x262143 passes in every row.
 //   32f, larger than the memory       the four device copies of a 32f matrix take 16 bytes per element: 8192x131072 passes in every
 //                                     row, and at 8192x262143 the program stops, out of the memory of an RTX 4090 (24 GB).
 //
-// The rows, each one a call that leaves its statistics in device memory (the hist rows: the counts). Nothing is brought to the host
+// The rows, each one a call that leaves its statistics in device memory. Nothing is brought to the host
 // inside a call, except in the thrust row, and the host does not wait for the GPU inside a call, except in the thrust row (and in the
 // opencv_cuda_msd row of a matrix of more than a hundred thousand rows: its description says from which height). T is the type of the
 // elements, uchar or float:
@@ -98,9 +86,7 @@
 //                    and Square are operations of this program (a user's operations): FKL's basic operations have neither. The write
 //                    is fk::PerThreadWrite<_1D, double> of five doubles. The thread blocks of the kernel leave their values in a
 //                    workspace, device memory that the caller owns: allocated and zeroed once for each size, as NPP's scratch
-//                    buffers (the time of the row does not depend on the address of the workspace: measured at 0, 512, 1,024,
-//                    1,536 and 2,560 bytes after a multiple of 4,096 bytes). Every call builds the read, the reductions, the write
-//                    and the details, and launches 1 kernel.
+//                    buffers. Every call builds the read, the reductions, the write and the details, and launches 1 kernel.
 //   fkl_double_sums  8u only: the call of fkl with A = double, so with the two sums accumulated as the opencv_cuda row accumulates
 //                    them (its accumulators: uchar, uchar, double, uint, double), with its own five doubles and its own workspace. It
 //                    separates the two differences between fkl and the OpenCV-CUDA and NPP rows: the passes, and the accumulators
@@ -151,24 +137,6 @@
 //                    buffer per call, allocated once for each size (nppi...GetBufferHostSize). 4 calls.
 //   npp_msd          nppiMinMax and nppiCountInRange as in npp, and nppiMean_StdDev_8u_C1R_Ctx or nppiMean_StdDev_32f_C1R_Ctx: with
 //                    the reductions of NPP, the fewest calls for the minimum, the maximum, the count and the variance. 3 calls.
-// The hist rows, of the 8u matrix only: one histogram call, which leaves the 256 counts of the values of a byte in device memory, NOT
-// the statistics: the host computes the five statistics from the counts (256 steps, exact in integers) where it reads those of the
-// other rows back, outside both timed intervals, as it computes the variance of every row. The time of the three calls depends on the
-// address of the counts: they are faster with the counts 512 bytes after a multiple of 1,024 bytes than at a multiple of 1,024 (cudaMalloc
-// gives either), so the program puts the counts of the three rows there, the fastest of the addresses that were measured (for NPP and
-// CUB, every 128 bytes from a multiple of 1,024; for OpenCV-CUDA, every 512 bytes). The times below are kernel_only on the RTX 4090.
-//   opencv_cuda_hist cv::cuda::calcHist (it takes CV_8UC1 only) into a GpuMat of 1 x 256 CV_32S, set once: a header of memory of the
-//                    program (the GpuMat constructor that takes a pointer), so that the program chooses its address. 1 call: 1 kernel
-//                    and the zeroing of the counts. 5.4 and 8.3 us at the two largest default sizes, and 6.2 and 9.4 us with the
-//                    counts at a multiple of 1,024 bytes; no difference at the two smallest.
-//   npp_hist         nppiHistogramEven_8u_C1R_Ctx with 257 levels from 0 to 256 (256 bins of one value), Npp32s counts in device memory,
-//                    the scratch buffer allocated once for each size (nppiHistogramEvenGetBufferSize_8u_C1R_Ctx). 1 call. 6.1 to
-//                    6.3, 6.5 to 6.9, 9.2 to 9.4 and 14.4 to 14.6 us at the four default sizes, and 7.2, 8.2, 10.3 and 15.4 us with
-//                    the counts at a multiple of 1,024 bytes.
-//   cub_hist         cub::DeviceHistogram::HistogramEven on the contiguous copy, the same levels, int counts in device memory, the
-//                    temporary storage allocated once for each size. 1 call. 4.2 to 4.3, 6.1 to 6.2 and 8.5 to 9.1 us at the three
-//                    largest default sizes, and 4.7 to 4.9, 7.4 and 10.3 to 10.4 us with the counts at a multiple of 1,024 bytes; no
-//                    difference at the smallest.
 // The OpenCV-CUDA, NPP, Thrust and CUB rows use no FKL object.
 //
 // The checks (e20_reductions_checks.csv), for every type and size, on two matrices: the probe and then the matrix that is timed. The
@@ -176,27 +144,25 @@
 // 250 in bytes) are those of any large part of it (its first two elements are 0). The probe is the matrix with every byte v replaced by
 // 253 - v (3 to 253, no zero), a 255 in its first element and a 1 in its last one (for 32f, those bytes divided by 8): its maximum and
 // its minimum are single elements at its two ends, so they are right only when the first and the last element are reduced, a minimum
-// of 0 is never right, and its maximum is the largest byte, the one of the last bin of a histogram and of the upper bound of NPP's
-// count. Every library's copy is uploaded again for each. The host computes the five statistics of the elements in integers, exactly,
+// of 0 is never right, and its maximum is the largest byte, the upper bound of NPP's count. Every library's copy is uploaded again for
+// each. The host computes the five statistics of the elements in integers, exactly,
 // and from them the mean, the standard deviation and the variance (the population variance, (N * sum of squares - sum^2) / N^2). Each
 // row is called once, after the buffers that hold the statistics of EVERY row are filled with 0xFF bytes (a NaN in a double or a float,
 // -1 in an int and the largest value in an unsigned integer: never a right value, but for the 255 of a byte, which is the maximum of the
 // probe: there the rows that leave a byte are caught by the matrix that is timed, where no statistic is 255. Filling them all shows a
 // row that reads what another one left), and its statistics are read back:
 //   minimum, maximum, non_zero    equal to the host's. The timing needs it.
-//   sum, sum_of_squares           the rows that leave them (fkl, fkl_double_sums, cub, thrust, thrust_reduce_into, opencv_cuda, npp)
-//                                 and the hist rows (from their counts, as their minimum, maximum and non_zero): equal to the host's.
-//                                 The host's are exact in a double: integers below 2^53 for 8u, and for 32f as said of its matrix.
-//                                 The timing needs it.
+//   sum, sum_of_squares           the rows that leave them (fkl, fkl_double_sums, cub, thrust, thrust_reduce_into, opencv_cuda, npp):
+//                                 equal to the host's. The host's are exact in a double: integers below 2^53 for 8u, and for 32f as
+//                                 said of its matrix. The timing needs it.
 //   mean, std_dev                 the msd rows: against the host's, relative difference at most 1e-9. The timing needs it.
 //   variance                      every row, computed on the host from what the row left: sum of squares / N - (sum / N)^2 in double from
 //                                 the rows that have the sums, and the square of the standard deviation from the msd rows; against the
 //                                 host's, relative difference at most 1e-9. The timing needs it.
 //
 // The timing (e20_reductions.csv), for every type and size after its checks: two intervals per row, in the order fkl, fkl_double_sums,
-// cub, thrust, thrust_reduce_into, opencv_cuda, opencv_cuda_msd, npp, npp_msd, opencv_cuda_hist, npp_hist, cub_hist (the 32f matrix
-// has no fkl_double_sums and no hist row), the same in every run (the first row timed after the checks can start at a lower clock, so
-// that row is FKL's, not a baseline's):
+// cub, thrust, thrust_reduce_into, opencv_cuda, opencv_cuda_msd, npp, npp_msd (the 32f matrix has no fkl_double_sums), the same in
+// every run (the first row timed after the checks can start at a lower clock, so that row is FKL's, not a baseline's):
 //   whole_call   fklb::timeIt (common/cuda_timing.h): CUDA events around one call, 100 calls after one warm-up call (the interval of E4,
 //                E18 and E19). When the GPU waits for the host, the interval holds the host's work too.
 //   kernel_only  fklb::timePreparedLaunch with gpuSpin as beforeLaunch and nothing to prepare: the whole call is enqueued behind one spin
@@ -227,9 +193,7 @@
 #include <opencv2/core/cuda.hpp>
 #include <opencv2/core/cuda_stream_accessor.hpp>
 #include <opencv2/cudaarithm.hpp>
-#include <opencv2/cudaimgproc.hpp>
 
-#include <cub/device/device_histogram.cuh>
 #include <cub/device/device_reduce.cuh>
 #include <thrust/device_ptr.h>
 #include <thrust/execution_policy.h>
@@ -357,7 +321,7 @@ constexpr Npp32f NON_ZERO_TO = std::numeric_limits<Npp32f>::max();
 
 // The rows of each matrix type, in the order of the checks and of the timing
 const std::vector<std::string> ROWS_8U = {"fkl", "fkl_double_sums", "cub", "thrust", "thrust_reduce_into", "opencv_cuda", "opencv_cuda_msd",
-                                          "npp", "npp_msd", "opencv_cuda_hist", "npp_hist", "cub_hist"};
+                                          "npp", "npp_msd"};
 const std::vector<std::string> ROWS_32F = {"fkl", "cub", "thrust", "thrust_reduce_into", "opencv_cuda", "opencv_cuda_msd", "npp", "npp_msd"};
 
 const std::vector<std::string>& rowsOfType(const std::string& type) { return type == "32f" ? ROWS_32F : ROWS_8U; }
@@ -528,33 +492,6 @@ double relativeDifference(const double value, const double reference) {
     if (!std::isfinite(value)) return std::numeric_limits<double>::infinity();
     return reference == 0 ? std::abs(value) : std::abs(value - reference) / std::abs(reference);
 }
-
-// The hist rows: the five statistics from the 256 counts of the values of a byte, in integers (exact)
-Statistics statisticsOfCounts(const int* counts) {
-    long long first = -1, last = -1, nonZero = 0, sum = 0, sumOfSquares = 0;
-    for (long long v = 0; v < 256; ++v) {
-        const long long count = counts[v];
-        if (count != 0) {
-            first = first < 0 ? v : first;
-            last = v;
-        }
-        nonZero += v != 0 ? count : 0;
-        sum += count * v;
-        sumOfSquares += count * v * v;
-    }
-    Statistics s;
-    s.minimum = static_cast<double>(first);
-    s.maximum = static_cast<double>(last);
-    s.nonZero = static_cast<double>(nonZero);
-    s.sum = static_cast<double>(sum);
-    s.sumOfSquares = static_cast<double>(sumOfSquares);
-    return s;
-}
-
-// The histogram calls of OpenCV-CUDA, NPP and CUB take a time that depends on the address of their 256 counts (see the hist rows in
-// the header): the bytes from the start of a block to the address 512 bytes after a multiple of 1,024 bytes, the fastest one that was
-// measured. A block with 1,024 bytes more than the counts holds them there
-size_t bytesBeforeTheCounts(const void* block) { return (512 + 1024 - reinterpret_cast<std::uintptr_t>(block) % 1024) % 1024; }
 
 // The GPU spin of the kernel-only interval, the one of E1, E18 and E19: one thread waits on the GPU's global timer and touches no
 // memory. Enqueued before the start event (the beforeLaunch hook of fklb::timePreparedLaunch), it keeps the GPU busy while the host
@@ -774,19 +711,13 @@ void checkAndTime(Run& run, const Size& size) {
     uploads.back()(matrix);
     // Set once: the outputs, with the size and the type that each call makes for this matrix (getOutputMat keeps a GpuMat that already has
     // them). cv::cuda::findMinMax gives ints for a matrix of bytes and floats for a matrix of floats; the other types do not depend on
-    // the matrix. The histogram (cv::cuda::calcHist) is of the 8u matrix only: its counts are a GpuMat header of memory of the program,
-    // 512 bytes after a multiple of 1,024 bytes (see bytesBeforeTheCounts), in a block with 1,024 bytes more than the counts
+    // the matrix
     using CvMinMax = std::conditional_t<IS_32F<T>, float, int>;
     cv::cuda::GpuMat cvMinMax(1, 2, IS_32F<T> ? CV_32FC1 : CV_32SC1), cvSum(1, 1, CV_64FC1), cvNonZero(1, 1, CV_32SC1), cvSqrSum(1, 1, CV_64FC1);
-    cv::cuda::GpuMat cvMeanStdDev(1, 2, CV_64FC1), cvHist;
-    int* cvHistBlock = nullptr;
-    if constexpr (!IS_32F<T>) {
-        cvHistBlock = deviceAlloc<int>(2 * 256);
-        cvHist = cv::cuda::GpuMat(1, 256, CV_32SC1, cvHistBlock + bytesBeforeTheCounts(cvHistBlock) / sizeof(int));
-    }
+    cv::cuda::GpuMat cvMeanStdDev(1, 2, CV_64FC1);
     // A call that makes its output again (because it is not set with its size and type) leaves it in other memory: these headers keep
     // the memory of the outputs as they are set, so no other GpuMat gets it, and the downloads refuse an output that is elsewhere
-    const std::vector<const cv::cuda::GpuMat*> cvOutputs = {&cvMinMax, &cvSum, &cvNonZero, &cvSqrSum, &cvMeanStdDev, &cvHist};
+    const std::vector<const cv::cuda::GpuMat*> cvOutputs = {&cvMinMax, &cvSum, &cvNonZero, &cvSqrSum, &cvMeanStdDev};
     std::vector<cv::cuda::GpuMat> cvOutputsAsSet;
     for (const cv::cuda::GpuMat* output : cvOutputs) cvOutputsAsSet.push_back(*output);
     const auto refuseAnOutputMadeAgain = [&] {
@@ -954,66 +885,6 @@ void checkAndTime(Run& run, const Size& size) {
     };
     rows.push_back({"npp_msd", 3, callNppMsd, fillNppMsd, downloadNppMsd, true});
 
-    // ---- The histogram of the bytes, rows of the 8u matrix only: one call per library; the 256 counts stay in device memory, and the
-    // host computes the statistics from them
-    const auto downloadCounts = [](const void* device) {
-        int counts[256];
-        FKLB_CUDA_CHECK(cudaMemcpy(counts, device, sizeof(counts), cudaMemcpyDeviceToHost));
-        return statisticsOfCounts(counts);
-    };
-    // Set once for the size (allocated here for the 8u matrix): NPP's counts and the scratch buffer of its call, CUB's counts and its
-    // temporary storage (the first call, with no storage, gives its size). OpenCV's counts are set above, with its other outputs. The
-    // counts of NPP and of CUB start 512 bytes after a multiple of 1,024 bytes too (see bytesBeforeTheCounts): each is in a block with
-    // 1,024 bytes more than the counts
-    Npp32s* nppHistBlock = nullptr;
-    Npp32s* nppHist = nullptr;
-    Npp8u* histBuffer = nullptr;
-    int* cubHistBlock = nullptr;
-    int* cubHist = nullptr;
-    void* cubHistStorage = nullptr;
-    size_t cubHistBytes = 0;
-    if constexpr (!IS_32F<T>) {
-        // The timed call (whole_call and kernel_only). Everything in this lambda is inside the interval
-        const auto callOpenCVHist = [&] { cv::cuda::calcHist(cvMatrix, cvHist, cvs); };
-        // (end of the timed call)
-        const auto fillOpenCVHist = [&] { FKLB_CUDA_CHECK(cudaMemset(cvHist.data, 0xFF, 256 * sizeof(int))); };
-        const auto downloadOpenCVHist = [&] {
-            refuseAnOutputMadeAgain();
-            return downloadCounts(cvHist.data);
-        };
-        rows.push_back({"opencv_cuda_hist", 1, callOpenCVHist, fillOpenCVHist, downloadOpenCVHist});
-
-        // 257 levels from 0 to 256: 256 bins, one per value of a byte
-        nppHistBlock = deviceAlloc<Npp32s>(2 * 256);
-        nppHist = nppHistBlock + bytesBeforeTheCounts(nppHistBlock) / sizeof(Npp32s);
-        size_t histBytes = 0;
-        FKLB_NPP_CHECK(nppiHistogramEvenGetBufferSize_8u_C1R_Ctx(nppSize, 257, &histBytes, ctx));
-        histBuffer = deviceAlloc<Npp8u>(histBytes > 0 ? histBytes : 1);
-        // The timed call (whole_call and kernel_only). Everything in this lambda is inside the interval
-        const auto callNppHist = [&] {
-            FKLB_NPP_CHECK(nppiHistogramEven_8u_C1R_Ctx(nppMatrix, step, nppSize, nppHist, 257, 0, 256, histBuffer, ctx));
-        };
-        // (end of the timed call)
-        const auto fillNppHist = [&] { FKLB_CUDA_CHECK(cudaMemset(nppHist, 0xFF, 256 * sizeof(Npp32s))); };
-        const auto downloadNppHist = [&] { return downloadCounts(nppHist); };
-        rows.push_back({"npp_hist", 1, callNppHist, fillNppHist, downloadNppHist});
-
-        cubHistBlock = deviceAlloc<int>(2 * 256);
-        cubHist = cubHistBlock + bytesBeforeTheCounts(cubHistBlock) / sizeof(int);
-        FKLB_CUDA_CHECK(cub::DeviceHistogram::HistogramEven(nullptr, cubHistBytes, flat, cubHist, 257, 0, 256, static_cast<long long>(elements), cs));
-        cubHistStorage = deviceAlloc<unsigned char>(cubHistBytes > 0 ? cubHistBytes : 1);
-        // The timed call (whole_call and kernel_only). Everything in this lambda is inside the interval
-        const auto callCubHist = [&] {
-            size_t storageBytes = cubHistBytes;
-            FKLB_CUDA_CHECK(cub::DeviceHistogram::HistogramEven(cubHistStorage, storageBytes, flat, cubHist, 257, 0, 256,
-                                                                static_cast<long long>(elements), cs));
-        };
-        // (end of the timed call)
-        const auto fillCubHist = [&] { FKLB_CUDA_CHECK(cudaMemset(cubHist, 0xFF, 256 * sizeof(int))); };
-        const auto downloadCubHist = [&] { return downloadCounts(cubHist); };
-        rows.push_back({"cub_hist", 1, callCubHist, fillCubHist, downloadCubHist});
-    }
-
     const std::vector<std::string>& rowsOfTheType = rowsOfType(typeName);
     if (rows.size() != rowsOfTheType.size()) throw std::runtime_error("the rows are not the ones of ROWS");
     for (size_t k = 0; k < rows.size(); ++k) {
@@ -1126,8 +997,7 @@ void checkAndTime(Run& run, const Size& size) {
 
     FKLB_CUDA_CHECK(cudaStreamSynchronize(cs));
     for (void* p : std::vector<void*>{flat, cubOut, cubStorage, thrustIntoOut, thrustStorage.block, nppMatrix, nppMin, nppMax, nppSum, nppCount,
-                                      nppDotProd, nppMean, nppStdDev, minMaxBuffer, sumBuffer, countBuffer, dotProdBuffer, meanStdDevBuffer,
-                                      nppHistBlock, histBuffer, cubHistBlock, cubHistStorage, cvHistBlock}) {
+                                      nppDotProd, nppMean, nppStdDev, minMaxBuffer, sumBuffer, countBuffer, dotProdBuffer, meanStdDevBuffer}) {
         FKLB_CUDA_CHECK(cudaFree(p));
     }
 }
@@ -1182,7 +1052,7 @@ int launch() {
     }
 
     for (const std::string& type : types) {
-        // A type none of whose rows is selected has nothing to check or time (E20_ONLY=npp_hist names a row of the 8u matrix only)
+        // A type none of whose rows is selected has nothing to check or time (E20_ONLY=fkl_double_sums names a row of the 8u matrix only)
         if (std::none_of(rowsOfType(type).begin(), rowsOfType(type).end(), selected)) {
             std::cout << type << ": no row of E20_ONLY is a row of this matrix type: nothing to do" << std::endl;
             continue;

@@ -117,10 +117,9 @@ endif()
 # (scripts/check_fkl_tree.sh)
 if(EXISTS "${CMAKE_SOURCE_DIR}/external/fkl/include/fused_kernel/core/execution_model/reduce_dpp.h")
     # E20, several reductions of the same matrix (minimum, maximum, sum, non-zero count and sum of squares), of bytes and of floats: FKL's
-    # ReduceDPP in one kernel against OpenCV-CUDA and NPP, which have one call per reduction, against Thrust and CUB, the single pass written
-    # by hand (header only: the CCCL of the toolkit, already on the include path), and, for the bytes, against one histogram call of
-    # OpenCV-CUDA, of NPP and of CUB (cv::cuda::calcHist is in cudaimgproc, which LIBS opencv links), from whose 256 counts the host computes
-    # the statistics. NPP's statistics and its histogram are in nppist, which only the E20 programs link
+    # ReduceDPP in one kernel against OpenCV-CUDA and NPP, which have one call per reduction, and against Thrust and CUB, the single pass
+    # written by hand (header only: the CCCL of the toolkit, already on the include path). NPP's statistics are in nppist, which only the
+    # E20 programs link
     fklb_add_benchmark(e20_reductions
         BACKENDS cu LIBS fkl opencv npp
         SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/reductions/e20_reductions.cu")
@@ -130,9 +129,7 @@ if(EXISTS "${CMAKE_SOURCE_DIR}/external/fkl/include/fused_kernel/core/execution_
 
     # E20 batched: the same five statistics for each of 30 crops of one frame. ReduceDPP takes the batch (one kernel, one grid plane per crop).
     # OpenCV-CUDA and NPP have no batched call for these reductions and loop over the crops; CUB and Thrust have one
-    # (cub::DeviceSegmentedReduce::Reduce, thrust::reduce_by_key), which has its row next to their loops. The histogram rows, the route for
-    # 8-bit data (one histogram per crop, and one of CUB for the 30 crops), link nothing more: cv::cuda::calcHist is in cudaimgproc (LIBS
-    # opencv) and nppiHistogramEven in nppist
+    # (cub::DeviceSegmentedReduce::Reduce, thrust::reduce_by_key), which has its row next to their loops
     fklb_add_benchmark(e20_batched_reductions
         BACKENDS cu LIBS fkl opencv npp
         SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/reductions/e20_batched_reductions.cu")
@@ -142,8 +139,7 @@ if(EXISTS "${CMAKE_SOURCE_DIR}/external/fkl/include/fused_kernel/core/execution_
 
     # E20 fused: the mean and the standard deviation of every channel of a crop resized to 224 x 224. The read of ReduceDPP is the crop followed by
     # fk::Resize, so the resized crop is never written; OpenCV-CUDA and NPP resize into an intermediate image (after converting the crop to float,
-    # or in 8 bits), which further calls read again for its sums, its statistics or its histograms. Nothing more to link: cv::cuda::cvtColor and
-    # cv::cuda::histEven are in cudaimgproc, which every OpenCV program links, and NPP's histogram is in nppist
+    # or in 8 bits), which further calls read again for its sums or its statistics
     fklb_add_benchmark(e20_fused_reductions
         BACKENDS cu LIBS fkl opencv npp
         SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/reductions/e20_fused_reductions.cu")

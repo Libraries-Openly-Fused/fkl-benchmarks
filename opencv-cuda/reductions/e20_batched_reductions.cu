@@ -19,20 +19,12 @@
 // quality metrics), so they loop over the crops; fkl_loop is FKL with that loop, one kernel per crop. CUB and Thrust have a batched call,
 // with the 30 crops as the 30 parts of one range: cub::DeviceSegmentedReduce::Reduce (the cub_segmented row) and thrust::reduce_by_key
 // (the thrust_reduce_by_key row). The cub, thrust and thrust_reduce_into rows loop over the crops.
-// The rows differ in two more things than the number of calls, and each has its rows:
-//   the accumulators  fkl_batch, fkl_loop and the rows of the reductions of CUB and Thrust accumulate in integers, the two sums in 64 bits.
-//                     cv::cuda::calcSum and cv::cuda::calcSqrSum accumulate in double (cudaarithm's sum.cu: sumImpl<uchar, double, 1> and
-//                     sumSqrImpl<uchar, double, 1>, on cudev's SumReductor), and NPP gives its sum, its dot product, its mean and its
-//                     standard deviation as Npp64f. fkl_batch_double_sums is fkl_batch with its two sums accumulated in double, as the
-//                     opencv_cuda row has them: what it takes more than fkl_batch is what the type of the accumulators costs in FKL's
-//                     kernel on the GPU of the measurement. It has nothing to do with the number of calls.
-//   the histogram     The elements are bytes, and for bytes there is a route that is not a reduction. One histogram of a crop
-//                     (cv::cuda::calcHist, nppiHistogramEven, cub::DeviceHistogram) reads it once and leaves 256 counts, and the five
-//                     statistics follow from the counts on the host, which computes the variance anyway. The hist rows are that route:
-//                     one histogram per crop, and in cub_hist_batch one histogram of CUB for the 30 crops (OpenCV-CUDA and NPP have no
-//                     call for the histograms of several regions). It leaves the counts in device memory, not the statistics, and it
-//                     exists only for 8-bit data (and for 16-bit data, with 65,536 counts per crop): the statistics of float data
-//                     follow from no histogram.
+// The rows differ in one more thing than the number of calls, the accumulators, and it has its row: fkl_batch, fkl_loop and the rows of
+// CUB and Thrust accumulate in integers, the two sums in 64 bits. cv::cuda::calcSum and cv::cuda::calcSqrSum accumulate in double
+// (cudaarithm's sum.cu: sumImpl<uchar, double, 1> and sumSqrImpl<uchar, double, 1>, on cudev's SumReductor), and NPP gives its sum, its
+// dot product, its mean and its standard deviation as Npp64f. fkl_batch_double_sums is fkl_batch with its two sums accumulated in
+// double, as the opencv_cuda row has them: what it takes more than fkl_batch is what the type of the accumulators costs in FKL's kernel
+// on the GPU of the measurement. It has nothing to do with the number of calls.
 //
 // The frame and the crops:
 //   frame    one 3840 x 2160 one-channel 8-bit frame, the matrix of E20 reductions at that size (the LCG of E4, E18 and E19, seed 12345; an
@@ -44,9 +36,9 @@
 // frame's step; CUB and Thrust: an iterator over the elements of the crop, or of the 30 crops; FKL: fk::Ptr2D::crop2D), and owns its
 // outputs.
 //
-// The rows, each one a call that computes the 30 crops and leaves in device memory their statistics (the thrust row: in host memory; the
-// hist rows: the 256 counts of every crop, from which the host computes the statistics). The host waits for the GPU inside a call of two
-// rows, thrust (in each of its 30 calls of Thrust) and thrust_reduce_by_key (in its one call of Thrust), and of no other row:
+// The rows, each one a call that computes the 30 crops and leaves in device memory their statistics (the thrust row: in host memory).
+// The host waits for the GPU inside a call of two rows, thrust (in each of its 30 calls of Thrust) and thrust_reduce_by_key (in its one
+// call of Thrust), and of no other row:
 //   fkl_batch        one fk::executeOperations<fk::ReduceDPP<>>, one kernel. The read is a BatchRead of the 30 crop views
 //                    (fk::PerThreadRead<_2D, uchar>::build of a std::array of the 30 fkFrame.crop2D): one grid z plane per crop. The
 //                    reductions are the five of E20 reductions (accumulators uchar, uchar, ulonglong, uint and ulonglong; IsNonZero and
@@ -96,52 +88,25 @@
 //                    the squares, as in e20_reductions.cu), each into element i of a device array; one scratch buffer per function,
 //                    allocated once (every crop has the same size). 120 calls.
 //   npp_msd          per crop: nppiMinMax_8u_C1R_Ctx, nppiCountInRange_8u_C1R_Ctx and nppiMean_StdDev_8u_C1R_Ctx. 90 calls.
-//   opencv_cuda_hist per crop: GpuMat::copyTo of the ROI into a GpuMat of the size of a crop, set once, and cv::cuda::calcHist of that copy
-//                    into row i of a GpuMat of 30 x 256 CV_32S, set once. 60 calls. cv::cuda::calcHist can not be called on the ROI: in
-//                    OpenCV 4.14 its kernel is given the column of the ROI in its parent where it needs that column mod 4 (cudaimgproc:
-//                    histogram.cpp passes the x of locateROI, and hist.cu takes alignedOffset = 4 - offsetX), so from column 5 on it also
-//                    counts bytes at the left of the ROI: for the crop at x = 64, 80,896 counts for its 65,536 elements.
-//   opencv_cuda_hist_nocopy  per crop, cv::cuda::calcHist without the copy, into the same GpuMat of counts: on the ROI of the crop in a
-//                    GpuMat header (the constructor that takes a pointer and a step) of the frame's memory from the multiple of 4 bytes
-//                    at or before the crop. The column of that ROI is 0 to 3, which calcHist counts right (0 for every crop of this
-//                    layout, whose x are multiples of 4). The copy of opencv_cuda_hist needs no knowledge of the defect; this header
-//                    does. 30 calls.
-//   npp_hist         per crop, from the crop pointer and the frame step: nppiHistogramEven_8u_C1R_Ctx (257 levels from 0 to 256: one
-//                    count per value) into the 256 counts of crop i of a device array; one scratch buffer, allocated once. 30 calls. The
-//                    time of this call depends on the address of the counts (RTX 4090, the 30 crops: 151 us when the counts of a crop
-//                    start 512 bytes after a multiple of 1,024 bytes, 185 us at a multiple of 1,024; cudaMalloc gives either), so the
-//                    program puts the array at the first, the fastest of the addresses that were measured.
-//   cub_hist         per crop: cub::DeviceHistogram::HistogramEven (257 levels from 0 to 256) over a transform iterator on a counting
-//                    iterator that gives the bytes of the crop, into the 256 counts of crop i of a device array; the temporary storage
-//                    allocated once. 30 calls. (Its overload for a region of interest, on the crop pointer, is slower here: 146 us at
-//                    the best address of the counts, where this row takes 125 us.)
-//   cub_hist_batch   one cub::DeviceHistogram::HistogramEven for the 30 crops: one histogram of 30 x 256 bins (7,681 levels from 0 to
-//                    7,680) over the 30 crops one after the other, the range of the cub_segmented row with another functor: the sample
-//                    of element g is 256 * (its crop) + its byte, so the 256 counts of crop i are the bins from 256 * i on, in one
-//                    device array. The same table of positions, uploaded in the call; the temporary storage is allocated once (9.8 MB
-//                    on the RTX 4090: with more than 256 bins CUB keeps the histogram of each of its thread blocks in device memory).
-//                    1 call.
 // The OpenCV-CUDA, NPP, CUB and Thrust rows use no FKL object.
 //
 // The checks (e20_batched_reductions_checks.csv): the checks of E20 reductions, for every crop, on two frames: the probe and then the frame
 // that is timed. Every crop of the frame has the minimum 0 and the maximum 250, whatever crop a call reduces. The probe has no zero (every
 // value in 32..222) and, in crop i, one 226 + i in its first element and one 1 + i in its last one: the maximum and the minimum of a crop
 // are right only for that crop, with its first and its last element, a minimum of 0 is never right, and the maximum of the last crop is
-// 255, the largest byte: the one of the last bin of a histogram and of the upper bound of NPP's count. Every library's copy of the frame
-// is uploaded again for each. The host computes the five statistics of each crop in integers, and from them its mean, standard deviation
-// and variance. Each row is called once, after the buffers that hold the statistics of EVERY row (the counts, for the hist rows) are filled
-// with 0xFF bytes (never a right value, but for the 255 of a byte, which is the maximum of the last crop of the probe: there a row that
-// leaves a byte is caught by the frame that is timed, where no maximum is 255) and the table of positions of the cub_segmented,
-// thrust_reduce_by_key and cub_hist_batch rows with zeros (30 times the crop at the corner of the frame, which is none of the 30), and the
-// statistics of its 30 crops are read back. Those of a hist row are computed from the 256 counts that it left for each crop (the minimum
-// and the maximum are the first and the last value whose count is not zero). One line per row and statistic: the crops whose value differs
-// from the host's by more than the criterion allows (equal, for the minimum, the maximum, the count, the sum and the sum of squares;
-// relative difference at most 1e-9 for the mean, the standard deviation and the variance), and the largest relative difference. The timing
-// needs 0 differing crops in every line.
+// 255, the largest byte, the upper bound of NPP's count. Every library's copy of the frame is uploaded again for each. The host computes
+// the five statistics of each crop in integers, and from them its mean, standard deviation and variance. Each row is called once, after
+// the buffers that hold the statistics of EVERY row are filled with 0xFF bytes (never a right value, but for the 255 of a byte, which is
+// the maximum of the last crop of the probe: there a row that leaves a byte is caught by the frame that is timed, where no maximum is
+// 255) and the table of positions of the cub_segmented and thrust_reduce_by_key rows with zeros (30 times the crop at the corner of the
+// frame, which is none of the 30), and the statistics of its 30 crops are read back. One line per row and statistic: the crops whose
+// value differs from the host's by more than the criterion allows (equal, for the minimum, the maximum, the count, the sum and the sum
+// of squares; relative difference at most 1e-9 for the mean, the standard deviation and the variance), and the largest relative
+// difference. The timing needs 0 differing crops in every line.
 //
 // The timing (e20_batched_reductions.csv): two intervals per row, in the order fkl_batch, fkl_batch_double_sums, fkl_loop, cub,
-// cub_segmented, thrust, thrust_reduce_into, thrust_reduce_by_key, opencv_cuda, opencv_cuda_msd, npp, npp_msd, opencv_cuda_hist,
-// opencv_cuda_hist_nocopy, npp_hist, cub_hist, cub_hist_batch, the same in every run. Both hold the whole frame (the 30 crops):
+// cub_segmented, thrust, thrust_reduce_into, thrust_reduce_by_key, opencv_cuda, opencv_cuda_msd, npp, npp_msd, the same in every run.
+// Both hold the whole frame (the 30 crops):
 //   whole_call   fklb::timeIt: CUDA events around one call, 100 calls after one warm-up call. When the GPU waits for the host, the
 //                interval holds the host's work too
 //   kernel_only  fklb::timePreparedLaunch with gpuSpin as beforeLaunch and nothing to prepare: the whole call is enqueued behind one spin
@@ -170,9 +135,7 @@
 #include <opencv2/core/cuda.hpp>
 #include <opencv2/core/cuda_stream_accessor.hpp>
 #include <opencv2/cudaarithm.hpp>
-#include <opencv2/cudaimgproc.hpp>
 
-#include <cub/device/device_histogram.cuh>
 #include <cub/device/device_reduce.cuh>
 #include <cub/device/device_segmented_reduce.cuh>
 #include <thrust/device_ptr.h>
@@ -231,7 +194,6 @@ constexpr int SRC_W = 3840, SRC_H = 2160;
 constexpr int CROPS = 30, CROP_W = 256, CROP_H = 256;
 constexpr long long CROP_ELEMENTS = static_cast<long long>(CROP_W) * CROP_H;   // 65,536 elements per crop
 constexpr int STATISTICS = 5;                                                   // minimum, maximum, sum, non zero, sum of squares
-constexpr int COUNTS = 256;                                                     // the counts of a histogram of bytes: one per value
 constexpr size_t THRUST_BLOCK_BYTES = 1u << 20;                                 // the block of the caller of the Thrust rows: 1 MiB
 constexpr double RELATIVE_TOLERANCE = 1e-9;   // the mean, the standard deviation and the variance, against the host's in double
 
@@ -288,27 +250,6 @@ struct CropOfBatchElement {
     __host__ __device__ int operator()(const unsigned int g) const { return static_cast<int>(g / static_cast<unsigned int>(CROP_ELEMENTS)); }
 };
 
-// Element k of a crop, row by row, as a byte: the samples of the histogram of the cub_hist row
-struct ByteOfCropElement {
-    const unsigned char* frame;
-    int x, y;
-    __host__ __device__ unsigned char operator()(const long long k) const { return frame[(y + k / CROP_W) * SRC_W + x + k % CROP_W]; }
-};
-
-// Element g of the 30 crops one after the other (the elements of FiveOfBatchElement, with its table of positions), as a sample of one
-// histogram of 30 x 256 bins: 256 * (its crop) + its byte, so the bins from 256 * i on are the counts of crop i. The samples of the
-// cub_hist_batch row
-struct BinOfBatchElement {
-    const unsigned char* frame;
-    const Detection* detections;
-    __host__ __device__ int operator()(const unsigned int g) const {
-        const unsigned int i = g / static_cast<unsigned int>(CROP_ELEMENTS);
-        const Detection crop = detections[i];
-        const unsigned int k = g % static_cast<unsigned int>(CROP_ELEMENTS);
-        return static_cast<int>(i * COUNTS + frame[(crop.y + k / CROP_W) * SRC_W + crop.x + k % CROP_W]);
-    }
-};
-
 // The temporary storage of the thrust_reduce_into and thrust_reduce_by_key rows: a block of device memory that the caller owns, as the
 // storage of the cub rows, given to Thrust as the allocator of its execution policy (the idiom of Thrust's custom_temporary_allocation
 // example). A call of Thrust takes its arrays from the block one after the other, each at a multiple of 256 bytes; every call of Thrust
@@ -328,8 +269,7 @@ struct BlockOfTheCaller {
 
 // The rows, in the order of the checks and of the timing
 const std::vector<std::string> ROWS = {"fkl_batch", "fkl_batch_double_sums", "fkl_loop", "cub", "cub_segmented", "thrust", "thrust_reduce_into",
-                                       "thrust_reduce_by_key", "opencv_cuda", "opencv_cuda_msd", "npp", "npp_msd", "opencv_cuda_hist",
-                                       "opencv_cuda_hist_nocopy", "npp_hist", "cub_hist", "cub_hist_batch"};
+                                       "thrust_reduce_by_key", "opencv_cuda", "opencv_cuda_msd", "npp", "npp_msd"};
 
 bool selected(const std::string& name) {
     const char* e = std::getenv("E20_ONLY");
@@ -441,8 +381,7 @@ __global__ void gpuSpin(const unsigned long long ns) {
 unsigned long long spinUs() { return static_cast<unsigned long long>(fklb::envInt("E20_SPIN_US", 5000, 0, 1000000)); }
 
 // One row: its call (the whole frame), the fill of the buffers that hold what it leaves with 0xFF bytes (and, in the rows that upload it,
-// of the table of positions with zeros), and the read back of what it left for every crop: its statistics, or the statistics that the
-// host computes from its counts
+// of the table of positions with zeros), and the read back of the statistics that it left for every crop
 struct Row {
     std::string version;
     int calls;   // library calls of one call of the row
@@ -657,8 +596,8 @@ int launch() {
                                                            FIVE_OF_NOTHING, cs));
     };
     // (end of the timed call)
-    // The fill of the rows that read the table (this one, thrust_reduce_by_key and cub_hist_batch) also sets it to zeros, the crop at the
-    // corner of the frame 30 times: a call that does not upload it leaves the statistics of that crop, which is none of the 30
+    // The fill of the rows that read the table (this one and thrust_reduce_by_key) also sets it to zeros, the crop at the corner of the
+    // frame 30 times: a call that does not upload it leaves the statistics of that crop, which is none of the 30
     const auto fillBatchDetections = [&] { FKLB_CUDA_CHECK(cudaMemset(batchDetections, 0, CROPS * sizeof(Detection))); };
     const auto fillCubSegmented = [&] {
         FKLB_CUDA_CHECK(cudaMemset(cubSegmentedOut, 0xFF, CROPS * sizeof(Five)));
@@ -926,137 +865,6 @@ int launch() {
     };
     rows.push_back({"npp_msd", 3 * CROPS, callNppMsd, fillNppMsd, downloadNppMsd, true});
 
-    // ---- The histogram of the bytes of every crop: the 256 counts of crop i stay in device memory, and the host computes the statistics
-    // of the crop from them when the row is read back
-    const auto statisticsOfCounts = [](const void* device) {
-        const std::vector<int> counts = fromDevice<int>(device, static_cast<size_t>(CROPS) * COUNTS);
-        std::vector<Statistics> s(CROPS);
-        for (int i = 0; i < CROPS; ++i) {
-            long long first = -1, last = -1, nonZero = 0, sum = 0, sumOfSquares = 0;
-            for (long long v = 0; v < COUNTS; ++v) {
-                const long long count = counts[static_cast<size_t>(i) * COUNTS + v];
-                if (count != 0) {
-                    first = first < 0 ? v : first;
-                    last = v;
-                }
-                nonZero += v != 0 ? count : 0;
-                sum += count * v;
-                sumOfSquares += count * v * v;
-            }
-            s[i].minimum = static_cast<double>(first);
-            s[i].maximum = static_cast<double>(last);
-            s[i].nonZero = static_cast<double>(nonZero);
-            s[i].sum = static_cast<double>(sum);
-            s[i].sumOfSquares = static_cast<double>(sumOfSquares);
-        }
-        return s;
-    };
-    // Set once: OpenCV's copy of one crop, and the counts of its two rows, one row of the GpuMat per crop (a row is a GpuMat of the size
-    // and type that calcHist makes, so its create keeps it)
-    cv::cuda::GpuMat cvCrop(CROP_H, CROP_W, CV_8UC1), cvHist;
-    cv::cuda::createContinuous(CROPS, COUNTS, CV_32SC1, cvHist);
-    if (!cvHist.isContinuous()) throw std::runtime_error("opencv_cuda_hist: the counts are not continuous");
-    // The timed call (whole_call and kernel_only): the whole frame. Everything in this lambda is inside the interval
-    const auto callOpenCVHist = [&] {
-        for (int i = 0; i < CROPS; ++i) {
-            const cv::cuda::GpuMat roi = cvFrame(cv::Rect(detections[i].x, detections[i].y, CROP_W, CROP_H));
-            cv::cuda::GpuMat hist = cvHist.row(i);
-            // calcHist of a ROI that starts at a column of 5 or more also counts bytes at its left (OpenCV 4.14): the crop is copied first
-            roi.copyTo(cvCrop, cvs);
-            cv::cuda::calcHist(cvCrop, hist, cvs);
-        }
-    };
-    // (end of the timed call)
-    const auto fillOpenCVHist = [&] { FKLB_CUDA_CHECK(cudaMemset(cvHist.data, 0xFF, CROPS * COUNTS * sizeof(int))); };
-    const auto downloadOpenCVHist = [&] { return statisticsOfCounts(cvHist.data); };
-    rows.push_back({"opencv_cuda_hist", 2 * CROPS, callOpenCVHist, fillOpenCVHist, downloadOpenCVHist});
-
-    // OpenCV's histogram without the copy, into the same counts (nothing more is set once)
-    // The timed call (whole_call and kernel_only): the whole frame. Everything in this lambda is inside the interval
-    const auto callOpenCVHistNoCopy = [&] {
-        for (int i = 0; i < CROPS; ++i) {
-            // calcHist is right when the column of the ROI in its parent is 0 to 3: the parent is a header of the frame's memory that starts
-            // at the multiple of 4 bytes at or before the first byte of the crop, with the frame's step
-            unsigned char* crop = cvFrame.data + static_cast<size_t>(detections[i].y) * cvFrame.step + detections[i].x;
-            const int column = static_cast<int>(reinterpret_cast<std::uintptr_t>(crop) % 4);
-            const cv::cuda::GpuMat header(CROP_H, column + CROP_W, CV_8UC1, crop - column, cvFrame.step);
-            const cv::cuda::GpuMat roi = header(cv::Rect(column, 0, CROP_W, CROP_H));
-            cv::cuda::GpuMat hist = cvHist.row(i);
-            cv::cuda::calcHist(roi, hist, cvs);
-        }
-    };
-    // (end of the timed call)
-    rows.push_back({"opencv_cuda_hist_nocopy", CROPS, callOpenCVHistNoCopy, fillOpenCVHist, downloadOpenCVHist});
-
-    // Set once: NPP's counts in device memory, 256 per crop, and the scratch buffer of the call (every crop has the same size). The counts
-    // start 512 bytes after a multiple of 1,024 bytes, the address at which the call was measured fastest (see npp_hist in the header):
-    // the block has 1,024 bytes more than the counts
-    Npp32s* nppHistBlock = deviceAlloc<Npp32s>(static_cast<size_t>(CROPS + 1) * COUNTS);
-    const size_t bytesBeforeTheCounts = (512 + 1024 - reinterpret_cast<std::uintptr_t>(nppHistBlock) % 1024) % 1024;
-    Npp32s* nppHist = nppHistBlock + bytesBeforeTheCounts / sizeof(Npp32s);
-    size_t histBytes = 0;
-    FKLB_NPP_CHECK(nppiHistogramEvenGetBufferSize_8u_C1R_Ctx(nppCropSize, COUNTS + 1, &histBytes, ctx));
-    Npp8u* histBuffer = deviceAlloc<Npp8u>(histBytes > 0 ? histBytes : 1);
-    // The timed call (whole_call and kernel_only): the whole frame. Everything in this lambda is inside the interval
-    const auto callNppHist = [&] {
-        for (int i = 0; i < CROPS; ++i) {
-            const Npp8u* crop = nppFrame + static_cast<size_t>(detections[i].y) * frameStep + detections[i].x;
-            FKLB_NPP_CHECK(nppiHistogramEven_8u_C1R_Ctx(crop, step, nppCropSize, nppHist + COUNTS * i, COUNTS + 1, 0, COUNTS, histBuffer, ctx));
-        }
-    };
-    // (end of the timed call)
-    const auto fillNppHist = [&] { FKLB_CUDA_CHECK(cudaMemset(nppHist, 0xFF, CROPS * COUNTS * sizeof(Npp32s))); };
-    const auto downloadNppHist = [&] { return statisticsOfCounts(nppHist); };
-    rows.push_back({"npp_hist", CROPS, callNppHist, fillNppHist, downloadNppHist});
-
-    // Set once: CUB's counts in device memory, 256 per crop, and its temporary storage (the first call, with no storage, gives its size:
-    // it depends on the number of samples, which every crop shares)
-    int* cubHist = deviceAlloc<int>(static_cast<size_t>(CROPS) * COUNTS);
-    const auto cropBytes = [&](const int i) {
-        return thrust::make_transform_iterator(thrust::make_counting_iterator(0ll), ByteOfCropElement{flat, detections[i].x, detections[i].y});
-    };
-    size_t cubHistBytes = 0;
-    FKLB_CUDA_CHECK(cub::DeviceHistogram::HistogramEven(nullptr, cubHistBytes, cropBytes(0), cubHist, COUNTS + 1, 0, COUNTS, CROP_ELEMENTS, cs));
-    void* cubHistStorage = deviceAlloc<unsigned char>(cubHistBytes > 0 ? cubHistBytes : 1);
-    // The timed call (whole_call and kernel_only): the whole frame. Everything in this lambda is inside the interval
-    const auto callCubHist = [&] {
-        for (int i = 0; i < CROPS; ++i) {
-            size_t bytes = cubHistBytes;
-            FKLB_CUDA_CHECK(cub::DeviceHistogram::HistogramEven(cubHistStorage, bytes, cropBytes(i), cubHist + COUNTS * i, COUNTS + 1, 0, COUNTS,
-                                                                CROP_ELEMENTS, cs));
-        }
-    };
-    // (end of the timed call)
-    const auto fillCubHist = [&] { FKLB_CUDA_CHECK(cudaMemset(cubHist, 0xFF, CROPS * COUNTS * sizeof(int))); };
-    const auto downloadCubHist = [&] { return statisticsOfCounts(cubHist); };
-    rows.push_back({"cub_hist", CROPS, callCubHist, fillCubHist, downloadCubHist});
-
-    // CUB's histogram of the 30 crops in one call: one histogram of 30 x 256 bins over the 30 crops one after the other, read with the
-    // table of positions of cub_segmented, which every call uploads from the detections
-    // Set once: the counts in device memory, 256 per crop, and the temporary storage (the first call, with no storage, gives its size)
-    int* cubHistBatch = deviceAlloc<int>(static_cast<size_t>(CROPS) * COUNTS);
-    const auto batchBins = [&] {
-        return thrust::make_transform_iterator(thrust::make_counting_iterator(0u), BinOfBatchElement{flat, batchDetections});
-    };
-    size_t cubHistBatchBytes = 0;
-    FKLB_CUDA_CHECK(cub::DeviceHistogram::HistogramEven(nullptr, cubHistBatchBytes, batchBins(), cubHistBatch, CROPS * COUNTS + 1, 0, CROPS * COUNTS,
-                                                        CROPS * CROP_ELEMENTS, cs));
-    void* cubHistBatchStorage = deviceAlloc<unsigned char>(cubHistBatchBytes > 0 ? cubHistBatchBytes : 1);
-    // The timed call (whole_call and kernel_only): the whole frame. Everything in this lambda is inside the interval
-    const auto callCubHistBatch = [&] {
-        FKLB_CUDA_CHECK(cudaMemcpyAsync(batchDetections, detections.data(), CROPS * sizeof(Detection), cudaMemcpyHostToDevice, cs));
-        size_t bytes = cubHistBatchBytes;
-        FKLB_CUDA_CHECK(cub::DeviceHistogram::HistogramEven(cubHistBatchStorage, bytes, batchBins(), cubHistBatch, CROPS * COUNTS + 1, 0,
-                                                            CROPS * COUNTS, CROPS * CROP_ELEMENTS, cs));
-    };
-    // (end of the timed call)
-    const auto fillCubHistBatch = [&] {
-        FKLB_CUDA_CHECK(cudaMemset(cubHistBatch, 0xFF, CROPS * COUNTS * sizeof(int)));
-        fillBatchDetections();
-    };
-    const auto downloadCubHistBatch = [&] { return statisticsOfCounts(cubHistBatch); };
-    rows.push_back({"cub_hist_batch", 1, callCubHistBatch, fillCubHistBatch, downloadCubHistBatch});
-
     if (rows.size() != ROWS.size()) throw std::runtime_error("the rows are not the ones of ROWS");
     for (size_t k = 0; k < rows.size(); ++k) {
         if (rows[k].version != ROWS[k]) throw std::runtime_error("the rows are not the ones of ROWS");
@@ -1171,8 +979,7 @@ int launch() {
     FKLB_CUDA_CHECK(cudaStreamSynchronize(cs));
     for (void* p : std::vector<void*>{flat, cubOut, cubStorage, batchDetections, cubSegmentedOut, cubSegmentedStorage, thrustIntoOut,
                                       thrustBlock, thrustByKeyOut, nppFrame, nppMin, nppMax, nppSum, nppCount, nppDotProd, nppMean, nppStdDev,
-                                      minMaxBuffer, sumBuffer, countBuffer, dotProdBuffer, meanStdDevBuffer, nppHistBlock, histBuffer, cubHist,
-                                      cubHistStorage, cubHistBatch, cubHistBatchStorage}) {
+                                      minMaxBuffer, sumBuffer, countBuffer, dotProdBuffer, meanStdDevBuffer}) {
         FKLB_CUDA_CHECK(cudaFree(p));
     }
     // The wrapper of the stream gives its part of the pool back, and synchronises the stream to do it: before the stream is destroyed

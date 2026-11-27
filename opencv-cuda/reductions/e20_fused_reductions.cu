@@ -16,9 +16,8 @@
 // crop of an 8-bit, three-channel frame resized to 224 x 224 (bilinear): what a per-image standardisation needs before it can subtract
 // and divide. FKL's ReduceDPP takes any read: its read is the crop view followed by fk::Resize, so one kernel interpolates every pixel of
 // the resized crop and accumulates it, and the resized crop exists in no memory. OpenCV-CUDA and NPP write the resized crop into an
-// intermediate image, and further calls, each of which reads that image, its planes or a four-channel copy of it again, take its sums,
-// its statistics or its histograms. Thrust and CUB are the single pass written by hand: a transform-reduce whose transform is the
-// bilinear interpolation of FKL written out.
+// intermediate image, and further calls, each of which reads that image or its planes again, take its sums or its statistics. Thrust
+// and CUB are the single pass written by hand: a transform-reduce whose transform is the bilinear interpolation of FKL written out.
 //
 // The rows are of two chains, which reduce different pixels and so give different numbers (the column "pixels" of the tables: float, or
 // 8u_ties_to_even and 8u_ties_up, the two roundings of the 8-bit chain). A row is compared with the rows of its chain:
@@ -28,11 +27,10 @@
 //                resize it; FKL's Resize reads the bytes and gives the floats. So the conversion of the baselines grows with the crop, and
 //                the rest of every row depends on the 224 x 224 pixels only: the crop sizes of the sweep show both.
 //   8-bit chain  the resize of the 8-bit crop: the statistics of the resized pixels rounded to 8 bits. It is what OpenCV-CUDA and NPP offer
-//                to a user who only needs the statistics: no conversion to float, no call that reads the whole crop (the resize reads four
-//                pixels of the crop for each resized one) and, the image being 8-bit, its histograms as another way to its sums (the
-//                hist rows). FKL computes this quantity in one kernel too: its read ends with the rounding. These rows are here so
-//                that the conversion of the float chain, which grows with the crop, is not taken for a gain of fusing the resize with
-//                the reductions: here no baseline converts the crop.
+//                to a user who only needs the statistics: no conversion to float, and no call that reads the whole crop (the resize reads
+//                four pixels of the crop for each resized one). FKL computes this quantity in one kernel too: its read ends with the
+//                rounding. These rows are here so that the conversion of the float chain, which grows with the crop, is not taken for a
+//                gain of fusing the resize with the reductions: here no baseline converts the crop.
 // How far apart the two chains are depends on the crop and on the rounding of the ties (the resized pixels halfway between two integers,
 // which the libraries round differently: see "rounding"). The default crop sizes make many ties, 16% to 37% of the 150,528 resized values
 // with ASYMMETRIC and 1% to 12% with HALF_PIXEL, and with them the mean of the rounded pixels is within 4.4e-5 of the mean of the float
@@ -43,9 +41,8 @@
 // line, and the program prints the largest distances and the ties of every crop.
 //
 // Every row leaves in device memory (the thrust row: in host memory), per channel, the sum and the sum of the squares of the 50,176 pixels
-// of its chain (the hist rows: the 256 counts of the values of a byte, from which the host computes the two sums), or the mean and the
-// standard deviation themselves (the msd rows); from the sums, the host computes the mean and the standard deviation (the population
-// one, sqrt(sum of squares / N - mean^2)) in double.
+// of its chain, or the mean and the standard deviation themselves (the msd rows); from the sums, the host computes the mean and the
+// standard deviation (the population one, sqrt(sum of squares / N - mean^2)) in double.
 //
 // The frame and the crops:
 //   frame    one 3840 x 2160 8UC3 frame of E4's seeded noise (the LCG of E4, E18 and E19, seed 12345; the bytes 31..24, 23..16 and 15..8 of
@@ -92,13 +89,12 @@
 //   ties up        nppiResize_8u_C3R_Ctx. Its header (nppi_geometry_transforms.h) does not give the rounding: it is the rule that gives
 //                  NPP's sums, found by comparison (the checks of npp_8u pass with it at every crop size, and fail with the other rule
 //                  at the default ones)
-// So fkl_8u, fkl_8u_double_sums, opencv_cuda_8u and opencv_cuda_8u_hist reduce the same pixels, and so do npp_8u and npp_8u_hist;
-// fkl_8u_half_pixel reduces the pixels of NPP's convention with FKL's rounding, which are not NPP's pixels. Every row is checked against
-// the reference of its OWN convention and rounding.
+// So fkl_8u, fkl_8u_double_sums and opencv_cuda_8u reduce the same pixels, and npp_8u its own; fkl_8u_half_pixel reduces the pixels of
+// NPP's convention with FKL's rounding, which are not NPP's pixels. Every row is checked against the reference of its OWN convention
+// and rounding.
 //
-// The rows, each one a call that leaves its statistics in device memory (the hist rows: the counts that give them). Nothing is brought to
-// the host inside a call, except in the thrust row, and the host does not wait for the GPU inside a call, except in the thrust row. The
-// rows of the float chain:
+// The rows, each one a call that leaves its statistics in device memory. Nothing is brought to the host inside a call, except in the
+// thrust row, and the host does not wait for the GPU inside a call, except in the thrust row. The rows of the float chain:
 //   fkl              one fk::executeOperations<fk::ReduceDPP<>>, one kernel. The read is fk::PerThreadRead<_2D, uchar3> of the crop view
 //                    .then(fk::Resize<INTER_LINEAR>::build(Size(224, 224))), which gives a float3 per resized pixel. Two reductions with
 //                    double3 accumulators:
@@ -141,9 +137,8 @@
 //                    (cv::cuda::setBufferPoolUsage(true), once for the run: no call of this row allocates, as no call of the NPP and
 //                    FKL rows does, whose scratch buffers and workspace are allocated once for each crop size). With OpenCV's default,
 //                    the pool off, every cv::cuda::meanStdDev allocates the buffer and frees it when it returns, and cudaFree waits for
-//                    the work of the stream: 3 allocations and 3 waits per call of the row. One other call of the OpenCV rows takes a
-//                    buffer from the pool, the cv::cuda::histEven of opencv_cuda_8u_hist (with the pool off: 1 allocation and 1 wait
-//                    per call of that row).
+//                    the work of the stream: 3 allocations and 3 waits per call of the row. No other call of the OpenCV rows takes a
+//                    buffer from the pool.
 //   npp              nppiConvert_8u32f_C3R_Ctx (the crop), nppiResize_32f_C3R_Ctx (NPPI_INTER_LINEAR), nppiSum_32f_C3R_Ctx and
 //                    nppiDotProd_32f64f_C3R_Ctx of the resized image with itself (the sums of the squares: NPP has no call named for
 //                    them, and its other call for them, nppiNorm_L2_32f_C3R_Ctx, gives their square roots), Npp64f[3] each. 4 calls;
@@ -165,32 +160,9 @@
 //                    the two FKL rows separate what the type of the accumulators costs in FKL's kernel from the rest.
 //   opencv_cuda_8u   cv::cuda::resize of the 8UC3 ROI of the crop (INTER_LINEAR), cv::cuda::calcSum and cv::cuda::calcSqrSum of the
 //                    resized 8-bit image (CV_64FC3 each). 3 calls; the resized image is the intermediate image.
-//   opencv_cuda_8u_hist  the same resize, cv::cuda::cvtColor of the resized image to four channels (COLOR_BGR2BGRA), and cv::cuda::histEven
-//                    of the four-channel image with 256 bins from 0 to 256 (bins of one value; NPP's nppiHistogramEven_8u_C4R inside,
-//                    with its scratch buffer from the BufferPool of the stream): 256 counts (CV_32SC1) per channel, the four channels
-//                    in one call; the counts of the fourth channel, the one that cvtColor adds, are not used. 3 calls, and the
-//                    four-channel image as a further intermediate image. The counts are GpuMat headers of memory of the program (the
-//                    GpuMat constructor that takes a pointer), at the addresses of the counts of npp_8u_hist (below), because the
-//                    time of the call depends on them in the same way: on the RTX 4090, kernel_only is 9.2, 9.3, 9.4 and 10.2 us at
-//                    the four default crops there, and 10.3 to 10.9 us at the three smaller ones and 11.3 us at the largest with the
-//                    counts where OpenCV allocates them. Not cv::cuda::calcHist: it takes one-channel 8-bit images only, so it needs
-//                    cv::cuda::split and three calls (5 calls in all), which take longer than these 3 (measured on the RTX 4090 with
-//                    the counts of both where OpenCV allocates them: about 13.5 us against 12 us in whole_call, and about 12.5 us
-//                    against 10.5 us in kernel_only).
 //   npp_8u           nppiResize_8u_C3R_Ctx of the crop (NPPI_INTER_LINEAR), nppiSum_8u_C3R_Ctx and nppiDotProd_8u64f_C3R_Ctx of the
 //                    resized image with itself (Npp64f[3] each). 3 calls; the resized image is the intermediate image.
-//   npp_8u_hist      the same resize, and nppiHistogramEven_8u_C3R_Ctx with 257 levels from 0 to 256 (256 bins of one value): 256
-//                    counts (Npp32s) per channel, the three channels in one call. 2 calls; its scratch buffer is allocated once for
-//                    each crop size. The time of the histogram call depends on the addresses of the counts (see the hist rows of
-//                    e20_reductions.cu). On the RTX 4090, kernel_only at the four default crops: 7.8, 8.1, 8.2 and 8.2 us with the
-//                    counts of each channel 512 bytes after a multiple of 4,096 bytes, each channel in its own 4,096 bytes; 8.3 to
-//                    8.8 us at the three smaller crops and 9.2 us at the largest with the three one after the other from such an
-//                    address; and 9.3, 9.3, 9.3 and 9.6 us with them one after the other from a multiple of 1,024 bytes (cudaMalloc
-//                    gives such addresses). The program puts them at the first, which no address that was measured beat.
-// The hist rows are another route of OpenCV-CUDA and NPP to the same statistics, which the timing compares with their sums: they leave
-// the counts of the 256 values of a byte in device memory, NOT the sums, and the host computes the two sums of a channel from its counts
-// (256 steps, exact) where the other rows read them back. The route exists for the 8-bit images of this chain only: the float pixels of
-// the other chain are not 256 values. The single pass written by hand (cub, thrust, thrust_reduce_into) is a row of the float chain only.
+// The single pass written by hand (cub, thrust, thrust_reduce_into) is a row of the float chain only.
 // The OpenCV-CUDA, NPP, Thrust and CUB rows use no FKL object.
 //
 // The checks (e20_fused_reductions_checks.csv), for every crop size. The host resizes the crop with fklb::resizeBilinear (the scalar
@@ -199,16 +171,12 @@
 // up (the 8-bit chain; a resized pixel is exact in double, see "factors", so the ties of the host are the ties). A reference holds, for
 // every channel, the sum of its pixels and the sum of their squares (exact, see "factors"), and the mean and the population standard
 // deviation (from the differences to the mean). Each row is called once, after the buffers that EVERY row writes, its intermediate
-// images and its statistics, are filled with 0xFF bytes (a NaN in a float and in a double and -1 in a count: never right values; 255
+// images and its statistics, are filled with 0xFF bytes (a NaN in a float and in a double: never right values; 255
 // in a byte of an 8-bit image, an image of mean 255, which no crop of this frame resizes to; filling them all shows a row that reads
 // what another one left, as an msd row that skips its resize would), its statistics are read back, and for every channel, against the
 // reference of the row's convention and pixels:
-//   count            the hist rows: the sum of the 256 counts, equal to 50,176 (the pixels of value 0 are in no sum). The timing needs
-//                    it.
-//   sum              the rows that compute it (all but the msd rows; the hist rows, on the host from their counts): equal. The timing
-//                    needs it.
-//   sum_of_squares   the rows that compute it (all but the msd rows; the hist rows, on the host from their counts): equal. The timing
-//                    needs it.
+//   sum              the rows that compute it (all but the msd rows): equal. The timing needs it.
+//   sum_of_squares   the rows that compute it (all but the msd rows): equal. The timing needs it.
 //   mean, std_dev    every row: computed on the host from the sums that the row left, or as the msd rows left them; relative
 //                    difference at most 1e-9. The timing needs it.
 // The sums of both chains are checked for equality, the tightest criterion: the 8-bit chain allows it because every library rounds an
@@ -220,7 +188,7 @@
 //
 // The timing (e20_fused_reductions.csv), for every crop size after its checks: two intervals per row, in the order of the rows, FKL's
 // first (fkl, fkl_half_pixel, fkl_8u, fkl_8u_half_pixel, fkl_8u_double_sums, cub, thrust, thrust_reduce_into, opencv_cuda,
-// opencv_cuda_msd, npp, npp_msd, opencv_cuda_8u, opencv_cuda_8u_hist, npp_8u, npp_8u_hist), the same in every run:
+// opencv_cuda_msd, npp, npp_msd, opencv_cuda_8u, npp_8u), the same in every run:
 //   whole_call   fklb::timeIt: CUDA events around one call, 100 calls after one warm-up call
 //   kernel_only  fklb::timePreparedLaunch with gpuSpin as beforeLaunch and nothing to prepare: the whole call is enqueued behind one spin
 //                of E20_SPIN_US (default 5,000 us). The thrust row waits for its result inside the call, so its interval also holds what
@@ -250,7 +218,6 @@
 #include <opencv2/core/cuda.hpp>
 #include <opencv2/core/cuda_stream_accessor.hpp>
 #include <opencv2/cudaarithm.hpp>
-#include <opencv2/cudaimgproc.hpp>
 #include <opencv2/cudawarping.hpp>
 
 #include <cub/device/device_reduce.cuh>
@@ -399,8 +366,7 @@ struct BlockOfTheCaller {
 // The rows, in the order of the checks and of the timing: FKL's first, then the single pass written by hand, the float chain of
 // OpenCV-CUDA and NPP, and their 8-bit chain
 const std::vector<std::string> ROWS = {"fkl", "fkl_half_pixel", "fkl_8u", "fkl_8u_half_pixel", "fkl_8u_double_sums", "cub", "thrust",
-                                       "thrust_reduce_into", "opencv_cuda", "opencv_cuda_msd", "npp", "npp_msd", "opencv_cuda_8u",
-                                       "opencv_cuda_8u_hist", "npp_8u", "npp_8u_hist"};
+                                       "thrust_reduce_into", "opencv_cuda", "opencv_cuda_msd", "npp", "npp_msd", "opencv_cuda_8u", "npp_8u"};
 
 bool selected(const std::string& name) {
     const char* e = std::getenv("E20_ONLY");
@@ -508,24 +474,7 @@ struct Statistics {
     double sumOfSquares[3] = {std::nan(""), std::nan(""), std::nan("")};
     double mean[3] = {std::nan(""), std::nan(""), std::nan("")};
     double stdDev[3] = {std::nan(""), std::nan(""), std::nan("")};
-    double count[3] = {std::nan(""), std::nan(""), std::nan("")};   // a hist row: the pixels that it counted, the sum of its 256 counts
 };
-
-// What a hist row leaves: of every channel, the 256 counts of the values of a byte, one channel after the other. The host computes from
-// them the pixels that the row counted, their sum and the sum of their squares (integers below 2^32: exact in a double)
-Statistics statisticsOfCounts(const std::vector<int>& counts) {
-    Statistics s;
-    for (int c = 0; c < 3; ++c) {
-        s.count[c] = s.sum[c] = s.sumOfSquares[c] = 0;
-        for (int value = 0; value < 256; ++value) {
-            const double count = counts[static_cast<size_t>(c) * 256 + value];
-            s.count[c] += count;
-            s.sum[c] += count * value;
-            s.sumOfSquares[c] += count * value * value;
-        }
-    }
-    return s;
-}
 
 // Of every channel of the crop resized on the host in double, for one convention and one rounding of the resized pixels: the sum of the
 // pixels and the sum of their squares (exact), and the mean and the population standard deviation; and the resized values of the three
@@ -580,16 +529,6 @@ Reference referenceOf(const std::vector<unsigned char>& frame, const Detection& 
 double relativeDifference(const double value, const double reference) {
     if (!std::isfinite(value)) return std::numeric_limits<double>::infinity();
     return reference == 0 ? std::abs(value) : std::abs(value - reference) / std::abs(reference);
-}
-
-// The histogram calls of NPP, and of OpenCV-CUDA with NPP inside, take a time that depends on the addresses of the counts of the
-// channels (see the hist rows in the header). The fastest ones that were measured: the 256 counts of each channel 512 bytes after a
-// multiple of 4,096 bytes, each channel in its own 4,096 bytes. The counts of channel c in a block of 4,096 bytes per channel and
-// 4,096 more (COUNTS_BLOCK_INTS ints per channel, and as many more)
-constexpr size_t COUNTS_BLOCK_INTS = 1024;
-int* countsOfChannel(int* block, const int c) {
-    const size_t bytesBefore = (512 + 4096 - reinterpret_cast<std::uintptr_t>(block) % 4096) % 4096;
-    return block + bytesBefore / sizeof(int) + COUNTS_BLOCK_INTS * c;
 }
 
 // The GPU spin of the kernel-only interval, the one of E1, E18 and E19 (see e20_reductions.cu)
@@ -655,9 +594,9 @@ int launch() {
 
     // Set once: the cv::cuda::Stream and FKL's stream object of the program's stream, and the NPP stream context, filled field by field
     // from the device properties and the stream's flags as in E18 and E19 (CUDA 13 has no nppGetStreamContext)
-    // OpenCV's buffer pool, turned on before the stream is wrapped (a cv::cuda::Stream takes its allocator when it is made): cv::cuda::meanStdDev
-    // and cv::cuda::histEven then take NPP's scratch buffer from the pool of the stream. With the pool off (OpenCV's default) each of them
-    // allocates the buffer and frees it when it returns, and cudaFree waits for the work of the stream
+    // OpenCV's buffer pool, turned on before the stream is wrapped (a cv::cuda::Stream takes its allocator when it is made):
+    // cv::cuda::meanStdDev then takes NPP's scratch buffer from the pool of the stream. With the pool off (OpenCV's default) every
+    // cv::cuda::meanStdDev allocates the buffer and frees it when it returns, and cudaFree waits for the work of the stream
     cv::cuda::setBufferPoolUsage(true);
     cv::cuda::Stream cvs = cv::cuda::StreamAccessor::wrapStream(cs);
     fk::Stream_<fk::ParArch::GPU_NVIDIA> fkStream(cs);
@@ -1082,48 +1021,6 @@ int launch() {
         rows.push_back({"opencv_cuda_8u", fklb::ResizeSampling::ASYMMETRIC, Rounding::TIES_TO_EVEN, 3, cvResized8.step * cvResized8.rows, callOpenCV8,
                         fillOpenCV8, downloadOpenCV8});
 
-        // The same resize, the resized 8-bit image to four channels, and the histograms of the four channels in one call:
-        // cv::cuda::histEven takes one-channel and four-channel images, and with 256 bins from 0 to 256 every bin is one value. The
-        // counts of the fourth channel, the one that cv::cuda::cvtColor adds, are not read back
-        // Set once for the crop size: the four-channel image, a further intermediate image, and the 256 counts of each of its channels:
-        // GpuMat headers, with the size and the type that histEven makes (GpuMat::create keeps a GpuMat that already has them), of
-        // memory of the program at the addresses of countsOfChannel
-        cv::cuda::GpuMat cvResized8x4(cvOutSize, CV_8UC4);
-        int* cvCountsBlock = deviceAlloc<int>(5 * COUNTS_BLOCK_INTS);
-        cv::cuda::GpuMat cvCounts[4];
-        for (int c = 0; c < 4; ++c) cvCounts[c] = cv::cuda::GpuMat(1, 256, CV_32SC1, countsOfChannel(cvCountsBlock, c));
-        int cvBins[4] = {256, 256, 256, 256}, cvLowerLevel[4] = {0, 0, 0, 0}, cvUpperLevel[4] = {256, 256, 256, 256};
-        // The timed call (whole_call and kernel_only). Everything in this lambda is inside the interval
-        const auto callOpenCV8Hist = [&] {
-            const cv::cuda::GpuMat roi = cvFrame(cv::Rect(detection.x, detection.y, CW, CH));
-            cv::cuda::resize(roi, cvResized8, cvOutSize, 0., 0., cv::INTER_LINEAR, cvs);
-            cv::cuda::cvtColor(cvResized8, cvResized8x4, cv::COLOR_BGR2BGRA, 0, cvs);
-            cv::cuda::histEven(cvResized8x4, cvCounts, cvBins, cvLowerLevel, cvUpperLevel, cvs);
-        };
-        // (end of the timed call)
-        const auto fillOpenCV8Hist = [&] {
-            FKLB_CUDA_CHECK(cudaMemset2D(cvResized8.data, cvResized8.step, 0xFF, static_cast<size_t>(OUT_W) * 3, OUT_H));
-            FKLB_CUDA_CHECK(cudaMemset2D(cvResized8x4.data, cvResized8x4.step, 0xFF, static_cast<size_t>(OUT_W) * 4, OUT_H));
-            for (int c = 0; c < 4; ++c) FKLB_CUDA_CHECK(cudaMemset(cvCounts[c].data, 0xFF, 256 * sizeof(int)));
-        };
-        const auto downloadOpenCV8Hist = [&] {
-            // The counts are where the program put them: a histEven that made them again would leave them at other addresses
-            for (int c = 0; c < 4; ++c) {
-                if (cvCounts[c].data != reinterpret_cast<unsigned char*>(countsOfChannel(cvCountsBlock, c))) {
-                    throw std::runtime_error("opencv_cuda_8u_hist: cv::cuda::histEven made again the counts that are set once");
-                }
-            }
-            std::vector<int> counts;
-            for (int c = 0; c < 3; ++c) {
-                const std::vector<int> ofChannel = fromDevice<int>(cvCounts[c].data, 256);
-                counts.insert(counts.end(), ofChannel.begin(), ofChannel.end());
-            }
-            return statisticsOfCounts(counts);
-        };
-        rows.push_back({"opencv_cuda_8u_hist", fklb::ResizeSampling::ASYMMETRIC, Rounding::TIES_TO_EVEN, 3,
-                        cvResized8.step * cvResized8.rows + cvResized8x4.step * cvResized8x4.rows, callOpenCV8Hist, fillOpenCV8Hist,
-                        downloadOpenCV8Hist});
-
         // ---- NPP, the 8-bit chain: the resize of the 8-bit crop, and the two reductions of the resized 8-bit image
         // Set once for the crop size: the intermediate image (the resized 8-bit image, cudaMallocPitch), the results in device memory, and
         // the scratch buffer of every call
@@ -1164,41 +1061,6 @@ int launch() {
         };
         rows.push_back(
             {"npp_8u", fklb::ResizeSampling::HALF_PIXEL, Rounding::TIES_UP, 3, nppResized8Step * OUT_H, callNpp8, fillNpp8, downloadNpp8});
-
-        // The same resize, and the histograms of the three channels of the resized 8-bit image in one call: 257 levels from 0 to 256, which
-        // are 256 bins of one value each
-        // Set once for the crop size: the 256 counts of each channel in device memory, at the addresses of countsOfChannel, and the
-        // scratch buffer of the call
-        Npp32s* nppCountsBlock = deviceAlloc<Npp32s>(4 * COUNTS_BLOCK_INTS);
-        Npp32s* nppCountsOf[3] = {countsOfChannel(nppCountsBlock, 0), countsOfChannel(nppCountsBlock, 1), countsOfChannel(nppCountsBlock, 2)};
-        int histLevels[3] = {257, 257, 257};
-        Npp32s histLower[3] = {0, 0, 0}, histUpper[3] = {256, 256, 256};
-        size_t histBytes = 0;
-        FKLB_NPP_CHECK(nppiHistogramEvenGetBufferSize_8u_C3R_Ctx(nppOutSize, histLevels, &histBytes, ctx));
-        Npp8u* histBuffer = deviceAlloc<Npp8u>(histBytes > 0 ? histBytes : 1);
-        // The timed call (whole_call and kernel_only). Everything in this lambda is inside the interval
-        const auto callNpp8Hist = [&] {
-            const Npp8u* nppCrop = nppFrame + static_cast<size_t>(detection.y) * nppFrameStep + static_cast<size_t>(detection.x) * 3;
-            FKLB_NPP_CHECK(nppiResize_8u_C3R_Ctx(nppCrop, frameStep, nppCropSize, nppCropRect, nppResized8, resized8Step, nppOutSize, nppOutRect,
-                                                 NPPI_INTER_LINEAR, ctx));
-            FKLB_NPP_CHECK(nppiHistogramEven_8u_C3R_Ctx(nppResized8, resized8Step, nppOutSize, nppCountsOf, histLevels, histLower, histUpper,
-                                                        histBuffer, ctx));
-        };
-        // (end of the timed call)
-        const auto fillNpp8Hist = [&] {
-            FKLB_CUDA_CHECK(cudaMemset2D(nppResized8, nppResized8Step, 0xFF, static_cast<size_t>(OUT_W) * 3, OUT_H));
-            for (int c = 0; c < 3; ++c) FKLB_CUDA_CHECK(cudaMemset(nppCountsOf[c], 0xFF, 256 * sizeof(Npp32s)));
-        };
-        const auto downloadNpp8Hist = [&] {
-            std::vector<int> counts;
-            for (int c = 0; c < 3; ++c) {
-                const std::vector<int> ofChannel = fromDevice<int>(nppCountsOf[c], 256);
-                counts.insert(counts.end(), ofChannel.begin(), ofChannel.end());
-            }
-            return statisticsOfCounts(counts);
-        };
-        rows.push_back({"npp_8u_hist", fklb::ResizeSampling::HALF_PIXEL, Rounding::TIES_UP, 2, nppResized8Step * OUT_H, callNpp8Hist, fillNpp8Hist,
-                        downloadNpp8Hist});
 
         if (rows.size() != ROWS.size()) throw std::runtime_error("the rows are not the ones of ROWS");
         for (size_t k = 0; k < rows.size(); ++k) {
@@ -1261,10 +1123,6 @@ int launch() {
                     // The mean and the standard deviation of the channel: as the row left them, or from the sums that it left
                     double mean = s.mean[c], stdDev = s.stdDev[c];
                     if (!row.leavesMeanAndStdDev) {
-                        if (!std::isnan(s.count[c])) {
-                            // A hist row: its 256 counts add up to the resized pixels (a pixel of value 0 is in no sum)
-                            check("count", "the number of resized pixels", s.count[c], n, n, n, 0, "equal");
-                        }
                         check("sum", "host", s.sum[c], own.sum[c], other.sum[c], ofFloats.sum[c], 0, "equal");
                         check("sum_of_squares", "host", s.sumOfSquares[c], own.sumOfSquares[c], other.sumOfSquares[c], ofFloats.sumOfSquares[c], 0,
                               "equal");
@@ -1344,7 +1202,7 @@ int launch() {
         FKLB_CUDA_CHECK(cudaStreamSynchronize(cs));
         for (void* p : std::vector<void*>{cubOut, cubStorage, thrustIntoOut, thrustStorage.block, nppFloat, nppResized, nppSum, nppDotProd, nppMean,
                                           nppStdDev, sumBuffer, dotProdBuffer, meanStdDevBuffer, nppResized8, nppSum8, nppDotProd8, sum8Buffer,
-                                          dotProd8Buffer, nppCountsBlock, histBuffer, cvCountsBlock}) {
+                                          dotProd8Buffer}) {
             FKLB_CUDA_CHECK(cudaFree(p));
         }
     }
