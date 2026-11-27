@@ -18,7 +18,67 @@ old/new/spread".
 Oscar's rule of 2026-11-26 applies too: "Coordinate with fkl-reduce, fkl-reduce has priority". The window runs only in a quiet slot agreed
 with that session.
 
-**State.** The window script is prepared and was tested on a tiny input. The window waits for the coordinator's GRANTED.
+**State.** The window ran on the coordinator's GRANTED (HOLD COMPILES and WINDOW STARTS sent) from 2026-11-27 05:50:06 to 06:42:49
+(+01:00; 04:50:06Z to 05:42:49Z, `window/window-console.txt`), 52 min 43 s. The repeat took 52 min. The tables below were made afterwards,
+on the CPU only.
+
+## Result
+
+**The window** (`window/`):
+- **Compiles:** all 25 ok: the warm-up (05:50:06-05:50:11), then the sweep, 24 compiles (05:50:26-06:42:44).
+- **The guards:**
+  - the watcher never fired: there is no `watcher.log` and no `DISTURBED`;
+  - `still_quiet` never fired;
+  - `wait_idle` passed before both steps, at once before the warm-up and about 15 s before the sweep, from the timestamps. The console's
+    start lines are cut at 300 characters, which cuts the idle note off.
+- **The machine** (`load.log`, every 20 s, 159 samples):
+  - the other cores of the compile CCD were at most 1 % busy (the repeat: at most 1 %);
+  - on the other CCD, the desktop's file indexer `localsearch-3` showed 20 % or more in 9 samples. It is not in the repeat's log;
+  - the governor was `performance`, with boost on.
+- **The translation units:** all eight are byte-identical to the repeat's (`window/tu-sha256-vs-9e20bd4e.txt`).
+
+**Old (9e20bd4e) against new (304492a)** (`window/e3_repeat_vs_9e20bd4e.md` and `.csv`, by `scripts/e3_repeat_pair.py`):
+- **The form:** the median of three compiles each.
+- **spread:** the larger of the two folders' (max - min) / median.
+- **exceeds:** |change| > spread.
+- **Flag:** 5 %, because a compile is host-bound.
+
+| N | wall 9e20bd4e (s) | wall 304492a (s) | the new compiles | spread % | change % | exceeds? | > 5 %? | peak memory 9e20bd4e -> 304492a (MiB) | change % | exceeds? |
+|---:|---:|---:|---|---:|---:|---|---|---|---:|---|
+| 1 | 2.596 | 2.709 | 2.693 / 2.714 / 2.709 | 1.39 | +4.35 | yes | no | 291 -> 298 | +2.41 | yes |
+| 100 | 3.078 | 3.200 | 3.200 / 3.202 / 3.194 | 0.25 | +3.96 | yes | no | 345 -> 352 | +2.03 | yes |
+| 500 | 7.683 | 7.923 | 7.837 / 7.923 / 8.118 | 3.55 | +3.12 | no | no | 691 -> 699 | +1.16 | yes |
+| 1,000 | 22.364 | 22.804 | 22.727 / 22.895 / 22.804 | 0.74 | +1.97 | yes | no | 1,470 -> 1,478 | +0.54 | yes |
+| 1,500 | 50.903 | 51.266 | 51.412 / 51.219 / 51.266 | 0.38 | +0.71 | yes | no | 2,598 -> 2,608 | +0.38 | yes |
+| 2,000 | 96.686 | 97.228 | 97.189 / 97.721 / 97.228 | 0.55 | +0.56 | yes | no | 4,073 -> 4,082 | +0.22 | yes |
+| 3,000 | 266.403 | 266.460 | 266.460 / 266.761 / 266.346 | 0.94 | +0.02 | no | no | 8,070 -> 8,080 | +0.12 | yes |
+| 4,000 | 579.593 | 587.751 | 586.417 / 587.751 / 588.363 | 0.33 | +1.41 | yes | no | 13,465 -> 13,475 | +0.07 | yes |
+
+- **Wall time:** no length is above the 5 % flag.
+  - The change is +4.35 % at N = 1, falling to +1.97 % at 1,000, then +0.71, +0.56, +0.02 and +1.41 % at 1,500 to 4,000.
+  - It exceeds the run-to-run spread at 6 of the 8 lengths, the exceptions being N = 500 and 3,000.
+  - The printed values at N = 2,000 / 3,000 / 4,000 become 97.2 / 266 / 588 s, against 96.7 / 266 / 580 s.
+- **Peak memory:** +0.07 % to +2.41 %, below 5 % and more than the spread at every length. At N = 4,000 it is 13,465 MiB at 9e20bd4e
+  and 13,475 MiB here.
+- **The phases** (medians): `cudafe++` is +3.7 % to +5.0 % at every length (0.832 → 0.874 s at N = 1, 0.040 s at the most).
+  - Three phase values are above 5 %: `cudafe++` at N = 1 (+5.05 %), and `ptxas` at N = 1 (+8.33 %, 0.012 → 0.013 s) and 1,500 (-5.26 %).
+  - `cicc` is +0.0 % to +4.5 %.
+  - The host compiler is +0.6 % to +4.9 %, with +4.9 % at N = 4,000.
+- **The generated code is the same:** at every length, the registers, spill stores and loads, stack, constant bank 0, SASS instructions
+  and `.text` bytes are equal.
+- **The cubin is larger at every length:** +896 B at N = 1 (+4.96 %), down to +194,048 B at N = 4,000 (+0.10 %). The `.text` sections are
+  the same size, so the bytes are in other sections; which ones is not examined here.
+
+**What differs between the two sets.** None of these is separated by this set, so **no cause is shown**:
+1. **The library:** 9e20bd4e → 304492a, the FKL #431 to #435 changes, with #435's `launchDPP_Kernel` names.
+2. **TMPDIR:** on disk (ext4) here, where the repeat's temporaries were in /tmp, the RAM disk. This is Oscar's standing rule.
+3. **The state of the machine:** 21 days apart, kernel 7.0.0-43 against 7.0.0-38, and the desktop's file indexer on the other CCD.
+
+The coordinator: a control at a flagged length (the 9e20bd4e tree with TMPDIR on disk) can follow in its own window. No length is flagged
+for the wall time.
+
+**The repeat's tables of this set** (`window/e3_repeat_summary.csv` / `.md`, `window/e3_table_chains.csv`, by `scripts/e3_repeat_table.py`)
+are in the repeat's format, for the paper's package.
 
 ## The protocol (`window-script.sh`)
 
@@ -92,7 +152,7 @@ The repeat's own scripts, unchanged:
    - per length and quantity: the wall time, the peak memory in MiB, the phases, and the code quantities;
 3. the sha256 of the eight translation units against the repeat's (`window/tu-sha256-vs-9e20bd4e.txt`).
 
-The memory goes in MiB as recorded, and in GiB (MiB / 1024) where printed, never GB. No cause is named unless shown.
+The memory is in MiB throughout (GNU time reports KiB; the sweep divides by 1024), never MB or GB. No cause is named unless shown.
 
 ## Files
 
@@ -101,3 +161,4 @@ The memory goes in MiB as recorded, and in GiB (MiB / 1024) where printed, never
 | `window-script.sh` | the window's script |
 | `scripts-manifest.sha256` | the scripts the window runs |
 | `scripts-used/after_window.sh` | the tables after the window |
+| `window/` | the window: console, environment before and after, `load.log`, the copy of the script it ran, `e3_repeat_warmup_A.csv`, `e3_repeat_A.csv`, `nvcc-time/` (the `nvcc --time` file of every compile; the warm-up's has the name of the first N = 1 compile and was overwritten by it, as in the repeat), `tu-sha256.txt`; and after the window `e3_repeat_summary.csv` / `.md`, `e3_table_chains.csv`, `e3_repeat_vs_9e20bd4e.csv` / `.md`, `tu-sha256-vs-9e20bd4e.txt` and the two scripts' stdout |
