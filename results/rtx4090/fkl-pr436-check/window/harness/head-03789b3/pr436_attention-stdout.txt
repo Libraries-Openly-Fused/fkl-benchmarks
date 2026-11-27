@@ -1,0 +1,59 @@
+pr436_attention, head (FKL #436 1df2738 API: executeOperations<DPP>): device 0 NVIDIA GeForce RTX 4090 (sm_89, 128 SMs), output folder /home/oscar/tfkl-bench/scratch/pr436/harness-out/head-03789b3
+OUT softmax_f32_37x301                                    44548 bytes
+OUT softmax_f32_fused_8x1024                              32768 bytes
+OUT fa_simt_d64_dense_b3_s45_s77                          34560 bytes
+OUT fa_simt_d128_causal_b2_s96                            98304 bytes
+OUT fa_simt_d64_int8kv_b2_s40_s130                        20480 bytes
+OUT fa_simt_d64_epilogue_b2_s33_s65                       16896 bytes
+mma_64x64x4_d64_dense_b2_s128_s300:
+OUT mma_64x64x4_d64_dense_b2_s128_s300                    65536 bytes
+mma_64x64x4_d128_causal_b2_s200:
+OUT mma_64x64x4_d128_causal_b2_s200                      204800 bytes
+mma_64x64x4_d128_dense_b2_s70_s300:
+OUT mma_64x64x4_d128_dense_b2_s70_s300                    71680 bytes
+mma_auto_d64_causal_b4_s1024:
+  flashAttentionMmaTiles = 64 x 128 x 4, flashAttentionMmaSplits = 1
+OUT mma_auto_d64_causal_b4_s1024                        1048576 bytes
+mma_auto_d64_dense_b32_s2048:
+  flashAttentionMmaTiles = 128 x 64 x 4, flashAttentionMmaSplits = 1
+OUT mma_auto_d64_dense_b32_s2048                       16777216 bytes
+mma_auto_d128_dense_b1_s16384:
+  flashAttentionMmaTiles = 128 x 128 x 8, flashAttentionMmaSplits = 1
+OUT mma_auto_d128_dense_b1_s16384                       8388608 bytes
+mma_auto_d64_dense_b2_s64_s1024:
+  flashAttentionMmaTiles = 64 x 64 x 4, flashAttentionMmaSplits = 4
+OUT mma_auto_d64_dense_b2_s64_s1024                       32768 bytes
+mma_auto_d64_int8kv_b2_s128_s200:
+  flashAttentionMmaTiles = 128 x 32 x 4, flashAttentionMmaSplits = 1
+OUT mma_auto_d64_int8kv_b2_s128_s200                      65536 bytes
+OUT mma_split_d64_dense_b2_s64_s1024_oracle_f64           65536 bytes
+mma_split_d64_dense_b2_s64_s1024_identity:
+  flashAttentionMmaSplits = 4, the base formula = 4
+OUT mma_split_d64_dense_b2_s64_s1024_identity             32768 bytes
+mma_split_d64_dense_b2_s64_s1024_epilogue:
+  flashAttentionMmaSplits = 4, the base formula = 4
+OUT mma_split_d64_dense_b2_s64_s1024_epilogue             32768 bytes
+mma_unsplit_d64_dense_b2_s64_s1024_identity / _epilogue (head only):
+OUT mma_unsplit_d64_dense_b2_s64_s1024_identity           32768 bytes
+OUT mma_unsplit_d64_dense_b2_s64_s1024_epilogue           32768 bytes
+OUT mma_split_d64_causal_b1_s1024_oracle_f64             524288 bytes
+mma_split_d64_causal_b1_s1024_identity:
+  flashAttentionMmaSplits = 2, the base formula = 2
+OUT mma_split_d64_causal_b1_s1024_identity               262144 bytes
+mma_split_d64_causal_b1_s1024_epilogue:
+  flashAttentionMmaSplits = 2, the base formula = 2
+OUT mma_split_d64_causal_b1_s1024_epilogue               262144 bytes
+mma_unsplit_d64_causal_b1_s1024_identity / _epilogue (head only):
+OUT mma_unsplit_d64_causal_b1_s1024_identity             262144 bytes
+OUT mma_unsplit_d64_causal_b1_s1024_epilogue             262144 bytes
+OUT mma_split_d128_dense_b2_s70_s1500_oracle_f64         143360 bytes
+mma_split_d128_dense_b2_s70_s1500_identity:
+  flashAttentionMmaSplits = 5, the base formula = 5
+OUT mma_split_d128_dense_b2_s70_s1500_identity            71680 bytes
+mma_split_d128_dense_b2_s70_s1500_epilogue:
+  flashAttentionMmaSplits = 5, the base formula = 5
+OUT mma_split_d128_dense_b2_s70_s1500_epilogue            71680 bytes
+mma_unsplit_d128_dense_b2_s70_s1500_identity / _epilogue (head only):
+OUT mma_unsplit_d128_dense_b2_s70_s1500_identity          71680 bytes
+OUT mma_unsplit_d128_dense_b2_s70_s1500_epilogue          71680 bytes
+pr436_attention: 29 output files written; PASS (every call ran without a CUDA error or a rejection)

@@ -22,8 +22,11 @@ Everything below is at 03789b3 unless it names 1df2738. The section "The new hea
 Decision: the coordinator's assignment C-MAIN-NV of 2026-11-26, the CUDA check of #436. Another session (fkl-reduce) has priority on this machine
 (Oscar, 2026-11-26). So every build here ran at nice 19 with at most 8 jobs, and the window starts only in a slot agreed with it.
 
-**State.** The compile-only steps are done at 03789b3: the builds, the device code and the harness. The GPU window waits for the coordinator's
-GRANTED.
+**State.** The compile-only steps are done at 03789b3: the builds, the device code and the harness.
+- **The GPU window** ran on the coordinator's GRANTED, after RT-1's, from 2026-11-27 03:52:56 to 03:54:32 (+01:00; 02:52:56Z to 02:54:32Z,
+  `window/window-console.txt`). HOLD COMPILES and WINDOW STARTS had been sent.
+- **Its result:** every test passes at both commits, all four harness runs pass, and the comparison passes. See "The window's result"
+  below.
 
 ## Result (compile only)
 
@@ -143,7 +146,7 @@ The comparison covers the SASS text, with addresses and module ids masked, and t
 
 ## The GPU window (`window-script.sh`)
 
-(To be run on the coordinator's GRANTED, after RT-1's window.)
+(Run on the coordinator's GRANTED, 2026-11-27 03:52:56 to 03:54:32 +01:00; the result follows the protocol.)
 
 **The protocol is task C-NV's**, with RT-1's idle checks. In this order, stopping at the first failure:
 1. FKL's 58 CUDA tests at 03789b3 (`ctest -R '_cu$' -j1 --stop-on-failure --timeout 300`);
@@ -158,6 +161,36 @@ other GPU program appeared during it; if one did, the window stops there and tha
 
 The 118 binaries it runs are in `window-binaries.sha256`: 56 + 58 test executables and the 4 harness programs. Nothing is timed.
 
+### The window's result (`window/`)
+
+- **Run conditions:**
+  - the script exited 0;
+  - the after-step check never fired, so no step was affected;
+  - the idle wait waited 0 to 40 s before a step, and the 1-minute load was 0.45 to 0.49;
+  - the window's copy of the script, `window/window-script.sh`, is the committed one.
+- **FKL's CUDA tests at 03789b3:** "100% tests passed, 0 tests failed out of 58" (`fkl-tests-head-03789b3-console.txt`, `.log`).
+  - `utest_flash_attention_mma_cu` and `utest_flash_decode_cu` are among them, and both passed.
+- **At ebb3891:** "100% tests passed, 0 tests failed out of 56" (`fkl-tests-base-ebb3891-console.txt`, `.log`).
+- **The harness** (`window/harness/`: each run's stdout, stderr, exit code and the GPU state at its end):
+  - all four runs exited 0 with an empty stderr;
+  - each printed "PASS (every call ran without a CUDA error or a rejection)";
+  - output files: `pr436_image` 22 at the base and 22 at the head; `pr436_attention` 23 at the base and 29 at the head.
+- **The comparison** (`harness-comparison.txt`, `.csv`), `compare_harness.py` on the CPU: **RESULT: PASS**.
+  - **Bit for bit:** base and head are equal in all 42 shared outputs that are compared. The three `mma_split_*_epilogue` outputs are not
+    compared bit for bit, by design.
+  - **The split path,** for each of the 3 shapes, within TOL = 3e-3, or 2 × TOL with the epilogue, against the double oracle: every check
+    passes.
+    - The oracle is the same at both commits.
+    - The head's split + combine and its unsplit call are within bound, with the identity and with the epilogue.
+    - The largest error is 2.630e-3, for d64_causal_b1_s1024 with the epilogue.
+  - **Reported only:** main's base split drops the epilogue, as LTS-C++17's did before #435. Its epilogue output is bit for bit its
+    identity output. So base and head differ in the three `mma_split_*_epilogue` outputs (max |base − head| 0.558, 1.480 and 0.563).
+  - **In the head only:** the 6 `mma_unsplit_*` outputs, identity and epilogue for each shape, which the split checks use.
+- **The harness outputs** are 96 files and 56 MiB, in `scratch/pr436/harness-out/`. They are not committed; their sha256 are in
+  `window/harness-outputs-sha256.txt`.
+- **The GPU** (`gpu_clocks.csv`; `gpu_clocks.err` is empty): 955 readings, 5 of them with a utilisation of 50 % or more (at 2,550 MHz). The
+  temperature was 45 to 47 °C. Nothing is timed.
+
 ## Files
 
 | path | content |
@@ -168,3 +201,4 @@ The 118 binaries it runs are in `window-binaries.sha256`: 56 + 58 test executabl
 | `harness/compile/` | the harness build's console and compiler logs, and the head side's 03789b3 build |
 | `scripts-used/` | `compile.sh`, `compile-newhead.sh`, `check_fkl_tree_report.py`, `pr435_sass_identity.py`, `sass_identity_main.py`, `sass_identity_norename.py`, `diff_summary.py` |
 | `window-script.sh`, `window-binaries.sha256` | the window's script and the sha256 of its 118 binaries |
+| `window/` | the window: console, environment before and after, `gpu-info.csv`, `gpu_clocks.csv` (and `.err`), `load.log`, the two ctest consoles and logs, the harness runs, `harness-comparison.txt` and `.csv`, the outputs' sha256, and the copy of the script it ran |
