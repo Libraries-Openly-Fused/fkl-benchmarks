@@ -1,0 +1,39 @@
+E19 crop sweep: E19_CROPS=30
+E19 batched box: checks, then the timing
+opencv_cuda grey against host_reference ((9798 R + 19235 G + 3735 B + 2^14) >> 15): 0 of 1966080 differ, largest difference 0; 0 differing values: ok
+opencv_cuda box against box_of_own_grey (floor(sum / 9)): 0 of 1966080 differ, largest difference 0; 0 differing values for one of the two rules: ok
+opencv_cuda box against box_of_own_grey (nearest of sum / 9): 873678 of 1966080 differ, largest difference 1; 0 differing values for one of the two rules: ok
+opencv_cuda box against box_of_reference_grey (floor(sum / 9)): 0 of 1966080 differ, largest difference 0; reported
+opencv_cuda float against conversion_of_own_box ((v / 255 - 0.45) / 0.225 in double): 0 of 1966080 differ, largest difference 1.28299e-07, not finite 0; largest difference at most 1e-5, every value finite: ok
+opencv_cuda float against conversion_of_reference_box ((v / 255 - 0.45) / 0.225 in double): 0 of 1966080 differ, largest difference 1.28299e-07, not finite 0; reported
+opencv_cuda buffers against before_the_call (data pointers of the 30 grey and 30 box images and of the tensor): 0 of 61 differ, largest difference 0; 0 moved: ok
+npp grey against host_reference (0.299f R + 0.587f G + 0.114f B exactly, truncated): 983428 of 1966080 differ, largest difference 1; reported
+npp grey against host_reference (0.299f R + 0.587f G + 0.114f B exactly, rounded half up): 450 of 1966080 differ, largest difference 1; reported
+npp grey against host_reference (0.299f R + 0.587f G + 0.114f B in float (each product and sum rounded, left to right), truncated): 983144 of 1966080 differ, largest difference 1; reported
+npp grey against host_reference (0.299f R + 0.587f G + 0.114f B in float (each product and sum rounded, left to right), + 0.5f, truncated): 135 of 1966080 differ, largest difference 1; reported
+npp grey against host_reference ((77 R + 150 G + 29 B + 128) >> 8): 262927 of 1966080 differ, largest difference 1; reported
+npp grey against host_reference ((9798 R + 19235 G + 3735 B + 2^14) >> 15): 2541 of 1966080 differ, largest difference 1; reported
+npp grey against host_reference (t = 0.587f G; t = fmaf(0.299f, R, t); t = fmaf(0.114f, B, t); (int)(t + 0.5f)): 0 of 1966080 differ, largest difference 0; 0 differing values (the rule with the fewest: the reference): ok
+npp box against box_of_own_grey (floor(sum / 9)): 0 of 1966080 differ, largest difference 0; 0 differing values for one of the two rules: ok
+npp box against box_of_own_grey (nearest of sum / 9): 873666 of 1966080 differ, largest difference 1; 0 differing values for one of the two rules: ok
+npp box against box_of_reference_grey (floor(sum / 9)): 0 of 1966080 differ, largest difference 0; reported
+npp float against conversion_of_own_box ((v / 255 - 0.45) / 0.225 in double): 0 of 1966080 differ, largest difference 3.48538e-07, not finite 0; largest difference at most 1e-5, every value finite: ok
+npp float against conversion_of_reference_box ((v / 255 - 0.45) / 0.225 in double): 0 of 1966080 differ, largest difference 3.48538e-07, not finite 0; reported
+opencv_cuda grey against npp (their own grey images): 2541 of 1966080 differ, largest difference 1; reported
+opencv_cuda box against npp (their own box images): 2497 of 1966080 differ, largest difference 1; reported
+opencv_cuda float against npp (their own tensors): 0 of 1966080 differ, largest difference 0.0174296, not finite 0; reported
+fkl_loop float against fkl_reference (grey nearbyint(fma(0.114f, B, fma(0.299f, R, 0.587f G))), box (1/9 in float) * sum of 9 in double, (v / 255 - 0.45) / 0.225 in double; differing = beyond 1e-5): 0 of 1966080 differ, largest difference 6.36952e-07, not finite 0; largest difference at most 1e-5, every value finite: ok
+fkl_loop float against opencv_cuda (their own tensors): 0 of 1966080 differ, largest difference 0.0193662, not finite 0; reported
+fkl_loop float against npp (their own tensors): 0 of 1966080 differ, largest difference 0.015493, not finite 0; reported
+fkl_batch float against fkl_batch_reference (grey nearbyint(fma(0.114f, B, fma(0.299f, R, 0.587f G))), box float(sum of 9 * (1/9 in float)), (v / 255 - 0.45) / 0.225 in double; differing = beyond 1e-5): 0 of 1966080 differ, largest difference 2.62312e-07, not finite 0; largest difference at most 1e-5, every value finite: ok
+fkl_batch written against fill (values still 0xFFFFFFFF (the fill's bytes)): 0 of 1966080 differ, largest difference 0; 0 left: ok
+fkl_batch float against fkl_loop (their own tensors): 0 of 1966080 differ, largest difference 7.7486e-07, not finite 0; reported
+fkl_batch float against opencv_cuda (their own tensors, in output units; differing = not equal): 1966079 of 1966080 differ, largest difference 0.0193659, not finite 0; reported
+fkl_batch float_grey_levels against opencv_cuda (their own tensors, in grey levels (x 57.375); differing = not equal): 1966079 of 1966080 differ, largest difference 1.11112, not finite 0; reported
+fkl_batch float against npp (their own tensors, in output units; differing = not equal): 1898472 of 1966080 differ, largest difference 0.0154927, not finite 0; reported
+fkl_batch float_grey_levels against npp (their own tensors, in grey levels (x 57.375); differing = not equal): 1898472 of 1966080 differ, largest difference 0.888892, not finite 0; reported
+E19 batched box checks passed
+fkl_loop: whole call mean 0.0794605 ms (min 0.078848); kernel only mean 0.0754381 ms (min 0.074752)
+fkl_batch: whole call mean 0.0221776 ms (min 0.021504); kernel only mean 0.021687 ms (min 0.021504)
+opencv_cuda: whole call mean 0.24162 ms (min 0.239552); kernel only mean 0.241674 ms (min 0.241664)
+npp: whole call mean 0.21679 ms (min 0.21504); kernel only mean 0.21548 ms (min 0.21504)

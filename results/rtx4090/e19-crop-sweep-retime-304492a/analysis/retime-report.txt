@@ -1,0 +1,51 @@
+E19 crop sweep re-time: 96 numbers (16 N x 3 rows x 2 intervals); old = /home/oscar/tfkl-bench/worktrees/fkl-benchmarks-rt1/results/rtx4090/e19-crop-sweep, window = /home/oscar/tfkl-bench/worktrees/fkl-benchmarks-rt1/results/rtx4090/e19-crop-sweep-retime-304492a/window
+  A vs old fkl_batch   whole_call : +0.04 % to +1.85 % (N >= 10: +0.04 % to +0.70 %)
+  A vs old fkl_batch   kernel_only: -0.09 % to +3.46 % (N >= 10: -0.09 % to +1.40 %)
+  A vs old opencv_cuda whole_call : -0.51 % to +1.31 % (N >= 10: +0.76 % to +1.31 %)
+  A vs old opencv_cuda kernel_only: +1.24 % to +6.07 % (N >= 10: +1.24 % to +2.37 %)
+  A vs old npp         whole_call : -0.78 % to +1.20 % (N >= 10: +0.65 % to +1.20 %)
+  A vs old npp         kernel_only: -0.26 % to +1.27 % (N >= 10: +0.14 % to +1.27 %)
+  B vs A   fkl_batch   whole_call : -18.04 % to +1.60 % (N >= 10: +0.62 % to +1.60 %)
+  B vs A   fkl_batch   kernel_only: -18.87 % to +2.75 % (N >= 10: +0.02 % to +2.75 %)
+  B vs A   opencv_cuda whole_call : -0.28 % to +1.41 % (N >= 10: -0.28 % to +0.13 %)
+  B vs A   opencv_cuda kernel_only: -0.33 % to +0.02 % (N >= 10: -0.03 % to +0.02 %)
+  B vs A   npp         whole_call : -0.25 % to +0.26 % (N >= 10: -0.25 % to +0.03 %)
+  B vs A   npp         kernel_only: -0.02 % to +0.01 % (N >= 10: -0.02 % to +0.01 %)
+  flags (GPU-bound above 3 %, host-bound above 5 %): A vs old 1, B vs A 2
+    A vs old N 1 opencv_cuda kernel_only: +6.07 % (host-bound; spreads 3.47 %, 0.22 %)
+    B vs A   N 1 fkl_batch whole_call: -18.04 % (host-bound; spreads 0.23 %, 0.67 %)
+    B vs A   N 1 fkl_batch kernel_only: -18.87 % (host-bound; spreads 0.74 %, 1.57 %)
+  B vs A changes that exceed the larger spread: 34 of 96; of them, ranges not overlapping: 33
+  ratios (median of the per-sweep ratios): N, interval: opencv_cuda / fkl_batch old, A, B | npp / fkl_batch old, A, B
+      1 whole_call : 2.060 2.019 2.493 | 1.799 1.752 2.141
+      1 kernel_only: 2.092 2.147 2.647 | 1.991 1.919 2.366
+     10 whole_call : 8.422 8.494 8.354 | 7.560 7.612 7.481
+     10 kernel_only: 8.557 8.725 8.719 | 7.871 7.885 7.883
+     20 whole_call : 10.095 10.161 10.026 | 9.066 9.106 8.990
+     20 kernel_only: 10.197 10.390 10.304 | 9.332 9.359 9.281
+     30 whole_call : 10.848 10.895 10.791 | 9.741 9.775 9.683
+     30 kernel_only: 10.889 11.144 10.846 | 9.907 9.936 9.668
+     40 whole_call : 11.244 11.342 11.201 | 10.126 10.164 10.038
+     40 kernel_only: 11.247 11.457 11.219 | 10.223 10.216 10.004
+     50 whole_call : 11.550 11.594 11.515 | 10.395 10.404 10.340
+     50 kernel_only: 11.480 11.583 11.541 | 10.452 10.330 10.295
+     60 whole_call : 11.647 11.762 11.660 | 10.538 10.609 10.503
+     60 kernel_only: 11.541 11.654 11.633 | 10.603 10.521 10.499
+     70 whole_call : 11.841 11.943 11.830 | 10.670 10.723 10.629
+     70 kernel_only: 11.721 11.946 11.886 | 10.697 10.704 10.650
+     80 whole_call : 12.026 12.087 11.926 | 10.837 10.846 10.704
+     80 kernel_only: 11.922 12.153 12.074 | 10.848 10.837 10.767
+     90 whole_call : 12.049 12.128 11.934 | 10.861 10.899 10.726
+     90 kernel_only: 11.997 12.155 12.116 | 10.944 10.893 10.856
+    100 whole_call : 12.306 12.378 12.237 | 10.920 10.968 10.853
+    100 kernel_only: 12.274 12.388 12.310 | 11.005 11.013 10.942
+    110 whole_call : 12.454 12.534 12.417 | 11.086 11.158 11.050
+    110 kernel_only: 12.435 12.568 12.449 | 11.152 11.277 11.166
+    120 whole_call : 12.689 12.793 12.650 | 11.262 11.304 11.193
+    120 kernel_only: 12.691 12.812 12.712 | 11.371 11.389 11.302
+    130 whole_call : 12.884 12.984 12.849 | 11.318 11.390 11.252
+    130 kernel_only: 12.909 13.080 12.976 | 11.404 11.468 11.376
+    140 whole_call : 13.003 13.107 12.979 | 11.414 11.495 11.383
+    140 kernel_only: 13.053 13.196 13.081 | 11.479 11.584 11.481
+    150 whole_call : 13.059 13.179 13.050 | 11.460 11.566 11.433
+    150 kernel_only: 13.075 13.272 13.129 | 11.525 11.629 11.503
