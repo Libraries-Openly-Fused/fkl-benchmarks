@@ -112,42 +112,23 @@ if(TARGET e19_crop_sweep_cu)
     target_link_libraries(e19_crop_sweep_cu PRIVATE CUDA::nppicc CUDA::nppif)
 endif()
 
-# The three E20 programs need FKL's ReduceDPP (fused_kernel/core/execution_model/reduce_dpp.h): their targets exist only when the FKL tree
-# has that header (as e4_preprocessing with common/resize_reference.h), so that an FKL tree without it can still be checked
-# (scripts/check_fkl_tree.sh)
+# E20 needs FKL's ReduceDPP (fused_kernel/core/execution_model/reduce_dpp.h): its target exists only when the FKL tree has that header (as
+# e4_preprocessing with common/resize_reference.h), so that an FKL tree without it can still be checked (scripts/check_fkl_tree.sh)
 if(EXISTS "${CMAKE_SOURCE_DIR}/external/fkl/include/fused_kernel/core/execution_model/reduce_dpp.h")
-    # E20, several reductions of the same matrix (minimum, maximum, sum, non-zero count and sum of squares), of bytes and of floats: FKL's
-    # ReduceDPP in one kernel against OpenCV-CUDA and NPP, which have one call per reduction, and against Thrust and CUB, the single pass
-    # written by hand (header only: the CCCL of the toolkit, already on the include path). NPP's statistics are in nppist, which only the
-    # E20 programs link
+    # E20, crop, resize and reduce for a batch of N crops of one frame (N = 1, 10, 20, ..., 150, the values of the E19 crop sweep, compiled
+    # in): of every crop resized to 224 x 224, the minimum, the maximum, the sum, the non-zero count and the sum of squares of every
+    # channel. One row per library: FKL's ReduceDPP in one kernel for the N crops, whose read is the batch of the crops followed by
+    # fk::Resize, so no resized crop is written; OpenCV-CUDA per crop and NPP with its batched resize, which resize into intermediate
+    # images that further calls read again; and Thrust, the single pass written by hand (header only: the CCCL of the toolkit, already on
+    # the include path). NPP's statistics are in nppist, which only E20 links
     fklb_add_benchmark(e20_reductions
         BACKENDS cu LIBS fkl opencv npp
         SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/reductions/e20_reductions.cu")
     if(TARGET e20_reductions_cu)
         target_link_libraries(e20_reductions_cu PRIVATE CUDA::nppist)
     endif()
-
-    # E20 batched: the same five statistics for each of 30 crops of one frame. ReduceDPP takes the batch (one kernel, one grid plane per crop).
-    # OpenCV-CUDA and NPP have no batched call for these reductions and loop over the crops; CUB and Thrust have one
-    # (cub::DeviceSegmentedReduce::Reduce, thrust::reduce_by_key), which has its row next to their loops
-    fklb_add_benchmark(e20_batched_reductions
-        BACKENDS cu LIBS fkl opencv npp
-        SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/reductions/e20_batched_reductions.cu")
-    if(TARGET e20_batched_reductions_cu)
-        target_link_libraries(e20_batched_reductions_cu PRIVATE CUDA::nppist)
-    endif()
-
-    # E20 fused: the mean and the standard deviation of every channel of a crop resized to 224 x 224. The read of ReduceDPP is the crop followed by
-    # fk::Resize, so the resized crop is never written; OpenCV-CUDA and NPP resize into an intermediate image (after converting the crop to float,
-    # or in 8 bits), which further calls read again for its sums or its statistics
-    fklb_add_benchmark(e20_fused_reductions
-        BACKENDS cu LIBS fkl opencv npp
-        SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/reductions/e20_fused_reductions.cu")
-    if(TARGET e20_fused_reductions_cu)
-        target_link_libraries(e20_fused_reductions_cu PRIVATE CUDA::nppist)
-    endif()
 else()
-    message(STATUS "fkl-benchmarks: e20_reductions, e20_batched_reductions and e20_fused_reductions skipped (external/fkl has no reduce_dpp.h)")
+    message(STATUS "fkl-benchmarks: e20_reductions skipped (external/fkl has no reduce_dpp.h)")
 endif()
 
 # The data-size experiment with every size a multiple of 4 (increment 282272 instead of 282270) and only the one-channel pairs: OpenCV-CUDA's one-channel kernels are
