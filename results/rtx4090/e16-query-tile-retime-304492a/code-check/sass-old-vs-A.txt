@@ -1,0 +1,14 @@
+A = /home/oscar/tfkl-bench/fkl-benchmarks/build/rtx4090/bin
+B = /home/oscar/tfkl-bench/scratch/pin-435/base-b10fc66/bench-build/bin
+arch sm_89, executables in both: 1, only in A: [], only in B: []
+cuobjdump: /home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/cuobjdump  (Build cuda_13.4.r13.4/compiler.38855100_0)
+pairing: demangled name, whitespace removed, ',fk::BinaryType' removed where it is the 4th template argument of fk::Sub, fk::Mul or fk::Div
+TOTAL: kernels A 58, B 51; pairs 51, of which renamed 3; identical SASS 51, different 0; only in A 7, only in B 0; key collisions 0; BinaryType arguments removed from the names: A 0, B 0
+  e16_query_tile_cu: kernels A 58, B 51; pairs 51 (renamed 3), identical 51, different 0, only in A 7, only in B 0; key collisions 0; BinaryType arguments removed A 0, B 0
+  ONLY IN A  e16_query_tile_cu: (anonymousnamespace)::affineBf16(__nv_bfloat16*,unsignedlong,float,float)
+  ONLY IN A  e16_query_tile_cu: (anonymousnamespace)::fillNormal(__nv_bfloat16*,unsignedlong,unsignedlong)
+  ONLY IN A  e16_query_tile_cu: void(anonymousnamespace)::gatherHeadsQuant<true>(signedcharconst*,floatconst*,float*,long,long,long,long,int)
+  ONLY IN A  e16_query_tile_cu: void(anonymousnamespace)::quantizeTokens<128,false>(__nv_bfloat16const*,signedchar*,float*,long)
+  ONLY IN A  e16_query_tile_cu: void(anonymousnamespace)::quantizeTokens<128,true>(__nv_bfloat16const*,signedchar*,float*,long)
+  ONLY IN A  e16_query_tile_cu: void(anonymousnamespace)::quantizeTokens<64,false>(__nv_bfloat16const*,signedchar*,float*,long)
+  ONLY IN A  e16_query_tile_cu: void(anonymousnamespace)::quantizeTokens<64,true>(__nv_bfloat16const*,signedchar*,float*,long)
