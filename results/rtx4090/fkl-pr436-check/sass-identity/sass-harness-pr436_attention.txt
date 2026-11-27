@@ -1,0 +1,50 @@
+A = ebb3891: /home/oscar/tfkl-bench/scratch/pr436/harness-build/base-ebb3891
+B = 1df2738: /home/oscar/tfkl-bench/scratch/pr436/harness-build/head-1df2738
+arch sm_89; Build cuda_13.4.r13.4/compiler.38855100_0; files (pr436_attention executables, libpr436_attention.so): A 1, B 1, in both 1
+only in A: []
+only in B: []
+kernels: A 26, B 24; pairs 22 (renamed 22); identical 18, different 4, only in A 4, only in B 2
+names demangled by llvm-cxxfilt because GNU c++filt returned them unchanged: 0
+renamed pairs by rule: flashFwdSplitCombineKernel 2, launchFlashAttentionDPP_Kernel 6, launchFlashAttentionMmaDPP_Kernel 12, main softmax (NullType dropped) 2
+by kernel family (B's name, or A's for a kernel only in A): identical / different / only in A / only in B
+  launchDPP_Kernel<fk::FlashAttentionDPP>: 6 / 0 / 0 / 0
+  launchDPP_Kernel<fk::FlashAttentionMmaDPP>: 8 / 0 / 0 / 0
+  launchDPP_Kernel<fk::FlashAttentionMmaSplitKVDPP>: 4 / 0 / 0 / 0
+  launchDPP_Kernel<fk::FlashAttentionSplitCombineDPP>: 0 / 2 / 0 / 2
+  launchDPP_Kernel<fk::SoftmaxDPP>: 0 / 2 / 0 / 0
+  launchFlashAttentionMmaDPP_Kernel: 0 / 0 / 4 / 0
+per file:
+  pr436_attention: kernels A 26, B 24; renamed pairs 22; identical 18, different 4, only in A 4, only in B 2
+every kernel that is different or on one side only (A = base, B = head):
+  pr436_attention: ONLY IN A  void fk::launchFlashAttentionMmaDPP_Kernel<float, 128, fk::ReadInstantiableOperation<fk::Bf16AttentionRead>, fk::ReadInstantiableOperation<fk::Bf16AttentionRead>, fk::ReadInstantiableOperation<fk::Bf16AttentionRead>, fk::AttentionIdentityEpilogue, 128, 128, 8, fk::NoScoreMod, true>(fk::FlashAttentionMmaDPP<float, 128, fk::ReadInstantiableOperation<fk::Bf16AttentionRead>, fk::ReadInstantiableOperation<fk::Bf16AttentionRead>, fk::ReadInstantiableOperation<fk::Bf16AttentionRead>, fk::AttentionIdentityEpilogue, 128, 128, 8, fk::NoScoreMod>::Params)
+      A: 3528 instructions, 255 registers, stack 104 B, LDL 31, STL 17, shared 0 B, local 0 B, cbank0 512 B
+  pr436_attention: ONLY IN A  void fk::launchFlashAttentionMmaDPP_Kernel<float, 64, fk::ReadInstantiableOperation<fk::Bf16AttentionRead>, fk::ReadInstantiableOperation<fk::Bf16AttentionRead>, fk::ReadInstantiableOperation<fk::Bf16AttentionRead>, fk::AttentionIdentityEpilogue, 128, 64, 4, fk::NoScoreMod, true>(fk::FlashAttentionMmaDPP<float, 64, fk::ReadInstantiableOperation<fk::Bf16AttentionRead>, fk::ReadInstantiableOperation<fk::Bf16AttentionRead>, fk::ReadInstantiableOperation<fk::Bf16AttentionRead>, fk::AttentionIdentityEpilogue, 128, 64, 4, fk::NoScoreMod>::Params)
+      A: 3016 instructions, 242 registers, stack 0 B, LDL 0, STL 0, shared 0 B, local 0 B, cbank0 512 B
+  pr436_attention: ONLY IN A  void fk::launchFlashAttentionMmaDPP_Kernel<float, 64, fk::ReadInstantiableOperation<fk::Bf16AttentionRead>, fk::ReadInstantiableOperation<fk::Bf16AttentionRead>, fk::ReadInstantiableOperation<fk::Bf16AttentionRead>, fk::AttentionIdentityEpilogue, 64, 128, 4, fk::NoScoreMod, true>(fk::FlashAttentionMmaDPP<float, 64, fk::ReadInstantiableOperation<fk::Bf16AttentionRead>, fk::ReadInstantiableOperation<fk::Bf16AttentionRead>, fk::ReadInstantiableOperation<fk::Bf16AttentionRead>, fk::AttentionIdentityEpilogue, 64, 128, 4, fk::NoScoreMod>::Params)
+      A: 2912 instructions, 248 registers, stack 0 B, LDL 0, STL 0, shared 0 B, local 0 B, cbank0 512 B
+  pr436_attention: ONLY IN A  void fk::launchFlashAttentionMmaDPP_Kernel<float, 64, fk::ReadInstantiableOperation<fk::Bf16AttentionRead>, fk::ReadInstantiableOperation<fk::Int8TokenDequantRead>, fk::ReadInstantiableOperation<fk::Int8TokenDequantRead>, fk::AttentionIdentityEpilogue, 128, 32, 4, fk::NoScoreMod, true>(fk::FlashAttentionMmaDPP<float, 64, fk::ReadInstantiableOperation<fk::Bf16AttentionRead>, fk::ReadInstantiableOperation<fk::Int8TokenDequantRead>, fk::ReadInstantiableOperation<fk::Int8TokenDequantRead>, fk::AttentionIdentityEpilogue, 128, 32, 4, fk::NoScoreMod>::Params)
+      A: 2416 instructions, 196 registers, stack 0 B, LDL 0, STL 0, shared 0 B, local 0 B, cbank0 528 B
+  pr436_attention: DIFFERENT  void fk::launchDPP_Kernel<fk::FlashAttentionSplitCombineDPP<(fk::ParArch)1, float, 128, true, fk::AttentionIdentityEpilogue>, fk::FlashAttentionSplitCombineDPP<(fk::ParArch)1, float, 128, true, fk::AttentionIdentityEpilogue>::Params>(fk::FlashAttentionSplitCombineDPP<(fk::ParArch)1, float, 128, true, fk::AttentionIdentityEpilogue>::Params)
+      A name: void fk::flashFwdSplitCombineKernel<float, 128, true>(float const*, float*, int, int)
+      A: 440 instructions, 40 registers, stack 0 B, LDL 0, STL 0, shared 0 B, local 0 B, cbank0 376 B
+      B: 440 instructions, 40 registers, stack 0 B, LDL 0, STL 0, shared 0 B, local 0 B, cbank0 384 B
+      opcode counts B - A: NOP +4, IMAD -3, S2R -3, UMOV +3, SHF -1
+  pr436_attention: ONLY IN B  void fk::launchDPP_Kernel<fk::FlashAttentionSplitCombineDPP<(fk::ParArch)1, float, 128, true, fk::BinaryInstantiableOperation<fk::FusedOperation_<void, fk::BinaryInstantiableOperation<fk::Mul<float, float, float, fk::BinaryType> >, fk::BinaryInstantiableOperation<fk::Add<float, float, float, fk::BinaryType> > > > >, fk::FlashAttentionSplitCombineDPP<(fk::ParArch)1, float, 128, true, fk::BinaryInstantiableOperation<fk::FusedOperation_<void, fk::BinaryInstantiableOperation<fk::Mul<float, float, float, fk::BinaryType> >, fk::BinaryInstantiableOperation<fk::Add<float, float, float, fk::BinaryType>
+      B: 440 instructions, 40 registers, stack 0 B, LDL 0, STL 0, shared 0 B, local 0 B, cbank0 384 B
+  pr436_attention: DIFFERENT  void fk::launchDPP_Kernel<fk::FlashAttentionSplitCombineDPP<(fk::ParArch)1, float, 64, true, fk::AttentionIdentityEpilogue>, fk::FlashAttentionSplitCombineDPP<(fk::ParArch)1, float, 64, true, fk::AttentionIdentityEpilogue>::Params>(fk::FlashAttentionSplitCombineDPP<(fk::ParArch)1, float, 64, true, fk::AttentionIdentityEpilogue>::Params)
+      A name: void fk::flashFwdSplitCombineKernel<float, 64, true>(float const*, float*, int, int)
+      A: 408 instructions, 36 registers, stack 0 B, LDL 0, STL 0, shared 0 B, local 0 B, cbank0 376 B
+      B: 416 instructions, 36 registers, stack 0 B, LDL 0, STL 0, shared 0 B, local 0 B, cbank0 384 B
+      opcode counts B - A: NOP +5, UMOV +3
+  pr436_attention: ONLY IN B  void fk::launchDPP_Kernel<fk::FlashAttentionSplitCombineDPP<(fk::ParArch)1, float, 64, true, fk::BinaryInstantiableOperation<fk::FusedOperation_<void, fk::BinaryInstantiableOperation<fk::Mul<float, float, float, fk::BinaryType> >, fk::BinaryInstantiableOperation<fk::Add<float, float, float, fk::BinaryType> > > > >, fk::FlashAttentionSplitCombineDPP<(fk::ParArch)1, float, 64, true, fk::BinaryInstantiableOperation<fk::FusedOperation_<void, fk::BinaryInstantiableOperation<fk::Mul<float, float, float, fk::BinaryType> >, fk::BinaryInstantiableOperation<fk::Add<float, float, float, fk::BinaryType> >
+      B: 416 instructions, 36 registers, stack 0 B, LDL 0, STL 0, shared 0 B, local 0 B, cbank0 384 B
+  pr436_attention: DIFFERENT  void fk::launchDPP_Kernel<fk::SoftmaxDPP<(fk::ParArch)1, fk::SoftmaxDPPDetails<256> >, fk::SoftmaxDPPDetails<256>, fk::ReadInstantiableOperation<fk::FusedOperation_<void, fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2, float> >, fk::BinaryInstantiableOperation<fk::Mul<float, float, float, fk::BinaryType> > > >, fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)2, float> > >(fk::SoftmaxDPPDetails<256>, fk::ReadInstantiableOperation<fk::FusedOperation_<void, fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2, float> >, fk::BinaryInstantiableOperation<fk::Mul<float, floa
+      A name: void fk::launchDPP_Kernel<fk::SoftmaxDPP, fk::SoftmaxDPPDetails<256>, fk::ReadInstantiableOperation<fk::FusedOperation_<void, fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2, float> >, fk::BinaryInstantiableOperation<fk::Mul<float, float, float, fk::BinaryType> > > >, NullType, fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)2, float> > >(fk::SoftmaxDPPDetails<256>, fk::ReadInstantiableOperation<fk::FusedOperation_<void, fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2, float> >, fk::BinaryInstantiableOperation<fk::Mul<float, float, float, fk::BinaryType> > > >, Nu
+      A: 736 instructions, 30 registers, stack 0 B, LDL 0, STL 0, shared 2048 B, local 0 B, cbank0 424 B
+      B: 736 instructions, 30 registers, stack 0 B, LDL 0, STL 0, shared 2048 B, local 0 B, cbank0 416 B
+      opcode counts B - A: none (the same opcodes, in another order or with other operands)
+  pr436_attention: DIFFERENT  void fk::launchDPP_Kernel<fk::SoftmaxDPP<(fk::ParArch)1, fk::SoftmaxDPPDetails<256> >, fk::SoftmaxDPPDetails<256>, fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2, float> >, fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)2, float> > >(fk::SoftmaxDPPDetails<256>, fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2, float> >, fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)2, float> >)
+      A name: void fk::launchDPP_Kernel<fk::SoftmaxDPP, fk::SoftmaxDPPDetails<256>, fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2, float> >, NullType, fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)2, float> > >(fk::SoftmaxDPPDetails<256>, fk::ReadInstantiableOperation<fk::PerThreadRead<(fk::ND)2, float> >, NullType, fk::WriteInstantiableOperation<fk::PerThreadWrite<(fk::ND)2, float> >)
+      A: 728 instructions, 31 registers, stack 0 B, LDL 0, STL 0, shared 2048 B, local 0 B, cbank0 416 B
+      B: 728 instructions, 31 registers, stack 0 B, LDL 0, STL 0, shared 2048 B, local 0 B, cbank0 408 B
+      opcode counts B - A: none (the same opcodes, in another order or with other operands)

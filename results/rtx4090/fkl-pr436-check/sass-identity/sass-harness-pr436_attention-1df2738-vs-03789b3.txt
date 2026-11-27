@@ -1,0 +1,18 @@
+A = 1df2738: /home/oscar/tfkl-bench/scratch/pr436/harness-build/head-1df2738
+B = 03789b3: /home/oscar/tfkl-bench/scratch/pr436/harness-build-03789b3/head-03789b3
+arch sm_89; Build cuda_13.4.r13.4/compiler.38855100_0; files (pr436_attention executables, libpr436_attention.so): A 1, B 1, in both 1
+only in A: []
+only in B: []
+kernels: A 24, B 24; pairs 24 (renamed 0); identical 24, different 0, only in A 0, only in B 0
+names demangled by llvm-cxxfilt because GNU c++filt returned them unchanged: 0
+renamed pairs by rule: none
+by kernel family (B's name, or A's for a kernel only in A): identical / different / only in A / only in B
+  launchDPP_Kernel<fk::FlashAttentionDPP>: 6 / 0 / 0 / 0
+  launchDPP_Kernel<fk::FlashAttentionMmaDPP>: 8 / 0 / 0 / 0
+  launchDPP_Kernel<fk::FlashAttentionMmaSplitKVDPP>: 4 / 0 / 0 / 0
+  launchDPP_Kernel<fk::FlashAttentionSplitCombineDPP>: 4 / 0 / 0 / 0
+  launchDPP_Kernel<fk::SoftmaxDPP>: 2 / 0 / 0 / 0
+per file:
+  pr436_attention: kernels A 24, B 24; renamed pairs 0; identical 24, different 0, only in A 0, only in B 0  (all identical)
+every kernel that is different or on one side only (A = base, B = head):
+  none

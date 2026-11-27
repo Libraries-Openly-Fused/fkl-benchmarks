@@ -1,0 +1,2 @@
+cmake -S /home/oscar/tfkl-bench/worktrees/fkl-pr436-head-1df2738 -B /home/oscar/tfkl-bench/scratch/pr436/fkl-head-build -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release -DCMAKE_CUDA_COMPILER=/home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/nvcc -DCUDA_ARCH=89  (nice -n 19)
+make -C /home/oscar/tfkl-bench/scratch/pr436/fkl-head-build -k -j8 --output-sync=target <the targets of fkl-head-03789b3-targets-built.txt>  (taskset -c 8-15,24-31, nice -n 19)
