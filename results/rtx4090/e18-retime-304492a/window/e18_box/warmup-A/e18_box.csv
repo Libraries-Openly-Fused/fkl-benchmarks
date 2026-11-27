@@ -1,0 +1,38 @@
+# experiment: E18 box: whole-call and kernel-only times
+# repo: fkl-benchmarks unknown
+# fkl: b10fc6609426bd18020b9213c7196b528fc677a8
+# cvGPUSpeedup: 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c
+# FastNPP: a1b5e245d7dd70fba23dcb51a0aea80495dbc61d
+# nvcc: 13.4.92 (/home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/nvcc), architectures 89, -fmad on, -lineinfo on
+# hip: none (none), architectures none
+# host compiler: GNU 15.2.0, Release, -march=native, -ftemplate-depth=1000
+# opencv: 4.14.0
+# cpu: AMD Ryzen 9 5950X 16-Core Processor
+# os: Ubuntu 26.04.1 LTS
+# kernel: Linux 7.0.0-43-generic
+# gpu: NVIDIA GeForce RTX 4090, cc 8.9, 128 SMs, 24106 MiB, PCI 0000:09:00.0
+# cuda driver api: 13.3, cuda runtime: 13.4
+# nvidia-smi driver: 610.43.02
+# clocks (sm, mem, max sm, max mem, MHz): 2550 MHz, 10251 MHz, 3105 MHz, 10501 MHz
+# power limit, temperature at start: 450.00 W, 42
+version,sampling,interval,mean_ms,min_ms,host_prepare_mean_ms,host_prepare_min_ms,iterations,spin_us
+fkl_box_asym,ASYMMETRIC,whole_call,0.0438819199,0.0429119989,,,100,
+fkl_box_asym,ASYMMETRIC,kernel_only,0.0420534396,0.040959999,0.00015259,0.00012,100,5000
+fkl_box_halfpixel,HALF_PIXEL,whole_call,0.0410495995,0.0399359986,,,100,
+fkl_box_halfpixel,HALF_PIXEL,kernel_only,0.0420652797,0.0419839993,0.000149,0.00012,100,5000
+fkl_trunc_asym,ASYMMETRIC,whole_call,0.0392659194,0.038784001,,,100,
+fkl_trunc_asym,ASYMMETRIC,kernel_only,0.0401715196,0.0399359986,0.0001518,0.00012,100,5000
+fkl_trunc_halfpixel,HALF_PIXEL,whole_call,0.0394870392,0.0389119983,,,100,
+fkl_trunc_halfpixel,HALF_PIXEL,kernel_only,0.040905599,0.0399359986,0.00015029,0.00012,100,5000
+opencv_cuda,ASYMMETRIC,whole_call,0.048175681,0.0478399992,,,100,
+opencv_cuda,ASYMMETRIC,kernel_only,0.0490771217,0.0481280014,8.36e-05,4e-05,100,5000
+npp,HALF_PIXEL,whole_call,0.03323488,0.0327679999,,,100,
+npp,HALF_PIXEL,kernel_only,0.0338108804,0.0337920003,4.799e-05,3e-05,100,5000
+fkl_asym_once,ASYMMETRIC,whole_call,0.0403052795,0.0398080014,,,100,
+fkl_asym_once,ASYMMETRIC,kernel_only,0.0414511994,0.040959999,3.76e-05,2e-05,100,5000
+fkl_half_once,HALF_PIXEL,whole_call,0.0409721595,0.0399359986,,,100,
+fkl_half_once,HALF_PIXEL,kernel_only,0.0421580798,0.0419839993,3.78e-05,2e-05,100,5000
+fkl_trunc_asym_once,ASYMMETRIC,whole_call,0.0394927992,0.0389119983,,,100,
+fkl_trunc_asym_once,ASYMMETRIC,kernel_only,0.040824319,0.0399359986,3.75e-05,3e-05,100,5000
+fkl_trunc_halfpixel_once,HALF_PIXEL,whole_call,0.0398444792,0.0389119983,,,100,
+fkl_trunc_halfpixel_once,HALF_PIXEL,kernel_only,0.040962239,0.040959999,3.76e-05,2e-05,100,5000

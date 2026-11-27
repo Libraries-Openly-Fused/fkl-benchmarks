@@ -15,8 +15,56 @@ Decision: the coordinator's task RT-4 of 2026-11-27, Oscar's order of 2026-11-26
 "Coordinate with fkl-reduce, fkl-reduce has priority". So every build here ran at nice 19 with at most 8 jobs, the window starts only in
 a quiet slot agreed with that session, and any run it disturbs is redone.
 
-**State.** The binaries, the code check and the kernel resources are done (compile only and CPU only). The window waits for the
-coordinator's GRANTED.
+**State.** The window ran on the coordinator's GRANTED (fkl-reduce QUIET, HOLD COMPILES and WINDOW STARTS sent) from 2026-11-27 04:20:10
+to 04:26:38 (+01:00; 03:20:10Z to 03:26:38Z, `window/window-console.txt`). The analysis below was done afterwards, on the CPU only.
+
+## Result
+
+**The window** (`window/`):
+- **Runs:** 24 of 24 exited 0, each printed its checks line, and no CSV is INCOMPLETE or holds -nan; every stderr is empty.
+- **Guards:** the after-run check never fired, so no run is affected and none is redone. The idle wait never timed out: it waited 0 to 51 s
+  before a run, and the 1-minute load at the start of a run was 0.25 to 0.49.
+- **Clocks** (`gpu_clocks.csv`, `gpu_clocks.err` empty):
+  - 924 of the 3,836 readings have a utilisation of 50 % or more. Their SM clock was 2,685 MHz in 899 of them and 2,550 MHz in 25, at P2.
+  - The temperature was 41 to 51 °C.
+  - As in #63, the first second of the timing of every run but one read 2,550 MHz and then 2,685 (`analysis/first-row-clock.txt`). The
+    exception is `e18_stencil` quiet-run3-A, which read 2,685 throughout.
+- **The check CSVs** (`analysis/checks-vs-old.txt`): all 56 equal #63's B quiet-run1-B row by row. That is every `*_agreement.csv`,
+  `*_checks.csv` and `e18_box_kernel.csv` of A and of B.
+
+**The numbers** (`analysis/retime-table.md`, `retime-summary.csv`, `retime-report.txt`):
+- **What they are:** 46 numbers, each the median of the three quiet runs' means, with the min-max.
+- **How to read them:** "exceeds" means larger than the larger spread of the two sides, and "apart" means the two min-max ranges do not
+  overlap.
+- **Bound:** all 46 are GPU-bound by #63's rule, so the flag is above 3 %.
+- **Cause:** not shown for any change.
+- **old:** recomputed from #63's B runs, it equals #63's summary (its B columns).
+
+**B against A, the pin move:** 1 flag; 11 changes exceed the larger spread and 14 are apart.
+- **The flag:** `e18_box_split` `fkl_box_asym` whole_call, 43.89 → 42.26 µs (−3.72 %).
+  - It does not exceed the larger spread (A's runs are 44.00, 42.27 and 43.89 µs; B's are 42.26, 42.28 and 42.24), and the ranges overlap.
+  - This is the first row each run of `e18_box_split` times. In #63 the same row was 43.29 µs (41.97-43.49) at A and 43.41 (42.33-43.68)
+    at B.
+  - The first-row clock readings of A's three runs (2,550 MHz in 4, 4 and 7 of the 10 readings of the first second) do not follow the
+    44.00, 42.27 and 43.89.
+  - Not shown to be the pin move.
+- **The other FKL rows:** −1.29 % to +0.53 % (e18_box −0.83 % to +0.31 %, e18_box_split −1.29 % to +0.53 %, e18_stencil −0.16 % to +0.24 %).
+- **The OpenCV and NPP rows,** whose code is the same in A and B: −0.21 % to +0.23 %.
+
+**A against old, the same timed code** (the code check above): no flag; 3 changes exceed the larger spread.
+- **The FKL rows:** −1.55 % to +1.22 %.
+- **The OpenCV and NPP rows:** −0.56 % to +0.24 %.
+
+**B against old:** no flag; 10 changes exceed the larger spread. The FKL rows are −2.65 % to +1.53 %, and the OpenCV and NPP rows −0.38 % to
++0.26 %.
+
+**The records' formats** (`formats/A/`, `formats/B/`):
+- Each side has its `e18-box/`, `e18-box-split/` and `e18-stencil/`, written by the three records' own report scripts from its three quiet
+  runs.
+- `e18_box_split_repeats.csv` compares each side's repeated rows with the same side's `e18_box_summary.csv`, as the record compared
+  them with the window e18-box.
+- `first-row-clock.txt` names the window `e18-retime-b10fc66` in its first line: that is #63's script's docstring, unchanged. Its
+  data are this window's.
 
 ## The binaries
 
@@ -86,7 +134,7 @@ old's folder with old's configuration (check 1).
 
 ## The window (`window-script.sh`)
 
-(To be run on the coordinator's GRANTED; about 10 minutes with the idle waits. #63's took 5 min.)
+(Run on the coordinator's GRANTED, 2026-11-27 04:20:10 to 04:26:38 +01:00; the result is above.)
 
 **The protocol is #63's.** The programs run in the order `e18_box`, `e18_box_split`, `e18_stencil`. For each program, one process per run:
 - `warmup-A`, then `warmup-B` (not used);
@@ -144,4 +192,7 @@ No cause is named unless shown.
 | `window-script.sh` | the window's script |
 | `code-check/` | A against old: the console, the rebuild of old (`rebuild-old/`: console, sha256, #63's manifest lines, the report, configure and build logs, target lists, time), the configure-log diff, the line counts against #60's record, the SASS and host code of A against the rebuild, the module ids |
 | `resources/` | B against A: the SASS comparison and its CSV, `cuobjdump -res-usage` of both |
+| `window/` | the window: console, environment before and after, `gpu-info.csv`, `gpu_clocks.csv` (and `.err`), `load.log`, the copy of the script it ran, and one folder per program and run with its CSVs, stdout, stderr, exit code, load and the GPU state at its end |
+| `analysis/` | `retime-report.txt`, `retime-summary.csv`, `retime-table.md`, `clock-by-run.txt`, `checks-vs-old.txt` (`rt4_report.py`) and `first-row-clock.txt` (`first_row_clock.py`) |
+| `formats/A/`, `formats/B/` | each side's outputs in the three E18 records' formats: `e18-box/`, `e18-box-split/`, `e18-stencil/` (`rt4_formats.sh`) |
 | `scripts-used/` | `rebuild_old.sh`, `check_fkl_tree_rt4.sh`, `rt4_code_check.sh`, `sass_linecounts_vs_60.py`, `pr435_sass_identity.py`, `sass_identity_norename.py`, `host_compare435.py`, `rt4_report.py`, `first_row_clock.py`, `rt4_formats.sh`, `after_window.sh` |

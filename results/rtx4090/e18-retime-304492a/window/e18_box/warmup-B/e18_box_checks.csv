@@ -1,0 +1,26 @@
+# experiment: E18 box: the exact references
+# repo: fkl-benchmarks unknown
+# fkl: 304492af4d777165bd556fdd6113439635724d02
+# cvGPUSpeedup: 6d26c65f5a5631cfcdc37c9ccde33d10d8d7c80c
+# FastNPP: a1b5e245d7dd70fba23dcb51a0aea80495dbc61d
+# nvcc: 13.4.92 (/home/oscar/tfkl-bench/toolchains/cuda-13.4.3/bin/nvcc), architectures 89, -fmad on, -lineinfo on
+# hip: none (none), architectures none
+# host compiler: GNU 15.2.0, Release, -march=native, -ftemplate-depth=1000
+# opencv: 4.14.0
+# cpu: AMD Ryzen 9 5950X 16-Core Processor
+# os: Ubuntu 26.04.1 LTS
+# kernel: Linux 7.0.0-43-generic
+# gpu: NVIDIA GeForce RTX 4090, cc 8.9, 128 SMs, 24106 MiB, PCI 0000:09:00.0
+# cuda driver api: 13.3, cuda runtime: 13.4
+# nvidia-smi driver: 610.43.02
+# clocks (sm, mem, max sm, max mem, MHz): 2685 MHz, 10251 MHz, 3105 MHz, 10501 MHz
+# power limit, temperature at start: 450.00 W, 43
+check,sampling,value,criterion,ok
+the exact resize: denominator of every value,ASYMMETRIC,9,informational,1
+the exact resize: values that are exact ties (k + 0.5),ASYMMETRIC,0,informational,1
+the double resize (common/resize_reference.h) against the exact resize: max |difference|,ASYMMETRIC,7.73070497e-11,informational,1
+values where the double resize rounded to nearest (std::nearbyint) differs from the exact resize rounded with ties to even,ASYMMETRIC,0,informational,1
+the exact resize: denominator of every value,HALF_PIXEL,36,informational,1
+the exact resize: values that are exact ties (k + 0.5),HALF_PIXEL,636525,informational,1
+the double resize (common/resize_reference.h) against the exact resize: max |difference|,HALF_PIXEL,7.97513167e-11,informational,1
+values where the double resize rounded to nearest (std::nearbyint) differs from the exact resize rounded with ties to even,HALF_PIXEL,201756,informational,1

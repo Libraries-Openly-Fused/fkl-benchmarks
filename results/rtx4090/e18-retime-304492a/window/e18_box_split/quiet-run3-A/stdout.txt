@@ -1,0 +1,32 @@
+E18 box split: checks, then the timing
+exact resize ASYMMETRIC: denominator 9, 0 exact ties; double resize within 7.7307e-11, its rounding differs from the exact one at 0 values
+exact resize HALF_PIXEL: denominator 36, 636525 exact ties; double resize within 7.97513e-11, its rounding differs from the exact one at 201756 values
+resize: fkl_read_chain_asym vs exact_resize_ASYMMETRIC: 0 values / 0 pixels differ, max 0 levels (0 above, 0 below); 0 at exact ties, the others within -1 of a half level; 0 of the 0 exact ties rounded up
+resize: fkl_read_chain_halfpixel vs exact_resize_HALF_PIXEL: 201593 values / 193530 pixels differ, max 1 levels (103564 above, 98029 below); 201302 at exact ties, the others within 0.0277778 of a half level; 323816 of the 636525 exact ties rounded up
+resize: npp_intermediate vs exact_resize_HALF_PIXEL: 318328 values / 293230 pixels differ, max 1 levels (220312 above, 98016 below); 318037 at exact ties, the others within 0.0277778 of a half level; 440577 of the 636525 exact ties rounded up
+resize: fkl_read_chain_halfpixel vs npp_intermediate: 116849 values / 100094 pixels differ, max 1 levels (44 above, 116805 below); 116849 at exact ties, the others within -1 of a half level; 323816 of the 636525 exact ties rounded up
+resize: npp_resize vs npp_intermediate: 0 values / 0 pixels differ, max 0 levels (0 above, 0 below); 0 at exact ties, the others within -1 of a half level; 440577 of the 636525 exact ties rounded up
+resize: npp_resize vs exact_resize_HALF_PIXEL: 318328 values / 293230 pixels differ, max 1 levels (220312 above, 98016 below); 318037 at exact ties, the others within 0.0277778 of a half level; 440577 of the 636525 exact ties rounded up
+resize: fkl_resize vs fkl_read_chain_halfpixel: 0 values / 0 pixels differ, max 0 levels (0 above, 0 below); 0 at exact ties, the others within -1 of a half level; 323816 of the 636525 exact ties rounded up
+resize: fkl_resize vs exact_resize_HALF_PIXEL: 201593 values / 193530 pixels differ, max 1 levels (103564 above, 98029 below); 201302 at exact ties, the others within 0.0277778 of a half level; 323816 of the 636525 exact ties rounded up
+resize: fkl_resize vs npp_resize: 116849 values / 100094 pixels differ, max 1 levels (44 above, 116805 below); 116849 at exact ties, the others within -1 of a half level; 323816 of the 636525 exact ties rounded up
+box: npp_box vs exact_box_truncated: 0 values / 0 pixels differ, max 0 levels (0 above, 0 below); 0 at exact ties, the others within -1 of a half level; 0 of the 0 exact ties rounded up
+box: fkl_box vs exact_box_truncated: 0 values / 0 pixels differ, max 0 levels (0 above, 0 below); 0 at exact ties, the others within -1 of a half level; 0 of the 0 exact ties rounded up
+box: fkl_box vs npp_box: 0 values / 0 pixels differ, max 0 levels (0 above, 0 below); 0 at exact ties, the others within -1 of a half level; 0 of the 0 exact ties rounded up
+pipeline: fkl_box_asym vs exact_pipeline_ASYMMETRIC: 0 values / 0 pixels differ, max 0 levels (0 above, 0 below)
+pipeline: fkl_box_asym vs exact_box_of_own_resize: 0 values / 0 pixels differ, max 0 levels (0 above, 0 below)
+pipeline: fkl_trunc_halfpixel vs exact_pipeline_HALF_PIXEL: 2763971 values / 1717771 pixels differ, max 1 levels (6 above, 2763965 below)
+pipeline: fkl_trunc_halfpixel vs exact_pipeline_truncated_HALF_PIXEL: 183571 values / 178567 pixels differ, max 1 levels (93976 above, 89595 below)
+pipeline: fkl_trunc_halfpixel vs exact_box_truncated_of_own_resize: 0 values / 0 pixels differ, max 0 levels (0 above, 0 below)
+pipeline: npp vs exact_pipeline_HALF_PIXEL: 2648272 values / 1681047 pixels differ, max 1 levels (87 above, 2648185 below)
+pipeline: npp vs exact_pipeline_truncated_HALF_PIXEL: 280340 values / 268599 pixels differ, max 1 levels (200291 above, 80049 below)
+pipeline: npp vs exact_box_truncated_of_own_resize: 0 values / 0 pixels differ, max 0 levels (0 above, 0 below)
+pipeline: fkl_trunc_halfpixel vs npp: 115927 values / 113849 pixels differ, max 1 levels (33 above, 115894 below)
+E18 box split checks passed
+fkl_box_asym: whole call mean 0.0438925 ms (min 0.042784); kernel only mean 0.0420317 ms (min 0.04096), host preparation mean 0.0001481 ms
+fkl_trunc_halfpixel: whole call mean 0.0395776 ms (min 0.038912); kernel only mean 0.0408643 ms (min 0.039936), host preparation mean 0.00014239 ms
+npp: whole call mean 0.0332614 ms (min 0.032768); kernel only mean 0.0339642 ms (min 0.033792), host preparation mean 4.03e-05 ms
+npp_resize: whole call mean 0.0123197 ms (min 0.011264); kernel only mean 0.0122947 ms (min 0.012288), host preparation mean 3.88e-05 ms
+fkl_resize: whole call mean 0.0145443 ms (min 0.014112); kernel only mean 0.014543 ms (min 0.014336), host preparation mean 0.0001046 ms
+npp_box: whole call mean 0.0229594 ms (min 0.022528); kernel only mean 0.023552 ms (min 0.023552), host preparation mean 3.85e-05 ms
+fkl_box: whole call mean 0.0311238 ms (min 0.03072); kernel only mean 0.0317578 ms (min 0.031744), host preparation mean 5.73e-05 ms
